@@ -2060,7 +2060,19 @@ IF(ENABLE_TEST)
   ADD_CUSTOM_TARGET(run_all_tests)
 ENDIF(ENABLE_TEST)
 
+#RUST
+SET(RUST_PATH "${PROJECT_SOURCE_DIR}/rust")
+link_directories(${RUST_PATH}/target/release)
+
+#step by step to compile
+set(STEP "${STEP}")
+if(STEP STREQUAL "link")
+  ADD_DEFINITIONS(-DCOMPILE_WITH_RUST)
+endif()
+
 add_subdirectory(libarchive)
-add_subdirectory(cat)
-add_subdirectory(tar)
-add_subdirectory(cpio)
+if(STEP STREQUAL "link")
+  add_subdirectory(cat)
+  add_subdirectory(tar)
+  add_subdirectory(cpio)
+endif()
