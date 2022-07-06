@@ -1,0 +1,16 @@
+[package]
+name = "rust_project"
+version = "0.1.0"
+# edition = "2021"
+build = "src/build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[build-dependencies]
+rust_ffi = {path = "../rust_ffi"}
+
+[lib]
+crate-type = ["staticlib"]
+name = "archive_rust"

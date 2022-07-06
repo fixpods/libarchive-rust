@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "rust_ffi",
+    "rust_project",
+]
+
+[profile.release]
+lto = true
