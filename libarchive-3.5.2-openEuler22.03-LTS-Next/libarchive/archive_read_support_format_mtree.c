@@ -59,35 +59,37 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_mtree.c 2011
 #include "archive_pack_dev.h"
 
 #ifndef O_BINARY
-#define	O_BINARY 0
+#define O_BINARY 0
 #endif
 #ifndef O_CLOEXEC
-#define O_CLOEXEC	0
+#define O_CLOEXEC 0
 #endif
 
-#define	MTREE_HAS_DEVICE	0x0001
-#define	MTREE_HAS_FFLAGS	0x0002
-#define	MTREE_HAS_GID		0x0004
-#define	MTREE_HAS_GNAME		0x0008
-#define	MTREE_HAS_MTIME		0x0010
-#define	MTREE_HAS_NLINK		0x0020
-#define	MTREE_HAS_PERM		0x0040
-#define	MTREE_HAS_SIZE		0x0080
-#define	MTREE_HAS_TYPE		0x0100
-#define	MTREE_HAS_UID		0x0200
-#define	MTREE_HAS_UNAME		0x0400
+#define MTREE_HAS_DEVICE 0x0001
+#define MTREE_HAS_FFLAGS 0x0002
+#define MTREE_HAS_GID 0x0004
+#define MTREE_HAS_GNAME 0x0008
+#define MTREE_HAS_MTIME 0x0010
+#define MTREE_HAS_NLINK 0x0020
+#define MTREE_HAS_PERM 0x0040
+#define MTREE_HAS_SIZE 0x0080
+#define MTREE_HAS_TYPE 0x0100
+#define MTREE_HAS_UID 0x0200
+#define MTREE_HAS_UNAME 0x0400
 
-#define	MTREE_HAS_OPTIONAL	0x0800
-#define	MTREE_HAS_NOCHANGE	0x1000 /* FreeBSD specific */
+#define MTREE_HAS_OPTIONAL 0x0800
+#define MTREE_HAS_NOCHANGE 0x1000 /* FreeBSD specific */
 
-#define	MAX_LINE_LEN		(1024 * 1024)
+#define MAX_LINE_LEN (1024 * 1024)
 
-struct mtree_option {
+struct mtree_option
+{
 	struct mtree_option *next;
 	char *value;
 };
 
-struct mtree_entry {
+struct mtree_entry
+{
 	struct archive_rb_node rbnode;
 	struct mtree_entry *next_dup;
 	struct mtree_entry *next;
@@ -97,37 +99,39 @@ struct mtree_entry {
 	char used;
 };
 
-struct mtree {
-	struct archive_string	 line;
-	size_t			 buffsize;
-	char			*buff;
-	int64_t			 offset;
-	int			 fd;
-	int			 archive_format;
-	const char		*archive_format_name;
-	struct mtree_entry	*entries;
-	struct mtree_entry	*this_entry;
-	struct archive_rb_tree	 entry_rbtree;
-	struct archive_string	 current_dir;
-	struct archive_string	 contents_name;
+struct mtree
+{
+	struct archive_string line;
+	size_t buffsize;
+	char *buff;
+	int64_t offset;
+	int fd;
+	int archive_format;
+	const char *archive_format_name;
+	struct mtree_entry *entries;
+	struct mtree_entry *this_entry;
+	struct archive_rb_tree entry_rbtree;
+	struct archive_string current_dir;
+	struct archive_string contents_name;
 
 	struct archive_entry_linkresolver *resolver;
 	struct archive_rb_tree rbtree;
 
-	int64_t			 cur_size;
+	int64_t cur_size;
 	char checkfs;
 };
 
 #ifdef HAVE_STRNLEN
-#define mtree_strnlen(a,b) strnlen(a,b)
+#define mtree_strnlen(a, b) strnlen(a, b)
 #endif
 
-#define MAX_BID_ENTRY	3
+#define MAX_BID_ENTRY 3
 
 #define MAX_PACK_ARGS 3
 
 #ifndef COMPILE_WITH_RUST
-struct archive_mtree_defined_param{
+struct archive_mtree_defined_param
+{
 	int s_iflnk;
 	int s_ifsock;
 	int s_ifchr;
@@ -180,7 +184,7 @@ struct archive_mtree_defined_param{
 	int archive_errno_programmer;
 	int mtree_has_fflags;
 	long int int64_max;
-	long int int32_max; 
+	long int int32_max;
 	long int int64_min;
 	long int int32_min;
 	long int time_t_min;
@@ -242,13 +246,13 @@ struct archive_mtree_defined_param get_archive_mtree_defined_param()
 	defined_param.archive_entry_digest_sha512 = ARCHIVE_ENTRY_DIGEST_SHA512;
 	defined_param.archive_errno_programmer = ARCHIVE_ERRNO_PROGRAMMER;
 	defined_param.mtree_has_fflags = MTREE_HAS_FFLAGS;
-    defined_param.int64_max = INT64_MAX;
+	defined_param.int64_max = INT64_MAX;
 	defined_param.int32_max = INT32_MAX;
 	defined_param.int64_min = INT64_MIN;
 	defined_param.int32_min = INT32_MIN;
 #if defined(TIME_T_MIN)
 	defined_param.time_t_min = TIME_T_MIN;
-#endif	
+#endif
 #if defined(TIME_T_MAX)
 	defined_param.time_t_max = TIME_T_MAX;
 #endif
@@ -269,7 +273,8 @@ int get_have_struct_stat_st_mtime_n();
 int get_have_struct_stat_st_umtime();
 int get_have_struct_stat_st_mtime_usec();
 
-int get_have_strnlen(){
+int get_have_strnlen()
+{
 #ifdef HAVE_STRNLEN
 	return 1;
 #else
@@ -277,23 +282,26 @@ int get_have_strnlen(){
 #endif
 }
 
-int get_time_t_max(){
-#if defined(TIME_T_MAX)	
+int get_time_t_max()
+{
+#if defined(TIME_T_MAX)
 	return 1;
 #else
 	return 0;
 #endif
 }
 
-int get_time_t_min(){
-#if defined(TIME_T_MIN)	
+int get_time_t_min()
+{
+#if defined(TIME_T_MIN)
 	return 1;
 #else
 	return 0;
 #endif
 }
 
-int get_have_struct_stat_st_mtimespec_tv_nsec(){
+int get_have_struct_stat_st_mtimespec_tv_nsec()
+{
 #if HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC
 	return 1;
 #else
@@ -301,7 +309,8 @@ int get_have_struct_stat_st_mtimespec_tv_nsec(){
 #endif
 }
 
-int get_have_struct_stat_st_mtim_tv_nsec(){
+int get_have_struct_stat_st_mtim_tv_nsec()
+{
 #if HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
 	return 1;
 #else
@@ -309,15 +318,17 @@ int get_have_struct_stat_st_mtim_tv_nsec(){
 #endif
 }
 
-int get_have_struct_stat_st_mtime_n(){
+int get_have_struct_stat_st_mtime_n()
+{
 #if HAVE_STRUCT_STAT_ST_MTIME_N
 	return 1;
 #else
 	return 0;
-#endif	
+#endif
 }
 
-int get_have_struct_stat_st_umtime(){
+int get_have_struct_stat_st_umtime()
+{
 #if HAVE_STRUCT_STAT_ST_UMTIME
 	return 1;
 #else
@@ -325,31 +336,35 @@ int get_have_struct_stat_st_umtime(){
 #endif
 }
 
-int get_have_struct_stat_st_mtime_usec(){
+int get_have_struct_stat_st_mtime_usec()
+{
 #if HAVE_STRUCT_STAT_ST_MTIME_USEC
 	return 1;
 #else
 	return 0;
-#endif	
+#endif
 }
 
-int get_s_iflnk(){
+int get_s_iflnk()
+{
 #ifdef S_IFLNK
 	return 1;
 #else
 	return 0;
-#endif	
+#endif
 }
 
-int get_s_ifsock(){
+int get_s_ifsock()
+{
 #ifdef S_IFSOCK
 	return 1;
 #else
 	return 0;
-#endif	
+#endif
 }
 
-int get_s_ifchr(){
+int get_s_ifchr()
+{
 #ifdef S_IFCHR
 	return 1;
 #else
@@ -357,7 +372,8 @@ int get_s_ifchr(){
 #endif
 }
 
-int get_s_ifblk(){
+int get_s_ifblk()
+{
 #ifdef S_IFBLK
 	return 1;
 #else
@@ -365,16 +381,16 @@ int get_s_ifblk(){
 #endif
 }
 
-int get_s_ififo(){
+int get_s_ififo()
+{
 #ifdef S_IFIFO
 	return 1;
 #else
 	return 0;
-#endif	
+#endif
 }
 
-int
-archive_read_support_format_mtree(struct archive *_a)
+int archive_read_support_format_mtree(struct archive *_a)
 {
 	return 0;
 }

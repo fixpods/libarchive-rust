@@ -31,8 +31,7 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_all.c 174991
 
 #ifndef COMPILE_WITH_RUST
 // 编译时使用
-int
-archive_read_support_format_all(struct archive *a)
+int archive_read_support_format_all(struct archive *a)
 {
 	return 0;
 }

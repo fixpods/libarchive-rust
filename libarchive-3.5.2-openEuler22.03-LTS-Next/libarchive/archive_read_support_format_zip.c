@@ -75,18 +75,17 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_zip.c 201102
 #include "archive_crc32.h"
 #endif
 
-
 /* Bits used in zip_flags. */
-#define ZIP_ENCRYPTED	(1 << 0)
-#define ZIP_LENGTH_AT_END	(1 << 3)
-#define ZIP_STRONG_ENCRYPTED	(1 << 6)
-#define ZIP_UTF8_NAME	(1 << 11)
+#define ZIP_ENCRYPTED (1 << 0)
+#define ZIP_LENGTH_AT_END (1 << 3)
+#define ZIP_STRONG_ENCRYPTED (1 << 6)
+#define ZIP_UTF8_NAME (1 << 11)
 /* See "7.2 Single Password Symmetric Encryption Method"
    in http://www.pkware.com/documents/casestudies/APPNOTE.TXT */
-#define ZIP_CENTRAL_DIRECTORY_ENCRYPTED	(1 << 13)
+#define ZIP_CENTRAL_DIRECTORY_ENCRYPTED (1 << 13)
 
 /* Bits used in flags. */
-#define LA_USED_ZIP64	(1 << 0)
+#define LA_USED_ZIP64 (1 << 0)
 #define LA_FROM_CENTRAL_DIRECTORY (1 << 1)
 
 /*
@@ -94,15 +93,14 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_zip.c 201102
  *     http://www.winzip.com/aes_info.htm
  */
 /* Value used in compression method. */
-#define WINZIP_AES_ENCRYPTION	99
+#define WINZIP_AES_ENCRYPTION 99
 /* Authentication code size. */
-#define AUTH_CODE_SIZE	10
+#define AUTH_CODE_SIZE 10
 /**/
-#define MAX_DERIVED_KEY_BUF_SIZE	(AES_MAX_KEY_SIZE * 2 + 2)
+#define MAX_DERIVED_KEY_BUF_SIZE (AES_MAX_KEY_SIZE * 2 + 2)
 
 /* Many systems define min or MIN, but not all. */
-#define	zipmin(a,b) ((a) < (b) ? (a) : (b))
-
+#define zipmin(a, b) ((a) < (b) ? (a) : (b))
 
 int archive_read_support_format_zip(struct archive *a)
 {
@@ -112,25 +110,19 @@ int archive_read_support_format_zip(struct archive *a)
 	if (r != ARCHIVE_OK)
 		return r;
 	return (archive_read_support_format_zip_seekable(a));
-
 }
 
 #ifndef COMPILE_WITH_RUST
 
 // 编译时使用
-int
-archive_read_support_format_zip_seekable(struct archive *_a)
+int archive_read_support_format_zip_seekable(struct archive *_a)
 {
 	return 0;
 }
 
-int
-archive_read_support_format_zip_streamable(struct archive *_a)
+int archive_read_support_format_zip_streamable(struct archive *_a)
 {
 	return 0;
 }
 
 #endif
-
-
-

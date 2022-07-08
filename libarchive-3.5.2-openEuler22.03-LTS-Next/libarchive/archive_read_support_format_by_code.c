@@ -34,7 +34,8 @@ __FBSDID("$FreeBSD$");
 #include "archive_private.h"
 
 #ifndef COMPILE_WITH_RUST
-struct archive_by_code_defined_param{
+struct archive_by_code_defined_param
+{
 	int archive_errno_programmer;
 	int archive_fatal;
 };
@@ -48,8 +49,7 @@ struct archive_by_code_defined_param get_archive_by_code_defined_param()
 	return defined_param;
 }
 
-int
-archive_read_support_format_by_code(struct archive *_a, int format_code)
+int archive_read_support_format_by_code(struct archive *_a, int format_code)
 {
 	return 0;
 }

@@ -40,20 +40,22 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_raw.c 201107
 
 #ifndef COMPILE_WITH_RUST
 
-struct archive_raw_defined_param{
-    unsigned int archive_read_magic;
-    unsigned int archive_state_new;
-    int archive_format_raw;
+struct archive_raw_defined_param
+{
+	unsigned int archive_read_magic;
+	unsigned int archive_state_new;
+	int archive_format_raw;
 	int enomem;
 	int archive_ok;
-    int archive_eof;
+	int archive_eof;
 	int archive_fatal;
 	unsigned int ae_ifreg;
 };
 
 struct archive_raw_defined_param get_archive_raw_defined_param();
 
-struct archive_raw_defined_param get_archive_raw_defined_param(){
+struct archive_raw_defined_param get_archive_raw_defined_param()
+{
 	struct archive_raw_defined_param defined_param;
 	defined_param.archive_read_magic = ARCHIVE_READ_MAGIC;
 	defined_param.archive_state_new = ARCHIVE_STATE_NEW;
@@ -66,8 +68,7 @@ struct archive_raw_defined_param get_archive_raw_defined_param(){
 	return defined_param;
 }
 
-int
-archive_read_support_format_raw(struct archive *_a)
+int archive_read_support_format_raw(struct archive *_a)
 {
 	return 0;
 }

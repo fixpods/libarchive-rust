@@ -77,7 +77,8 @@ int get_check_crc_on_solid_skip();
 int get_dont_fail_on_crc_error();
 int get_have_iconv();
 
-int get__win32(){
+int get__win32()
+{
 #ifdef _WIN32
 	return 1;
 #else
@@ -85,8 +86,8 @@ int get__win32(){
 #endif
 }
 
-
-int get___cygwin__(){
+int get___cygwin__()
+{
 #ifdef __CYGWIN__
 	return 1;
 #else
@@ -94,8 +95,8 @@ int get___cygwin__(){
 #endif
 }
 
-
-int get__debug(){
+int get__debug()
+{
 #ifdef _DEBUG
 	return 1;
 #else
@@ -103,8 +104,8 @@ int get__debug(){
 #endif
 }
 
-
-int get_have_lzma_h(){
+int get_have_lzma_h()
+{
 #ifdef HAVE_LZMA_H
 	return 1;
 #else
@@ -112,8 +113,8 @@ int get_have_lzma_h(){
 #endif
 }
 
-
-int get_have_bzlib_h(){
+int get_have_bzlib_h()
+{
 #ifdef HAVE_BZLIB_H
 	return 1;
 #else
@@ -121,7 +122,8 @@ int get_have_bzlib_h(){
 #endif
 }
 
-int get_bz_config_error(){
+int get_bz_config_error()
+{
 #ifdef BZ_CONFIG_ERROR
 	return 1;
 #else
@@ -129,8 +131,8 @@ int get_bz_config_error(){
 #endif
 }
 
-
-int get__lzma_prob32(){
+int get__lzma_prob32()
+{
 #ifdef _LZMA_PROB32
 	return 1;
 #else
@@ -138,7 +140,8 @@ int get__lzma_prob32(){
 #endif
 }
 
-int get_have_zlib_h(){
+int get_have_zlib_h()
+{
 #ifdef HAVE_ZLIB_H
 	return 1;
 #else
@@ -146,7 +149,8 @@ int get_have_zlib_h(){
 #endif
 }
 
-int get_have_timegm(){
+int get_have_timegm()
+{
 #if HAVE_TIMEGM
 	return 1;
 #else
@@ -154,7 +158,8 @@ int get_have_timegm(){
 #endif
 }
 
-int get_have__mkgmtime64(){
+int get_have__mkgmtime64()
+{
 #if HAVE__MKGMTIME64
 	return 1;
 #else
@@ -162,7 +167,8 @@ int get_have__mkgmtime64(){
 #endif
 }
 
-int get_debug(){
+int get_debug()
+{
 #if DEBUG
 	return 1;
 #else
@@ -170,63 +176,69 @@ int get_debug(){
 #endif
 }
 
-
-int get_have_libxml_xmlreader_h(){
+int get_have_libxml_xmlreader_h()
+{
 #if defined(HAVE_LIBXML_XMLREADER_H)
- return 1;
+	return 1;
 #else
- return 0;
+	return 0;
 #endif
 }
 
-int get_have_bsdxml_h(){
+int get_have_bsdxml_h()
+{
 #if defined(HAVE_BSDXML_H)
- return 1;
+	return 1;
 #else
- return 0   ;
+	return 0;
 #endif
 }
 
-int get_have_expat_h(){
+int get_have_expat_h()
+{
 #if defined(HAVE_EXPAT_H)
- return 1;
+	return 1;
 #else
- return 0;
+	return 0;
 #endif
 }
 
-
-int get_lzma_version_major(){
+int get_lzma_version_major()
+{
 #if LZMA_VERSION_MAJOR >= 5
- return 1;
+	return 1;
 #else
- return 0;
+	return 0;
 #endif
 }
 
-int get_archive_has_md5(){
+int get_archive_has_md5()
+{
 #ifdef ARCHIVE_HAS_MD5
- return 1;
+	return 1;
 #else
- return 0;
+	return 0;
 #endif
 }
 
-int get_debug_print_toc(){
+int get_debug_print_toc()
+{
 #if DEBUG_PRINT_TOC
-  return 1;
+	return 1;
 #endif
-  return 0;
+	return 0;
 }
 
-int get_archive_has_sha1(){
+int get_archive_has_sha1()
+{
 #ifdef ARCHIVE_HAS_SHA1
- return 1;
+	return 1;
 #endif
- return 0;
+	return 0;
 }
 
-int get_have_liblzma(){
+int get_have_liblzma()
+{
 #ifdef HAVE_LIBLZMA
 	return 1;
 #else
@@ -234,7 +246,8 @@ int get_have_liblzma(){
 #endif
 }
 
-int get_have_copyfile_h(){
+int get_have_copyfile_h()
+{
 #ifdef HAVE_COPYFILE_H
 	return 1;
 #else
@@ -242,35 +255,39 @@ int get_have_copyfile_h(){
 #endif
 }
 
-int get_have_localtime_r() {
+int get_have_localtime_r()
+{
 #ifdef HAVE_LOCALTIME_R
-  return 1;
+	return 1;
 #else
-  return 0;
+	return 0;
 #endif
 }
 
-int get_have__localtime64_s() {
+int get_have__localtime64_s()
+{
 #ifdef HAVE__LOCALTIME64_S
-  return 1;
+	return 1;
 #else
-  return 0;
+	return 0;
 #endif
 }
 
-int get_check_crc_on_solid_skip() {
+int get_check_crc_on_solid_skip()
+{
 #ifdef CHECK_CRC_ON_SOLID_SKIP
-  return 1;
+	return 1;
 #else
-  return 0;
+	return 0;
 #endif
 }
 
-int get_dont_fail_on_crc_error() {
+int get_dont_fail_on_crc_error()
+{
 #ifdef DONT_FAIL_ON_CRC_ERROR
-  return 1;
+	return 1;
 #else
-  return 0;
+	return 0;
 #endif
 }
 

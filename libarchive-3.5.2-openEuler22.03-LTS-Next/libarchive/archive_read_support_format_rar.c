@@ -1,28 +1,28 @@
 /*-
-* Copyright (c) 2003-2007 Tim Kientzle
-* Copyright (c) 2011 Andres Mejia
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions
-* are met:
-* 1. Redistributions of source code must retain the above copyright
-*    notice, this list of conditions and the following disclaimer.
-* 2. Redistributions in binary form must reproduce the above copyright
-*    notice, this list of conditions and the following disclaimer in the
-*    documentation and/or other materials provided with the distribution.
-*
-* THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
-* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
-* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-* THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-* THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * Copyright (c) 2003-2007 Tim Kientzle
+ * Copyright (c) 2011 Andres Mejia
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "archive_platform.h"
 
@@ -50,74 +50,74 @@
 #define RAR_SIGNATURE "\x52\x61\x72\x21\x1A\x07\x00"
 
 /* Header types */
-#define MARK_HEAD    0x72
-#define MAIN_HEAD    0x73
-#define FILE_HEAD    0x74
-#define COMM_HEAD    0x75
-#define AV_HEAD      0x76
-#define SUB_HEAD     0x77
+#define MARK_HEAD 0x72
+#define MAIN_HEAD 0x73
+#define FILE_HEAD 0x74
+#define COMM_HEAD 0x75
+#define AV_HEAD 0x76
+#define SUB_HEAD 0x77
 #define PROTECT_HEAD 0x78
-#define SIGN_HEAD    0x79
-#define NEWSUB_HEAD  0x7a
-#define ENDARC_HEAD  0x7b
+#define SIGN_HEAD 0x79
+#define NEWSUB_HEAD 0x7a
+#define ENDARC_HEAD 0x7b
 
 /* Main Header Flags */
-#define MHD_VOLUME       0x0001
-#define MHD_COMMENT      0x0002
-#define MHD_LOCK         0x0004
-#define MHD_SOLID        0x0008
+#define MHD_VOLUME 0x0001
+#define MHD_COMMENT 0x0002
+#define MHD_LOCK 0x0004
+#define MHD_SOLID 0x0008
 #define MHD_NEWNUMBERING 0x0010
-#define MHD_AV           0x0020
-#define MHD_PROTECT      0x0040
-#define MHD_PASSWORD     0x0080
-#define MHD_FIRSTVOLUME  0x0100
-#define MHD_ENCRYPTVER   0x0200
+#define MHD_AV 0x0020
+#define MHD_PROTECT 0x0040
+#define MHD_PASSWORD 0x0080
+#define MHD_FIRSTVOLUME 0x0100
+#define MHD_ENCRYPTVER 0x0200
 
 /* Flags common to all headers */
-#define HD_MARKDELETION     0x4000
+#define HD_MARKDELETION 0x4000
 #define HD_ADD_SIZE_PRESENT 0x8000
 
 /* File Header Flags */
 #define FHD_SPLIT_BEFORE 0x0001
-#define FHD_SPLIT_AFTER  0x0002
-#define FHD_PASSWORD     0x0004
-#define FHD_COMMENT      0x0008
-#define FHD_SOLID        0x0010
-#define FHD_LARGE        0x0100
-#define FHD_UNICODE      0x0200
-#define FHD_SALT         0x0400
-#define FHD_VERSION      0x0800
-#define FHD_EXTTIME      0x1000
-#define FHD_EXTFLAGS     0x2000
+#define FHD_SPLIT_AFTER 0x0002
+#define FHD_PASSWORD 0x0004
+#define FHD_COMMENT 0x0008
+#define FHD_SOLID 0x0010
+#define FHD_LARGE 0x0100
+#define FHD_UNICODE 0x0200
+#define FHD_SALT 0x0400
+#define FHD_VERSION 0x0800
+#define FHD_EXTTIME 0x1000
+#define FHD_EXTFLAGS 0x2000
 
 /* File dictionary sizes */
-#define DICTIONARY_SIZE_64   0x00
-#define DICTIONARY_SIZE_128  0x20
-#define DICTIONARY_SIZE_256  0x40
-#define DICTIONARY_SIZE_512  0x60
+#define DICTIONARY_SIZE_64 0x00
+#define DICTIONARY_SIZE_128 0x20
+#define DICTIONARY_SIZE_256 0x40
+#define DICTIONARY_SIZE_512 0x60
 #define DICTIONARY_SIZE_1024 0x80
 #define DICTIONARY_SIZE_2048 0xA0
 #define DICTIONARY_SIZE_4096 0xC0
-#define FILE_IS_DIRECTORY    0xE0
-#define DICTIONARY_MASK      FILE_IS_DIRECTORY
+#define FILE_IS_DIRECTORY 0xE0
+#define DICTIONARY_MASK FILE_IS_DIRECTORY
 
 /* OS Flags */
-#define OS_MSDOS  0
-#define OS_OS2    1
-#define OS_WIN32  2
-#define OS_UNIX   3
+#define OS_MSDOS 0
+#define OS_OS2 1
+#define OS_WIN32 2
+#define OS_UNIX 3
 #define OS_MAC_OS 4
-#define OS_BEOS   5
+#define OS_BEOS 5
 
 /* Compression Methods */
-#define COMPRESS_METHOD_STORE   0x30
+#define COMPRESS_METHOD_STORE 0x30
 /* LZSS */
 #define COMPRESS_METHOD_FASTEST 0x31
-#define COMPRESS_METHOD_FAST    0x32
-#define COMPRESS_METHOD_NORMAL  0x33
+#define COMPRESS_METHOD_FAST 0x32
+#define COMPRESS_METHOD_NORMAL 0x33
 /* PPMd Variant H */
-#define COMPRESS_METHOD_GOOD    0x34
-#define COMPRESS_METHOD_BEST    0x35
+#define COMPRESS_METHOD_GOOD 0x34
+#define COMPRESS_METHOD_BEST 0x35
 
 #define CRC_POLYNOMIAL 0xEDB88320
 
@@ -125,15 +125,15 @@
 
 #define DICTIONARY_MAX_SIZE 0x400000
 
-#define MAINCODE_SIZE      299
-#define OFFSETCODE_SIZE    60
+#define MAINCODE_SIZE 299
+#define OFFSETCODE_SIZE 60
 #define LOWOFFSETCODE_SIZE 17
-#define LENGTHCODE_SIZE    28
+#define LENGTHCODE_SIZE 28
 #define HUFFMAN_TABLE_SIZE \
   MAINCODE_SIZE + OFFSETCODE_SIZE + LOWOFFSETCODE_SIZE + LENGTHCODE_SIZE
 
 #define MAX_SYMBOL_LENGTH 0xF
-#define MAX_SYMBOLS       20
+#define MAX_SYMBOLS 20
 
 /*
  * Considering L1,L2 cache miss and a calling of write system-call,
@@ -141,7 +141,7 @@
  * If the structure of extracting process is changed, this value
  * might be researched again.
  */
-#define UNP_BUFFER_SIZE   (128 * 1024)
+#define UNP_BUFFER_SIZE (128 * 1024)
 
 /* Define this here for non-Windows platforms */
 #if !((defined(__WIN32__) || defined(_WIN32) || defined(__WIN32)) && !defined(__CYGWIN__))
@@ -149,13 +149,14 @@
 #endif
 
 #undef minimum
-#define minimum(a, b)    ((a)<(b)?(a):(b))
+#define minimum(a, b) ((a) < (b) ? (a) : (b))
 
 /* Stack overflow check */
 #define MAX_COMPRESS_DEPTH 1024
 
 /* Fields common to all headers */
-struct rar_header {
+struct rar_header
+{
   char crc[2];
   char type;
   char flags[2];
@@ -163,7 +164,8 @@ struct rar_header {
 };
 
 /* Fields common to all file headers */
-struct rar_file_header {
+struct rar_file_header
+{
   char pack_size[4];
   char unp_size[4];
   char host_os;
@@ -175,16 +177,19 @@ struct rar_file_header {
   char file_attr[4];
 };
 
-struct huffman_tree_node {
+struct huffman_tree_node
+{
   int branches[2];
 };
 
-struct huffman_table_entry {
+struct huffman_table_entry
+{
   unsigned int length;
   int value;
 };
 
-struct huffman_code {
+struct huffman_code
+{
   struct huffman_tree_node *tree;
   int numentries;
   int numallocatedentries;
@@ -194,19 +199,22 @@ struct huffman_code {
   struct huffman_table_entry *table;
 };
 
-struct lzss {
+struct lzss
+{
   unsigned char *window;
   int mask;
   int64_t position;
 };
 
-struct data_block_offsets {
+struct data_block_offsets
+{
   int64_t header_size;
   int64_t start_offset;
   int64_t end_offset;
 };
 
-struct rar {
+struct rar
+{
   /* Entries from main RAR header */
   unsigned main_flags;
   unsigned long file_crc;
@@ -295,9 +303,10 @@ struct rar {
   /*
    * Bit stream reader.
    */
-  struct rar_br {
-#define CACHE_TYPE    uint64_t
-#define CACHE_BITS    (8 * sizeof(CACHE_TYPE))
+  struct rar_br
+  {
+#define CACHE_TYPE uint64_t
+#define CACHE_BITS (8 * sizeof(CACHE_TYPE))
     /* Cache buffer. */
     CACHE_TYPE cache_buffer;
     /* Indicates how many bits avail in cache_buffer. */
@@ -318,12 +327,12 @@ struct rar {
 /* Check that the cache buffer has enough bits. */
 #define rar_br_has(br, n) ((br)->cache_avail >= n)
 /* Get compressed data by bit. */
-#define rar_br_bits(br, n)        \
-  (((uint32_t)((br)->cache_buffer >>    \
-    ((br)->cache_avail - (n)))) & cache_masks[n])
-#define rar_br_bits_forced(br, n)     \
-  (((uint32_t)((br)->cache_buffer <<    \
-    ((n) - (br)->cache_avail))) & cache_masks[n])
+#define rar_br_bits(br, n)                   \
+  (((uint32_t)((br)->cache_buffer >>         \
+               ((br)->cache_avail - (n)))) & \
+   cache_masks[n])
+#define rar_br_bits_forced(br, n) \
+  (((uint32_t)((br)->cache_buffer << ((n) - (br)->cache_avail))) & cache_masks[n])
 /* Read ahead to make sure the cache buffer has enough compressed data we
  * will use.
  *  True  : completed, there is enough data in the cache buffer.
@@ -336,7 +345,8 @@ struct rar {
 
 #ifndef COMPILE_WITH_RUST
 
-struct archive_rar_defined_param{
+struct archive_rar_defined_param
+{
   int cache_bits;
   int archive_errno_file_format;
   int archive_fatal;
@@ -415,85 +425,86 @@ struct archive_rar_defined_param{
 
 struct archive_rar_defined_param get_archive_rar_defined_param();
 
-struct archive_rar_defined_param get_archive_rar_defined_param(){
+struct archive_rar_defined_param get_archive_rar_defined_param()
+{
   struct archive_rar_defined_param defined_param;
-  defined_param.cache_bits=CACHE_BITS;
-  defined_param.archive_errno_file_format=ARCHIVE_ERRNO_FILE_FORMAT;
-  defined_param.archive_fatal=ARCHIVE_FATAL;
-  defined_param.archive_ok=ARCHIVE_OK;
-  defined_param.archive_read_format_caps_encrypt_data=ARCHIVE_READ_FORMAT_CAPS_ENCRYPT_DATA;
-  defined_param.archive_read_format_caps_encrypt_metadata=ARCHIVE_READ_FORMAT_CAPS_ENCRYPT_METADATA;
-  defined_param.archive_read_format_encryption_dont_know=ARCHIVE_READ_FORMAT_ENCRYPTION_DONT_KNOW;
-  defined_param.archive_failed=ARCHIVE_FAILED;
-  defined_param.archive_errno_misc=ARCHIVE_ERRNO_MISC;
-  defined_param.archive_warn=ARCHIVE_WARN;
-  defined_param.archive_format_rar=ARCHIVE_FORMAT_RAR;
-  defined_param.archive_eof=ARCHIVE_EOF;
-  defined_param.mark_head=MARK_HEAD;
-  defined_param.main_head=MAIN_HEAD;
-  defined_param.mhd_encryptver=MHD_ENCRYPTVER;
-  defined_param.mhd_password=MHD_PASSWORD;
-  defined_param.file_head=FILE_HEAD;
-  defined_param.comm_head=COMM_HEAD;
-  defined_param.av_head=AV_HEAD;
-  defined_param.sub_head=SUB_HEAD;
-  defined_param.protect_head=PROTECT_HEAD;
-  defined_param.sign_head=SIGN_HEAD;
-  defined_param.endarc_head=ENDARC_HEAD;
-  defined_param.hd_add_size_present=HD_ADD_SIZE_PRESENT;
-  defined_param.newsub_head=NEWSUB_HEAD;
-  defined_param.compress_method_store=COMPRESS_METHOD_STORE;
-  defined_param.compress_method_fastest=COMPRESS_METHOD_FASTEST;
-  defined_param.compress_method_fast=COMPRESS_METHOD_FAST;
-  defined_param.compress_method_normal=COMPRESS_METHOD_NORMAL;
-  defined_param.compress_method_good=COMPRESS_METHOD_GOOD;
-  defined_param.compress_method_best=COMPRESS_METHOD_BEST;
-  defined_param.mhd_volume=MHD_VOLUME;
-  defined_param.fhd_split_after=FHD_SPLIT_AFTER;
-  defined_param.seek_cur=SEEK_CUR;
-  defined_param.seek_end=SEEK_END;
-  defined_param.seek_set=SEEK_SET;
-  defined_param.fhd_split_before=FHD_SPLIT_BEFORE;
-  defined_param.fhd_solid=FHD_SOLID;
-  defined_param.fhd_password=FHD_PASSWORD;
-  defined_param.fhd_large=FHD_LARGE;
-  defined_param.enomem=ENOMEM;
-  defined_param.fhd_unicode=FHD_UNICODE;
-  defined_param.os_msdos=OS_MSDOS;
-  defined_param.os_os2=OS_OS2;
-  defined_param.os_win32=OS_WIN32;
-  defined_param.file_attribute_directory=FILE_ATTRIBUTE_DIRECTORY;
-  defined_param.ae_ifdir=AE_IFDIR;
-  defined_param.s_ixusr=S_IXUSR;
-  defined_param.s_ixgrp=S_IXGRP;
-  defined_param.s_ixoth=S_IXOTH;
-  defined_param.ae_ifreg=AE_IFREG;
-  defined_param.s_irusr=S_IRUSR;
-  defined_param.s_iwusr=S_IWUSR;
-  defined_param.s_irgrp=S_IRGRP;
-  defined_param.s_iroth=S_IROTH;
-  defined_param.os_unix=OS_UNIX;
-  defined_param.os_mac_os=OS_MAC_OS;
-  defined_param.os_beos=OS_BEOS;
-  defined_param.unp_buffer_size=UNP_BUFFER_SIZE;
-  defined_param.ae_ifmt=AE_IFMT;
-  defined_param.ae_iflnk=AE_IFLNK;
-  defined_param.ns_unit=NS_UNIT;
-  defined_param.max_compress_depth=MAX_COMPRESS_DEPTH;
-  defined_param.int64_max=INT64_MAX;
-  defined_param.max_symbols=MAX_SYMBOLS;
-  defined_param.max_symbol_length=MAX_SYMBOL_LENGTH;
-  defined_param.huffman_table_size=HUFFMAN_TABLE_SIZE;
-  defined_param.maincode_size=MAINCODE_SIZE;
-  defined_param.offsetcode_size=OFFSETCODE_SIZE;
-  defined_param.lowoffsetcode_size=LOWOFFSETCODE_SIZE;
-  defined_param.lengthcode_size=LENGTHCODE_SIZE;
-  defined_param.dictionary_max_size=DICTIONARY_MAX_SIZE;
+  defined_param.cache_bits = CACHE_BITS;
+  defined_param.archive_errno_file_format = ARCHIVE_ERRNO_FILE_FORMAT;
+  defined_param.archive_fatal = ARCHIVE_FATAL;
+  defined_param.archive_ok = ARCHIVE_OK;
+  defined_param.archive_read_format_caps_encrypt_data = ARCHIVE_READ_FORMAT_CAPS_ENCRYPT_DATA;
+  defined_param.archive_read_format_caps_encrypt_metadata = ARCHIVE_READ_FORMAT_CAPS_ENCRYPT_METADATA;
+  defined_param.archive_read_format_encryption_dont_know = ARCHIVE_READ_FORMAT_ENCRYPTION_DONT_KNOW;
+  defined_param.archive_failed = ARCHIVE_FAILED;
+  defined_param.archive_errno_misc = ARCHIVE_ERRNO_MISC;
+  defined_param.archive_warn = ARCHIVE_WARN;
+  defined_param.archive_format_rar = ARCHIVE_FORMAT_RAR;
+  defined_param.archive_eof = ARCHIVE_EOF;
+  defined_param.mark_head = MARK_HEAD;
+  defined_param.main_head = MAIN_HEAD;
+  defined_param.mhd_encryptver = MHD_ENCRYPTVER;
+  defined_param.mhd_password = MHD_PASSWORD;
+  defined_param.file_head = FILE_HEAD;
+  defined_param.comm_head = COMM_HEAD;
+  defined_param.av_head = AV_HEAD;
+  defined_param.sub_head = SUB_HEAD;
+  defined_param.protect_head = PROTECT_HEAD;
+  defined_param.sign_head = SIGN_HEAD;
+  defined_param.endarc_head = ENDARC_HEAD;
+  defined_param.hd_add_size_present = HD_ADD_SIZE_PRESENT;
+  defined_param.newsub_head = NEWSUB_HEAD;
+  defined_param.compress_method_store = COMPRESS_METHOD_STORE;
+  defined_param.compress_method_fastest = COMPRESS_METHOD_FASTEST;
+  defined_param.compress_method_fast = COMPRESS_METHOD_FAST;
+  defined_param.compress_method_normal = COMPRESS_METHOD_NORMAL;
+  defined_param.compress_method_good = COMPRESS_METHOD_GOOD;
+  defined_param.compress_method_best = COMPRESS_METHOD_BEST;
+  defined_param.mhd_volume = MHD_VOLUME;
+  defined_param.fhd_split_after = FHD_SPLIT_AFTER;
+  defined_param.seek_cur = SEEK_CUR;
+  defined_param.seek_end = SEEK_END;
+  defined_param.seek_set = SEEK_SET;
+  defined_param.fhd_split_before = FHD_SPLIT_BEFORE;
+  defined_param.fhd_solid = FHD_SOLID;
+  defined_param.fhd_password = FHD_PASSWORD;
+  defined_param.fhd_large = FHD_LARGE;
+  defined_param.enomem = ENOMEM;
+  defined_param.fhd_unicode = FHD_UNICODE;
+  defined_param.os_msdos = OS_MSDOS;
+  defined_param.os_os2 = OS_OS2;
+  defined_param.os_win32 = OS_WIN32;
+  defined_param.file_attribute_directory = FILE_ATTRIBUTE_DIRECTORY;
+  defined_param.ae_ifdir = AE_IFDIR;
+  defined_param.s_ixusr = S_IXUSR;
+  defined_param.s_ixgrp = S_IXGRP;
+  defined_param.s_ixoth = S_IXOTH;
+  defined_param.ae_ifreg = AE_IFREG;
+  defined_param.s_irusr = S_IRUSR;
+  defined_param.s_iwusr = S_IWUSR;
+  defined_param.s_irgrp = S_IRGRP;
+  defined_param.s_iroth = S_IROTH;
+  defined_param.os_unix = OS_UNIX;
+  defined_param.os_mac_os = OS_MAC_OS;
+  defined_param.os_beos = OS_BEOS;
+  defined_param.unp_buffer_size = UNP_BUFFER_SIZE;
+  defined_param.ae_ifmt = AE_IFMT;
+  defined_param.ae_iflnk = AE_IFLNK;
+  defined_param.ns_unit = NS_UNIT;
+  defined_param.max_compress_depth = MAX_COMPRESS_DEPTH;
+  defined_param.int64_max = INT64_MAX;
+  defined_param.max_symbols = MAX_SYMBOLS;
+  defined_param.max_symbol_length = MAX_SYMBOL_LENGTH;
+  defined_param.huffman_table_size = HUFFMAN_TABLE_SIZE;
+  defined_param.maincode_size = MAINCODE_SIZE;
+  defined_param.offsetcode_size = OFFSETCODE_SIZE;
+  defined_param.lowoffsetcode_size = LOWOFFSETCODE_SIZE;
+  defined_param.lengthcode_size = LENGTHCODE_SIZE;
+  defined_param.dictionary_max_size = DICTIONARY_MAX_SIZE;
   return defined_param;
 }
 
-int
-archive_read_support_format_rar(struct archive *_a) {
+int archive_read_support_format_rar(struct archive *_a)
+{
   return 0;
 }
 

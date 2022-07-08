@@ -137,48 +137,46 @@ struct archive_string_conv
 
 #ifndef COMPILE_WITH_RUST
 
-struct unicode_composition_table * get_u_composition_table();
-char * get_u_decomposable_blocks();
-unsigned char * get_ccc_val();
-unsigned char * get_ccc_val_index();
-unsigned char * get_ccc_index();
-struct unicode_decomposition_table * get_u_decomposition_table();
+struct unicode_composition_table *get_u_composition_table();
+char *get_u_decomposable_blocks();
+unsigned char *get_ccc_val();
+unsigned char *get_ccc_val_index();
+unsigned char *get_ccc_index();
+struct unicode_decomposition_table *get_u_decomposition_table();
 
-struct unicode_composition_table * get_u_composition_table()
+struct unicode_composition_table *get_u_composition_table()
 {
-	struct unicode_composition_table * u_composition_table_copy
-		= (struct unicode_composition_table *)malloc(sizeof u_composition_table);
+	struct unicode_composition_table *u_composition_table_copy = (struct unicode_composition_table *)malloc(sizeof u_composition_table);
 	u_composition_table_copy = (struct unicode_composition_table *)memcpy(u_composition_table_copy, u_composition_table, sizeof u_composition_table);
 	return u_composition_table_copy;
 }
-char * get_u_decomposable_blocks()
+char *get_u_decomposable_blocks()
 {
-	char * u_decomposable_blocks_copy = (char *)malloc(sizeof u_decomposable_blocks);
+	char *u_decomposable_blocks_copy = (char *)malloc(sizeof u_decomposable_blocks);
 	u_decomposable_blocks_copy = (char *)memcpy(u_decomposable_blocks_copy, u_decomposable_blocks, sizeof u_decomposable_blocks);
 	return u_decomposable_blocks_copy;
 }
-unsigned char * get_ccc_val()
+unsigned char *get_ccc_val()
 {
-	unsigned char * ccc_val_copy = (unsigned char *)malloc(sizeof ccc_val);
+	unsigned char *ccc_val_copy = (unsigned char *)malloc(sizeof ccc_val);
 	ccc_val_copy = (unsigned char *)memcpy(ccc_val_copy, ccc_val, sizeof ccc_val);
 	return ccc_val_copy;
 }
-unsigned char * get_ccc_val_index()
+unsigned char *get_ccc_val_index()
 {
-	unsigned char * ccc_val_index_copy = (unsigned char *)malloc(sizeof ccc_val_index);
+	unsigned char *ccc_val_index_copy = (unsigned char *)malloc(sizeof ccc_val_index);
 	ccc_val_index_copy = (unsigned char *)memcpy(ccc_val_index_copy, ccc_val_index, sizeof ccc_val_index);
 	return ccc_val_index_copy;
 }
-unsigned char * get_ccc_index()
+unsigned char *get_ccc_index()
 {
-	unsigned char * ccc_index_copy = (unsigned char *)malloc(sizeof ccc_index);
+	unsigned char *ccc_index_copy = (unsigned char *)malloc(sizeof ccc_index);
 	ccc_index_copy = (unsigned char *)memcpy(ccc_index_copy, ccc_index, sizeof ccc_index);
 	return ccc_index_copy;
 }
-struct unicode_decomposition_table * get_u_decomposition_table()
+struct unicode_decomposition_table *get_u_decomposition_table()
 {
-	struct unicode_decomposition_table * u_decomposition_table_copy 
-		= (struct unicode_decomposition_table *)malloc(sizeof u_decomposition_table);
+	struct unicode_decomposition_table *u_decomposition_table_copy = (struct unicode_decomposition_table *)malloc(sizeof u_decomposition_table);
 	u_decomposition_table_copy = (struct unicode_decomposition_table *)memcpy(u_decomposition_table_copy, u_decomposition_table, sizeof u_decomposition_table);
 	return u_decomposition_table_copy;
 }
@@ -186,16 +184,16 @@ struct unicode_decomposition_table * get_u_decomposition_table()
 struct archive_string *archive_strappend_char(struct archive_string *as, char c) { return NULL; }
 struct archive_wstring *archive_wstrappend_wchar(struct archive_wstring *as, wchar_t c) { return NULL; }
 struct archive_string *archive_array_append(struct archive_string *as, const char *p, size_t s) { return NULL; }
-int archive_string_append_from_wcs(struct archive_string *as,const wchar_t *w, size_t len){ return 0; }
-struct archive_string_conv *archive_string_conversion_to_charset(struct archive *a, const char *charset,int best_effort){ return NULL; }
-struct archive_string_conv *archive_string_conversion_from_charset(struct archive *a, const char *charset,int best_effort) { return NULL; }
+int archive_string_append_from_wcs(struct archive_string *as, const wchar_t *w, size_t len) { return 0; }
+struct archive_string_conv *archive_string_conversion_to_charset(struct archive *a, const char *charset, int best_effort) { return NULL; }
+struct archive_string_conv *archive_string_conversion_from_charset(struct archive *a, const char *charset, int best_effort) { return NULL; }
 struct archive_string_conv *archive_string_default_conversion_for_read(struct archive *a) { return NULL; }
 struct archive_string_conv *archive_string_default_conversion_for_write(struct archive *a) { return NULL; }
 void archive_string_conversion_free(struct archive *a) {}
 const char *archive_string_conversion_charset_name(struct archive_string_conv *sc) { return NULL; }
 void archive_string_conversion_set_opt(struct archive_string_conv *sc, int opt) {}
-int archive_strncpy_l(struct archive_string *as, const void *_p, size_t n,struct archive_string_conv *sc){ return 0; }
-int archive_strncat_l(struct archive_string *as, const void *_p, size_t n,struct archive_string_conv *sc) { return 0; }
+int archive_strncpy_l(struct archive_string *as, const void *_p, size_t n, struct archive_string_conv *sc) { return 0; }
+int archive_strncat_l(struct archive_string *as, const void *_p, size_t n, struct archive_string_conv *sc) { return 0; }
 void archive_string_concat(struct archive_string *dest, struct archive_string *src) {}
 void archive_wstring_concat(struct archive_wstring *dest, struct archive_wstring *src) {}
 struct archive_string *archive_string_ensure(struct archive_string *as, size_t s) { return NULL; }
@@ -206,18 +204,18 @@ struct archive_string *archive_strcat(struct archive_string *as, const void *p) 
 struct archive_wstring *archive_wstrcat(struct archive_wstring *as, const wchar_t *p) { return NULL; }
 void archive_string_free(struct archive_string *as) {}
 void archive_wstring_free(struct archive_wstring *as) {}
-int archive_wstring_append_from_mbs(struct archive_wstring *dest,const char *p, size_t len){ return 0; }
+int archive_wstring_append_from_mbs(struct archive_wstring *dest, const char *p, size_t len) { return 0; }
 void archive_mstring_clean(struct archive_mstring *aes) {}
 void archive_mstring_copy(struct archive_mstring *dest, struct archive_mstring *src) {}
-int archive_mstring_get_mbs(struct archive *a, struct archive_mstring *aes,const char **p){ return 0; }
-int archive_mstring_get_utf8(struct archive *a, struct archive_mstring *aes,const char **p){ return 0; }
-int archive_mstring_get_wcs(struct archive *a, struct archive_mstring *aes,const wchar_t **wp){ return 0; }
-int archive_mstring_get_mbs_l(struct archive *a, struct archive_mstring *aes,const char **p, size_t *length, struct archive_string_conv *sc){ return 0; }
+int archive_mstring_get_mbs(struct archive *a, struct archive_mstring *aes, const char **p) { return 0; }
+int archive_mstring_get_utf8(struct archive *a, struct archive_mstring *aes, const char **p) { return 0; }
+int archive_mstring_get_wcs(struct archive *a, struct archive_mstring *aes, const wchar_t **wp) { return 0; }
+int archive_mstring_get_mbs_l(struct archive *a, struct archive_mstring *aes, const char **p, size_t *length, struct archive_string_conv *sc) { return 0; }
 int archive_mstring_copy_mbs(struct archive_mstring *aes, const char *mbs) { return 0; }
-int archive_mstring_copy_mbs_len(struct archive_mstring *aes, const char *mbs,size_t len){ return 0; }
+int archive_mstring_copy_mbs_len(struct archive_mstring *aes, const char *mbs, size_t len) { return 0; }
 int archive_mstring_copy_utf8(struct archive_mstring *aes, const char *utf8) { return 0; }
 int archive_mstring_copy_wcs(struct archive_mstring *aes, const wchar_t *wcs) { return 0; }
-int archive_mstring_copy_wcs_len(struct archive_mstring *aes, const wchar_t *wcs,size_t len){ return 0; }
-int archive_mstring_copy_mbs_len_l(struct archive_mstring *aes,const char *mbs, size_t len, struct archive_string_conv *sc){ return 0; }
-int archive_mstring_update_utf8(struct archive *a, struct archive_mstring *aes,const char *utf8){ return 0; }
+int archive_mstring_copy_wcs_len(struct archive_mstring *aes, const wchar_t *wcs, size_t len) { return 0; }
+int archive_mstring_copy_mbs_len_l(struct archive_mstring *aes, const char *mbs, size_t len, struct archive_string_conv *sc) { return 0; }
+int archive_mstring_update_utf8(struct archive *a, struct archive_mstring *aes, const char *utf8) { return 0; }
 #endif

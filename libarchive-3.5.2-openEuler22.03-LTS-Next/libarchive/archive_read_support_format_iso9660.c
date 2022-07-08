@@ -79,8 +79,8 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_iso9660.c 20
  * the file body.  This strategy allows us to read most compliant
  * CDs with a single pass through the data, as required by libarchive.
  */
-#define	LOGICAL_BLOCK_SIZE	2048
-#define	SYSTEM_AREA_BLOCK	16
+#define LOGICAL_BLOCK_SIZE 2048
+#define SYSTEM_AREA_BLOCK 16
 
 /* Structure of on-disk primary volume descriptor. */
 #define PVD_type_offset 0
@@ -157,7 +157,6 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_iso9660.c 20
 #error PVD offset and size definitions are wrong.
 #endif
 
-
 /* Structure of optional on-disk supplementary volume descriptor. */
 #define SVD_type_offset 0
 #define SVD_type_size 1
@@ -166,8 +165,8 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_iso9660.c 20
 #define SVD_version_offset (SVD_id_offset + SVD_id_size)
 #define SVD_version_size 1
 /* ... */
-#define SVD_reserved1_offset	72
-#define SVD_reserved1_size	8
+#define SVD_reserved1_offset 72
+#define SVD_reserved1_size 8
 #define SVD_volume_space_size_offset 80
 #define SVD_volume_space_size_size 8
 #define SVD_escape_sequences_offset (SVD_volume_space_size_offset + SVD_volume_space_size_size)
@@ -181,10 +180,10 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_iso9660.c 20
 #define SVD_root_directory_record_offset 156
 #define SVD_root_directory_record_size 34
 #define SVD_file_structure_version_offset 881
-#define SVD_reserved2_offset	882
-#define SVD_reserved2_size	1
-#define SVD_reserved3_offset	1395
-#define SVD_reserved3_size	653
+#define SVD_reserved2_offset 882
+#define SVD_reserved2_size 1
+#define SVD_reserved3_offset 1395
+#define SVD_reserved3_size 653
 /* ... */
 /* FIXME: validate correctness of last SVD entry offset. */
 
@@ -215,19 +214,20 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_iso9660.c 20
 #define DR_name_len_size 1
 #define DR_name_offset 33
 
-#define ISO9660_MAGIC   0x96609660
-#define UTF16_NAME_MAX	1024
+#define ISO9660_MAGIC 0x96609660
+#define UTF16_NAME_MAX 1024
 
-#define add_entry(arch, iso9660, file)	\
+#define add_entry(arch, iso9660, file) \
 	heap_add_entry(arch, &((iso9660)->pending_files), file, file->offset)
-#define next_entry(iso9660)		\
+#define next_entry(iso9660) \
 	heap_get_entry(&((iso9660)->pending_files))
 
-#define RESERVED_AREA	(SYSTEM_AREA_BLOCK * LOGICAL_BLOCK_SIZE)
+#define RESERVED_AREA (SYSTEM_AREA_BLOCK * LOGICAL_BLOCK_SIZE)
 
 #ifndef COMPILE_WITH_RUST
 
-struct archive_iso9660_defined_param{
+struct archive_iso9660_defined_param
+{
 	unsigned int archive_read_magic;
 	unsigned int archive_state_new;
 	int enomem;
@@ -305,8 +305,9 @@ struct archive_iso9660_defined_param{
 
 struct archive_iso9660_defined_param get_archive_iso9660_defined_param();
 
-struct archive_iso9660_defined_param get_archive_iso9660_defined_param(){
-		struct archive_iso9660_defined_param defined_param;
+struct archive_iso9660_defined_param get_archive_iso9660_defined_param()
+{
+	struct archive_iso9660_defined_param defined_param;
 	defined_param.archive_read_magic = ARCHIVE_READ_MAGIC;
 	defined_param.archive_state_new = ARCHIVE_STATE_NEW;
 	defined_param.enomem = ENOMEM;
@@ -330,9 +331,9 @@ struct archive_iso9660_defined_param get_archive_iso9660_defined_param(){
 	defined_param.system_area_block = SYSTEM_AREA_BLOCK;
 	defined_param.seek_set = SEEK_SET;
 	defined_param.dr_extent_offset = DR_extent_offset;
-    defined_param.dr_extent_size = DR_extent_size;
-    defined_param.dr_ext_attr_length_offset = DR_ext_attr_length_offset;
-    defined_param.dr_ext_attr_length_size = DR_ext_attr_length_size;
+	defined_param.dr_extent_size = DR_extent_size;
+	defined_param.dr_ext_attr_length_offset = DR_ext_attr_length_offset;
+	defined_param.dr_ext_attr_length_size = DR_ext_attr_length_size;
 	defined_param.dr_size_offset = DR_size_offset;
 	defined_param.dr_size_size = DR_size_size;
 	defined_param.dr_length_offset = DR_length_offset;
@@ -340,15 +341,15 @@ struct archive_iso9660_defined_param get_archive_iso9660_defined_param(){
 	defined_param.dr_date_offset = DR_date_offset;
 	defined_param.dr_flags_offset = DR_flags_offset;
 	defined_param.dr_flags_size = DR_flags_size;
-    defined_param.dr_file_unit_size_offset = DR_file_unit_size_offset;
-    defined_param.dr_file_unit_size_size = DR_file_unit_size_size;
-    defined_param.dr_interleave_offset = DR_interleave_offset;
-    defined_param.dr_interleave_size = DR_interleave_size;
+	defined_param.dr_file_unit_size_offset = DR_file_unit_size_offset;
+	defined_param.dr_file_unit_size_size = DR_file_unit_size_size;
+	defined_param.dr_interleave_offset = DR_interleave_offset;
+	defined_param.dr_interleave_size = DR_interleave_size;
 	defined_param.dr_name_len_offset = DR_name_len_offset;
 	defined_param.dr_name_len_size = DR_name_len_size;
 	defined_param.dr_name_offset = DR_name_offset;
 	defined_param.dr_volume_sequence_number_offset = DR_volume_sequence_number_offset;
-    defined_param.dr_volume_sequence_number_size = DR_volume_sequence_number_size;
+	defined_param.dr_volume_sequence_number_size = DR_volume_sequence_number_size;
 	defined_param.svd_type_offset = SVD_type_offset;
 	defined_param.svd_reserved1_offset = SVD_reserved1_offset;
 	defined_param.svd_reserved1_size = SVD_reserved1_size;
@@ -383,8 +384,7 @@ struct archive_iso9660_defined_param get_archive_iso9660_defined_param(){
 	return defined_param;
 }
 
-int
-archive_read_support_format_iso9660(struct archive *_a)
+int archive_read_support_format_iso9660(struct archive *_a)
 {
 	return 0;
 }
