@@ -166,6 +166,7 @@ SET(libarchive_SOURCES
   filter_fork_posix.c
   filter_fork.h
   xxhash.c
+  archive_macro_send_for_rust.c
 )
 
 # Man pages

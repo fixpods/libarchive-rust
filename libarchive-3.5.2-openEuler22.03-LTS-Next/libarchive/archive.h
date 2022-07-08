@@ -441,24 +441,49 @@ __LA_DECL int archive_read_support_filter_rpm(struct archive *);
 __LA_DECL int archive_read_support_filter_uu(struct archive *);
 __LA_DECL int archive_read_support_filter_xz(struct archive *);
 __LA_DECL int archive_read_support_filter_zstd(struct archive *);
-
 __LA_DECL int archive_read_support_format_7zip(struct archive *);
 __LA_DECL int archive_read_support_format_all(struct archive *);
-__LA_DECL int archive_read_support_format_ar(struct archive *);
 __LA_DECL int archive_read_support_format_by_code(struct archive *, int);
 __LA_DECL int archive_read_support_format_cab(struct archive *);
 __LA_DECL int archive_read_support_format_cpio(struct archive *);
+#ifdef COMPILE_WITH_RUST
+extern __LA_DECL int archive_read_support_format_empty(struct archive *);
+extern __LA_DECL int archive_read_support_format_iso9660(struct archive *);
+extern __LA_DECL int archive_read_support_format_lha(struct archive *);
+extern __LA_DECL int archive_read_support_format_raw(struct archive *);
+extern __LA_DECL int archive_read_support_format_rar(struct archive *);
+extern __LA_DECL int archive_read_support_format_rar5(struct archive *);
+extern __LA_DECL int archive_read_support_format_ar(struct archive *);
+extern __LA_DECL int archive_read_support_format_warc(struct archive *);
+extern __LA_DECL int archive_read_support_format_xar(struct archive *);
+extern __LA_DECL int archive_read_support_format_gnutar(struct archive *);
+extern __LA_DECL int archive_read_support_format_tar(struct archive *);
+extern __LA_DECL int archive_read_support_format_7zip(struct archive *);
+extern __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
+extern __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
+extern __LA_DECL int archive_read_support_format_all(struct archive *);
+#else
 __LA_DECL int archive_read_support_format_empty(struct archive *);
-__LA_DECL int archive_read_support_format_gnutar(struct archive *);
 __LA_DECL int archive_read_support_format_iso9660(struct archive *);
 __LA_DECL int archive_read_support_format_lha(struct archive *);
+__LA_DECL int archive_read_support_format_raw(struct archive *);
+__LA_DECL int archive_read_support_format_rar(struct archive *);
+__LA_DECL int archive_read_support_format_rar5(struct archive *);
+__LA_DECL int archive_read_support_format_ar(struct archive *);
+__LA_DECL int archive_read_support_format_warc(struct archive *);
+__LA_DECL int archive_read_support_format_xar(struct archive *);
+__LA_DECL int archive_read_support_format_gnutar(struct archive *);
+__LA_DECL int archive_read_support_format_tar(struct archive *);
+__LA_DECL int archive_read_support_format_7zip(struct archive *);
+__LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
+__LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
+__LA_DECL int archive_read_support_format_all(struct archive *);
+#endif
+
 __LA_DECL int archive_read_support_format_mtree(struct archive *);
 __LA_DECL int archive_read_support_format_rar(struct archive *);
 __LA_DECL int archive_read_support_format_rar5(struct archive *);
-__LA_DECL int archive_read_support_format_raw(struct archive *);
-__LA_DECL int archive_read_support_format_tar(struct archive *);
-__LA_DECL int archive_read_support_format_warc(struct archive *);
-__LA_DECL int archive_read_support_format_xar(struct archive *);
+
 /* archive_read_support_format_zip() enables both streamable and seekable
  * zip readers. */
 __LA_DECL int archive_read_support_format_zip(struct archive *);

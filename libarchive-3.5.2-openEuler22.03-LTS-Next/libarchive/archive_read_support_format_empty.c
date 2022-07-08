@@ -31,66 +31,30 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_empty.c 1915
 #include "archive_private.h"
 #include "archive_read_private.h"
 
-static int	archive_read_format_empty_bid(struct archive_read *, int);
-static int	archive_read_format_empty_read_data(struct archive_read *,
-		    const void **, size_t *, int64_t *);
-static int	archive_read_format_empty_read_header(struct archive_read *,
-		    struct archive_entry *);
+#ifndef COMPILE_WITH_RUST
+
+struct archive_empty_defined_param{
+    unsigned int archive_read_magic;
+    unsigned int archive_state_new;
+    int archive_format_empty;
+    int archive_eof;
+};
+
+struct archive_empty_defined_param get_archive_empty_defined_param();
+
+struct archive_empty_defined_param get_archive_empty_defined_param(){
+	struct archive_empty_defined_param defined_param;
+	defined_param.archive_read_magic = ARCHIVE_READ_MAGIC;
+	defined_param.archive_state_new = ARCHIVE_STATE_NEW;
+	defined_param.archive_format_empty = ARCHIVE_FORMAT_EMPTY;
+	defined_param.archive_eof = ARCHIVE_EOF;
+	return defined_param;
+}
+
 int
 archive_read_support_format_empty(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	int r;
-
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_format_empty");
-
-	r = __archive_read_register_format(a,
-	    NULL,
-	    "empty",
-	    archive_read_format_empty_bid,
-	    NULL,
-	    archive_read_format_empty_read_header,
-	    archive_read_format_empty_read_data,
-	    NULL,
-	    NULL,
-	    NULL,
-	    NULL,
-	    NULL);
-
-	return (r);
+	return 0;
 }
 
-
-static int
-archive_read_format_empty_bid(struct archive_read *a, int best_bid)
-{
-	if (best_bid < 1 && __archive_read_ahead(a, 1, NULL) == NULL)
-		return (1);
-	return (-1);
-}
-
-static int
-archive_read_format_empty_read_header(struct archive_read *a,
-    struct archive_entry *entry)
-{
-	(void)a; /* UNUSED */
-	(void)entry; /* UNUSED */
-
-	a->archive.archive_format = ARCHIVE_FORMAT_EMPTY;
-	a->archive.archive_format_name = "Empty file";
-
-	return (ARCHIVE_EOF);
-}
-
-static int
-archive_read_format_empty_read_data(struct archive_read *a,
-    const void **buff, size_t *size, int64_t *offset)
-{
-	(void)a; /* UNUSED */
-	(void)buff; /* UNUSED */
-	(void)size; /* UNUSED */
-	(void)offset; /* UNUSED */
-
-	return (ARCHIVE_EOF);
-}
+#endif
