@@ -1,10 +1,28 @@
 # libarchive-rust
 
 #### 介绍
-rewrite memory leak modules for libarchive using Rust
+Libarchive历史安全漏洞较多，其中内存漏洞在两个项目漏洞中分别占比75%，产生这些安全漏洞或与这些安全漏洞相关的模块称为高危模块。本项目拟通过Rust语言重写libarchive库的这些高危模块，利用Rust语言自身的内存安全机制修复这些安全漏洞，增加两个库的安全性和可靠性。
+
+本项目主要改写的模块包括：
+
+（1）int archive_read_support_format_XX(struct archive *_a)系列方法
+
+（2）archive_read_support_format_all(struct archive *a)
+
+（3）archive_string.c
+
+（4）archive_acl.c
+
 
 #### 软件架构
-软件架构说明
+
+![输入图片说明](images/libarchive_architecture_description.png)
+
+上图展示了libarchive项目中各个模块之间的关系，以及本项目中改写部分与不改写部分之间的关系。
+
+#### 本项目重写方案与计划
+
+![输入图片说明](images/project_plan.png)
 
 
 #### 安装教程
