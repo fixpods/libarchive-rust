@@ -35,7 +35,7 @@ Libarchive历史安全漏洞较多，其中内存漏洞在两个项目漏洞中�
 安装步骤如下：
 1. 通过gitee 获取代码  git clone git@gitee.com:lcynju/libarchive-rust.git
 2. 运行libarchive-3.5.2-openEuler22.03-LTS-Next/build.sh编译代码
-3. 运行make insatll 将代码安装到系统中
+3. 运行make install 将代码安装到系统中
 
 #### 使用说明
 

@@ -1,0 +1,2 @@
+1. libarchive-rust.cpio为`find libarchive-rust | bsdcpio -o > libarchive-rust.cpio`命令将libarchive-rust与其子目录打包的结果。可以使用`bsdcpio -t -I libarchive.cpio`命令查看包内文件详情。
+2. libarchive-rust.tar为`bsdtar -zcvf libarchive-rust.tar libarchive-rust`命令将libarchive-rust与其子目录打包的结果。可以使用`bsdtar -ztvf libarchive-rust.tar`命令查看包内文件详情。
