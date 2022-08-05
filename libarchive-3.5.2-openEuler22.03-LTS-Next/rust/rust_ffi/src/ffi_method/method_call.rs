@@ -137,9 +137,9 @@ extern "C" {
 
     pub fn mktime(timeptr: *mut tm) -> time_t;
 
-    pub fn wcschr(str: *const libc::c_int, c: libc::c_int) -> *mut libc::c_int;
+    pub fn wcschr(str: *const wchar_t, c: wchar_t) -> *mut wchar_t;
 
-    pub fn wcslen(str: *const libc::c_int) -> libc::c_ulong;
+    pub fn wcslen(str: *const wchar_t) -> libc::c_ulong;
 
     pub fn archive_set_error(
         a: *mut archive,
@@ -408,7 +408,7 @@ extern "C" {
 
     pub fn wcscpy(__dest: *mut wchar_t, __src: *const wchar_t) -> *mut wchar_t;
 
-    pub fn wmemcmp(_: *const libc::c_int, _: *const libc::c_int, _: libc::c_ulong) -> libc::c_int;
+    pub fn wmemcmp(_: *const wchar_t, _: *const wchar_t, _: libc::c_ulong) -> libc::c_int;
 
     pub fn inflateInit2_(
         strm: z_streamp,
@@ -645,6 +645,8 @@ extern "C" {
 
     pub fn inflate(strm: z_streamp, flush: libc::c_int) -> libc::c_int;
 
+    pub fn isprint(c: libc::c_int) -> libc::c_int;
+
     pub static __archive_hmac: archive_hmac;
 
     pub static __archive_ppmd8_functions: IPpmd8;
@@ -704,11 +706,11 @@ pub fn mktime_safe(timeptr: *mut tm) -> time_t {
     return unsafe { mktime(timeptr) };
 }
 
-pub fn wcschr_safe(str: *const libc::c_int, c: libc::c_int) -> *mut libc::c_int {
+pub fn wcschr_safe(str: *const wchar_t, c: wchar_t) -> *mut wchar_t {
     return unsafe { wcschr(str, c) };
 }
 
-pub fn wcslen_safe(str: *const libc::c_int) -> libc::c_ulong {
+pub fn wcslen_safe(str: *const wchar_t) -> libc::c_ulong {
     return unsafe { wcslen(str) };
 }
 
@@ -1345,8 +1347,8 @@ pub fn wcscpy_safe(__dest: *mut wchar_t, __src: *const wchar_t) -> *mut wchar_t 
 }
 
 pub fn wmemcmp_safe(
-    _const1: *const libc::c_int,
-    _const2: *const libc::c_int,
+    _const1: *const wchar_t,
+    _const2: *const wchar_t,
     _const3: libc::c_ulong,
 ) -> libc::c_int {
     return unsafe { wmemcmp(_const1, _const2, _const3) };

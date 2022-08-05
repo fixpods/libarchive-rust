@@ -1,8 +1,8 @@
 use rust_ffi::archive_set_error_safe;
-use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_alias::alias_set::*;
-use rust_ffi::ffi_struct::struct_transfer::* ;
+use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
+use rust_ffi::ffi_struct::struct_transfer::*;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct mtree {
@@ -195,12 +195,12 @@ pub extern "C" fn archive_read_support_format_mtree(mut _a: *mut archive) -> lib
     let mut r: libc::c_int = 0;
     let mut magic_test: libc::c_int = __archive_check_magic_safe(
         _a,
-        0xdeb0c5 as libc::c_uint,
-        1 as libc::c_uint,
+        ARCHIVE_MTREE_DEFINED_PARAM.archive_read_magic,
+        ARCHIVE_MTREE_DEFINED_PARAM.archive_state_new,
         b"archive_read_support_format_mtree\x00" as *const u8 as *const libc::c_char,
     );
-    if magic_test == -(30 as libc::c_int) {
-        return -(30 as libc::c_int);
+    if magic_test == ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal {
+        return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
     mtree = calloc_safe(
         1 as libc::c_int as libc::c_ulong,
@@ -1601,11 +1601,7 @@ extern "C" fn read_mtree(mut a: *mut archive_read, mut mtree: *mut mtree) -> lib
                 s = p;
                 unsafe {
                     while s < p.offset(len as isize).offset(-(1 as libc::c_int as isize)) {
-                        if *(*__ctype_b_loc()).offset(*s as libc::c_uchar as libc::c_int as isize)
-                            as libc::c_int
-                            & _ISprint_m as libc::c_int as libc::c_ushort as libc::c_int
-                            == 0
-                        {
+                        if unsafe { isprint(*s as libc::c_uchar as libc::c_int) } == 0 {
                             r = ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
                             break;
                         } else {
@@ -1757,32 +1753,7 @@ extern "C" fn parse_file(
     mut use_next: *mut libc::c_int,
 ) -> libc::c_int {
     let mut path: *const libc::c_char = 0 as *const libc::c_char;
-    let mut st_storage: stat = stat {
-        st_dev: 0,
-        st_ino: 0,
-        st_nlink: 0,
-        st_mode: 0,
-        st_uid: 0,
-        st_gid: 0,
-        __pad0: 0,
-        st_rdev: 0,
-        st_size: 0,
-        st_blksize: 0,
-        st_blocks: 0,
-        st_atim: timespec {
-            tv_sec: 0,
-            tv_nsec: 0,
-        },
-        st_mtim: timespec {
-            tv_sec: 0,
-            tv_nsec: 0,
-        },
-        st_ctim: timespec {
-            tv_sec: 0,
-            tv_nsec: 0,
-        },
-        __glibc_reserved: [0; 3],
-    };
+    let mut st_storage: stat = unsafe { std::mem::zeroed() };
     let mut st: *mut stat = 0 as *mut stat;
     let mut mp: *mut mtree_entry = 0 as *mut mtree_entry;
     let mut sparse_entry: *mut archive_entry = 0 as *mut archive_entry;
@@ -1792,10 +1763,7 @@ extern "C" fn parse_file(
     let mentry_safe = unsafe { &mut *mentry };
     mentry_safe.used = 1 as libc::c_int as libc::c_char;
     /* Initialize reasonable defaults. */
-    archive_entry_set_filetype_safe(
-        entry,
-        ARCHIVE_MTREE_DEFINED_PARAM.ae_ifreg as mode_t,
-    );
+    archive_entry_set_filetype_safe(entry, ARCHIVE_MTREE_DEFINED_PARAM.ae_ifreg as mode_t);
     archive_entry_set_size_safe(entry, 0 as libc::c_int as la_int64_t);
     let mtree_safe = unsafe { &mut *mtree };
     mtree_safe.contents_name.length = 0 as libc::c_int as size_t;
@@ -1849,9 +1817,7 @@ extern "C" fn parse_file(
             mentry_safe.name as *const libc::c_void,
         );
         archive_entry_copy_pathname_safe(entry, mtree_safe.current_dir.s);
-        if archive_entry_filetype_safe(entry)
-            != ARCHIVE_MTREE_DEFINED_PARAM.ae_ifdir as mode_t
-        {
+        if archive_entry_filetype_safe(entry) != ARCHIVE_MTREE_DEFINED_PARAM.ae_ifdir as mode_t {
             mtree_safe.current_dir.length = n
         }
     }
@@ -1873,10 +1839,8 @@ extern "C" fn parse_file(
         } else {
             path = archive_entry_pathname_safe(entry)
         }
-        if archive_entry_filetype_safe(entry)
-            == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifreg as mode_t
-            || archive_entry_filetype_safe(entry)
-                == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifdir as mode_t
+        if archive_entry_filetype_safe(entry) == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifreg as mode_t
+            || archive_entry_filetype_safe(entry) == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifdir as mode_t
         {
             mtree_safe.fd = open_safe(
                 path,
@@ -1928,18 +1892,12 @@ extern "C" fn parse_file(
                 & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
                 == ARCHIVE_MTREE_DEFINED_PARAM.s_ifreg as libc::c_uint
                 && archive_entry_filetype_safe(entry)
-                    == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifreg as mode_t
-                || st_safe.st_mode
-                    & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
-                    == ARCHIVE_MTREE_DEFINED_PARAM.s_ifdir as libc::c_uint
-                    && archive_entry_filetype_safe(entry)
-                        == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifdir as mode_t;
+                    == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifreg as mode_t;
             match () {
                 #[cfg(S_IFLNK)]
                 _ => {
                     conditions = conditions
-                        || st_safe.st_mode
-                            & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
+                        || st_safe.st_mode & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
                             == ARCHIVE_MTREE_DEFINED_PARAM.s_iflnk as libc::c_uint
                             && archive_entry_filetype_safe(entry)
                                 == ARCHIVE_MTREE_DEFINED_PARAM.ae_iflnk as mode_t;
@@ -1951,8 +1909,7 @@ extern "C" fn parse_file(
                 #[cfg(S_IFSOCK)]
                 _ => {
                     conditions = conditions
-                        || st_safe.st_mode
-                            & ARCHIVE_MTREE_DEFINED_PARAM.s_ifsock as libc::c_uint
+                        || st_safe.st_mode & ARCHIVE_MTREE_DEFINED_PARAM.s_ifsock as libc::c_uint
                             == ARCHIVE_MTREE_DEFINED_PARAM.s_ifsock as libc::c_uint
                             && archive_entry_filetype_safe(entry)
                                 == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifsock as mode_t;
@@ -1964,11 +1921,10 @@ extern "C" fn parse_file(
                 #[cfg(S_IFCHR)]
                 _ => {
                     conditions = conditions
-                        || st_safe.st_mode
-                            & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
+                        || st_safe.st_mode & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
                             == ARCHIVE_MTREE_DEFINED_PARAM.s_ifchr as libc::c_uint
                             && archive_entry_filetype_safe(entry)
-                                == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifsock as mode_t;
+                                == ARCHIVE_MTREE_DEFINED_PARAM.s_ifchr as mode_t;
                 }
                 #[cfg(not(S_IFCHR))]
                 _ => {}
@@ -1977,8 +1933,7 @@ extern "C" fn parse_file(
                 #[cfg(S_IFBLK)]
                 _ => {
                     conditions = conditions
-                        || st_safe.st_mode
-                            & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
+                        || st_safe.st_mode & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
                             == ARCHIVE_MTREE_DEFINED_PARAM.s_ifblk as libc::c_uint
                             && archive_entry_filetype_safe(entry)
                                 == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifblk as mode_t;
@@ -1986,12 +1941,16 @@ extern "C" fn parse_file(
                 #[cfg(not(S_IFBLK))]
                 _ => {}
             }
+            conditions = conditions
+                || st_safe.st_mode & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
+                    == ARCHIVE_MTREE_DEFINED_PARAM.s_ifdir as libc::c_uint
+                    && archive_entry_filetype_safe(entry)
+                        == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifdir as mode_t;
             match () {
                 #[cfg(S_IFIFO)]
                 _ => {
                     conditions = conditions
-                        || st_safe.st_mode
-                            & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
+                        || st_safe.st_mode & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as libc::c_uint
                             == ARCHIVE_MTREE_DEFINED_PARAM.s_ififo as libc::c_uint
                             && archive_entry_filetype_safe(entry)
                                 == ARCHIVE_MTREE_DEFINED_PARAM.ae_ififo as mode_t;
@@ -2006,10 +1965,7 @@ extern "C" fn parse_file(
                     close_safe(mtree_safe.fd);
                 }
                 mtree_safe.fd = -(1 as libc::c_int);
-                if parsed_kws
-                    & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_optional
-                    != 0
-                {
+                if parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_optional != 0 {
                     /* It's not an error for an optional
                      * entry to not match disk. */
                     unsafe { *use_next = 1 as libc::c_int }
@@ -2033,11 +1989,8 @@ extern "C" fn parse_file(
          * from the specification.
          */
         if !st.is_null() {
-            if (parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_device
-                == 0 as libc::c_int
-                || parsed_kws
-                    & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange
-                    != 0 as libc::c_int)
+            if (parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_device == 0 as libc::c_int
+                || parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange != 0 as libc::c_int)
                 && (archive_entry_filetype_safe(entry)
                     == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifchr as mode_t
                     || archive_entry_filetype_safe(entry)
@@ -2049,9 +2002,7 @@ extern "C" fn parse_file(
                 & (ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_gid
                     | ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_gname)
                 == 0 as libc::c_int
-                || parsed_kws
-                    & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange
-                    != 0 as libc::c_int
+                || parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange != 0 as libc::c_int
             {
                 archive_entry_set_gid_safe(entry, st_safe.st_gid as la_int64_t);
             }
@@ -2059,99 +2010,105 @@ extern "C" fn parse_file(
                 & (ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_uid
                     | ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_uname)
                 == 0 as libc::c_int
-                || parsed_kws
-                    & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange
-                    != 0 as libc::c_int
+                || parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange != 0 as libc::c_int
             {
                 archive_entry_set_uid_safe(entry, st_safe.st_uid as la_int64_t);
             }
-            if parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_mtime
-                == 0 as libc::c_int
-                || parsed_kws
-                    & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange
-                    != 0 as libc::c_int
+            if parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_mtime == 0 as libc::c_int
+                || parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange != 0 as libc::c_int
             {
                 match () {
                     #[cfg(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC)]
                     _ => {
                         archive_entry_set_mtime_safe(
                             entry,
-                            st_safe.st_mtim.tv_sec,
+                            st_safe.st_mtime,
                             st_safe.st_mtimespec.tv_nsec,
                         );
                     }
-                    #[cfg(HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC)]
+                    #[cfg(all(
+                        not(HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC),
+                        HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
+                    ))]
                     _ => {
                         archive_entry_set_mtime_safe(
                             entry,
-                            st_safe.st_mtim.tv_sec,
-                            st_safe.st_mtim.tv_nsec,
+                            st_safe.st_mtime,
+                            st_safe.st_mtime_nsec,
                         );
                     }
-                    #[cfg(HAVE_STRUCT_STAT_ST_MTIME_N)]
+                    #[cfg(all(
+                        not(any(
+                            HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC,
+                            HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
+                        )),
+                        HAVE_STRUCT_STAT_ST_MTIME_N
+                    ))]
                     _ => {
-                        archive_entry_set_mtime_safe(
-                            entry,
-                            st_safe.st_mtim.tv_sec,
-                            st_safe.st_mtime_n,
-                        );
+                        archive_entry_set_mtime_safe(entry, st_safe.st_mtime, st_safe.st_mtime_n);
                     }
-                    #[cfg(HAVE_STRUCT_STAT_ST_UMTIME)]
+                    #[cfg(all(
+                        not(any(
+                            HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC,
+                            HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC,
+                            HAVE_STRUCT_STAT_ST_MTIME_N
+                        )),
+                        HAVE_STRUCT_STAT_ST_UMTIME
+                    ))]
                     _ => {
                         archive_entry_set_mtime_safe(
                             entry,
-                            st_safe.st_mtim.tv_sec,
+                            st_safe.st_mtime,
                             st_safe.st_umtime * 1000 as libc::c_long,
                         );
                     }
-                    #[cfg(HAVE_STRUCT_STAT_ST_MTIME_USEC)]
+                    #[cfg(all(
+                        not(any(
+                            HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC,
+                            HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC,
+                            HAVE_STRUCT_STAT_ST_MTIME_N,
+                            HAVE_STRUCT_STAT_ST_UMTIME
+                        )),
+                        HAVE_STRUCT_STAT_ST_MTIME_USEC
+                    ))]
                     _ => {
                         archive_entry_set_mtime_safe(
                             entry,
-                            st_safe.st_mtim.tv_sec,
+                            st_safe.st_mtime,
                             st_safe.st_mtime_usec * 1000 as libc::c_long,
                         );
                     }
+                    #[cfg(not(any(
+                        HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC,
+                        HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC,
+                        HAVE_STRUCT_STAT_ST_MTIME_N,
+                        HAVE_STRUCT_STAT_ST_UMTIME,
+                        HAVE_STRUCT_STAT_ST_MTIME_USEC
+                    )))]
                     _ => {
-                        archive_entry_set_mtime_safe(
-                            entry,
-                            st_safe.st_mtim.tv_sec,
-                            0 as libc::c_long,
-                        );
+                        archive_entry_set_mtime_safe(entry, st_safe.st_mtime, 0 as libc::c_long);
                     }
                 }
             }
-            if parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nlink
-                == 0 as libc::c_int
-                || parsed_kws
-                    & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange
-                    != 0 as libc::c_int
+            if parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nlink == 0 as libc::c_int
+                || parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange != 0 as libc::c_int
             {
                 archive_entry_set_nlink_safe(entry, st_safe.st_nlink as libc::c_uint);
             }
-            if parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_perm
-                == 0 as libc::c_int
-                || parsed_kws
-                    & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange
-                    != 0 as libc::c_int
+            if parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_perm == 0 as libc::c_int
+                || parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange != 0 as libc::c_int
             {
                 archive_entry_set_perm_safe(entry, st_safe.st_mode);
             }
-            if parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_size
-                == 0 as libc::c_int
-                || parsed_kws
-                    & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange
-                    != 0 as libc::c_int
+            if parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_size == 0 as libc::c_int
+                || parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nochange != 0 as libc::c_int
             {
                 archive_entry_set_size_safe(entry, st_safe.st_size);
             }
             archive_entry_set_ino_safe(entry, st_safe.st_ino as la_int64_t);
             archive_entry_set_dev_safe(entry, st_safe.st_dev);
             archive_entry_linkify_safe(mtree_safe.resolver, &mut entry, &mut sparse_entry);
-        } else if parsed_kws
-            & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_optional
-            != 0
-        {
+        } else if parsed_kws & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_optional != 0 {
             /*
              * Couldn't open the entry, stat it or the on-disk type
              * didn't match.  If this entry is optional, just
@@ -2195,8 +2152,7 @@ extern "C" fn parse_line(
         iter = unsafe { (*iter).next }
     }
     if r == ARCHIVE_MTREE_DEFINED_PARAM.archive_ok
-        && *parsed_kws_safe & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_type
-            == 0 as libc::c_int
+        && *parsed_kws_safe & ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_type == 0 as libc::c_int
     {
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
@@ -3211,8 +3167,8 @@ extern "C" fn mtree_atol(mut p: *mut *mut libc::c_char, mut base: libc::c_int) -
     }
     if unsafe { **p as libc::c_int == '-' as i32 } {
         limit = ARCHIVE_MTREE_DEFINED_PARAM.int64_min / base as libc::c_long;
-        last_digit_limit = -(ARCHIVE_MTREE_DEFINED_PARAM.int64_min
-            % base as libc::c_long) as libc::c_int;
+        last_digit_limit =
+            -(ARCHIVE_MTREE_DEFINED_PARAM.int64_min % base as libc::c_long) as libc::c_int;
         *p_safe = unsafe { (*p).offset(1) };
         l = 0 as libc::c_int as int64_t;
         digit = unsafe { parsedigit(**p) };
@@ -3227,8 +3183,8 @@ extern "C" fn mtree_atol(mut p: *mut *mut libc::c_char, mut base: libc::c_int) -
         return l;
     } else {
         limit = ARCHIVE_MTREE_DEFINED_PARAM.int64_max / base as libc::c_long;
-        last_digit_limit = (ARCHIVE_MTREE_DEFINED_PARAM.int64_max
-            % base as libc::c_long) as libc::c_int;
+        last_digit_limit =
+            (ARCHIVE_MTREE_DEFINED_PARAM.int64_max % base as libc::c_long) as libc::c_int;
         l = 0 as libc::c_int as int64_t;
         digit = unsafe { parsedigit(**p) };
         while digit >= 0 as libc::c_int && digit < base {

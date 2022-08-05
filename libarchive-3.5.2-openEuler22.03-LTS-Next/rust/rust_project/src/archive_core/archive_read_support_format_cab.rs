@@ -584,8 +584,8 @@ extern "C" fn cab_convert_path_separator_2(mut cab: *mut cab, mut entry: *mut ar
         i = 0 as libc::c_int as size_t;
         while i < cab_safe.ws.length {
             unsafe {
-                if *(*cab).ws.s.offset(i as isize) == '\\' as i32 {
-                    *(*cab).ws.s.offset(i as isize) = '/' as i32
+                if *(*cab).ws.s.offset(i as isize) == '\\' as wchar_t {
+                    *(*cab).ws.s.offset(i as isize) = '/' as wchar_t
                 }
             }
             i = i.wrapping_add(1)
@@ -1382,7 +1382,7 @@ extern "C" fn archive_read_format_cab_read_header(
         /* Choose the default conversion. */
         if cab_safe.init_default_conversion == 0 {
             cab_safe.sconv_default =
-                unsafe{archive_string_default_conversion_for_read(&mut a_safe.archive)};
+                unsafe { archive_string_default_conversion_for_read(&mut a_safe.archive) };
             cab_safe.init_default_conversion = 1 as libc::c_int
         }
         sconv = cab_safe.sconv_default

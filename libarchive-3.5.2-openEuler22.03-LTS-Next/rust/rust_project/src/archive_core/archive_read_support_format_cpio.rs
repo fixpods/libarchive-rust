@@ -1,8 +1,8 @@
 use rust_ffi::archive_set_error_safe;
-use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_alias::alias_set::*;
-use rust_ffi::ffi_struct::struct_transfer::* ;
+use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
+use rust_ffi::ffi_struct::struct_transfer::*;
 
 use super::archive_string::archive_string_default_conversion_for_read;
 #[derive(Copy, Clone)]
@@ -98,14 +98,10 @@ pub extern "C" fn archive_read_support_format_cpio(mut _a: *mut archive) -> libc
                     _: *mut int64_t,
                 ) -> libc::c_int,
         ),
-        Some(
-            archive_read_format_cpio_skip
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
-        ),
+        Some(archive_read_format_cpio_skip as extern "C" fn(_: *mut archive_read) -> libc::c_int),
         None,
         Some(
-            archive_read_format_cpio_cleanup
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+            archive_read_format_cpio_cleanup as extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         None,
         None,
@@ -356,7 +352,7 @@ extern "C" fn archive_read_format_cpio_read_header(
     if sconv.is_null() {
         if cpio_safe.init_default_conversion == 0 {
             cpio_safe.sconv_default =
-                unsafe{archive_string_default_conversion_for_read(&mut a_safe.archive)};
+                unsafe { archive_string_default_conversion_for_read(&mut a_safe.archive) };
             cpio_safe.init_default_conversion = 1 as libc::c_int
         }
         sconv = cpio_safe.sconv_default
@@ -566,11 +562,7 @@ extern "C" fn find_newc_header(mut a: *mut archive_read) -> libc::c_int {
     let mut skipped: size_t = 0 as libc::c_int as size_t;
     let mut bytes: ssize_t = 0;
     loop {
-        h = __archive_read_ahead_safe(
-            a,
-            ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE,
-            &mut bytes,
-        );
+        h = __archive_read_ahead_safe(a, ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE, &mut bytes);
         if h == 0 as *mut libc::c_void {
             return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
         }
@@ -586,10 +578,7 @@ extern "C" fn find_newc_header(mut a: *mut archive_read) -> libc::c_int {
                 (*p.offset(5 as libc::c_int as isize) as libc::c_int == '1' as i32
                     || *p.offset(5 as libc::c_int as isize) as libc::c_int == '2' as i32)
             }
-            && is_hex(
-                p,
-                ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE,
-            ) != 0
+            && is_hex(p, ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE) != 0
         {
             return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
         }
@@ -598,8 +587,7 @@ extern "C" fn find_newc_header(mut a: *mut archive_read) -> libc::c_int {
          * like a newc header.
          */
         unsafe {
-            while p.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE as isize) <= q
-            {
+            while p.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE as isize) <= q {
                 match *p.offset(5 as libc::c_int as isize) as libc::c_int {
                     49 | 50 => {
                         if memcmp_safe(
@@ -607,10 +595,7 @@ extern "C" fn find_newc_header(mut a: *mut archive_read) -> libc::c_int {
                             p as *const libc::c_void,
                             5 as libc::c_int as libc::c_ulong,
                         ) == 0 as libc::c_int
-                            && is_hex(
-                                p,
-                                ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE,
-                            ) != 0
+                            && is_hex(p, ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE) != 0
                         {
                             skip =
                                 p.offset_from(h as *const libc::c_char) as libc::c_long as size_t;
@@ -697,18 +682,14 @@ extern "C" fn header_newc(
         archive_entry_set_devmajor(
             entry,
             atol16(
-                header.offset(
-                    ARCHIVE_CPIO_DEFINED_PARAM.NEWC_DEVMAJOR_OFFSET as isize,
-                ),
+                header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_DEVMAJOR_OFFSET as isize),
                 ARCHIVE_CPIO_DEFINED_PARAM.NEWC_DEVMAJOR_SIZE as libc::c_uint,
             ) as dev_t,
         );
         archive_entry_set_devminor(
             entry,
             atol16(
-                header.offset(
-                    ARCHIVE_CPIO_DEFINED_PARAM.NEWC_DEVMINOR_OFFSET as isize,
-                ),
+                header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_DEVMINOR_OFFSET as isize),
                 ARCHIVE_CPIO_DEFINED_PARAM.NEWC_DEVMINOR_SIZE as libc::c_uint,
             ) as dev_t,
         );
@@ -750,18 +731,14 @@ extern "C" fn header_newc(
         archive_entry_set_rdevmajor(
             entry,
             atol16(
-                header.offset(
-                    ARCHIVE_CPIO_DEFINED_PARAM.NEWC_RDEVMAJOR_OFFSET as isize,
-                ),
+                header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_RDEVMAJOR_OFFSET as isize),
                 ARCHIVE_CPIO_DEFINED_PARAM.NEWC_RDEVMAJOR_SIZE as libc::c_uint,
             ) as dev_t,
         );
         archive_entry_set_rdevminor(
             entry,
             atol16(
-                header.offset(
-                    ARCHIVE_CPIO_DEFINED_PARAM.NEWC_RDEVMINOR_OFFSET as isize,
-                ),
+                header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_RDEVMINOR_OFFSET as isize),
                 ARCHIVE_CPIO_DEFINED_PARAM.NEWC_RDEVMINOR_SIZE as libc::c_uint,
             ) as dev_t,
         );
@@ -774,9 +751,7 @@ extern "C" fn header_newc(
             0 as libc::c_int as libc::c_long,
         );
         *namelength = atol16(
-            header.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.NEWC_NAMESIZE_OFFSET as isize,
-            ),
+            header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_NAMESIZE_OFFSET as isize),
             ARCHIVE_CPIO_DEFINED_PARAM.NEWC_NAMESIZE_SIZE as libc::c_uint,
         ) as size_t;
         /* Pad name to 2 more than a multiple of 4. */
@@ -797,9 +772,7 @@ extern "C" fn header_newc(
          * size.
          */
         (*cpio).entry_bytes_remaining = atol16(
-            header.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.NEWC_FILESIZE_OFFSET as isize,
-            ),
+            header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_FILESIZE_OFFSET as isize),
             ARCHIVE_CPIO_DEFINED_PARAM.NEWC_FILESIZE_SIZE as libc::c_uint,
         );
     }
@@ -807,10 +780,7 @@ extern "C" fn header_newc(
     archive_entry_set_size_safe(entry, cpio_safe.entry_bytes_remaining);
     /* Pad file contents to a multiple of 4. */
     cpio_safe.entry_padding = 3 as libc::c_int as libc::c_long & -cpio_safe.entry_bytes_remaining;
-    __archive_read_consume_safe(
-        a,
-        ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE as int64_t,
-    );
+    __archive_read_consume_safe(a, ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE as int64_t);
     return r;
 }
 /*
@@ -839,20 +809,13 @@ extern "C" fn is_afio_large(mut h: *const libc::c_char, mut len: size_t) -> libc
         return 0 as libc::c_int;
     }
     unsafe {
-        if *h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_INO_M_OFFSET as isize)
-            as libc::c_int
+        if *h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_INO_M_OFFSET as isize) as libc::c_int
             != 'm' as i32
-            || *h.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_MTIME_N_OFFSET as isize,
-            ) as libc::c_int
+            || *h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_MTIME_N_OFFSET as isize) as libc::c_int
                 != 'n' as i32
-            || *h.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_XSIZE_S_OFFSET as isize,
-            ) as libc::c_int
+            || *h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_XSIZE_S_OFFSET as isize) as libc::c_int
                 != 's' as i32
-            || *h.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_FILESIZE_C_OFFSET as isize,
-            ) as libc::c_int
+            || *h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_FILESIZE_C_OFFSET as isize) as libc::c_int
                 != ':' as i32
         {
             return 0 as libc::c_int;
@@ -868,16 +831,13 @@ extern "C" fn is_afio_large(mut h: *const libc::c_char, mut len: size_t) -> libc
         if is_hex(
             h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_MODE_OFFSET as isize),
             (ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_MTIME_N_OFFSET
-                - ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_MODE_OFFSET)
-                as size_t,
+                - ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_MODE_OFFSET) as size_t,
         ) == 0
         {
             return 0 as libc::c_int;
         }
         if is_hex(
-            h.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_NAMESIZE_OFFSET as isize,
-            ),
+            h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_NAMESIZE_OFFSET as isize),
             (ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_XSIZE_S_OFFSET
                 - ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_NAMESIZE_OFFSET) as size_t,
         ) == 0
@@ -885,9 +845,7 @@ extern "C" fn is_afio_large(mut h: *const libc::c_char, mut len: size_t) -> libc
             return 0 as libc::c_int;
         }
         if is_hex(
-            h.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_FILESIZE_OFFSET as isize,
-            ),
+            h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_FILESIZE_OFFSET as isize),
             ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_FILESIZE_SIZE as size_t,
         ) == 0
         {
@@ -918,10 +876,7 @@ extern "C" fn find_odc_header(mut a: *mut archive_read) -> libc::c_int {
             p as *const libc::c_void,
             6 as libc::c_int as libc::c_ulong,
         ) == 0 as libc::c_int
-            && is_octal(
-                p,
-                ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as size_t,
-            ) != 0
+            && is_octal(p, ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as size_t) != 0
         {
             return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
         }
@@ -933,7 +888,8 @@ extern "C" fn find_odc_header(mut a: *mut archive_read) -> libc::c_int {
         ) == 0 as libc::c_int
             && is_afio_large(p, bytes as size_t) != 0
         {
-            a_safe.archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_afio_large;
+            a_safe.archive.archive_format =
+                ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_afio_large;
             return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
         }
         /*
@@ -941,8 +897,7 @@ extern "C" fn find_odc_header(mut a: *mut archive_read) -> libc::c_int {
          * like an odc header.
          */
         unsafe {
-            while p.offset(ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as isize) <= q
-            {
+            while p.offset(ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as isize) <= q {
                 match *p.offset(5 as libc::c_int as isize) as libc::c_int {
                     55 => {
                         if memcmp_safe(
@@ -951,10 +906,8 @@ extern "C" fn find_odc_header(mut a: *mut archive_read) -> libc::c_int {
                             p as *const libc::c_void,
                             6 as libc::c_int as libc::c_ulong,
                         ) == 0 as libc::c_int
-                            && is_octal(
-                                p,
-                                ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as size_t,
-                            ) != 0
+                            && is_octal(p, ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as size_t)
+                                != 0
                             || memcmp_safe(
                                 b"070727\x00" as *const u8 as *const libc::c_char
                                     as *const libc::c_void,
@@ -969,7 +922,8 @@ extern "C" fn find_odc_header(mut a: *mut archive_read) -> libc::c_int {
                             skipped =
                                 (skipped as libc::c_ulong).wrapping_add(skip) as size_t as size_t;
                             if *p.offset(4 as libc::c_int as isize) as libc::c_int == '2' as i32 {
-                                (*a).archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_afio_large
+                                (*a).archive.archive_format =
+                                    ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_afio_large
                             }
                             if skipped > 0 as libc::c_int as libc::c_ulong {
                                 archive_set_error_safe!(
@@ -1014,9 +968,7 @@ extern "C" fn header_odc(
     if r < ARCHIVE_CPIO_DEFINED_PARAM.archive_warn {
         return r;
     }
-    if a_safe.archive.archive_format
-        == ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_afio_large
-    {
+    if a_safe.archive.archive_format == ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_afio_large {
         let mut r2: libc::c_int = header_afiol(a, cpio, entry, namelength, name_pad);
         if r2 == ARCHIVE_CPIO_DEFINED_PARAM.archive_ok {
             return r;
@@ -1094,9 +1046,7 @@ extern "C" fn header_odc(
             0 as libc::c_int as libc::c_long,
         );
         *namelength = atol8(
-            header.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.ODC_NAMESIZE_OFFSET as isize,
-            ),
+            header.offset(ARCHIVE_CPIO_DEFINED_PARAM.ODC_NAMESIZE_OFFSET as isize),
             ARCHIVE_CPIO_DEFINED_PARAM.ODC_NAMESIZE_SIZE as libc::c_uint,
         ) as size_t;
         *name_pad = 0 as libc::c_int as size_t;
@@ -1106,19 +1056,14 @@ extern "C" fn header_odc(
          * size.
          */
         (*cpio).entry_bytes_remaining = atol8(
-            header.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.ODC_FILESIZE_OFFSET as isize,
-            ),
+            header.offset(ARCHIVE_CPIO_DEFINED_PARAM.ODC_FILESIZE_OFFSET as isize),
             ARCHIVE_CPIO_DEFINED_PARAM.ODC_FILESIZE_SIZE as libc::c_uint,
         );
     }
     let cpio_safe = unsafe { &mut *cpio };
     archive_entry_set_size_safe(entry, cpio_safe.entry_bytes_remaining);
     cpio_safe.entry_padding = 0 as libc::c_int as int64_t;
-    __archive_read_consume_safe(
-        a,
-        ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as int64_t,
-    );
+    __archive_read_consume_safe(a, ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as int64_t);
     return r;
 }
 /*
@@ -1191,8 +1136,7 @@ extern "C" fn header_afiol(
         archive_entry_set_nlink(
             entry,
             atol16(
-                header
-                    .offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_NLINK_OFFSET as isize),
+                header.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_NLINK_OFFSET as isize),
                 ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_NLINK_SIZE as libc::c_uint,
             ) as libc::c_uint,
         );
@@ -1206,33 +1150,25 @@ extern "C" fn header_afiol(
         archive_entry_set_mtime(
             entry,
             atol16(
-                header
-                    .offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_MTIME_OFFSET as isize),
+                header.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_MTIME_OFFSET as isize),
                 ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_MTIME_SIZE as libc::c_uint,
             ),
             0 as libc::c_int as libc::c_long,
         );
         *namelength = atol16(
-            header.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_NAMESIZE_OFFSET as isize,
-            ),
+            header.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_NAMESIZE_OFFSET as isize),
             ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_NAMESIZE_SIZE as libc::c_uint,
         ) as size_t;
         *name_pad = 0 as libc::c_int as size_t;
         (*cpio).entry_bytes_remaining = atol16(
-            header.offset(
-                ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_FILESIZE_OFFSET as isize,
-            ),
+            header.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_FILESIZE_OFFSET as isize),
             ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_FILESIZE_SIZE as libc::c_uint,
         );
     }
     let cpio_safe = unsafe { &mut *cpio };
     archive_entry_set_size_safe(entry, cpio_safe.entry_bytes_remaining);
     cpio_safe.entry_padding = 0 as libc::c_int as int64_t;
-    __archive_read_consume_safe(
-        a,
-        ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_HEADER_SIZE as int64_t,
-    );
+    __archive_read_consume_safe(a, ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_HEADER_SIZE as int64_t);
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
 }
 extern "C" fn header_bin_le(
@@ -1267,31 +1203,25 @@ extern "C" fn header_bin_le(
     unsafe {
         archive_entry_set_dev(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET as isize)
-                as libc::c_int
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET + 1 as libc::c_int)
-                        as isize,
-                ) as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET as isize) as libc::c_int
+                + *header
+                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET + 1 as libc::c_int) as isize)
+                    as libc::c_int
                     * 256 as libc::c_int) as dev_t,
         );
         archive_entry_set_ino(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET as isize)
-                as libc::c_int
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET + 1 as libc::c_int)
-                        as isize,
-                ) as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET as isize) as libc::c_int
+                + *header
+                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET + 1 as libc::c_int) as isize)
+                    as libc::c_int
                     * 256 as libc::c_int) as la_int64_t,
         );
         archive_entry_set_mode(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET as isize)
-                as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET as isize) as libc::c_int
                 + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET + 1 as libc::c_int)
-                        as isize,
+                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET + 1 as libc::c_int) as isize,
                 ) as libc::c_int
                     * 256 as libc::c_int) as mode_t,
         );
@@ -1301,54 +1231,44 @@ extern "C" fn header_bin_le(
                 entry,
                 archive_entry_mode(entry) & 0o67777 as libc::c_int as libc::c_uint,
             ); /* Pad to even. */
-            if archive_entry_mode(entry)
-                & ARCHIVE_CPIO_DEFINED_PARAM.ae_ifmt as mode_t
+            if archive_entry_mode(entry) & ARCHIVE_CPIO_DEFINED_PARAM.ae_ifmt as mode_t
                 == 0 as libc::c_int as libc::c_uint
             {
                 archive_entry_set_mode(
                     entry,
-                    archive_entry_mode(entry)
-                        | ARCHIVE_CPIO_DEFINED_PARAM.ae_ifreg as mode_t,
+                    archive_entry_mode(entry) | ARCHIVE_CPIO_DEFINED_PARAM.ae_ifreg as mode_t,
                 ); /* Pad to even. */
             }
         }
         archive_entry_set_uid(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET as isize)
-                as libc::c_int
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET + 1 as libc::c_int)
-                        as isize,
-                ) as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET as isize) as libc::c_int
+                + *header
+                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET + 1 as libc::c_int) as isize)
+                    as libc::c_int
                     * 256 as libc::c_int) as la_int64_t,
         );
         archive_entry_set_gid(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET as isize)
-                as libc::c_int
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET + 1 as libc::c_int)
-                        as isize,
-                ) as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET as isize) as libc::c_int
+                + *header
+                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET + 1 as libc::c_int) as isize)
+                    as libc::c_int
                     * 256 as libc::c_int) as la_int64_t,
         );
         archive_entry_set_nlink(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET as isize)
-                as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET as isize) as libc::c_int
                 + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET + 1 as libc::c_int)
-                        as isize,
+                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET + 1 as libc::c_int) as isize,
                 ) as libc::c_int
                     * 256 as libc::c_int) as libc::c_uint,
         );
         archive_entry_set_rdev(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET as isize)
-                as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET as isize) as libc::c_int
                 + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET + 1 as libc::c_int)
-                        as isize,
+                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET + 1 as libc::c_int) as isize,
                 ) as libc::c_int
                     * 256 as libc::c_int) as dev_t,
         );
@@ -1357,26 +1277,20 @@ extern "C" fn header_bin_le(
             le4(header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_MTIME_OFFSET as isize)),
             0 as libc::c_int as libc::c_long,
         );
-        *namelength = (*header.offset(
-            ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET as isize,
-        ) as libc::c_int
+        *namelength = (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET as isize)
+            as libc::c_int
             + *header.offset(
-                (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET
-                    + 1 as libc::c_int) as isize,
+                (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET + 1 as libc::c_int) as isize,
             ) as libc::c_int
                 * 256 as libc::c_int) as size_t;
         *name_pad = *namelength & 1 as libc::c_int as libc::c_ulong;
-        (*cpio).entry_bytes_remaining = le4(header.offset(
-            ARCHIVE_CPIO_DEFINED_PARAM.BIN_FILESIZE_OFFSET as isize,
-        ));
+        (*cpio).entry_bytes_remaining =
+            le4(header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_FILESIZE_OFFSET as isize));
     }
     let cpio_safe = unsafe { &mut *cpio };
     archive_entry_set_size_safe(entry, cpio_safe.entry_bytes_remaining);
     cpio_safe.entry_padding = cpio_safe.entry_bytes_remaining & 1 as libc::c_int as libc::c_long;
-    __archive_read_consume_safe(
-        a,
-        ARCHIVE_CPIO_DEFINED_PARAM.BIN_HEADER_SIZE as int64_t,
-    );
+    __archive_read_consume_safe(a, ARCHIVE_CPIO_DEFINED_PARAM.BIN_HEADER_SIZE as int64_t);
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
 }
 extern "C" fn header_bin_be(
@@ -1411,32 +1325,26 @@ extern "C" fn header_bin_be(
     unsafe {
         archive_entry_set_dev(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET as isize)
-                as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET as isize) as libc::c_int
                 * 256 as libc::c_int
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET + 1 as libc::c_int)
-                        as isize,
-                ) as libc::c_int) as dev_t,
+                + *header
+                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET + 1 as libc::c_int) as isize)
+                    as libc::c_int) as dev_t,
         );
         archive_entry_set_ino(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET as isize)
-                as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET as isize) as libc::c_int
                 * 256 as libc::c_int
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET + 1 as libc::c_int)
-                        as isize,
-                ) as libc::c_int) as la_int64_t,
+                + *header
+                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET + 1 as libc::c_int) as isize)
+                    as libc::c_int) as la_int64_t,
         );
         archive_entry_set_mode(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET as isize)
-                as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET as isize) as libc::c_int
                 * 256 as libc::c_int
                 + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET + 1 as libc::c_int)
-                        as isize,
+                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET + 1 as libc::c_int) as isize,
                 ) as libc::c_int) as mode_t,
         );
         if (*cpio).option_pwb != 0 {
@@ -1445,55 +1353,45 @@ extern "C" fn header_bin_be(
                 entry,
                 archive_entry_mode(entry) & 0o67777 as libc::c_int as libc::c_uint,
             ); /* Pad to even. */
-            if archive_entry_mode(entry)
-                & ARCHIVE_CPIO_DEFINED_PARAM.ae_ifmt as mode_t
+            if archive_entry_mode(entry) & ARCHIVE_CPIO_DEFINED_PARAM.ae_ifmt as mode_t
                 == 0 as libc::c_int as libc::c_uint
             {
                 archive_entry_set_mode(
                     entry,
-                    archive_entry_mode(entry)
-                        | ARCHIVE_CPIO_DEFINED_PARAM.ae_ifreg as mode_t,
+                    archive_entry_mode(entry) | ARCHIVE_CPIO_DEFINED_PARAM.ae_ifreg as mode_t,
                 ); /* Pad to even. */
             }
         }
         archive_entry_set_uid(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET as isize)
-                as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET as isize) as libc::c_int
                 * 256 as libc::c_int
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET + 1 as libc::c_int)
-                        as isize,
-                ) as libc::c_int) as la_int64_t,
+                + *header
+                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET + 1 as libc::c_int) as isize)
+                    as libc::c_int) as la_int64_t,
         );
         archive_entry_set_gid(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET as isize)
-                as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET as isize) as libc::c_int
                 * 256 as libc::c_int
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET + 1 as libc::c_int)
-                        as isize,
-                ) as libc::c_int) as la_int64_t,
+                + *header
+                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET + 1 as libc::c_int) as isize)
+                    as libc::c_int) as la_int64_t,
         );
         archive_entry_set_nlink(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET as isize)
-                as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET as isize) as libc::c_int
                 * 256 as libc::c_int
                 + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET + 1 as libc::c_int)
-                        as isize,
+                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET + 1 as libc::c_int) as isize,
                 ) as libc::c_int) as libc::c_uint,
         );
         archive_entry_set_rdev(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET as isize)
-                as libc::c_int
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET as isize) as libc::c_int
                 * 256 as libc::c_int
                 + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET + 1 as libc::c_int)
-                        as isize,
+                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET + 1 as libc::c_int) as isize,
                 ) as libc::c_int) as dev_t,
         );
         archive_entry_set_mtime(
@@ -1501,26 +1399,20 @@ extern "C" fn header_bin_be(
             be4(header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_MTIME_OFFSET as isize)),
             0 as libc::c_int as libc::c_long,
         );
-        *namelength = (*header.offset(
-            ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET as isize,
-        ) as libc::c_int
+        *namelength = (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET as isize)
+            as libc::c_int
             * 256 as libc::c_int
             + *header.offset(
-                (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET
-                    + 1 as libc::c_int) as isize,
+                (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET + 1 as libc::c_int) as isize,
             ) as libc::c_int) as size_t;
         *name_pad = *namelength & 1 as libc::c_int as libc::c_ulong;
-        (*cpio).entry_bytes_remaining = be4(header.offset(
-            ARCHIVE_CPIO_DEFINED_PARAM.BIN_FILESIZE_OFFSET as isize,
-        ));
+        (*cpio).entry_bytes_remaining =
+            be4(header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_FILESIZE_OFFSET as isize));
     }
     let cpio_safe = unsafe { &mut *cpio };
     archive_entry_set_size_safe(entry, cpio_safe.entry_bytes_remaining);
     cpio_safe.entry_padding = cpio_safe.entry_bytes_remaining & 1 as libc::c_int as libc::c_long;
-    __archive_read_consume_safe(
-        a,
-        ARCHIVE_CPIO_DEFINED_PARAM.BIN_HEADER_SIZE as int64_t,
-    );
+    __archive_read_consume_safe(a, ARCHIVE_CPIO_DEFINED_PARAM.BIN_HEADER_SIZE as int64_t);
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
 }
 extern "C" fn archive_read_format_cpio_cleanup(mut a: *mut archive_read) -> libc::c_int {

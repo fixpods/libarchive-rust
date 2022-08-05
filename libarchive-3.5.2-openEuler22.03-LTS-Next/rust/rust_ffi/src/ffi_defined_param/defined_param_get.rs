@@ -1,10 +1,10 @@
 extern "C" {
     fn get_archive_empty_defined_param() -> archive_empty_defined_param;
-    
+
     fn get_archive_iso9660_defined_param() -> archive_iso9660_defined_param;
-    
+
     fn get_archive_lha_defined_param() -> archive_lha_defined_param;
-    
+
     fn get_archive_raw_defined_param() -> archive_raw_defined_param;
 
     fn get_archive_rar_defined_param() -> archive_rar_defined_param;
@@ -16,9 +16,9 @@ extern "C" {
 
     fn get_archive_warc_defined_param() -> archive_warc_defined_param;
 
-    fn get_archive_xar_defined_param() ->archive_xar_defined_param;
+    fn get_archive_xar_defined_param() -> archive_xar_defined_param;
 
-    fn get_archive_tar_defined_param() ->archive_tar_defined_param;
+    fn get_archive_tar_defined_param() -> archive_tar_defined_param;
 
     fn get_archive_by_code_defined_param() -> archive_by_code_defined_param;
 
@@ -339,61 +339,60 @@ pub struct archive_rar5_defined_param {
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
-pub struct archive_acl_defined_param{
+pub struct archive_acl_defined_param {
     pub archive_ok: libc::c_int,
     pub archvie_failed: libc::c_int,
-	pub archive_fatal: libc::c_int,
-	pub archive_warn: libc::c_int,
-	pub archive_eof: libc::c_int,
-	pub enomem: libc::c_int,
-	pub archive_entry_acl_append_data: libc::c_int,
-	pub archive_entry_acl_delete: libc::c_int,
-	pub archive_entry_acl_delete_child: libc::c_int,
-	pub archive_entry_acl_read_attributes: libc::c_int,
-	pub archive_entry_acl_read_named_attrs: libc::c_int,
-	pub archive_entry_acl_read: libc::c_int,
-	pub archive_entry_acl_read_data: libc::c_int,
-	pub archive_entry_acl_write: libc::c_int,
-	pub archive_entry_acl_write_named_attrs: libc::c_int,
-	pub archive_entry_acl_write_attributes: libc::c_int,
-	pub archive_entry_acl_write_owner: libc::c_int,
-	pub archive_entry_acl_synchronize: libc::c_int,
-	pub archive_entry_acl_write_data: libc::c_int,
-	pub archive_entry_acl_execute: libc::c_int,
-	pub archive_entry_acl_everyone: libc::c_int,
-	pub archive_entry_acl_mask: libc::c_int,
-	pub archive_entry_acl_other: libc::c_int,
-	pub archive_entry_acl_user: libc::c_int,
-	pub archive_entry_acl_group: libc::c_int,
-	pub archive_entry_acl_user_obj: libc::c_int,
-	pub archive_entry_acl_group_obj: libc::c_int,
-	pub archive_entry_acl_type_allow: libc::c_int,
-	pub archive_entry_acl_type_alram: libc::c_int,
-	pub archive_entry_acl_type_audit: libc::c_int,
-	pub archive_entry_acl_type_deny: libc::c_int,
-	pub archive_entry_acl_type_nfs4: libc::c_int,
-	pub archive_entry_acl_type_posix1e: libc::c_int,
-	pub archive_entry_acl_type_access: libc::c_int,
-	pub archive_entry_acl_type_default: libc::c_int,
-	pub archive_entry_acl_perms_nfs4: libc::c_int,
-	pub archive_entry_acl_perms_posix1e: libc::c_int,
-	pub archive_entry_acl_inheritance_nfs4: libc::c_int,
-	pub archive_entry_acl_style_compact: libc::c_int,
-	pub archive_entry_acl_style_extra_id: libc::c_int,
-	pub archive_entry_acl_style_solaris: libc::c_int,
-	pub archive_entry_acl_style_mark_default: libc::c_int,
-	pub archive_entry_acl_style_separator_comma: libc::c_int,
-	pub archive_entry_acl_entry_file_inherit: libc::c_int,
-	pub archive_entry_acl_entry_directory_inherit: libc::c_int,
-	pub archive_entry_acl_entry_inherit_only: libc::c_int,
-	pub archive_entry_acl_entry_no_propagate_inherit: libc::c_int,
-	pub archive_entry_acl_entry_successful_access: libc::c_int,
-	pub archive_entry_acl_entry_failed_access: libc::c_int,
-	pub archive_entry_acl_entry_inherited: libc::c_int,
-	pub archive_entry_acl_read_acl:libc::c_int,
-	pub archive_entry_acl_write_acl:libc::c_int,
+    pub archive_fatal: libc::c_int,
+    pub archive_warn: libc::c_int,
+    pub archive_eof: libc::c_int,
+    pub enomem: libc::c_int,
+    pub archive_entry_acl_append_data: libc::c_int,
+    pub archive_entry_acl_delete: libc::c_int,
+    pub archive_entry_acl_delete_child: libc::c_int,
+    pub archive_entry_acl_read_attributes: libc::c_int,
+    pub archive_entry_acl_read_named_attrs: libc::c_int,
+    pub archive_entry_acl_read: libc::c_int,
+    pub archive_entry_acl_read_data: libc::c_int,
+    pub archive_entry_acl_write: libc::c_int,
+    pub archive_entry_acl_write_named_attrs: libc::c_int,
+    pub archive_entry_acl_write_attributes: libc::c_int,
+    pub archive_entry_acl_write_owner: libc::c_int,
+    pub archive_entry_acl_synchronize: libc::c_int,
+    pub archive_entry_acl_write_data: libc::c_int,
+    pub archive_entry_acl_execute: libc::c_int,
+    pub archive_entry_acl_everyone: libc::c_int,
+    pub archive_entry_acl_mask: libc::c_int,
+    pub archive_entry_acl_other: libc::c_int,
+    pub archive_entry_acl_user: libc::c_int,
+    pub archive_entry_acl_group: libc::c_int,
+    pub archive_entry_acl_user_obj: libc::c_int,
+    pub archive_entry_acl_group_obj: libc::c_int,
+    pub archive_entry_acl_type_allow: libc::c_int,
+    pub archive_entry_acl_type_alram: libc::c_int,
+    pub archive_entry_acl_type_audit: libc::c_int,
+    pub archive_entry_acl_type_deny: libc::c_int,
+    pub archive_entry_acl_type_nfs4: libc::c_int,
+    pub archive_entry_acl_type_posix1e: libc::c_int,
+    pub archive_entry_acl_type_access: libc::c_int,
+    pub archive_entry_acl_type_default: libc::c_int,
+    pub archive_entry_acl_perms_nfs4: libc::c_int,
+    pub archive_entry_acl_perms_posix1e: libc::c_int,
+    pub archive_entry_acl_inheritance_nfs4: libc::c_int,
+    pub archive_entry_acl_style_compact: libc::c_int,
+    pub archive_entry_acl_style_extra_id: libc::c_int,
+    pub archive_entry_acl_style_solaris: libc::c_int,
+    pub archive_entry_acl_style_mark_default: libc::c_int,
+    pub archive_entry_acl_style_separator_comma: libc::c_int,
+    pub archive_entry_acl_entry_file_inherit: libc::c_int,
+    pub archive_entry_acl_entry_directory_inherit: libc::c_int,
+    pub archive_entry_acl_entry_inherit_only: libc::c_int,
+    pub archive_entry_acl_entry_no_propagate_inherit: libc::c_int,
+    pub archive_entry_acl_entry_successful_access: libc::c_int,
+    pub archive_entry_acl_entry_failed_access: libc::c_int,
+    pub archive_entry_acl_entry_inherited: libc::c_int,
+    pub archive_entry_acl_read_acl: libc::c_int,
+    pub archive_entry_acl_write_acl: libc::c_int,
 }
-
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
@@ -457,12 +456,12 @@ pub struct archive_xar_defined_param {
     pub archive_format_xar: libc::c_int,
     pub seek_set: libc::c_int,
     pub ae_ifreg: libc::c_uint,
-    pub ae_ifmt : libc::c_uint,
+    pub ae_ifmt: libc::c_uint,
     pub ae_ifdir: libc::c_uint,
     pub ae_iflnk: libc::c_uint,
-    pub ae_ifchr : libc::c_uint,
+    pub ae_ifchr: libc::c_uint,
     pub ae_ifblk: libc::c_uint,
-    pub ae_ifsock : libc::c_uint,
+    pub ae_ifsock: libc::c_uint,
     pub ae_ififo: libc::c_uint,
 }
 
@@ -496,8 +495,8 @@ pub struct archive_tar_defined_param {
     pub sconv_set_opt_utf8_libarchive2x: libc::c_int,
     pub archive_entry_acl_type_default: libc::c_int,
     pub ae_symlink_type_directory: libc::c_int,
-    pub archive_retry:libc::c_int,
-    pub ae_symlink_type_file:libc::c_int,
+    pub archive_retry: libc::c_int,
+    pub ae_symlink_type_file: libc::c_int,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -515,70 +514,70 @@ pub struct archive_cab_defined_param {
     pub archive_failed: libc::c_int,
     pub archive_eof: libc::c_int,
     pub archive_errno_misc: libc::c_int,
-	pub archive_errno_file_format: libc::c_int,
-	pub attr_name_is_utf: libc::c_int,
-	pub archive_format_cab: libc::c_int,
-	pub cfheader_signature: libc::c_int,
-	pub cfheader_cbcabinet: libc::c_int,
-	pub cfheader_cofffiles: libc::c_int,
-	pub cfheader_versionminor: libc::c_int,
-	pub cfheader_cfolders: libc::c_int,
-	pub cfheader_cfiles: libc::c_int,
-	pub cfheader_flags: libc::c_int,
-	pub cfheader_setid: libc::c_int,
-	pub cfheader_icabinet: libc::c_int,
-	pub cfheader_cbcfheader: libc::c_int,
-	pub cfheader_cbcffolder: libc::c_int,
-	pub cfheader_cbcfdata: libc::c_int,
-	pub prev_cabinet: libc::c_int,
-	pub next_cabinet: libc::c_int,
-	pub reserve_present: libc::c_int,
-	pub cffolder_coffcabstart: libc::c_int,
-	pub cffolder_ccfdata: libc::c_int,
-	pub cffolder_typecompress: libc::c_int,
-	pub cffile_cbfile: libc::c_int,
-	pub cffile_uofffolderstart: libc::c_int,
-	pub cffile_ifolder: libc::c_int,
-	pub cffile_date_time: libc::c_int,
-	pub cffile_attribs: libc::c_int,
-	pub enomem: libc::c_int,
-	pub attr_rdonly: libc::c_int,
-	pub ae_ifreg: libc::c_int,
-	pub cfdata_cbdata: libc::c_int,
-	pub cfdata_csum: libc::c_int,
-	pub cfdata_cbuncomp: libc::c_int,
-	pub comptype_none: libc::c_int,
-	pub z_ok: libc::c_int,
-	pub ifoldcontinued_prev_and_next: libc::c_int,
-	pub ifoldcontinued_from_prev: libc::c_int,
-	pub slot_base: libc::c_int,
-	pub slot_max: libc::c_int,
-	pub st_main: libc::c_int,
-	pub st_rd_translation: libc::c_int,
-	pub st_rd_translation_size: libc::c_int,
-	pub st_rd_block_type: libc::c_int,
-	pub st_rd_block_size: libc::c_int,
-	pub uncompressed_block: libc::c_int,
-	pub verbatim_block: libc::c_int,
-	pub st_rd_verbatim: libc::c_int,
-	pub st_rd_aligned_offset: libc::c_int,
-	pub st_rd_alignment: libc::c_int,
-	pub st_rd_r0: libc::c_int,
-	pub st_rd_r1: libc::c_int,
-	pub st_rd_r2: libc::c_int,
-	pub st_copy_uncomp1: libc::c_int,
-	pub st_copy_uncomp2: libc::c_int,
-	pub st_rd_pre_main_tree_256: libc::c_int,
-	pub st_main_tree_256: libc::c_int,
-	pub st_rd_pre_main_tree_rem: libc::c_int,
-	pub st_main_tree_rem: libc::c_int,
-	pub st_rd_pre_length_tree: libc::c_int,
-	pub st_length_tree: libc::c_int,
-	pub st_length: libc::c_int,
-	pub st_real_pos: libc::c_int,
-	pub aligned_offset_block: libc::c_int,
-	pub st_offset: libc::c_int,
-	pub st_copy: libc::c_int,
+    pub archive_errno_file_format: libc::c_int,
+    pub attr_name_is_utf: libc::c_int,
+    pub archive_format_cab: libc::c_int,
+    pub cfheader_signature: libc::c_int,
+    pub cfheader_cbcabinet: libc::c_int,
+    pub cfheader_cofffiles: libc::c_int,
+    pub cfheader_versionminor: libc::c_int,
+    pub cfheader_cfolders: libc::c_int,
+    pub cfheader_cfiles: libc::c_int,
+    pub cfheader_flags: libc::c_int,
+    pub cfheader_setid: libc::c_int,
+    pub cfheader_icabinet: libc::c_int,
+    pub cfheader_cbcfheader: libc::c_int,
+    pub cfheader_cbcffolder: libc::c_int,
+    pub cfheader_cbcfdata: libc::c_int,
+    pub prev_cabinet: libc::c_int,
+    pub next_cabinet: libc::c_int,
+    pub reserve_present: libc::c_int,
+    pub cffolder_coffcabstart: libc::c_int,
+    pub cffolder_ccfdata: libc::c_int,
+    pub cffolder_typecompress: libc::c_int,
+    pub cffile_cbfile: libc::c_int,
+    pub cffile_uofffolderstart: libc::c_int,
+    pub cffile_ifolder: libc::c_int,
+    pub cffile_date_time: libc::c_int,
+    pub cffile_attribs: libc::c_int,
+    pub enomem: libc::c_int,
+    pub attr_rdonly: libc::c_int,
+    pub ae_ifreg: libc::c_int,
+    pub cfdata_cbdata: libc::c_int,
+    pub cfdata_csum: libc::c_int,
+    pub cfdata_cbuncomp: libc::c_int,
+    pub comptype_none: libc::c_int,
+    pub z_ok: libc::c_int,
+    pub ifoldcontinued_prev_and_next: libc::c_int,
+    pub ifoldcontinued_from_prev: libc::c_int,
+    pub slot_base: libc::c_int,
+    pub slot_max: libc::c_int,
+    pub st_main: libc::c_int,
+    pub st_rd_translation: libc::c_int,
+    pub st_rd_translation_size: libc::c_int,
+    pub st_rd_block_type: libc::c_int,
+    pub st_rd_block_size: libc::c_int,
+    pub uncompressed_block: libc::c_int,
+    pub verbatim_block: libc::c_int,
+    pub st_rd_verbatim: libc::c_int,
+    pub st_rd_aligned_offset: libc::c_int,
+    pub st_rd_alignment: libc::c_int,
+    pub st_rd_r0: libc::c_int,
+    pub st_rd_r1: libc::c_int,
+    pub st_rd_r2: libc::c_int,
+    pub st_copy_uncomp1: libc::c_int,
+    pub st_copy_uncomp2: libc::c_int,
+    pub st_rd_pre_main_tree_256: libc::c_int,
+    pub st_main_tree_256: libc::c_int,
+    pub st_rd_pre_main_tree_rem: libc::c_int,
+    pub st_main_tree_rem: libc::c_int,
+    pub st_rd_pre_length_tree: libc::c_int,
+    pub st_length_tree: libc::c_int,
+    pub st_length: libc::c_int,
+    pub st_real_pos: libc::c_int,
+    pub aligned_offset_block: libc::c_int,
+    pub st_offset: libc::c_int,
+    pub st_copy: libc::c_int,
     pub cfheader_versionmajor: libc::c_int,
 }
 
@@ -642,6 +641,8 @@ pub struct archive_mtree_defined_param {
     pub int32_min: libc::c_longlong,
     pub time_t_min: libc::c_longlong,
     pub time_t_max: libc::c_longlong,
+    pub archive_read_magic: libc::c_uint,
+    pub archive_state_new: libc::c_uint,
 }
 
 #[derive(Copy, Clone)]
@@ -791,15 +792,14 @@ lazy_static! {
         unsafe { get_archive_rar_defined_param() };
     pub static ref ARCHIVE_RAR5_DEFINED_PARAM: archive_rar5_defined_param =
         unsafe { get_archive_rar5_defined_param() };
-    pub static ref ARCHIVE_AR_DEFINED_PARAM:archive_ar_defined_param=
+    pub static ref ARCHIVE_AR_DEFINED_PARAM: archive_ar_defined_param =
         unsafe { get_archive_ar_defined_param() };
-    pub static ref ARCHIVE_WARC_DEFINED_PARAM:archive_warc_defined_param=
-        unsafe {get_archive_warc_defined_param()};
-    pub static ref ARCHIVE_XAR_DEFINED_PARAM:archive_xar_defined_param=
-        unsafe {get_archive_xar_defined_param()};
-
-    pub static ref ARCHIVE_TAR_DEFINED_PARAM:archive_tar_defined_param=
-        unsafe {get_archive_tar_defined_param()};
+    pub static ref ARCHIVE_WARC_DEFINED_PARAM: archive_warc_defined_param =
+        unsafe { get_archive_warc_defined_param() };
+    pub static ref ARCHIVE_XAR_DEFINED_PARAM: archive_xar_defined_param =
+        unsafe { get_archive_xar_defined_param() };
+    pub static ref ARCHIVE_TAR_DEFINED_PARAM: archive_tar_defined_param =
+        unsafe { get_archive_tar_defined_param() };
     pub static ref ARCHIVE_ACL_DEFINED_PARAM: archive_acl_defined_param =
         unsafe { get_archive_acl_defined_param() };
     pub static ref ARCHIVE_BY_CODE_DEFINED_PARAM: archive_by_code_defined_param =

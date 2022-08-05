@@ -1,25 +1,18 @@
-use rust_ffi::ffi_struct::struct_transfer::* ;
-use rust_ffi::ffi_defined_param::defined_param_get::*;
-use rust_ffi::ffi_alias::alias_set::*;
-use rust_ffi::ffi_method::method_call::*;
-use rust_ffi::archive_set_error_safe;
 use archive_core::{
-    archive_read_support_format_ar::*,
-    archive_read_support_format_cpio::*,
-    archive_read_support_format_empty::*,
-    archive_read_support_format_lha::*,
-    archive_read_support_format_mtree::*,
-    archive_read_support_format_tar::*,
-    archive_read_support_format_xar::*,
-    archive_read_support_format_warc::*,
-    archive_read_support_format_7zip::*,
-    archive_read_support_format_cab::*,
-    archive_read_support_format_rar::*,
-    archive_read_support_format_rar5::*,
-    archive_read_support_format_iso9660::*,
+    archive_read_support_format_7zip::*, archive_read_support_format_ar::*,
+    archive_read_support_format_cab::*, archive_read_support_format_cpio::*,
+    archive_read_support_format_empty::*, archive_read_support_format_iso9660::*,
+    archive_read_support_format_lha::*, archive_read_support_format_mtree::*,
+    archive_read_support_format_rar::*, archive_read_support_format_rar5::*,
+    archive_read_support_format_raw::*, archive_read_support_format_tar::*,
+    archive_read_support_format_warc::*, archive_read_support_format_xar::*,
     archive_read_support_format_zip::*,
-    archive_read_support_format_raw::*,
 };
+use rust_ffi::archive_set_error_safe;
+use rust_ffi::ffi_alias::alias_set::*;
+use rust_ffi::ffi_defined_param::defined_param_get::*;
+use rust_ffi::ffi_method::method_call::*;
+use rust_ffi::ffi_struct::struct_transfer::*;
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_format_by_code(

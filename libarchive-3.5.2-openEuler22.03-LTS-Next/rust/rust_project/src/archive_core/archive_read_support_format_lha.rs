@@ -900,8 +900,8 @@ extern "C" fn lha_replace_path_separator(mut lha: &mut lha, mut entry: *mut arch
         );
         i = 0 as libc::c_int as size_t;
         while i < lha.ws.length {
-            if unsafe { *lha.ws.s.offset(i as isize) } == '\\' as i32 {
-                unsafe { *lha.ws.s.offset(i as isize) = '/' as i32 }
+            if unsafe { *lha.ws.s.offset(i as isize) } == '\\' as wchar_t {
+                unsafe { *lha.ws.s.offset(i as isize) = '/' as wchar_t }
             }
             i = i.wrapping_add(1)
         }
@@ -921,8 +921,8 @@ extern "C" fn lha_replace_path_separator(mut lha: &mut lha, mut entry: *mut arch
         );
         i = 0 as libc::c_int as size_t;
         while i < lha.ws.length {
-            if unsafe { *lha.ws.s.offset(i as isize) } == '\\' as i32 {
-                unsafe { *lha.ws.s.offset(i as isize) = '/' as i32 }
+            if unsafe { *lha.ws.s.offset(i as isize) } == '\\' as wchar_t {
+                unsafe { *lha.ws.s.offset(i as isize) = '/' as wchar_t }
             }
             i = i.wrapping_add(1)
         }
@@ -2070,7 +2070,7 @@ extern "C" fn lha_parse_linkname(
     mut linkname: &mut archive_wstring,
     mut pathname: &mut archive_wstring,
 ) -> libc::c_int {
-    let mut linkptr = unsafe { &mut *wcschr_safe(pathname.s, '|' as i32) };
+    let mut linkptr = unsafe { &mut *wcschr_safe(pathname.s, '|' as wchar_t) };
     let mut symlen: size_t = 0;
     if !(linkptr as *mut wchar_t).is_null() {
         symlen =
@@ -2081,7 +2081,7 @@ extern "C" fn lha_parse_linkname(
             unsafe { (linkptr as *mut wchar_t).offset(1 as libc::c_int as isize) },
             symlen,
         );
-        *linkptr = 0 as libc::c_int;
+        *linkptr = 0 as wchar_t;
         pathname.length = wcslen_safe(pathname.s);
         return 1 as libc::c_int;
     }

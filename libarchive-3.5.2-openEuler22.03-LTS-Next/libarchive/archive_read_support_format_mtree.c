@@ -189,6 +189,8 @@ struct archive_mtree_defined_param
 	long int int32_min;
 	long int time_t_min;
 	long int time_t_max;
+	unsigned int archive_read_magic;
+	unsigned int archive_state_new;
 };
 
 struct archive_mtree_defined_param get_archive_mtree_defined_param();
@@ -256,6 +258,8 @@ struct archive_mtree_defined_param get_archive_mtree_defined_param()
 #if defined(TIME_T_MAX)
 	defined_param.time_t_max = TIME_T_MAX;
 #endif
+	defined_param.archive_read_magic = ARCHIVE_READ_MAGIC;
+	defined_param.archive_state_new = ARCHIVE_STATE_NEW;
 	return defined_param;
 }
 

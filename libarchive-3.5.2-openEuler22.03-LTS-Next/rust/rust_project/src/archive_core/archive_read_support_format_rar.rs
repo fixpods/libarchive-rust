@@ -1271,7 +1271,7 @@ extern "C" fn read_header(
     if sconv.is_null() {
         if safe_rar.init_default_conversion == 0 {
             safe_rar.sconv_default =
-                unsafe{archive_string_default_conversion_for_read(&mut safe_a.archive)};
+                unsafe { archive_string_default_conversion_for_read(&mut safe_a.archive) };
             safe_rar.init_default_conversion = 1 as libc::c_int
         }
         sconv = safe_rar.sconv_default

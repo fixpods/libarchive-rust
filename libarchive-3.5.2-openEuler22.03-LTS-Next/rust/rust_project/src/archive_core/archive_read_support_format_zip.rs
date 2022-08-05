@@ -1,11 +1,10 @@
-use rust_ffi::ffi_struct::struct_transfer::* ;
-use rust_ffi::ffi_alias::alias_set::*;
 use archive_core::archive_endian::*;
+use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
+use rust_ffi::ffi_struct::struct_transfer::*;
 
 use super::archive_string::archive_string_default_conversion_for_read;
-
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -44,7 +43,6 @@ pub struct zip {
     pub uncompressed_buffer: *mut libc::c_uchar,
     pub uncompressed_buffer_size: size_t,
 
-    
     #[cfg(HAVE_ZLIB_H)]
     pub stream: z_stream,
     #[cfg(HAVE_ZLIB_H)]
@@ -1168,7 +1166,7 @@ extern "C" fn zip_read_local_file_header(
     /* Setup default conversion. */
     if safe_zip.sconv.is_null() && safe_zip.init_default_conversion == 0 {
         safe_zip.sconv_default =
-            unsafe{archive_string_default_conversion_for_read(&mut safe_a.archive)};
+            unsafe { archive_string_default_conversion_for_read(&mut safe_a.archive) };
         safe_zip.init_default_conversion = 1 as libc::c_int
     }
     p = __archive_read_ahead_safe(a, 30 as libc::c_int as size_t, 0 as *mut ssize_t)
@@ -1334,7 +1332,8 @@ extern "C" fn zip_read_local_file_header(
         wp = archive_entry_pathname_w_safe(entry);
         !wp.is_null()
     } {
-        if wcschr_safe(wp, '/' as i32).is_null() && !wcschr_safe(wp, '\\' as i32).is_null() {
+        if wcschr_safe(wp, '/' as wchar_t).is_null() && !wcschr_safe(wp, '\\' as wchar_t).is_null()
+        {
             let mut i: size_t = 0;
             let mut s: archive_wstring = archive_wstring {
                 s: 0 as *mut wchar_t,
@@ -1357,8 +1356,8 @@ extern "C" fn zip_read_local_file_header(
             i = 0 as libc::c_int as size_t;
             unsafe {
                 while i < s.length {
-                    if *s.s.offset(i as isize) == '\\' as i32 {
-                        *s.s.offset(i as isize) = '/' as i32
+                    if *s.s.offset(i as isize) == '\\' as wchar_t {
+                        *s.s.offset(i as isize) = '/' as wchar_t
                     }
                     i = i.wrapping_add(1)
                 }
@@ -1380,7 +1379,7 @@ extern "C" fn zip_read_local_file_header(
             has_slash = unsafe {
                 (len > 0 as libc::c_int as libc::c_ulong
                     && *wp.offset(len.wrapping_sub(1 as libc::c_int as libc::c_ulong) as isize)
-                        == '/' as i32) as libc::c_int
+                        == '/' as wchar_t) as libc::c_int
             }
         } else {
             cp = archive_entry_pathname_safe(entry);
@@ -1422,7 +1421,7 @@ extern "C" fn zip_read_local_file_header(
             if unsafe {
                 len > 0 as libc::c_int as libc::c_ulong
                     && *wp.offset(len.wrapping_sub(1 as libc::c_int as libc::c_ulong) as isize)
-                        != '/' as i32
+                        != '/' as wchar_t
             } {
                 let mut s_0: archive_wstring = archive_wstring {
                     s: 0 as *mut wchar_t,
@@ -1433,7 +1432,7 @@ extern "C" fn zip_read_local_file_header(
                 s_0.length = 0 as libc::c_int as size_t;
                 s_0.buffer_length = 0 as libc::c_int as size_t;
                 archive_wstrcat_safe(&mut s_0, wp);
-                archive_wstrappend_wchar_safe(&mut s_0, '/' as i32);
+                archive_wstrappend_wchar_safe(&mut s_0, '/' as wchar_t);
                 archive_entry_copy_pathname_w_safe(entry, s_0.s);
                 archive_wstring_free_safe(&mut s_0);
             }

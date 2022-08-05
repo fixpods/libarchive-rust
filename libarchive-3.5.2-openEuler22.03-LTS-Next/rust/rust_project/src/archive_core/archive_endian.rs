@@ -94,10 +94,10 @@ pub extern "C" fn archive_le32enc(mut pp: *mut libc::c_void, mut u: uint32_t) {
 #[inline]
 pub extern "C" fn archive_be16enc(mut pp: *mut libc::c_void, mut u: uint16_t) {
     let mut p: *mut libc::c_uchar = pp as *mut libc::c_uchar;
-    unsafe{
-    *p.offset(0 as libc::c_int as isize) =
-        (u as libc::c_int >> 8 as libc::c_int & 0xff as libc::c_int) as libc::c_uchar;
-    *p.offset(1 as libc::c_int as isize) =
-        (u as libc::c_int & 0xff as libc::c_int) as libc::c_uchar;
+    unsafe {
+        *p.offset(0 as libc::c_int as isize) =
+            (u as libc::c_int >> 8 as libc::c_int & 0xff as libc::c_int) as libc::c_uchar;
+        *p.offset(1 as libc::c_int as isize) =
+            (u as libc::c_int & 0xff as libc::c_int) as libc::c_uchar;
     }
 }

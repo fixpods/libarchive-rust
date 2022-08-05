@@ -43,7 +43,6 @@ pub type lzma_reserved_enum = libc::c_uint;
 pub type lzma_ret = libc::c_uint;
 pub type lzma_action = libc::c_uint;
 
-
 pub type UInt16 = libc::c_ushort;
 pub type UInt32 = libc::c_uint;
 pub type CPpmd_Void_Ref = UInt32;
@@ -51,7 +50,6 @@ pub type Int32 = libc::c_int;
 pub type CPpmd8_Context_Ref = UInt32;
 pub type CPpmd_State_Ref = UInt32;
 pub type Bool = libc::c_int;
-
 
 pub type __syscall_slong_t = libc::c_long;
 pub type __ino_t = libc::c_ulong;
@@ -62,6 +60,8 @@ pub type __blkcnt_t = libc::c_long;
 pub type __uintmax_t = libc::c_ulong;
 pub type uintmax_t = __uintmax_t;
 pub const _ISprint_m: libc::c_uint = 16384;
+
+pub type stat = libc::stat;
 
 pub type UInt64 = libc::c_ulonglong;
 pub type __int8_t = libc::c_schar;
@@ -155,7 +155,7 @@ pub type CDE_RETURN_VALUES = libc::c_uint;
 pub type HEADER_FLAGS = libc::c_uint;
 pub const HFL_INHERITED: HEADER_FLAGS = 64;
 pub const HFL_CHILD: HEADER_FLAGS = 32;
-pub const SIZE_MAX: size_t=1<<31;
+pub const SIZE_MAX: size_t = 1 << 31;
 
 pub type C2RustUnnamed = libc::c_uint;
 pub const _ISalnum: C2RustUnnamed = 8;
@@ -171,7 +171,6 @@ pub const _ISalpha: C2RustUnnamed = 1024;
 pub const _ISlower: C2RustUnnamed = 512;
 pub const _ISupper: C2RustUnnamed = 256;
 
-
 pub const LAST_WT: warc_type_t = 9;
 pub const WT_CONT: warc_type_t = 8;
 pub const WT_CONV: warc_type_t = 7;
@@ -185,25 +184,21 @@ pub const WT_RSP: warc_type_t = 5;
 pub const WT_RSRC: warc_type_t = 3;
 pub type warc_type_t = libc::c_uint;
 
-
 pub type xmlChar = libc::c_uchar;
-pub type xmlInputCloseCallback
-=
-Option<unsafe extern "C" fn(_: *mut libc::c_void) -> libc::c_int>;
-pub type xmlInputReadCallback
-=
-Option<unsafe extern "C" fn(_: *mut libc::c_void, _: *mut libc::c_char,
-                            _: libc::c_int) -> libc::c_int>;
+pub type xmlInputCloseCallback = Option<unsafe extern "C" fn(_: *mut libc::c_void) -> libc::c_int>;
+pub type xmlInputReadCallback = Option<
+    unsafe extern "C" fn(_: *mut libc::c_void, _: *mut libc::c_char, _: libc::c_int) -> libc::c_int,
+>;
 pub type xmlParserSeverities = libc::c_uint;
-pub const HEADER_MAGIC:libc::c_int=0x78617221;
-pub const HEADER_SIZE:libc::c_int=28;
-pub const HEADER_VERSION:libc::c_int=1;
-pub const CKSUM_SHA1:libc::c_int=1;
-pub const CKSUM_NONE:libc::c_int=0;
-pub const CKSUM_MD5:libc::c_int=2;
-pub const MD5_SIZE:libc::c_int=16;
-pub const SHA1_SIZE:libc::c_int=20;
-pub const MAX_SUM_SIZE:libc::c_int=20;
+pub const HEADER_MAGIC: libc::c_int = 0x78617221;
+pub const HEADER_SIZE: libc::c_int = 28;
+pub const HEADER_VERSION: libc::c_int = 1;
+pub const CKSUM_SHA1: libc::c_int = 1;
+pub const CKSUM_NONE: libc::c_int = 0;
+pub const CKSUM_MD5: libc::c_int = 2;
+pub const MD5_SIZE: libc::c_int = 16;
+pub const SHA1_SIZE: libc::c_int = 20;
+pub const MAX_SUM_SIZE: libc::c_int = 20;
 pub const XML_PARSER_SEVERITY_ERROR: xmlParserSeverities = 4;
 pub const XML_PARSER_SEVERITY_WARNING: xmlParserSeverities = 3;
 pub const XML_PARSER_SEVERITY_VALIDITY_ERROR: xmlParserSeverities = 2;
@@ -227,8 +222,6 @@ pub const XML_READER_TYPE_TEXT: C2RustUnnamed = 3;
 pub const XML_READER_TYPE_ATTRIBUTE: C2RustUnnamed = 2;
 pub const XML_READER_TYPE_ELEMENT: C2RustUnnamed = 1;
 pub const XML_READER_TYPE_NONE: C2RustUnnamed = 0;
-
-
 
 pub const LZMA_RESERVED_ENUM: lzma_reserved_enum = 0;
 pub const LZMA_PROG_ERROR: lzma_ret = 11;
@@ -640,27 +633,26 @@ pub const BZIP2: enctype = 2;
 pub const GZIP: enctype = 1;
 pub const NONE: enctype = 0;
 
-
 pub type xmlstatus = libc::c_uint;
 pub const UNKNOWN: xmlstatus = 77;
-pub const HAS_DATA:libc::c_uint=0x00001;
-pub const HAS_PATHNAME:libc::c_uint=0x00002;
-pub const HAS_SYMLINK:libc::c_uint=	0x00004;
-pub const HAS_TIME:libc::c_uint= 0x00008;
-pub const HAS_UID:libc::c_uint=	0x00010;
-pub const HAS_GID:libc::c_uint=	0x00020;
-pub const HAS_MODE:libc::c_uint=0x00040;
-pub const HAS_TYPE:libc::c_uint=0x00080;
-pub const HAS_DEV:libc::c_uint=	0x00100;
-pub const HAS_DEVMAJOR:libc::c_uint=0x00200;
-pub const HAS_DEVMINOR:libc::c_uint=0x00400;
-pub const HAS_INO:libc::c_uint=	0x00800;
-pub const HAS_FFLAGS:libc::c_uint=0x01000;
-pub const HAS_XATTR:libc::c_uint=0x02000;
-pub const HAS_ACL:libc::c_uint=0x04000;
-pub const HAS_CTIME_XAR:libc::c_uint=0x08000;
-pub const HAS_MTIME_XAR:libc::c_uint=0x10000;
-pub const HAS_ATIME_XAR:libc::c_uint=0x20000;
+pub const HAS_DATA: libc::c_uint = 0x00001;
+pub const HAS_PATHNAME: libc::c_uint = 0x00002;
+pub const HAS_SYMLINK: libc::c_uint = 0x00004;
+pub const HAS_TIME: libc::c_uint = 0x00008;
+pub const HAS_UID: libc::c_uint = 0x00010;
+pub const HAS_GID: libc::c_uint = 0x00020;
+pub const HAS_MODE: libc::c_uint = 0x00040;
+pub const HAS_TYPE: libc::c_uint = 0x00080;
+pub const HAS_DEV: libc::c_uint = 0x00100;
+pub const HAS_DEVMAJOR: libc::c_uint = 0x00200;
+pub const HAS_DEVMINOR: libc::c_uint = 0x00400;
+pub const HAS_INO: libc::c_uint = 0x00800;
+pub const HAS_FFLAGS: libc::c_uint = 0x01000;
+pub const HAS_XATTR: libc::c_uint = 0x02000;
+pub const HAS_ACL: libc::c_uint = 0x04000;
+pub const HAS_CTIME_XAR: libc::c_uint = 0x08000;
+pub const HAS_MTIME_XAR: libc::c_uint = 0x10000;
+pub const HAS_ATIME_XAR: libc::c_uint = 0x20000;
 pub const FILE_EXT2_Reserved: xmlstatus = 76;
 pub const FILE_EXT2_TopDir: xmlstatus = 75;
 pub const FILE_EXT2_DirSync: xmlstatus = 74;

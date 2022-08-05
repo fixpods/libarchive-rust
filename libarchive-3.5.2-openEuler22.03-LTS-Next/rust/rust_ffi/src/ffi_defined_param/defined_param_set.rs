@@ -104,20 +104,18 @@ fn c_debug_add_cfg() {
     }
 }
 
-
-
 fn have_libxml_xmlreader_h_add_cfg() {
     if unsafe { get_have_libxml_xmlreader_h() } == 1 as libc::c_int {
         println!("cargo:rustc-cfg=HAVE_LIBXML_XMLREADER_H");
     }
 }
-fn have_bsdxml_h_add_cfg(){
-    if unsafe { get_have_bsdxml_h() } == 1 as libc::c_int{
+fn have_bsdxml_h_add_cfg() {
+    if unsafe { get_have_bsdxml_h() } == 1 as libc::c_int {
         println!("cargo:rustc-cfg=HAVE_BSDXML_H");
     }
 }
-fn have_expat_h_add_cfg(){
-    if unsafe { get_have_expat_h() } == 1 as libc::c_int{
+fn have_expat_h_add_cfg() {
+    if unsafe { get_have_expat_h() } == 1 as libc::c_int {
         println!("cargo:rustc-cfg=HAVE_EXPAT_H");
     }
 }
@@ -138,7 +136,6 @@ fn archive_has_sha1_add_cfg() {
         println!("cargo:rustc-cfg=ARCHIVE_HAS_SHA1");
     }
 }
-
 
 fn debug_print_toc_add_cfg() {
     if unsafe { get_debug_print_toc() } == 1 as libc::c_int {
@@ -279,30 +276,30 @@ fn have_s_ififo() {
 }
 
 fn have_iconv_add_cfg() {
-    if unsafe{get_have_iconv()}==1 as libc::c_int{
+    if unsafe { get_have_iconv() } == 1 as libc::c_int {
         println!("cargo:rustc-cfg=HAVE_ICONV");
     }
 }
 
-fn have_localtime_r_add_cfg(){
+fn have_localtime_r_add_cfg() {
     if unsafe { get_have_localtime_r() } == 1 as libc::c_int {
         println!("cargo:rustc-cfg=HAVE_LOCALTIME_R");
     }
 }
 
-fn have__localtime64_s_add_cfg(){
+fn have__localtime64_s_add_cfg() {
     if unsafe { get_have__localtime64_s() } == 1 as libc::c_int {
         println!("cargo:rustc-cfg=HAVE__LOCALTIME64_S");
     }
 }
 
-fn have_check_crc_on_solid_skip_add_cfg(){
+fn have_check_crc_on_solid_skip_add_cfg() {
     if unsafe { get_check_crc_on_solid_skip() } == 1 as libc::c_int {
         println!("cargo:rustc-cfg=CHECK_CRC_ON_SOLID_SKIP");
     }
 }
 
-fn have_dont_fail_on_crc_error_add_cfg(){
+fn have_dont_fail_on_crc_error_add_cfg() {
     if unsafe { get_dont_fail_on_crc_error() } == 1 as libc::c_int {
         println!("cargo:rustc-cfg=DONT_FAIL_ON_CRC_ERROR");
     }
