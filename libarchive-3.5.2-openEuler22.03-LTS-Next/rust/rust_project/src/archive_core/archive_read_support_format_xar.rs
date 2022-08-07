@@ -1,11 +1,11 @@
 use archive_core::archive_endian::*;
 use rust_ffi::archive_set_error_safe;
 use rust_ffi::ffi_alias::alias_set::*;
+use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
-use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 
 #[derive(Copy, Clone)]

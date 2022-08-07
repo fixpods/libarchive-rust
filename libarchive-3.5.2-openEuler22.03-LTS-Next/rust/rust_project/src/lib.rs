@@ -10,8 +10,8 @@
 
 #[macro_use]
 extern crate lazy_static;
+extern crate c2rust_bitfields;
 extern crate libz_sys;
 extern crate rust_ffi;
-extern crate c2rust_bitfields;
 
 mod archive_core;

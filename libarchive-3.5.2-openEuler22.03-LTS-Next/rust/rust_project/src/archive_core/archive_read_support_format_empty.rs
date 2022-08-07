@@ -1,7 +1,7 @@
 use rust_ffi::ffi_alias::alias_set::*;
-use rust_ffi::ffi_struct::struct_transfer::* ;
-use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
+use rust_ffi::ffi_method::method_call::*;
+use rust_ffi::ffi_struct::struct_transfer::*;
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_format_empty(mut _a: *mut archive) -> libc::c_int {
