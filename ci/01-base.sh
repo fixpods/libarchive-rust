@@ -1,6 +1,5 @@
 #!/bin/bash
 
-cd libarchive-3.5.2-openEuler22.03-LTS-Next/
 cmake -DSTEP="build"
 make
 
