@@ -13,7 +13,7 @@ use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_all(mut a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_all(mut a: *mut archive) -> libc::c_int {
     let mut magic_test: libc::c_int = __archive_check_magic_safe(
         a,
         0xdeb0c5 as libc::c_uint,

@@ -15,7 +15,7 @@ use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_by_code(
+pub unsafe extern "C" fn archive_read_support_format_by_code(
     mut a: *mut archive,
     mut format_code: libc::c_int,
 ) -> libc::c_int {

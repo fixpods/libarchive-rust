@@ -234,7 +234,7 @@ static mut compression_name: [*const libc::c_char; 4] = [
     b"LZX\x00" as *const u8 as *const libc::c_char,
 ];
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
     let mut r: libc::c_int = 0;
@@ -271,11 +271,11 @@ pub extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -> libc:
         b"cab\x00" as *const u8 as *const libc::c_char,
         Some(
             archive_read_format_cab_bid
-                as extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
         ),
         Some(
             archive_read_format_cab_options
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *const libc::c_char,
                     _: *const libc::c_char,
@@ -283,11 +283,11 @@ pub extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -> libc:
         ),
         Some(
             archive_read_format_cab_read_header
-                as extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
         ),
         Some(
             archive_read_format_cab_read_data
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *mut *const libc::c_void,
                     _: *mut size_t,
@@ -296,10 +296,13 @@ pub extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -> libc:
         ),
         Some(
             archive_read_format_cab_read_data_skip
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         None,
-        Some(archive_read_format_cab_cleanup as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+        Some(
+            archive_read_format_cab_cleanup
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
+        ),
         None,
         None,
     );
@@ -308,7 +311,7 @@ pub extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -> libc:
     }
     return ARCHIVE_CAB_DEFINED_PARAM.archive_ok;
 }
-extern "C" fn find_cab_magic(mut p: *const libc::c_char) -> libc::c_int {
+unsafe extern "C" fn find_cab_magic(mut p: *const libc::c_char) -> libc::c_int {
     match unsafe { *p.offset(4 as libc::c_int as isize) as libc::c_int } {
         0 => {
             /*
@@ -336,7 +339,7 @@ extern "C" fn find_cab_magic(mut p: *const libc::c_char) -> libc::c_int {
         _ => return 5 as libc::c_int,
     };
 }
-extern "C" fn archive_read_format_cab_bid(
+unsafe extern "C" fn archive_read_format_cab_bid(
     mut a: *mut archive_read,
     mut best_bid: libc::c_int,
 ) -> libc::c_int {
@@ -401,7 +404,7 @@ extern "C" fn archive_read_format_cab_bid(
     }
     return 0 as libc::c_int;
 }
-extern "C" fn archive_read_format_cab_options(
+unsafe extern "C" fn archive_read_format_cab_options(
     mut a: *mut archive_read,
     mut key: *const libc::c_char,
     mut val: *const libc::c_char,
@@ -445,7 +448,7 @@ extern "C" fn archive_read_format_cab_options(
      * a suitable error if no one used this option. */
     return ARCHIVE_CAB_DEFINED_PARAM.archive_warn;
 }
-extern "C" fn cab_skip_sfx(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn cab_skip_sfx(mut a: *mut archive_read) -> libc::c_int {
     let mut p: *const libc::c_char = 0 as *const libc::c_char;
     let mut q: *const libc::c_char = 0 as *const libc::c_char;
     let mut skip: size_t = 0;
@@ -489,7 +492,7 @@ extern "C" fn cab_skip_sfx(mut a: *mut archive_read) -> libc::c_int {
         }
     }
 }
-extern "C" fn truncated_error(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn truncated_error(mut a: *mut archive_read) -> libc::c_int {
     let a_safe = unsafe { &mut *a };
     archive_set_error_safe!(
         &mut a_safe.archive as *mut archive,
@@ -498,7 +501,7 @@ extern "C" fn truncated_error(mut a: *mut archive_read) -> libc::c_int {
     );
     return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
 }
-extern "C" fn cab_strnlen(mut p: *const libc::c_uchar, mut maxlen: size_t) -> ssize_t {
+unsafe extern "C" fn cab_strnlen(mut p: *const libc::c_uchar, mut maxlen: size_t) -> ssize_t {
     let mut i: size_t = 0;
     i = 0 as libc::c_int as size_t;
     while i <= maxlen {
@@ -513,7 +516,7 @@ extern "C" fn cab_strnlen(mut p: *const libc::c_uchar, mut maxlen: size_t) -> ss
     return i as ssize_t;
 }
 /* Read bytes as much as remaining. */
-extern "C" fn cab_read_ahead_remaining(
+unsafe extern "C" fn cab_read_ahead_remaining(
     mut a: *mut archive_read,
     mut min: size_t,
     mut avail: *mut ssize_t,
@@ -529,7 +532,7 @@ extern "C" fn cab_read_ahead_remaining(
     return 0 as *const libc::c_void;
 }
 /* Convert a path separator '\' -> '/' */
-extern "C" fn cab_convert_path_separator_1(
+unsafe extern "C" fn cab_convert_path_separator_1(
     mut fn_0: *mut archive_string,
     mut attr: libc::c_uchar,
 ) -> libc::c_int {
@@ -564,7 +567,10 @@ extern "C" fn cab_convert_path_separator_1(
 /*
  * Replace a character '\' with '/' in wide character.
  */
-extern "C" fn cab_convert_path_separator_2(mut cab: *mut cab, mut entry: *mut archive_entry) {
+unsafe extern "C" fn cab_convert_path_separator_2(
+    mut cab: *mut cab,
+    mut entry: *mut archive_entry,
+) {
     let mut wp: *const wchar_t = 0 as *const wchar_t;
     let mut i: size_t = 0;
     /* If a conversion to wide character failed, force the replacement. */
@@ -596,7 +602,7 @@ extern "C" fn cab_convert_path_separator_2(mut cab: *mut cab, mut entry: *mut ar
 /*
  * Read CFHEADER, CFFOLDER and CFFILE.
  */
-extern "C" fn cab_read_header(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn cab_read_header(mut a: *mut archive_read) -> libc::c_int {
     let mut current_block: u64;
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut cab: *mut cab = 0 as *mut cab;
@@ -1296,7 +1302,7 @@ extern "C" fn cab_read_header(mut a: *mut archive_read) -> libc::c_int {
     );
     return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
 }
-extern "C" fn archive_read_format_cab_read_header(
+unsafe extern "C" fn archive_read_format_cab_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> libc::c_int {
@@ -1452,7 +1458,7 @@ extern "C" fn archive_read_format_cab_read_header(
     a_safe.archive.archive_format_name = cab_safe.format_name.as_mut_ptr();
     return err;
 }
-extern "C" fn archive_read_format_cab_read_data(
+unsafe extern "C" fn archive_read_format_cab_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -1522,7 +1528,7 @@ extern "C" fn archive_read_format_cab_read_data(
     }
     return cab_read_data(a, buff, size, offset);
 }
-extern "C" fn cab_checksum_cfdata_4(
+unsafe extern "C" fn cab_checksum_cfdata_4(
     mut p: *const libc::c_void,
     mut bytes: size_t,
     mut seed: uint32_t,
@@ -1540,7 +1546,7 @@ extern "C" fn cab_checksum_cfdata_4(
     }
     return sum;
 }
-extern "C" fn cab_checksum_cfdata(
+unsafe extern "C" fn cab_checksum_cfdata(
     mut p: *const libc::c_void,
     mut bytes: size_t,
     mut seed: uint32_t,
@@ -1596,7 +1602,7 @@ extern "C" fn cab_checksum_cfdata(
     sum ^= t;
     return sum;
 }
-extern "C" fn cab_checksum_update(mut a: *mut archive_read, mut bytes: size_t) {
+unsafe extern "C" fn cab_checksum_update(mut a: *mut archive_read, mut bytes: size_t) {
     let mut cab: *mut cab = unsafe { (*(*a).format).data as *mut cab };
     let mut cfdata: *mut cfdata = unsafe { (*cab).entry_cfdata };
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
@@ -1655,7 +1661,7 @@ extern "C" fn cab_checksum_update(mut a: *mut archive_read, mut bytes: size_t) {
     }
     cfdata_safe.sum_ptr = 0 as *const libc::c_void;
 }
-extern "C" fn cab_checksum_finish(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn cab_checksum_finish(mut a: *mut archive_read) -> libc::c_int {
     let mut cab: *mut cab = unsafe { (*(*a).format).data as *mut cab };
     let cab_safe = unsafe { &mut *cab };
     let mut cfdata: *mut cfdata = cab_safe.entry_cfdata;
@@ -1707,7 +1713,7 @@ extern "C" fn cab_checksum_finish(mut a: *mut archive_read) -> libc::c_int {
 /*
  * Read CFDATA if needed.
  */
-extern "C" fn cab_next_cfdata(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn cab_next_cfdata(mut a: *mut archive_read) -> libc::c_int {
     let mut current_block: u64;
     let mut cab: *mut cab = unsafe { (*(*a).format).data as *mut cab };
     let cab_safe = unsafe { &mut *cab };
@@ -1801,9 +1807,8 @@ extern "C" fn cab_next_cfdata(mut a: *mut archive_read) -> libc::c_int {
         if cfdata_safe.compressed_size as libc::c_int == 0 as libc::c_int
             || cfdata_safe.compressed_size as libc::c_int
                 > 0x8000 as libc::c_int + 6144 as libc::c_int
+            || cfdata_safe.uncompressed_size as libc::c_int > 0x8000 as libc::c_int
         {
-            current_block = 2305958262682200376;
-        } else if cfdata_safe.uncompressed_size as libc::c_int > 0x8000 as libc::c_int {
             current_block = 2305958262682200376;
         } else {
             if cfdata_safe.uncompressed_size as libc::c_int == 0 as libc::c_int {
@@ -1824,15 +1829,13 @@ extern "C" fn cab_next_cfdata(mut a: *mut archive_read) -> libc::c_int {
                 /* If CFDATA is not last in a folder, an uncompressed
                  * size must be 0x8000(32KBi) */
                 {
-                    if cab_cffolder_safe.cfdata_index
+                    if (cab_cffolder_safe.cfdata_index
                         < cab_cffolder_safe.cfdata_count as libc::c_int
-                        && cfdata_safe.uncompressed_size as libc::c_int != 0x8000 as libc::c_int
-                    {
-                        current_block = 2305958262682200376;
-                    } else if cab_cffolder_safe.comptype as libc::c_int
-                        == ARCHIVE_CAB_DEFINED_PARAM.comptype_none
-                        && cfdata_safe.compressed_size as libc::c_int
-                            != cfdata_safe.uncompressed_size as libc::c_int
+                        && cfdata_safe.uncompressed_size as libc::c_int != 0x8000 as libc::c_int)
+                        || (cab_cffolder_safe.comptype as libc::c_int
+                            == ARCHIVE_CAB_DEFINED_PARAM.comptype_none
+                            && cfdata_safe.compressed_size as libc::c_int
+                                != cfdata_safe.uncompressed_size as libc::c_int)
                     {
                         current_block = 2305958262682200376;
                     } else {
@@ -1901,7 +1904,7 @@ extern "C" fn cab_next_cfdata(mut a: *mut archive_read) -> libc::c_int {
 /*
  * Read ahead CFDATA.
  */
-extern "C" fn cab_read_ahead_cfdata(
+unsafe extern "C" fn cab_read_ahead_cfdata(
     mut a: *mut archive_read,
     mut avail: *mut ssize_t,
 ) -> *const libc::c_void {
@@ -1934,7 +1937,7 @@ extern "C" fn cab_read_ahead_cfdata(
 /*
  * Read ahead CFDATA as uncompressed data.
  */
-extern "C" fn cab_read_ahead_cfdata_none(
+unsafe extern "C" fn cab_read_ahead_cfdata_none(
     mut a: *mut archive_read,
     mut avail: *mut ssize_t,
 ) -> *const libc::c_void {
@@ -1969,7 +1972,7 @@ extern "C" fn cab_read_ahead_cfdata_none(
 
 /* HAVE_ZLIB_H */
 #[cfg(not(HAVE_ZLIB_H))]
-extern "C" fn cab_read_ahead_cfdata_deflate(
+unsafe extern "C" fn cab_read_ahead_cfdata_deflate(
     mut a: *mut archive_read,
     mut avail: *mut ssize_t,
 ) -> *const libc::c_void {
@@ -1988,7 +1991,7 @@ extern "C" fn cab_read_ahead_cfdata_deflate(
 /* HAVE_ZLIB_H */
 
 #[cfg(HAVE_ZLIB_H)]
-extern "C" fn cab_read_ahead_cfdata_deflate(
+unsafe extern "C" fn cab_read_ahead_cfdata_deflate(
     mut a: *mut archive_read,
     mut avail: *mut ssize_t,
 ) -> *const libc::c_void {
@@ -2311,7 +2314,7 @@ extern "C" fn cab_read_ahead_cfdata_deflate(
     return 0 as *const libc::c_void;
 }
 
-extern "C" fn cab_read_ahead_cfdata_lzx(
+unsafe extern "C" fn cab_read_ahead_cfdata_lzx(
     mut a: *mut archive_read,
     mut avail: *mut ssize_t,
 ) -> *const libc::c_void {
@@ -2473,7 +2476,10 @@ extern "C" fn cab_read_ahead_cfdata_lzx(
  * iFoldCONTINUED_FROM_PREV, we won't decompress because a CFDATA for
  * the CFFILE is remaining bytes of previous Multivolume CAB file.
  */
-extern "C" fn cab_consume_cfdata(mut a: *mut archive_read, mut consumed_bytes: int64_t) -> int64_t {
+unsafe extern "C" fn cab_consume_cfdata(
+    mut a: *mut archive_read,
+    mut consumed_bytes: int64_t,
+) -> int64_t {
     let mut cab: *mut cab = unsafe { (*(*a).format).data as *mut cab };
     let mut cfdata: *mut cfdata = 0 as *mut cfdata;
     let mut cbytes: int64_t = 0;
@@ -2568,7 +2574,7 @@ extern "C" fn cab_consume_cfdata(mut a: *mut archive_read, mut consumed_bytes: i
  * Consume CFDATA as much as we have already gotten and
  * compute the sum of CFDATA.
  */
-extern "C" fn cab_minimum_consume_cfdata(
+unsafe extern "C" fn cab_minimum_consume_cfdata(
     mut a: *mut archive_read,
     mut consumed_bytes: int64_t,
 ) -> int64_t {
@@ -2638,7 +2644,7 @@ extern "C" fn cab_minimum_consume_cfdata(
  * Returns ARCHIVE_OK if successful, ARCHIVE_FATAL otherwise, sets
  * cab->end_of_entry if it consumes all of the data.
  */
-extern "C" fn cab_read_data(
+unsafe extern "C" fn cab_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -2702,7 +2708,9 @@ extern "C" fn cab_read_data(
     }
     return 0 as libc::c_int;
 }
-extern "C" fn archive_read_format_cab_read_data_skip(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_cab_read_data_skip(
+    mut a: *mut archive_read,
+) -> libc::c_int {
     let mut cab: *mut cab = 0 as *mut cab;
     let mut bytes_skipped: int64_t = 0;
     let mut r: libc::c_int = 0;
@@ -2758,7 +2766,7 @@ extern "C" fn archive_read_format_cab_read_data_skip(mut a: *mut archive_read) -
     cab_safe.end_of_entry_cleanup = cab_safe.end_of_entry;
     return 0 as libc::c_int;
 }
-extern "C" fn archive_read_format_cab_cleanup(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_cab_cleanup(mut a: *mut archive_read) -> libc::c_int {
     let mut cab: *mut cab = unsafe { (*(*a).format).data as *mut cab };
     let cab_safe = unsafe { &mut *cab };
     let mut hd: *mut cfheader = &mut cab_safe.cfheader;
@@ -2803,7 +2811,7 @@ extern "C" fn archive_read_format_cab_cleanup(mut a: *mut archive_read) -> libc:
     return 0 as libc::c_int;
 }
 /* Convert an MSDOS-style date/time into Unix-style time. */
-extern "C" fn cab_dos_time(mut p: *const libc::c_uchar) -> time_t {
+unsafe extern "C" fn cab_dos_time(mut p: *const libc::c_uchar) -> time_t {
     let mut msTime: libc::c_int = 0; /* Years since 1900. */
     let mut msDate: libc::c_int = 0; /* Month number.     */
     let mut ts: tm = tm {
@@ -2850,7 +2858,10 @@ extern "C" fn cab_dos_time(mut p: *const libc::c_uchar) -> time_t {
  * Returns ARCHIVE_FATAL if initialization failed; memory allocation
  * error occurred.
  */
-extern "C" fn lzx_decode_init(mut strm: *mut lzx_stream, mut w_bits: libc::c_int) -> libc::c_int {
+unsafe extern "C" fn lzx_decode_init(
+    mut strm: *mut lzx_stream,
+    mut w_bits: libc::c_int,
+) -> libc::c_int {
     let mut ds: *mut lzx_dec = 0 as *mut lzx_dec;
     let mut slot: libc::c_int = 0;
     let mut w_size: libc::c_int = 0;
@@ -2979,7 +2990,7 @@ extern "C" fn lzx_decode_init(mut strm: *mut lzx_stream, mut w_bits: libc::c_int
 /*
  * Release LZX decoder.
  */
-extern "C" fn lzx_decode_free(mut strm: *mut lzx_stream) {
+unsafe extern "C" fn lzx_decode_free(mut strm: *mut lzx_stream) {
     let strm_safe = unsafe { &mut *strm };
     if strm_safe.ds.is_null() {
         return;
@@ -2997,7 +3008,7 @@ extern "C" fn lzx_decode_free(mut strm: *mut lzx_stream) {
 /*
  * E8 Call Translation reversal.
  */
-extern "C" fn lzx_translation(
+unsafe extern "C" fn lzx_translation(
     mut strm: *mut lzx_stream,
     mut p: *mut libc::c_void,
     mut size: size_t,
@@ -3101,7 +3112,7 @@ static mut cache_masks: [uint32_t; 36] = [
  * Returns 1 if the cache buffer is full.
  * Returns 0 if the cache buffer is not full; input buffer is empty.
  */
-extern "C" fn lzx_br_fillup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) -> libc::c_int {
+unsafe extern "C" fn lzx_br_fillup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) -> libc::c_int {
     /*
      * x86 processor family can read misaligned data without an access error.
      */
@@ -3196,7 +3207,7 @@ extern "C" fn lzx_br_fillup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) -> l
         n -= 16 as libc::c_int
     }
 }
-extern "C" fn lzx_br_fixup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) {
+unsafe extern "C" fn lzx_br_fixup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) {
     let br_safe = unsafe { &mut *br };
     let mut n: libc::c_int = (8 as libc::c_int as libc::c_ulong)
         .wrapping_mul(::std::mem::size_of::<uint64_t>() as libc::c_ulong)
@@ -3219,12 +3230,12 @@ extern "C" fn lzx_br_fixup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) {
         br_safe.have_odd = 0 as libc::c_int as libc::c_char
     };
 }
-extern "C" fn lzx_cleanup_bitstream(mut strm: *mut lzx_stream) {
+unsafe extern "C" fn lzx_cleanup_bitstream(mut strm: *mut lzx_stream) {
     let strm_ds_safe = unsafe { &mut (*(*strm).ds) };
     strm_ds_safe.br.cache_avail = 0 as libc::c_int;
     strm_ds_safe.br.have_odd = 0 as libc::c_int as libc::c_char;
 }
-extern "C" fn lzx_decode(mut strm: *mut lzx_stream, mut last: libc::c_int) -> libc::c_int {
+unsafe extern "C" fn lzx_decode(mut strm: *mut lzx_stream, mut last: libc::c_int) -> libc::c_int {
     let strm_safe = unsafe { &mut *strm };
     let mut ds: *mut lzx_dec = strm_safe.ds;
     let mut avail_in: int64_t = 0;
@@ -3257,7 +3268,10 @@ extern "C" fn lzx_decode(mut strm: *mut lzx_stream, mut last: libc::c_int) -> li
     strm_safe.total_in += avail_in - strm_safe.avail_in;
     return r;
 }
-extern "C" fn lzx_read_blocks(mut strm: *mut lzx_stream, mut last: libc::c_int) -> libc::c_int {
+unsafe extern "C" fn lzx_read_blocks(
+    mut strm: *mut lzx_stream,
+    mut last: libc::c_int,
+) -> libc::c_int {
     let mut current_block: u64;
     let strm_safe = unsafe { &mut *strm };
     let mut ds: *mut lzx_dec = strm_safe.ds;
@@ -3839,7 +3853,10 @@ extern "C" fn lzx_read_blocks(mut strm: *mut lzx_stream, mut last: libc::c_int) 
     ds_safe.error = -(25 as libc::c_int);
     return ds_safe.error;
 }
-extern "C" fn lzx_decode_blocks(mut strm: *mut lzx_stream, mut last: libc::c_int) -> libc::c_int {
+unsafe extern "C" fn lzx_decode_blocks(
+    mut strm: *mut lzx_stream,
+    mut last: libc::c_int,
+) -> libc::c_int {
     let mut current_block: u64;
     let strm_safe = unsafe { &mut *strm };
     let mut ds: *mut lzx_dec = strm_safe.ds;
@@ -4281,7 +4298,7 @@ extern "C" fn lzx_decode_blocks(mut strm: *mut lzx_stream, mut last: libc::c_int
         }
     };
 }
-extern "C" fn lzx_read_pre_tree(mut strm: *mut lzx_stream) -> libc::c_int {
+unsafe extern "C" fn lzx_read_pre_tree(mut strm: *mut lzx_stream) -> libc::c_int {
     let strm_safe = unsafe { &mut *strm };
     let mut ds: *mut lzx_dec = strm_safe.ds;
     let ds_safe = unsafe { &mut *ds };
@@ -4319,7 +4336,7 @@ extern "C" fn lzx_read_pre_tree(mut strm: *mut lzx_stream) -> libc::c_int {
 /*
  * Read a bunch of bit-lengths from pre-tree.
  */
-extern "C" fn lzx_read_bitlen(
+unsafe extern "C" fn lzx_read_bitlen(
     mut strm: *mut lzx_stream,
     mut d: *mut huffman,
     mut end: libc::c_int,
@@ -4513,7 +4530,7 @@ extern "C" fn lzx_read_bitlen(
     ds_safe.loop_0 = i;
     return ret;
 }
-extern "C" fn lzx_huffman_init(
+unsafe extern "C" fn lzx_huffman_init(
     mut hf: *mut huffman,
     mut len_size: size_t,
     mut tbl_bits: libc::c_int,
@@ -4548,7 +4565,7 @@ extern "C" fn lzx_huffman_init(
     }
     return 0 as libc::c_int;
 }
-extern "C" fn lzx_huffman_free(mut hf: *mut huffman) {
+unsafe extern "C" fn lzx_huffman_free(mut hf: *mut huffman) {
     let hf_safe = unsafe { &mut *hf };
     free_safe(hf_safe.bitlen as *mut libc::c_void);
     free_safe(hf_safe.tbl as *mut libc::c_void);
@@ -4556,7 +4573,7 @@ extern "C" fn lzx_huffman_free(mut hf: *mut huffman) {
 /*
  * Make a huffman coding table.
  */
-extern "C" fn lzx_make_huffman_table(mut hf: *mut huffman) -> libc::c_int {
+unsafe extern "C" fn lzx_make_huffman_table(mut hf: *mut huffman) -> libc::c_int {
     let mut tbl: *mut uint16_t = 0 as *mut uint16_t;
     let mut bitlen: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut bitptn: [libc::c_int; 17] = [0; 17];
@@ -4643,7 +4660,10 @@ extern "C" fn lzx_make_huffman_table(mut hf: *mut huffman) -> libc::c_int {
     return 1 as libc::c_int;
 }
 #[inline]
-extern "C" fn lzx_decode_huffman(mut hf: *mut huffman, mut rbits: libc::c_uint) -> libc::c_int {
+unsafe extern "C" fn lzx_decode_huffman(
+    mut hf: *mut huffman,
+    mut rbits: libc::c_uint,
+) -> libc::c_int {
     let mut c: libc::c_int = 0;
     c = unsafe { *(*hf).tbl.offset(rbits as isize) as libc::c_int };
     let hf_safe = unsafe { &mut *hf };

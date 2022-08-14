@@ -221,7 +221,7 @@ static mut zisofs_magic: [libc::c_uchar; 8] = [
 ];
 
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_iso9660(mut _a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_iso9660(mut _a: *mut archive) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut r: libc::c_int = 0;
     let mut magic_test: libc::c_int = __archive_check_magic_safe(
@@ -262,11 +262,11 @@ pub extern "C" fn archive_read_support_format_iso9660(mut _a: *mut archive) -> l
         b"iso9660\x00" as *const u8 as *const libc::c_char,
         Some(
             archive_read_format_iso9660_bid
-                as extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
         ),
         Some(
             archive_read_format_iso9660_options
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *const libc::c_char,
                     _: *const libc::c_char,
@@ -274,11 +274,11 @@ pub extern "C" fn archive_read_support_format_iso9660(mut _a: *mut archive) -> l
         ),
         Some(
             archive_read_format_iso9660_read_header
-                as extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
         ),
         Some(
             archive_read_format_iso9660_read_data
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *mut *const libc::c_void,
                     _: *mut size_t,
@@ -287,12 +287,12 @@ pub extern "C" fn archive_read_support_format_iso9660(mut _a: *mut archive) -> l
         ),
         Some(
             archive_read_format_iso9660_read_data_skip
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         None,
         Some(
             archive_read_format_iso9660_cleanup
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         None,
         None,
@@ -304,7 +304,7 @@ pub extern "C" fn archive_read_support_format_iso9660(mut _a: *mut archive) -> l
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn archive_read_format_iso9660_bid(
+unsafe extern "C" fn archive_read_format_iso9660_bid(
     mut a: *mut archive_read,
     mut best_bid: libc::c_int,
 ) -> libc::c_int {
@@ -400,7 +400,7 @@ extern "C" fn archive_read_format_iso9660_bid(
     return 0 as libc::c_int;
 }
 
-extern "C" fn archive_read_format_iso9660_options(
+unsafe extern "C" fn archive_read_format_iso9660_options(
     mut a: *mut archive_read,
     mut key: *const libc::c_char,
     mut val: *const libc::c_char,
@@ -435,7 +435,7 @@ extern "C" fn archive_read_format_iso9660_options(
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_warn;
 }
 
-extern "C" fn isNull(
+unsafe extern "C" fn isNull(
     mut iso9660: *mut iso9660,
     mut h: *const libc::c_uchar,
     mut offset: libc::c_uint,
@@ -470,7 +470,10 @@ extern "C" fn isNull(
     };
 }
 
-extern "C" fn isBootRecord(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> libc::c_int {
+unsafe extern "C" fn isBootRecord(
+    mut iso9660: *mut iso9660,
+    mut h: *const libc::c_uchar,
+) -> libc::c_int {
     /* UNUSED */
     /* Type of the Volume Descriptor Boot Record must be 0. */
     if unsafe { *h.offset(0 as libc::c_int as isize) } as libc::c_int != 0 as libc::c_int {
@@ -483,7 +486,7 @@ extern "C" fn isBootRecord(mut iso9660: *mut iso9660, mut h: *const libc::c_ucha
     return 1 as libc::c_int;
 }
 
-extern "C" fn isVolumePartition(
+unsafe extern "C" fn isVolumePartition(
     mut iso9660: *mut iso9660,
     mut h: *const libc::c_uchar,
 ) -> libc::c_int {
@@ -517,7 +520,7 @@ extern "C" fn isVolumePartition(
     return 1 as libc::c_int;
 }
 
-extern "C" fn isVDSetTerminator(
+unsafe extern "C" fn isVDSetTerminator(
     mut iso9660: *mut iso9660,
     mut h: *const libc::c_uchar,
 ) -> libc::c_int {
@@ -543,7 +546,10 @@ extern "C" fn isVDSetTerminator(
     return 1 as libc::c_int;
 }
 
-extern "C" fn isJolietSVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> libc::c_int {
+unsafe extern "C" fn isJolietSVD(
+    mut iso9660: *mut iso9660,
+    mut h: *const libc::c_uchar,
+) -> libc::c_int {
     let iso9660 = unsafe { &mut *iso9660 };
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut logical_block_size: ssize_t = 0;
@@ -604,7 +610,7 @@ extern "C" fn isJolietSVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar
     return 48 as libc::c_int;
 }
 
-extern "C" fn isSVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> libc::c_int {
+unsafe extern "C" fn isSVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> libc::c_int {
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut logical_block_size: ssize_t = 0;
     let mut volume_block: int32_t = 0;
@@ -700,7 +706,7 @@ extern "C" fn isSVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> l
     return 48 as libc::c_int;
 }
 
-extern "C" fn isEVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> libc::c_int {
+unsafe extern "C" fn isEVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> libc::c_int {
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut logical_block_size: ssize_t = 0;
     let mut volume_block: int32_t = 0;
@@ -824,7 +830,7 @@ extern "C" fn isEVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> l
     return 48 as libc::c_int;
 }
 
-extern "C" fn isPVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> libc::c_int {
+unsafe extern "C" fn isPVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> libc::c_int {
     let iso9660 = unsafe { &mut *iso9660 };
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut logical_block_size: ssize_t = 0;
@@ -971,7 +977,10 @@ extern "C" fn isPVD(mut iso9660: *mut iso9660, mut h: *const libc::c_uchar) -> l
     return 48 as libc::c_int;
 }
 
-extern "C" fn read_children(mut a: *mut archive_read, mut parent: *mut file_info) -> libc::c_int {
+unsafe extern "C" fn read_children(
+    mut a: *mut archive_read,
+    mut parent: *mut file_info,
+) -> libc::c_int {
     let mut b: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut step: size_t = 0;
@@ -1145,7 +1154,10 @@ extern "C" fn read_children(mut a: *mut archive_read, mut parent: *mut file_info
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn choose_volume(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> libc::c_int {
+unsafe extern "C" fn choose_volume(
+    mut a: *mut archive_read,
+    mut iso9660: *mut iso9660,
+) -> libc::c_int {
     let safe_a = unsafe { &mut *a };
     let iso9660 = unsafe { &mut *iso9660 };
     let mut file: *mut file_info = 0 as *mut file_info;
@@ -1260,7 +1272,7 @@ extern "C" fn choose_volume(mut a: *mut archive_read, mut iso9660: *mut iso9660)
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn archive_read_format_iso9660_read_header(
+unsafe extern "C" fn archive_read_format_iso9660_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> libc::c_int {
@@ -1544,7 +1556,9 @@ extern "C" fn archive_read_format_iso9660_read_header(
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn archive_read_format_iso9660_read_data_skip(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_iso9660_read_data_skip(
+    mut a: *mut archive_read,
+) -> libc::c_int {
     /* Because read_next_header always does an explicit skip
      * to the next entry, we don't need to do anything here. */
     /* UNUSED */
@@ -1553,7 +1567,7 @@ extern "C" fn archive_read_format_iso9660_read_data_skip(mut a: *mut archive_rea
 
 /* HAVE_ZLIB_H */
 #[cfg(HAVE_ZLIB_H)]
-extern "C" fn zisofs_read_data(
+unsafe extern "C" fn zisofs_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -1836,8 +1850,7 @@ extern "C" fn zisofs_read_data(
                 zisofs.stream.next_out = zisofs.uncompressed_buffer;
                 zisofs.stream.avail_out = zisofs.uncompressed_buffer_size as uInt;
                 r = unsafe { libz_sys::inflate(&mut zisofs.stream, 0 as libc::c_int) };
-                if r == libz_sys::Z_OK {
-                } else if r == libz_sys::Z_STREAM_END {
+                if r == libz_sys::Z_OK || r == libz_sys::Z_STREAM_END {
                 } else {
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
@@ -1883,7 +1896,7 @@ extern "C" fn zisofs_read_data(
 }
 
 #[cfg(not(HAVE_ZLIB_H))]
-extern "C" fn zisofs_read_data(
+unsafe extern "C" fn zisofs_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -1899,7 +1912,7 @@ extern "C" fn zisofs_read_data(
 }
 
 /* HAVE_ZLIB_H */
-extern "C" fn archive_read_format_iso9660_read_data(
+unsafe extern "C" fn archive_read_format_iso9660_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -1982,7 +1995,7 @@ extern "C" fn archive_read_format_iso9660_read_data(
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn archive_read_format_iso9660_cleanup(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_iso9660_cleanup(mut a: *mut archive_read) -> libc::c_int {
     let mut r: libc::c_int = ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
     let iso9660 = unsafe { &mut *((*(*a).format).data as *mut iso9660) };
     release_files(iso9660);
@@ -2025,7 +2038,7 @@ extern "C" fn archive_read_format_iso9660_cleanup(mut a: *mut archive_read) -> l
  * This routine parses a single ISO directory record, makes sense
  * of any extensions, and stores the result in memory.
  */
-extern "C" fn parse_file_info(
+unsafe extern "C" fn parse_file_info(
     mut a: *mut archive_read,
     mut parent: *mut file_info,
     mut isodirrec: *const libc::c_uchar,
@@ -2213,23 +2226,6 @@ extern "C" fn parse_file_info(
             name_len = (name_len as libc::c_ulong).wrapping_sub(4 as libc::c_int as libc::c_ulong)
                 as size_t as size_t
         }
-        if 0 as libc::c_int != 0 as libc::c_int {
-            if name_len > 2 as libc::c_int as libc::c_ulong
-                && unsafe {
-                    *p.offset(name_len.wrapping_sub(2 as libc::c_int as libc::c_ulong) as isize)
-                } as libc::c_int
-                    == 0 as libc::c_int
-                && unsafe {
-                    *p.offset(name_len.wrapping_sub(1 as libc::c_int as libc::c_ulong) as isize)
-                } as libc::c_int
-                    == '.' as i32
-            {
-                name_len = (name_len as libc::c_ulong)
-                    .wrapping_sub(2 as libc::c_int as libc::c_ulong)
-                    as size_t as size_t
-            }
-        }
-        /* XXX: this somehow manages to strip of single-character file extensions, like '.c'. */
         file.utf16be_name = malloc_safe(name_len) as *mut libc::c_uchar;
         if file.utf16be_name.is_null() {
             archive_set_error_safe!(
@@ -2471,15 +2467,8 @@ extern "C" fn parse_file_info(
                                     let mut r_0 = 0 as *mut file_info;
                                     if (safe_parent as *mut file_info).is_null()
                                         || safe_parent.parent.is_null()
+                                        || flags & 0x2 as libc::c_int != 0 as libc::c_int
                                     {
-                                        archive_set_error_safe!(
-                                            &mut (*a).archive as *mut archive,
-                                            ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                                            b"Invalid Rockridge CL\x00" as *const u8
-                                                as *const libc::c_char
-                                        );
-                                        current_block = 9906378635038024695;
-                                    } else if flags & 0x2 as libc::c_int != 0 as libc::c_int {
                                         archive_set_error_safe!(
                                             &mut (*a).archive as *mut archive,
                                             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
@@ -2638,7 +2627,7 @@ extern "C" fn parse_file_info(
     return 0 as *mut file_info;
 }
 
-extern "C" fn parse_rockridge(
+unsafe extern "C" fn parse_rockridge(
     mut a: *mut archive_read,
     mut file: *mut file_info,
     mut p: *const libc::c_uchar,
@@ -2840,7 +2829,7 @@ extern "C" fn parse_rockridge(
     };
 }
 
-extern "C" fn register_CE(
+unsafe extern "C" fn register_CE(
     mut a: *mut archive_read,
     mut location: int32_t,
     mut file: *mut file_info,
@@ -2944,7 +2933,7 @@ extern "C" fn register_CE(
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn next_CE(mut heap: *mut read_ce_queue) {
+unsafe extern "C" fn next_CE(mut heap: *mut read_ce_queue) {
     let heap = unsafe { &mut *heap };
     let mut a_offset: uint64_t = 0;
     let mut b_offset: uint64_t = 0;
@@ -2998,7 +2987,7 @@ extern "C" fn next_CE(mut heap: *mut read_ce_queue) {
     }
 }
 
-extern "C" fn read_CE(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> libc::c_int {
+unsafe extern "C" fn read_CE(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> libc::c_int {
     let iso9660 = unsafe { &mut *iso9660 };
     let mut b: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
@@ -3059,7 +3048,7 @@ extern "C" fn read_CE(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> li
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn parse_rockridge_NM1(
+unsafe extern "C" fn parse_rockridge_NM1(
     mut file: *mut file_info,
     mut data: *const libc::c_uchar,
     mut data_length: libc::c_int,
@@ -3122,7 +3111,7 @@ extern "C" fn parse_rockridge_NM1(
     };
 }
 
-extern "C" fn parse_rockridge_TF1(
+unsafe extern "C" fn parse_rockridge_TF1(
     mut file: *mut file_info,
     mut data: *const libc::c_uchar,
     mut data_length: libc::c_int,
@@ -3212,7 +3201,7 @@ extern "C" fn parse_rockridge_TF1(
     };
 }
 
-extern "C" fn parse_rockridge_SL1(
+unsafe extern "C" fn parse_rockridge_SL1(
     mut file: *mut file_info,
     mut data: *const libc::c_uchar,
     mut data_length: libc::c_int,
@@ -3337,7 +3326,7 @@ extern "C" fn parse_rockridge_SL1(
     }
 }
 
-extern "C" fn parse_rockridge_ZF1(
+unsafe extern "C" fn parse_rockridge_ZF1(
     mut file: *mut file_info,
     mut data: *const libc::c_uchar,
     mut data_length: libc::c_int,
@@ -3356,14 +3345,14 @@ extern "C" fn parse_rockridge_ZF1(
     };
 }
 
-extern "C" fn register_file(mut iso9660: *mut iso9660, mut file: *mut file_info) {
+unsafe extern "C" fn register_file(mut iso9660: *mut iso9660, mut file: *mut file_info) {
     let mut iso9660 = unsafe { &mut *iso9660 };
     let mut file = unsafe { &mut *file };
     file.use_next = iso9660.use_files;
     iso9660.use_files = file;
 }
 
-extern "C" fn release_files(mut iso9660: *mut iso9660) {
+unsafe extern "C" fn release_files(mut iso9660: *mut iso9660) {
     let mut iso9660 = unsafe { &mut *iso9660 };
     let mut con = 0 as *mut content;
     let mut connext: *mut content = 0 as *mut content;
@@ -3385,7 +3374,7 @@ extern "C" fn release_files(mut iso9660: *mut iso9660) {
     }
 }
 
-extern "C" fn next_entry_seek(
+unsafe extern "C" fn next_entry_seek(
     mut a: *mut archive_read,
     mut iso9660: *mut iso9660,
     mut pfile: *mut *mut file_info,
@@ -3421,7 +3410,7 @@ extern "C" fn next_entry_seek(
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn next_cache_entry(
+unsafe extern "C" fn next_cache_entry(
     mut a: *mut archive_read,
     mut iso9660: *mut iso9660,
     mut pfile: *mut *mut file_info,
@@ -3721,7 +3710,7 @@ extern "C" fn next_cache_entry(
     };
 }
 
-extern "C" fn re_add_entry(mut iso9660: *mut iso9660, mut file: *mut file_info) {
+unsafe extern "C" fn re_add_entry(mut iso9660: *mut iso9660, mut file: *mut file_info) {
     let mut iso9660 = unsafe { &mut *iso9660 };
     let mut file = unsafe { &mut *file };
     file.re_next = 0 as *mut file_info;
@@ -3731,7 +3720,7 @@ extern "C" fn re_add_entry(mut iso9660: *mut iso9660, mut file: *mut file_info) 
     iso9660.re_files.last = &mut file.re_next;
 }
 
-extern "C" fn re_get_entry(mut iso9660: *mut iso9660) -> *mut file_info {
+unsafe extern "C" fn re_get_entry(mut iso9660: *mut iso9660) -> *mut file_info {
     let mut iso9660 = unsafe { &mut *iso9660 };
     let mut file = unsafe { &mut *iso9660.re_files.first };
     if !(file as *mut file_info).is_null() {
@@ -3743,7 +3732,7 @@ extern "C" fn re_get_entry(mut iso9660: *mut iso9660) -> *mut file_info {
     return file;
 }
 
-extern "C" fn rede_add_entry(mut file: *mut file_info) -> libc::c_int {
+unsafe extern "C" fn rede_add_entry(mut file: *mut file_info) -> libc::c_int {
     let mut file = unsafe { &mut *file };
     let mut re = file.parent;
     let mut safe_re = unsafe { &mut *re };
@@ -3765,7 +3754,7 @@ extern "C" fn rede_add_entry(mut file: *mut file_info) -> libc::c_int {
     return 0 as libc::c_int;
 }
 
-extern "C" fn rede_get_entry(mut re: *mut file_info) -> *mut file_info {
+unsafe extern "C" fn rede_get_entry(mut re: *mut file_info) -> *mut file_info {
     let mut re = unsafe { &mut *re };
     let mut file = unsafe { &mut *re.rede_files.first };
     if !(file as *mut file_info).is_null() {
@@ -3777,7 +3766,7 @@ extern "C" fn rede_get_entry(mut re: *mut file_info) -> *mut file_info {
     return file;
 }
 
-extern "C" fn cache_add_entry(mut iso9660: *mut iso9660, mut file: *mut file_info) {
+unsafe extern "C" fn cache_add_entry(mut iso9660: *mut iso9660, mut file: *mut file_info) {
     let mut iso9660 = unsafe { &mut *iso9660 };
     let mut file = unsafe { &mut *file };
     file.next = 0 as *mut file_info;
@@ -3787,7 +3776,7 @@ extern "C" fn cache_add_entry(mut iso9660: *mut iso9660, mut file: *mut file_inf
     iso9660.cache_files.last = &mut file.next;
 }
 
-extern "C" fn cache_get_entry(mut iso9660: *mut iso9660) -> *mut file_info {
+unsafe extern "C" fn cache_get_entry(mut iso9660: *mut iso9660) -> *mut file_info {
     let mut iso9660 = unsafe { &mut *iso9660 };
     let mut file = unsafe { &mut *iso9660.cache_files.first };
     if !(file as *mut file_info).is_null() {
@@ -3799,7 +3788,7 @@ extern "C" fn cache_get_entry(mut iso9660: *mut iso9660) -> *mut file_info {
     return file;
 }
 
-extern "C" fn heap_add_entry(
+unsafe extern "C" fn heap_add_entry(
     mut a: *mut archive_read,
     mut heap: *mut heap_queue,
     mut file: *mut file_info,
@@ -3883,7 +3872,7 @@ extern "C" fn heap_add_entry(
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn heap_get_entry(mut heap: *mut heap_queue) -> *mut file_info {
+unsafe extern "C" fn heap_get_entry(mut heap: *mut heap_queue) -> *mut file_info {
     let mut heap = unsafe { &mut *heap };
     let mut a_key: uint64_t = 0;
     let mut b_key: uint64_t = 0;
@@ -3943,7 +3932,7 @@ extern "C" fn heap_get_entry(mut heap: *mut heap_queue) -> *mut file_info {
     }
 }
 
-extern "C" fn toi(mut p: *const libc::c_void, mut n: libc::c_int) -> libc::c_uint {
+unsafe extern "C" fn toi(mut p: *const libc::c_void, mut n: libc::c_int) -> libc::c_uint {
     let mut v: *const libc::c_uchar = p as *const libc::c_uchar;
     if n > 1 as libc::c_int {
         return (unsafe { *v.offset(0 as libc::c_int as isize) } as libc::c_uint).wrapping_add(
@@ -3959,7 +3948,7 @@ extern "C" fn toi(mut p: *const libc::c_void, mut n: libc::c_int) -> libc::c_uin
     return 0 as libc::c_int as libc::c_uint;
 }
 
-extern "C" fn isodate7(mut v: *const libc::c_uchar) -> time_t {
+unsafe extern "C" fn isodate7(mut v: *const libc::c_uchar) -> time_t {
     let mut tm: tm = tm {
         tm_sec: 0,
         tm_min: 0,
@@ -4000,7 +3989,7 @@ extern "C" fn isodate7(mut v: *const libc::c_uchar) -> time_t {
     return t;
 }
 
-extern "C" fn isodate17(mut v: *const libc::c_uchar) -> time_t {
+unsafe extern "C" fn isodate17(mut v: *const libc::c_uchar) -> time_t {
     let mut tm: tm = tm {
         tm_sec: 0,
         tm_min: 0,
@@ -4058,7 +4047,7 @@ extern "C" fn isodate17(mut v: *const libc::c_uchar) -> time_t {
     return t;
 }
 
-extern "C" fn time_from_tm(mut t: *mut tm) -> time_t {
+unsafe extern "C" fn time_from_tm(mut t: *mut tm) -> time_t {
     let mut t = unsafe { &mut *t };
     /* Use platform timegm() if available. */
     #[cfg(HAVE_TIMEGM)]
@@ -4080,7 +4069,7 @@ extern "C" fn time_from_tm(mut t: *mut tm) -> time_t {
         as time_t;
 }
 
-extern "C" fn build_pathname(
+unsafe extern "C" fn build_pathname(
     mut as_0: *mut archive_string,
     mut file: *mut file_info,
     mut depth: libc::c_int,
@@ -4113,7 +4102,7 @@ extern "C" fn build_pathname(
     return unsafe { (*as_0).s };
 }
 
-extern "C" fn build_pathname_utf16be(
+unsafe extern "C" fn build_pathname_utf16be(
     mut p: *mut libc::c_uchar,
     mut max: size_t,
     mut len: *mut size_t,
@@ -4161,7 +4150,7 @@ extern "C" fn build_pathname_utf16be(
 }
 
 #[no_mangle]
-pub extern "C" fn dump_isodirrec(mut isodirrec: *const libc::c_uchar) {
+pub unsafe extern "C" fn dump_isodirrec(mut isodirrec: *const libc::c_uchar) {
     match () {
         #[cfg(C_DEBUG)]
         _ => {

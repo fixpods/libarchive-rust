@@ -5,7 +5,7 @@ use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut ar: *mut ar = 0 as *mut ar;
     let mut r: libc::c_int = 0;
@@ -41,27 +41,33 @@ pub extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) -> libc::
             b"ar\x00" as *const u8 as *const libc::c_char,
             Some(
                 archive_read_format_ar_bid
-                    as extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
+                    as unsafe extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
             ),
             None,
             Some(
                 archive_read_format_ar_read_header
-                    as extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
+                    as unsafe extern "C" fn(
+                        _: *mut archive_read,
+                        _: *mut archive_entry,
+                    ) -> libc::c_int,
             ),
             Some(
                 archive_read_format_ar_read_data
-                    as extern "C" fn(
+                    as unsafe extern "C" fn(
                         _: *mut archive_read,
                         _: *mut *const libc::c_void,
                         _: *mut size_t,
                         _: *mut int64_t,
                     ) -> libc::c_int,
             ),
-            Some(archive_read_format_ar_skip as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+            Some(
+                archive_read_format_ar_skip
+                    as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
+            ),
             None,
             Some(
                 archive_read_format_ar_cleanup
-                    as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                    as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
             ),
             None,
             None,
@@ -75,7 +81,7 @@ pub extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) -> libc::
     return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn archive_read_format_ar_cleanup(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_ar_cleanup(mut a: *mut archive_read) -> libc::c_int {
     let mut safe_a = unsafe { &mut *a };
     let mut ar: *mut ar = 0 as *mut ar;
     ar = unsafe { (*(*a).format).data as *mut ar };
@@ -85,7 +91,7 @@ extern "C" fn archive_read_format_ar_cleanup(mut a: *mut archive_read) -> libc::
     return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn archive_read_format_ar_bid(
+unsafe extern "C" fn archive_read_format_ar_bid(
     mut a: *mut archive_read,
     mut best_bid: libc::c_int,
 ) -> libc::c_int {
@@ -111,7 +117,7 @@ extern "C" fn archive_read_format_ar_bid(
     }
     return -(1 as libc::c_int);
 }
-extern "C" fn _ar_read_header(
+unsafe extern "C" fn _ar_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut ar: *mut ar,
@@ -489,7 +495,7 @@ extern "C" fn _ar_read_header(
     unsafe { archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr()) };
     return ar_parse_common_header(ar, entry, h);
 }
-extern "C" fn archive_read_format_ar_read_header(
+unsafe extern "C" fn archive_read_format_ar_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> libc::c_int {
@@ -531,7 +537,7 @@ extern "C" fn archive_read_format_ar_read_header(
     }
     return ret;
 }
-extern "C" fn ar_parse_common_header(
+unsafe extern "C" fn ar_parse_common_header(
     mut ar: *mut ar,
     mut entry: *mut archive_entry,
     mut h: *const libc::c_char,
@@ -581,7 +587,7 @@ extern "C" fn ar_parse_common_header(
     safe_ar.entry_bytes_remaining = n as int64_t;
     return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
 }
-extern "C" fn archive_read_format_ar_read_data(
+unsafe extern "C" fn archive_read_format_ar_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -643,7 +649,7 @@ extern "C" fn archive_read_format_ar_read_data(
         return ARCHIVE_AR_DEFINED_PARAM.archive_eof;
     };
 }
-extern "C" fn archive_read_format_ar_skip(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_ar_skip(mut a: *mut archive_read) -> libc::c_int {
     let mut bytes_skipped: int64_t = 0;
     let mut ar: *mut ar = 0 as *mut ar;
     ar = unsafe { (*(*a).format).data as *mut ar };
@@ -663,7 +669,7 @@ extern "C" fn archive_read_format_ar_skip(mut a: *mut archive_read) -> libc::c_i
     safe_ar.entry_padding = 0 as libc::c_int as int64_t;
     return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
 }
-extern "C" fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> libc::c_int {
     let mut current_block: u64;
     let mut ar: *mut ar = 0 as *mut ar;
     let mut p: *mut libc::c_char = 0 as *mut libc::c_char;
@@ -727,7 +733,7 @@ extern "C" fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> libc::c_i
     ar_safe.strtab = 0 as *mut libc::c_char;
     return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
 }
-extern "C" fn ar_atol8(mut p: *const libc::c_char, mut char_cnt: libc::c_uint) -> uint64_t {
+unsafe extern "C" fn ar_atol8(mut p: *const libc::c_char, mut char_cnt: libc::c_uint) -> uint64_t {
     let mut l: uint64_t = 0;
     let mut limit: uint64_t = 0;
     let mut last_digit_limit: uint64_t = 0;
@@ -768,7 +774,7 @@ extern "C" fn ar_atol8(mut p: *const libc::c_char, mut char_cnt: libc::c_uint) -
     return l;
 }
 
-extern "C" fn ar_atol10(mut p: *const libc::c_char, mut char_cnt: libc::c_uint) -> uint64_t {
+unsafe extern "C" fn ar_atol10(mut p: *const libc::c_char, mut char_cnt: libc::c_uint) -> uint64_t {
     let mut l: uint64_t = 0;
     let mut limit: uint64_t = 0;
     let mut last_digit_limit: uint64_t = 0;

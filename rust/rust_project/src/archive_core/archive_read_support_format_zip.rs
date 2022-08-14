@@ -104,7 +104,7 @@ pub struct _alone_header {
     pub uncompressed_size: uint64_t,
 }
 
-extern "C" fn ppmd_read(mut p: *mut libc::c_void) -> Byte {
+unsafe extern "C" fn ppmd_read(mut p: *mut libc::c_void) -> Byte {
     /* Get the handle to current decompression context. */
 
     let mut a: *mut archive_read = unsafe { (*(p as *mut IByteIn)).a };
@@ -127,7 +127,7 @@ extern "C" fn ppmd_read(mut p: *mut libc::c_void) -> Byte {
     unsafe { return *data.offset(0 as libc::c_int as isize) };
 }
 
-extern "C" fn trad_enc_update_keys(mut ctx: *mut trad_enc_ctx, mut c: uint8_t) {
+unsafe extern "C" fn trad_enc_update_keys(mut ctx: *mut trad_enc_ctx, mut c: uint8_t) {
     let mut t: uint8_t = 0;
     let safe_ctx = unsafe { &mut *ctx };
     safe_ctx.keys[0 as libc::c_int as usize] = (crc32_safe(
@@ -149,7 +149,7 @@ extern "C" fn trad_enc_update_keys(mut ctx: *mut trad_enc_ctx, mut c: uint8_t) {
         1 as libc::c_int as uInt,
     ) ^ 0xffffffff as libc::c_ulong) as uint32_t;
 }
-extern "C" fn trad_enc_decrypt_byte(mut ctx: *mut trad_enc_ctx) -> uint8_t {
+unsafe extern "C" fn trad_enc_decrypt_byte(mut ctx: *mut trad_enc_ctx) -> uint8_t {
     let safe_ctx = unsafe { &mut *ctx };
     let mut temp: libc::c_uint =
         safe_ctx.keys[2 as libc::c_int as usize] | 2 as libc::c_int as libc::c_uint;
@@ -157,7 +157,7 @@ extern "C" fn trad_enc_decrypt_byte(mut ctx: *mut trad_enc_ctx) -> uint8_t {
         as uint8_t as libc::c_int
         & 0xff as libc::c_int) as uint8_t;
 }
-extern "C" fn trad_enc_decrypt_update(
+unsafe extern "C" fn trad_enc_decrypt_update(
     mut ctx: *mut trad_enc_ctx,
     mut in_0: *const uint8_t,
     mut in_len: size_t,
@@ -179,7 +179,7 @@ extern "C" fn trad_enc_decrypt_update(
         }
     }
 }
-extern "C" fn trad_enc_init(
+unsafe extern "C" fn trad_enc_init(
     mut ctx: *mut trad_enc_ctx,
     mut pw: *const libc::c_char,
     mut pw_len: size_t,
@@ -223,7 +223,7 @@ extern "C" fn trad_enc_init(
 * Includes code to read local file headers, decompress data
 * from entry bodies, and common API.
 */
-extern "C" fn real_crc32(
+unsafe extern "C" fn real_crc32(
     mut crc: libc::c_ulong,
     mut buff: *const libc::c_void,
     mut len: size_t,
@@ -231,7 +231,7 @@ extern "C" fn real_crc32(
     return crc32_safe(crc, buff as *const Bytef, len as libc::c_uint);
 }
 /* Used by "ignorecrc32" option to speed up tests. */
-extern "C" fn fake_crc32(
+unsafe extern "C" fn fake_crc32(
     mut crc: libc::c_ulong,
     mut buff: *const libc::c_void,
     mut len: size_t,
@@ -418,7 +418,7 @@ static mut compression_methods: [obj2; 25] = [
 ];
 // Initialized in run_static_initializers
 static mut num_compression_methods: libc::c_int = 0;
-extern "C" fn compression_name(compression: libc::c_int) -> *const libc::c_char {
+unsafe extern "C" fn compression_name(compression: libc::c_int) -> *const libc::c_char {
     let mut i: libc::c_int = 0 as libc::c_int;
     unsafe {
         while compression >= 0 as libc::c_int && i < num_compression_methods {
@@ -431,7 +431,7 @@ extern "C" fn compression_name(compression: libc::c_int) -> *const libc::c_char 
     return b"??\x00" as *const u8 as *const libc::c_char;
 }
 /* Convert an MSDOS-style date/time into Unix-style time. */
-extern "C" fn zip_time(mut p: *const libc::c_char) -> time_t {
+unsafe extern "C" fn zip_time(mut p: *const libc::c_char) -> time_t {
     let mut msTime: libc::c_int = 0; /* Years since 1900. */
     let mut msDate: libc::c_int = 0; /* Month number. */
     let mut ts: tm = tm {
@@ -482,7 +482,7 @@ extern "C" fn zip_time(mut p: *const libc::c_char) -> time_t {
 *	id1+size1+data1 + id2+size2+data2 ...
 *  triplets.  id and size are 2 bytes each.
 */
-extern "C" fn process_extra(
+unsafe extern "C" fn process_extra(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut p: *const libc::c_char,
@@ -1096,7 +1096,7 @@ extern "C" fn process_extra(
 /*
 * Assumes file pointer is at beginning of local file header.
 */
-extern "C" fn zip_read_local_file_header(
+unsafe extern "C" fn zip_read_local_file_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut zip: *mut zip,
@@ -1722,7 +1722,7 @@ extern "C" fn zip_read_local_file_header(
     safe_a.archive.archive_format_name = safe_zip.format_name.s;
     return ret;
 }
-extern "C" fn check_authentication_code(
+unsafe extern "C" fn check_authentication_code(
     mut a: *mut archive_read,
     mut _p: *const libc::c_void,
 ) -> libc::c_int {
@@ -1782,7 +1782,7 @@ extern "C" fn check_authentication_code(
     return 0 as libc::c_int;
 }
 
-extern "C" fn zip_read_data_none(
+unsafe extern "C" fn zip_read_data_none(
     mut a: *mut archive_read,
     mut _buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -1982,7 +1982,10 @@ extern "C" fn zip_read_data_none(
     }
 }
 
-extern "C" fn consume_optional_marker(mut a: *mut archive_read, mut zip: *mut zip) -> libc::c_int {
+unsafe extern "C" fn consume_optional_marker(
+    mut a: *mut archive_read,
+    mut zip: *mut zip,
+) -> libc::c_int {
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
 
@@ -2064,7 +2067,7 @@ extern "C" fn consume_optional_marker(mut a: *mut archive_read, mut zip: *mut zi
 }
 
 #[cfg(all(HAVE_LZMA_H, HAVE_LIBLZMA))]
-extern "C" fn zipx_xz_init(mut a: *mut archive_read, mut zip: *mut zip) -> libc::c_int {
+unsafe extern "C" fn zipx_xz_init(mut a: *mut archive_read, mut zip: *mut zip) -> libc::c_int {
     let mut r: lzma_ret = LZMA_OK;
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
@@ -2111,7 +2114,10 @@ extern "C" fn zipx_xz_init(mut a: *mut archive_read, mut zip: *mut zip) -> libc:
     safe_zip.decompress_init = 1 as libc::c_int as libc::c_char;
     return 0 as libc::c_int;
 }
-extern "C" fn zipx_lzma_alone_init(mut a: *mut archive_read, mut zip: *mut zip) -> libc::c_int {
+unsafe extern "C" fn zipx_lzma_alone_init(
+    mut a: *mut archive_read,
+    mut zip: *mut zip,
+) -> libc::c_int {
     unsafe {
         let safe_a = unsafe { &mut *a };
         let safe_zip = unsafe { &mut *zip };
@@ -2232,7 +2238,7 @@ extern "C" fn zipx_lzma_alone_init(mut a: *mut archive_read, mut zip: *mut zip) 
         return 0 as libc::c_int;
     }
 }
-extern "C" fn zip_read_data_zipx_xz(
+unsafe extern "C" fn zip_read_data_zipx_xz(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -2336,7 +2342,7 @@ extern "C" fn zip_read_data_zipx_xz(
 }
 
 #[cfg(all(HAVE_LZMA_H, HAVE_LIBLZMA))]
-extern "C" fn zip_read_data_zipx_lzma_alone(
+unsafe extern "C" fn zip_read_data_zipx_lzma_alone(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -2465,7 +2471,7 @@ extern "C" fn zip_read_data_zipx_lzma_alone(
     return 0 as libc::c_int;
 }
 /* HAVE_LZMA_H && HAVE_LIBLZMA */
-extern "C" fn zipx_ppmd8_init(mut a: *mut archive_read, mut zip: *mut zip) -> libc::c_int {
+unsafe extern "C" fn zipx_ppmd8_init(mut a: *mut archive_read, mut zip: *mut zip) -> libc::c_int {
     let mut p: *const libc::c_void = 0 as *const libc::c_void;
     let mut val: uint32_t = 0;
     let mut order: uint32_t = 0;
@@ -2601,7 +2607,7 @@ extern "C" fn zipx_ppmd8_init(mut a: *mut archive_read, mut zip: *mut zip) -> li
         2 as libc::c_int as libc::c_long + (safe_zip).zipx_ppmd_read_compressed;
     return 0 as libc::c_int;
 }
-extern "C" fn zip_read_data_zipx_ppmd(
+unsafe extern "C" fn zip_read_data_zipx_ppmd(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -2703,7 +2709,7 @@ extern "C" fn zip_read_data_zipx_ppmd(
 }
 
 #[cfg(HAVE_BZLIB_H)]
-extern "C" fn zipx_bzip2_init(mut a: *mut archive_read, mut zip: *mut zip) -> libc::c_int {
+unsafe extern "C" fn zipx_bzip2_init(mut a: *mut archive_read, mut zip: *mut zip) -> libc::c_int {
     let mut r: libc::c_int = 0;
     /* Deallocate already existing BZ2 decompression context if it
      * exists. */
@@ -2753,7 +2759,7 @@ extern "C" fn zipx_bzip2_init(mut a: *mut archive_read, mut zip: *mut zip) -> li
     safe_zip.decompress_init = 1 as libc::c_int as libc::c_char;
     return 0 as libc::c_int;
 }
-extern "C" fn zip_read_data_zipx_bzip2(
+unsafe extern "C" fn zip_read_data_zipx_bzip2(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -2876,7 +2882,7 @@ extern "C" fn zip_read_data_zipx_bzip2(
 }
 
 #[cfg(HAVE_ZLIB_H)]
-extern "C" fn zip_deflate_init(mut a: *mut archive_read, mut zip: *mut zip) -> libc::c_int {
+unsafe extern "C" fn zip_deflate_init(mut a: *mut archive_read, mut zip: *mut zip) -> libc::c_int {
     let mut r: libc::c_int = 0;
     /* If we haven't yet read any data, initialize the decompressor. */
     let safe_zip = unsafe { &mut *zip };
@@ -2911,7 +2917,7 @@ extern "C" fn zip_deflate_init(mut a: *mut archive_read, mut zip: *mut zip) -> l
 }
 
 #[cfg(HAVE_ZLIB_H)]
-extern "C" fn zip_read_data_deflate(
+unsafe extern "C" fn zip_read_data_deflate(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -3110,7 +3116,7 @@ extern "C" fn zip_read_data_deflate(
     }
 }
 
-extern "C" fn read_decryption_header(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn read_decryption_header(mut a: *mut archive_read) -> libc::c_int {
     let mut current_block: u64;
     let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut p: *const libc::c_char = 0 as *const libc::c_char;
@@ -3631,7 +3637,7 @@ extern "C" fn read_decryption_header(mut a: *mut archive_read) -> libc::c_int {
     };
     return -(30 as libc::c_int);
 }
-extern "C" fn zip_alloc_decryption_buffer(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn zip_alloc_decryption_buffer(mut a: *mut archive_read) -> libc::c_int {
     let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut bs: size_t = (256 as libc::c_int * 1024 as libc::c_int) as size_t;
 
@@ -3655,7 +3661,7 @@ extern "C" fn zip_alloc_decryption_buffer(mut a: *mut archive_read) -> libc::c_i
     safe_zip.decrypted_ptr = safe_zip.decrypted_buffer;
     return 0 as libc::c_int;
 }
-extern "C" fn init_traditional_PKWARE_decryption(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn init_traditional_PKWARE_decryption(mut a: *mut archive_read) -> libc::c_int {
     let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut p: *const libc::c_void = 0 as *const libc::c_void;
     let mut retry: libc::c_int = 0;
@@ -3761,7 +3767,7 @@ extern "C" fn init_traditional_PKWARE_decryption(mut a: *mut archive_read) -> li
     safe_zip.decrypted_bytes_remaining = 0 as libc::c_int as size_t;
     return zip_alloc_decryption_buffer(a);
 }
-extern "C" fn init_WinZip_AES_decryption(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn init_WinZip_AES_decryption(mut a: *mut archive_read) -> libc::c_int {
     let mut current_block: u64;
     let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut p: *const libc::c_void = 0 as *const libc::c_void;
@@ -3984,7 +3990,7 @@ extern "C" fn init_WinZip_AES_decryption(mut a: *mut archive_read) -> libc::c_in
     };
     return -(30 as libc::c_int);
 }
-extern "C" fn archive_read_format_zip_read_data(
+unsafe extern "C" fn archive_read_format_zip_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -4150,7 +4156,7 @@ extern "C" fn archive_read_format_zip_read_data(
     return 0 as libc::c_int;
 }
 
-extern "C" fn archive_read_format_zip_cleanup(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_zip_cleanup(mut a: *mut archive_read) -> libc::c_int {
     unsafe {
         let mut zip: *mut zip = 0 as *mut zip;
         let mut zip_entry: *mut zip_entry = 0 as *mut zip_entry;
@@ -4204,7 +4210,7 @@ extern "C" fn archive_read_format_zip_cleanup(mut a: *mut archive_read) -> libc:
     }
 }
 
-extern "C" fn archive_read_format_zip_has_encrypted_entries(
+unsafe extern "C" fn archive_read_format_zip_has_encrypted_entries(
     mut _a: *mut archive_read,
 ) -> libc::c_int {
     let safe__a = unsafe { &mut *_a };
@@ -4219,7 +4225,7 @@ extern "C" fn archive_read_format_zip_has_encrypted_entries(
     return -(1 as libc::c_int);
 }
 
-extern "C" fn archive_read_format_zip_options(
+unsafe extern "C" fn archive_read_format_zip_options(
     mut a: *mut archive_read,
     mut key: *const libc::c_char,
     mut val: *const libc::c_char,
@@ -4326,17 +4332,17 @@ extern "C" fn archive_read_format_zip_options(
 
 pub fn archive_read_support_format_zip(mut a: *mut archive) -> libc::c_int {
     let mut r: libc::c_int = 0;
-    r = archive_read_support_format_zip_streamable(a);
+    r = unsafe { archive_read_support_format_zip_streamable(a) };
     if r != 0 as libc::c_int {
         return r;
     }
-    return archive_read_support_format_zip_seekable(a);
+    return unsafe { archive_read_support_format_zip_seekable(a) };
 }
 /* ------------------------------------------------------------------------ */
 /*
 * Streaming-mode support
 */
-extern "C" fn archive_read_support_format_zip_capabilities_streamable(
+unsafe extern "C" fn archive_read_support_format_zip_capabilities_streamable(
     mut a: *mut archive_read,
 ) -> libc::c_int {
     /* UNUSED */
@@ -4344,7 +4350,7 @@ extern "C" fn archive_read_support_format_zip_capabilities_streamable(
         return (1 as libc::c_int) << 0 as libc::c_int | (1 as libc::c_int) << 1 as libc::c_int;
     }
 }
-extern "C" fn archive_read_format_zip_streamable_bid(
+unsafe extern "C" fn archive_read_format_zip_streamable_bid(
     mut a: *mut archive_read,
     mut best_bid: libc::c_int,
 ) -> libc::c_int {
@@ -4391,7 +4397,7 @@ extern "C" fn archive_read_format_zip_streamable_bid(
     }
 }
 
-extern "C" fn archive_read_format_zip_streamable_read_header(
+unsafe extern "C" fn archive_read_format_zip_streamable_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> libc::c_int {
@@ -4518,7 +4524,7 @@ extern "C" fn archive_read_format_zip_streamable_read_header(
     }
 }
 
-extern "C" fn archive_read_format_zip_read_data_skip_streamable(
+unsafe extern "C" fn archive_read_format_zip_read_data_skip_streamable(
     mut a: *mut archive_read,
 ) -> libc::c_int {
     let mut zip: *mut zip = 0 as *mut zip;
@@ -4526,7 +4532,7 @@ extern "C" fn archive_read_format_zip_read_data_skip_streamable(
     zip = unsafe { (*(*a).format).data as *mut zip };
 
     let safe_a = unsafe { &mut *a };
-    let safe_zip = unsafe { &mut *zip };
+    let mut safe_zip = unsafe { &mut *zip };
 
     bytes_skipped = __archive_read_consume_safe(a, (safe_zip).unconsumed as int64_t);
 
@@ -4585,6 +4591,7 @@ extern "C" fn archive_read_format_zip_read_data_skip_streamable(
                 if r_0 != 0 as libc::c_int {
                     return r_0;
                 }
+                safe_zip = unsafe { &mut *((*(*a).format).data as *mut zip) }
             }
             return 0 as libc::c_int;
         }
@@ -4658,7 +4665,9 @@ extern "C" fn archive_read_format_zip_read_data_skip_streamable(
     };
 }
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_zip_streamable(mut _a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_zip_streamable(
+    mut _a: *mut archive,
+) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut zip = 0 as *mut zip;
 
@@ -4712,11 +4721,11 @@ pub extern "C" fn archive_read_support_format_zip_streamable(mut _a: *mut archiv
         b"zip\x00" as *const u8 as *const libc::c_char,
         Some(
             archive_read_format_zip_streamable_bid
-                as extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
         ),
         Some(
             archive_read_format_zip_options
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *const libc::c_char,
                     _: *const libc::c_char,
@@ -4724,11 +4733,11 @@ pub extern "C" fn archive_read_support_format_zip_streamable(mut _a: *mut archiv
         ),
         Some(
             archive_read_format_zip_streamable_read_header
-                as extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
         ),
         Some(
             archive_read_format_zip_read_data
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *mut *const libc::c_void,
                     _: *mut size_t,
@@ -4737,17 +4746,20 @@ pub extern "C" fn archive_read_support_format_zip_streamable(mut _a: *mut archiv
         ),
         Some(
             archive_read_format_zip_read_data_skip_streamable
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         None,
-        Some(archive_read_format_zip_cleanup as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+        Some(
+            archive_read_format_zip_cleanup
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
+        ),
         Some(
             archive_read_support_format_zip_capabilities_streamable
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         Some(
             archive_read_format_zip_has_encrypted_entries
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
     );
     if r != 0 as libc::c_int {
@@ -4759,7 +4771,7 @@ pub extern "C" fn archive_read_support_format_zip_streamable(mut _a: *mut archiv
 /*
 * Seeking-mode support
 */
-extern "C" fn archive_read_support_format_zip_capabilities_seekable(
+unsafe extern "C" fn archive_read_support_format_zip_capabilities_seekable(
     mut a: *mut archive_read,
 ) -> libc::c_int {
     /* UNUSED */
@@ -4828,7 +4840,7 @@ unsafe extern "C" fn read_eocd(
 * Examine Zip64 EOCD locator:  If it's valid, store the information
 * from it.
 */
-extern "C" fn read_zip64_eocd(
+unsafe extern "C" fn read_zip64_eocd(
     mut a: *mut archive_read,
     mut zip: *mut zip,
     mut p: *const libc::c_char,
@@ -4905,7 +4917,7 @@ extern "C" fn read_zip64_eocd(
     (safe_zip).central_directory_offset_adjusted = (safe_zip).central_directory_offset;
     return 32 as libc::c_int;
 }
-extern "C" fn archive_read_format_zip_seekable_bid(
+unsafe extern "C" fn archive_read_format_zip_seekable_bid(
     mut a: *mut archive_read,
     mut best_bid: libc::c_int,
 ) -> libc::c_int {
@@ -4997,7 +5009,7 @@ extern "C" fn archive_read_format_zip_seekable_bid(
 }
 /* The red-black trees are only used in seeking mode to manage
 * the in-memory copy of the central directory. */
-extern "C" fn cmp_node(
+unsafe extern "C" fn cmp_node(
     mut n1: *const archive_rb_node,
     mut n2: *const archive_rb_node,
 ) -> libc::c_int {
@@ -5013,7 +5025,10 @@ extern "C" fn cmp_node(
     }
     return 0 as libc::c_int;
 }
-extern "C" fn cmp_key(mut n: *const archive_rb_node, mut key: *const libc::c_void) -> libc::c_int {
+unsafe extern "C" fn cmp_key(
+    mut n: *const archive_rb_node,
+    mut key: *const libc::c_void,
+) -> libc::c_int {
     /* This function won't be called */
     /* UNUSED */
     return 1 as libc::c_int;
@@ -5037,7 +5052,7 @@ static mut rb_ops: archive_rb_tree_ops = {
     };
     init
 };
-extern "C" fn rsrc_cmp_node(
+unsafe extern "C" fn rsrc_cmp_node(
     mut n1: *const archive_rb_node,
     mut n2: *const archive_rb_node,
 ) -> libc::c_int {
@@ -5047,7 +5062,7 @@ extern "C" fn rsrc_cmp_node(
     let safe_e2 = unsafe { &*e2 };
     return strcmp_safe(safe_e2.rsrcname.s, safe_e1.rsrcname.s);
 }
-extern "C" fn rsrc_cmp_key(
+unsafe extern "C" fn rsrc_cmp_key(
     mut n: *const archive_rb_node,
     mut key: *const libc::c_void,
 ) -> libc::c_int {
@@ -5074,7 +5089,7 @@ static mut rb_rsrc_ops: archive_rb_tree_ops = {
     };
     init
 };
-extern "C" fn rsrc_basename(
+unsafe extern "C" fn rsrc_basename(
     mut name: *const libc::c_char,
     mut name_length: size_t,
 ) -> *const libc::c_char {
@@ -5097,7 +5112,7 @@ extern "C" fn rsrc_basename(
     }
     return r;
 }
-extern "C" fn expose_parent_dirs(
+unsafe extern "C" fn expose_parent_dirs(
     mut zip: *mut zip,
     mut name: *const libc::c_char,
     mut name_length: size_t,
@@ -5136,7 +5151,7 @@ extern "C" fn expose_parent_dirs(
     }
     archive_string_free_safe(&mut str);
 }
-extern "C" fn slurp_central_directory(
+unsafe extern "C" fn slurp_central_directory(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut zip: *mut zip,
@@ -5205,15 +5220,12 @@ extern "C" fn slurp_central_directory(
                             as *const libc::c_void,
                         4 as libc::c_int as libc::c_ulong,
                     ) == 0 as libc::c_int
-                    {
-                        unsafe { p = p.offset(i as isize) };
-                        found = 1 as libc::c_int as libc::c_uint
-                    } else if memcmp_safe(
-                        unsafe { p.offset(i as isize) as *const libc::c_void },
-                        b"PK\x06\x06\x00" as *const u8 as *const libc::c_char
-                            as *const libc::c_void,
-                        4 as libc::c_int as libc::c_ulong,
-                    ) == 0 as libc::c_int
+                        || memcmp_safe(
+                            unsafe { p.offset(i as isize) as *const libc::c_void },
+                            b"PK\x06\x06\x00" as *const u8 as *const libc::c_char
+                                as *const libc::c_void,
+                            4 as libc::c_int as libc::c_ulong,
+                        ) == 0 as libc::c_int
                     {
                         unsafe { p = p.offset(i as isize) };
                         found = 1 as libc::c_int as libc::c_uint
@@ -5509,7 +5521,7 @@ extern "C" fn slurp_central_directory(
     return 0 as libc::c_int;
 }
 
-extern "C" fn zip_get_local_file_header_size(
+unsafe extern "C" fn zip_get_local_file_header_size(
     mut a: *mut archive_read,
     mut extra: size_t,
 ) -> ssize_t {
@@ -5557,7 +5569,7 @@ extern "C" fn zip_get_local_file_header_size(
     return 30 as libc::c_int as libc::c_long + filename_length + extra_length;
 }
 
-extern "C" fn zip_read_mac_metadata(
+unsafe extern "C" fn zip_read_mac_metadata(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut rsrc: *mut zip_entry,
@@ -5782,7 +5794,7 @@ extern "C" fn zip_read_mac_metadata(
         return ret;
     }
 }
-extern "C" fn archive_read_format_zip_seekable_read_header(
+unsafe extern "C" fn archive_read_format_zip_seekable_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> libc::c_int {
@@ -5888,7 +5900,7 @@ extern "C" fn archive_read_format_zip_seekable_read_header(
 * We're going to seek for the next header anyway, so we don't
 * need to bother doing anything here.
 */
-extern "C" fn archive_read_format_zip_read_data_skip_seekable(
+unsafe extern "C" fn archive_read_format_zip_read_data_skip_seekable(
     mut a: *mut archive_read,
 ) -> libc::c_int {
     let mut zip: *mut zip = 0 as *mut zip;
@@ -5899,7 +5911,9 @@ extern "C" fn archive_read_format_zip_read_data_skip_seekable(
 }
 
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_zip_seekable(mut _a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_zip_seekable(
+    mut _a: *mut archive,
+) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut zip = 0 as *mut zip;
     let mut r: libc::c_int = 0;
@@ -5959,11 +5973,11 @@ pub extern "C" fn archive_read_support_format_zip_seekable(mut _a: *mut archive)
         b"zip\x00" as *const u8 as *const libc::c_char,
         Some(
             archive_read_format_zip_seekable_bid
-                as extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
         ),
         Some(
             archive_read_format_zip_options
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *const libc::c_char,
                     _: *const libc::c_char,
@@ -5971,11 +5985,11 @@ pub extern "C" fn archive_read_support_format_zip_seekable(mut _a: *mut archive)
         ),
         Some(
             archive_read_format_zip_seekable_read_header
-                as extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
         ),
         Some(
             archive_read_format_zip_read_data
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *mut *const libc::c_void,
                     _: *mut size_t,
@@ -5984,17 +5998,20 @@ pub extern "C" fn archive_read_support_format_zip_seekable(mut _a: *mut archive)
         ),
         Some(
             archive_read_format_zip_read_data_skip_seekable
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         None,
-        Some(archive_read_format_zip_cleanup as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+        Some(
+            archive_read_format_zip_cleanup
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
+        ),
         Some(
             archive_read_support_format_zip_capabilities_seekable
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         Some(
             archive_read_format_zip_has_encrypted_entries
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
     );
     if r != 0 as libc::c_int {
@@ -6002,7 +6019,7 @@ pub extern "C" fn archive_read_support_format_zip_seekable(mut _a: *mut archive)
     }
     return 0 as libc::c_int;
 }
-extern "C" fn run_static_initializers() {
+unsafe extern "C" fn run_static_initializers() {
     unsafe {
         num_compression_methods = (::std::mem::size_of::<[obj2; 25]>() as libc::c_ulong)
             .wrapping_div(::std::mem::size_of::<obj2>() as libc::c_ulong)
