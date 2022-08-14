@@ -21,7 +21,7 @@ fn _mkgmtime_safe(__tp: *mut tm) -> time_t {
     return unsafe { _mkgmtime(__tp) };
 }
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_warc(mut _a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_warc(mut _a: *mut archive) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut w: *mut warc_s = 0 as *mut warc_s;
     let mut r: libc::c_int = 0;
@@ -51,24 +51,26 @@ pub extern "C" fn archive_read_support_format_warc(mut _a: *mut archive) -> libc
         a,
         w as *mut libc::c_void,
         b"warc\x00" as *const u8 as *const libc::c_char,
-        Some(_warc_bid as extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int),
+        Some(
+            _warc_bid as unsafe extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
+        ),
         None,
         Some(
             _warc_rdhdr
-                as extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
         ),
         Some(
             _warc_read
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *mut *const libc::c_void,
                     _: *mut size_t,
                     _: *mut int64_t,
                 ) -> libc::c_int,
         ),
-        Some(_warc_skip as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+        Some(_warc_skip as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int),
         None,
-        Some(_warc_cleanup as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+        Some(_warc_cleanup as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int),
         None,
         None,
     );
@@ -78,7 +80,7 @@ pub extern "C" fn archive_read_support_format_warc(mut _a: *mut archive) -> libc
     }
     return 0 as libc::c_int;
 }
-extern "C" fn _warc_cleanup(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn _warc_cleanup(mut a: *mut archive_read) -> libc::c_int {
     let mut w: *mut warc_s = unsafe { (*(*a).format).data as *mut warc_s };
     let mut safe_w = unsafe { &mut *w };
     let mut safe_a = unsafe { &mut *a };
@@ -90,7 +92,7 @@ extern "C" fn _warc_cleanup(mut a: *mut archive_read) -> libc::c_int {
     unsafe { (*safe_a.format).data = 0 as *mut libc::c_void };
     return ARCHIVE_WARC_DEFINED_PARAM.archive_ok;
 }
-extern "C" fn _warc_bid(mut a: *mut archive_read, mut best_bid: libc::c_int) -> libc::c_int {
+unsafe extern "C" fn _warc_bid(mut a: *mut archive_read, mut best_bid: libc::c_int) -> libc::c_int {
     let mut hdr: *const libc::c_char = 0 as *const libc::c_char;
     let mut nrd: ssize_t = 0;
     let mut ver: libc::c_uint = 0;
@@ -116,7 +118,10 @@ extern "C" fn _warc_bid(mut a: *mut archive_read, mut best_bid: libc::c_int) -> 
     /* otherwise be confident */
     return 64 as libc::c_int;
 }
-extern "C" fn _warc_rdhdr(mut a: *mut archive_read, mut entry: *mut archive_entry) -> libc::c_int {
+unsafe extern "C" fn _warc_rdhdr(
+    mut a: *mut archive_read,
+    mut entry: *mut archive_entry,
+) -> libc::c_int {
     let mut w: *mut warc_s = unsafe { (*(*a).format).data as *mut warc_s };
     let mut ver: libc::c_uint = 0;
     let mut buf: *const libc::c_char = 0 as *const libc::c_char;
@@ -329,7 +334,7 @@ extern "C" fn _warc_rdhdr(mut a: *mut archive_read, mut entry: *mut archive_entr
     archive_entry_set_mtime_safe(entry, mtime, 0 as libc::c_long);
     return ARCHIVE_WARC_DEFINED_PARAM.archive_ok;
 }
-extern "C" fn _warc_read(
+unsafe extern "C" fn _warc_read(
     mut a: *mut archive_read,
     mut buf: *mut *const libc::c_void,
     mut bsz: *mut size_t,
@@ -376,7 +381,7 @@ extern "C" fn _warc_read(
     safe_w.unconsumed = 0 as libc::c_uint as size_t;
     return ARCHIVE_WARC_DEFINED_PARAM.archive_eof;
 }
-extern "C" fn _warc_skip(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn _warc_skip(mut a: *mut archive_read) -> libc::c_int {
     let mut w: *mut warc_s = unsafe { (*(*a).format).data as *mut warc_s };
     let mut safe_w = unsafe { &mut *w };
     __archive_read_consume_safe(
@@ -390,10 +395,10 @@ extern "C" fn _warc_skip(mut a: *mut archive_read) -> libc::c_int {
     return ARCHIVE_WARC_DEFINED_PARAM.archive_ok;
 }
 /* private routines */
-extern "C" fn deconst(mut c: *const libc::c_void) -> *mut libc::c_void {
+unsafe extern "C" fn deconst(mut c: *const libc::c_void) -> *mut libc::c_void {
     return c as uintptr_t as *mut libc::c_void;
 }
-extern "C" fn xmemmem(
+unsafe extern "C" fn xmemmem(
     mut hay: *const libc::c_char,
     haysize: size_t,
     mut needle: *const libc::c_char,
@@ -477,7 +482,7 @@ extern "C" fn xmemmem(
     }
     return 0 as *mut libc::c_char;
 }
-extern "C" fn strtoi_lim(
+unsafe extern "C" fn strtoi_lim(
     mut str: *const libc::c_char,
     mut ep: *mut *const libc::c_char,
     mut llim: libc::c_int,
@@ -514,7 +519,7 @@ extern "C" fn strtoi_lim(
     unsafe { *ep = sp };
     return res;
 }
-extern "C" fn time_from_tm(mut t: *mut tm) -> time_t {
+unsafe extern "C" fn time_from_tm(mut t: *mut tm) -> time_t {
     /* Use platform timegm() if available. */
     /* Use platform timegm() if available. */
     #[cfg(HAVE_TIMEGM)]
@@ -535,7 +540,7 @@ extern "C" fn time_from_tm(mut t: *mut tm) -> time_t {
         + (safe_t.tm_year + 299 as libc::c_int) / 400 as libc::c_int * 86400 as libc::c_int)
         as time_t;
 }
-extern "C" fn xstrpisotime(
+unsafe extern "C" fn xstrpisotime(
     mut s: *const libc::c_char,
     mut endptr: *mut *mut libc::c_char,
 ) -> time_t {
@@ -636,7 +641,7 @@ extern "C" fn xstrpisotime(
     return res;
 }
 /* private routines */
-extern "C" fn _warc_rdver(mut buf: *const libc::c_char, mut bsz: size_t) -> libc::c_uint {
+unsafe extern "C" fn _warc_rdver(mut buf: *const libc::c_char, mut bsz: size_t) -> libc::c_uint {
     static mut magic: [libc::c_char; 6] =
         unsafe { *::std::mem::transmute::<&[u8; 6], &[libc::c_char; 6]>(b"WARC/\x00") };
     let mut c: *const libc::c_char = 0 as *const libc::c_char;
@@ -727,7 +732,7 @@ extern "C" fn _warc_rdver(mut buf: *const libc::c_char, mut bsz: size_t) -> libc
     }
     return ver;
 }
-extern "C" fn _warc_rdtyp(mut buf: *const libc::c_char, mut bsz: size_t) -> libc::c_uint {
+unsafe extern "C" fn _warc_rdtyp(mut buf: *const libc::c_char, mut bsz: size_t) -> libc::c_uint {
     static mut _key: [libc::c_char; 13] =
         unsafe { *::std::mem::transmute::<&[u8; 13], &[libc::c_char; 13]>(b"\r\nWARC-Type:\x00") };
     let mut val: *const libc::c_char = 0 as *const libc::c_char;
@@ -784,7 +789,7 @@ extern "C" fn _warc_rdtyp(mut buf: *const libc::c_char, mut bsz: size_t) -> libc
     }
     return WT_NONE as libc::c_int as libc::c_uint;
 }
-extern "C" fn _warc_rduri(mut buf: *const libc::c_char, mut bsz: size_t) -> warc_string_t {
+unsafe extern "C" fn _warc_rduri(mut buf: *const libc::c_char, mut bsz: size_t) -> warc_string_t {
     static mut _key: [libc::c_char; 19] = unsafe {
         *::std::mem::transmute::<&[u8; 19], &[libc::c_char; 19]>(b"\r\nWARC-Target-URI:\x00")
     };
@@ -893,7 +898,7 @@ extern "C" fn _warc_rduri(mut buf: *const libc::c_char, mut bsz: size_t) -> warc
     res.len = unsafe { eol.offset_from(uri) as libc::c_long as size_t };
     return res;
 }
-extern "C" fn _warc_rdlen(mut buf: *const libc::c_char, mut bsz: size_t) -> ssize_t {
+unsafe extern "C" fn _warc_rdlen(mut buf: *const libc::c_char, mut bsz: size_t) -> ssize_t {
     static mut _key: [libc::c_char; 18] = unsafe {
         *::std::mem::transmute::<&[u8; 18], &[libc::c_char; 18]>(b"\r\nContent-Length:\x00")
     };
@@ -948,7 +953,7 @@ extern "C" fn _warc_rdlen(mut buf: *const libc::c_char, mut bsz: size_t) -> ssiz
     }
     return len as size_t as ssize_t;
 }
-extern "C" fn _warc_rdrtm(mut buf: *const libc::c_char, mut bsz: size_t) -> time_t {
+unsafe extern "C" fn _warc_rdrtm(mut buf: *const libc::c_char, mut bsz: size_t) -> time_t {
     static mut _key: [libc::c_char; 13] =
         unsafe { *::std::mem::transmute::<&[u8; 13], &[libc::c_char; 13]>(b"\r\nWARC-Date:\x00") };
     let mut val: *const libc::c_char = 0 as *const libc::c_char;
@@ -987,7 +992,7 @@ extern "C" fn _warc_rdrtm(mut buf: *const libc::c_char, mut bsz: size_t) -> time
     }
     return res;
 }
-extern "C" fn _warc_rdmtm(mut buf: *const libc::c_char, mut bsz: size_t) -> time_t {
+unsafe extern "C" fn _warc_rdmtm(mut buf: *const libc::c_char, mut bsz: size_t) -> time_t {
     static mut _key: [libc::c_char; 17] = unsafe {
         *::std::mem::transmute::<&[u8; 17], &[libc::c_char; 17]>(b"\r\nLast-Modified:\x00")
     };
@@ -1027,7 +1032,10 @@ extern "C" fn _warc_rdmtm(mut buf: *const libc::c_char, mut bsz: size_t) -> time
     }
     return res;
 }
-extern "C" fn _warc_find_eoh(mut buf: *const libc::c_char, mut bsz: size_t) -> *const libc::c_char {
+unsafe extern "C" fn _warc_find_eoh(
+    mut buf: *const libc::c_char,
+    mut bsz: size_t,
+) -> *const libc::c_char {
     static mut _marker: [libc::c_char; 5] =
         unsafe { *::std::mem::transmute::<&[u8; 5], &[libc::c_char; 5]>(b"\r\n\r\n\x00") };
     let mut hit: *const libc::c_char = xmemmem(
@@ -1047,7 +1055,10 @@ extern "C" fn _warc_find_eoh(mut buf: *const libc::c_char, mut bsz: size_t) -> *
     }
     return hit;
 }
-extern "C" fn _warc_find_eol(mut buf: *const libc::c_char, mut bsz: size_t) -> *const libc::c_char {
+unsafe extern "C" fn _warc_find_eol(
+    mut buf: *const libc::c_char,
+    mut bsz: size_t,
+) -> *const libc::c_char {
     static mut _marker: [libc::c_char; 3] =
         unsafe { *::std::mem::transmute::<&[u8; 3], &[libc::c_char; 3]>(b"\r\n\x00") };
     let mut hit: *const libc::c_char = xmemmem(

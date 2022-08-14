@@ -53,7 +53,7 @@ static mut cache_masks: [uint32_t; 36] = [
  * Returns 1 if the cache buffer is full.
  * Returns 0 if the cache buffer is not full; input buffer is empty.
  */
-extern "C" fn rar_br_fillup(mut a: *mut archive_read, mut br: *mut rar_br) -> libc::c_int {
+unsafe extern "C" fn rar_br_fillup(mut a: *mut archive_read, mut br: *mut rar_br) -> libc::c_int {
     let safe_a = unsafe { &mut *a };
     let safe_br = unsafe { &mut *br };
     let mut rar: *mut rar = unsafe { (*(*a).format).data as *mut rar };
@@ -173,7 +173,10 @@ extern "C" fn rar_br_fillup(mut a: *mut archive_read, mut br: *mut rar_br) -> li
     }
 }
 
-extern "C" fn rar_br_preparation(mut a: *mut archive_read, mut br: *mut rar_br) -> libc::c_int {
+unsafe extern "C" fn rar_br_preparation(
+    mut a: *mut archive_read,
+    mut br: *mut rar_br,
+) -> libc::c_int {
     let mut rar: *mut rar = unsafe { (*(*a).format).data as *mut rar };
     let safe_rar = unsafe { &mut *rar };
     let safe_br = unsafe { &mut *br };
@@ -196,7 +199,7 @@ extern "C" fn rar_br_preparation(mut a: *mut archive_read, mut br: *mut rar_br) 
 }
 /* Find last bit set */
 #[inline]
-extern "C" fn rar_fls(mut word: libc::c_uint) -> libc::c_int {
+unsafe extern "C" fn rar_fls(mut word: libc::c_uint) -> libc::c_int {
     word |= word >> 1 as libc::c_int;
     word |= word >> 2 as libc::c_int;
     word |= word >> 4 as libc::c_int;
@@ -206,31 +209,34 @@ extern "C" fn rar_fls(mut word: libc::c_uint) -> libc::c_int {
 }
 /* LZSS functions */
 #[inline]
-extern "C" fn lzss_position(mut lzss: *mut lzss) -> int64_t {
+unsafe extern "C" fn lzss_position(mut lzss: *mut lzss) -> int64_t {
     let safe_lzss = unsafe { &mut *lzss };
     return safe_lzss.position;
 }
 
 #[inline]
-extern "C" fn lzss_mask(mut lzss: *mut lzss) -> libc::c_int {
+unsafe extern "C" fn lzss_mask(mut lzss: *mut lzss) -> libc::c_int {
     let safe_lzss = unsafe { &mut *lzss };
     return safe_lzss.mask;
 }
 
 #[inline]
-extern "C" fn lzss_size(mut lzss: *mut lzss) -> libc::c_int {
+unsafe extern "C" fn lzss_size(mut lzss: *mut lzss) -> libc::c_int {
     let safe_lzss = unsafe { &mut *lzss };
     return safe_lzss.mask + 1 as libc::c_int;
 }
 
 #[inline]
-extern "C" fn lzss_offset_for_position(mut lzss: *mut lzss, mut pos: int64_t) -> libc::c_int {
+unsafe extern "C" fn lzss_offset_for_position(
+    mut lzss: *mut lzss,
+    mut pos: int64_t,
+) -> libc::c_int {
     let safe_lzss = unsafe { &mut *lzss };
     return (pos & safe_lzss.mask as libc::c_long) as libc::c_int;
 }
 
 #[inline]
-extern "C" fn lzss_pointer_for_position(
+unsafe extern "C" fn lzss_pointer_for_position(
     mut lzss: *mut lzss,
     mut pos: int64_t,
 ) -> *mut libc::c_uchar {
@@ -243,19 +249,19 @@ extern "C" fn lzss_pointer_for_position(
 }
 
 #[inline]
-extern "C" fn lzss_current_offset(mut lzss: *mut lzss) -> libc::c_int {
+unsafe extern "C" fn lzss_current_offset(mut lzss: *mut lzss) -> libc::c_int {
     let safe_lzss = unsafe { &mut *lzss };
     return lzss_offset_for_position(lzss, safe_lzss.position);
 }
 
 #[inline]
-extern "C" fn lzss_current_pointer(mut lzss: *mut lzss) -> *mut uint8_t {
+unsafe extern "C" fn lzss_current_pointer(mut lzss: *mut lzss) -> *mut uint8_t {
     let safe_lzss = unsafe { &mut *lzss };
     return lzss_pointer_for_position(lzss, safe_lzss.position);
 }
 
 #[inline]
-extern "C" fn lzss_emit_literal(mut rar: *mut rar, mut literal: uint8_t) {
+unsafe extern "C" fn lzss_emit_literal(mut rar: *mut rar, mut literal: uint8_t) {
     let safe_rar = unsafe { &mut *rar };
     unsafe {
         *lzss_current_pointer(&mut safe_rar.lzss) = literal;
@@ -264,7 +270,11 @@ extern "C" fn lzss_emit_literal(mut rar: *mut rar, mut literal: uint8_t) {
 }
 
 #[inline]
-extern "C" fn lzss_emit_match(mut rar: *mut rar, mut offset: libc::c_int, mut length: libc::c_int) {
+unsafe extern "C" fn lzss_emit_match(
+    mut rar: *mut rar,
+    mut offset: libc::c_int,
+    mut length: libc::c_int,
+) {
     let safe_rar = unsafe { &mut *rar };
     let mut dstoffs: libc::c_int = lzss_current_offset(&mut safe_rar.lzss);
     let mut srcoffs: libc::c_int = dstoffs - offset & lzss_mask(&mut safe_rar.lzss);
@@ -307,7 +317,7 @@ extern "C" fn lzss_emit_match(mut rar: *mut rar, mut offset: libc::c_int, mut le
     safe_rar.lzss.position += length as libc::c_long;
 }
 
-extern "C" fn ppmd_read(mut p: *mut libc::c_void) -> Byte {
+unsafe extern "C" fn ppmd_read(mut p: *mut libc::c_void) -> Byte {
     let safe_p = unsafe { *(p as *mut IByteIn) };
     let mut a: *mut archive_read = safe_p.a;
     let mut rar: *mut rar = unsafe { (*(*a).format).data as *mut rar };
@@ -336,7 +346,7 @@ extern "C" fn ppmd_read(mut p: *mut libc::c_void) -> Byte {
 }
 
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_rar(mut _a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_rar(mut _a: *mut archive) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
     let mut r: libc::c_int = 0;
@@ -372,11 +382,11 @@ pub extern "C" fn archive_read_support_format_rar(mut _a: *mut archive) -> libc:
         b"rar\x00" as *const u8 as *const libc::c_char,
         Some(
             archive_read_format_rar_bid
-                as extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
         ),
         Some(
             archive_read_format_rar_options
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *const libc::c_char,
                     _: *const libc::c_char,
@@ -384,11 +394,11 @@ pub extern "C" fn archive_read_support_format_rar(mut _a: *mut archive) -> libc:
         ),
         Some(
             archive_read_format_rar_read_header
-                as extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
         ),
         Some(
             archive_read_format_rar_read_data
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *mut *const libc::c_void,
                     _: *mut size_t,
@@ -397,20 +407,27 @@ pub extern "C" fn archive_read_support_format_rar(mut _a: *mut archive) -> libc:
         ),
         Some(
             archive_read_format_rar_read_data_skip
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         Some(
             archive_read_format_rar_seek_data
-                as extern "C" fn(_: *mut archive_read, _: int64_t, _: libc::c_int) -> int64_t,
+                as unsafe extern "C" fn(
+                    _: *mut archive_read,
+                    _: int64_t,
+                    _: libc::c_int,
+                ) -> int64_t,
         ),
-        Some(archive_read_format_rar_cleanup as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+        Some(
+            archive_read_format_rar_cleanup
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
+        ),
         Some(
             archive_read_support_format_rar_capabilities
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         Some(
             archive_read_format_rar_has_encrypted_entries
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
     );
     if r != 0 as libc::c_int {
@@ -419,7 +436,7 @@ pub extern "C" fn archive_read_support_format_rar(mut _a: *mut archive) -> libc:
     return r;
 }
 
-extern "C" fn archive_read_support_format_rar_capabilities(
+unsafe extern "C" fn archive_read_support_format_rar_capabilities(
     mut a: *mut archive_read,
 ) -> libc::c_int {
     /* UNUSED */
@@ -427,7 +444,7 @@ extern "C" fn archive_read_support_format_rar_capabilities(
         | ARCHIVE_RAR_DEFINED_PARAM.archive_read_format_caps_encrypt_metadata;
 }
 
-extern "C" fn archive_read_format_rar_has_encrypted_entries(
+unsafe extern "C" fn archive_read_format_rar_has_encrypted_entries(
     mut _a: *mut archive_read,
 ) -> libc::c_int {
     let safe_a = unsafe { &mut *_a };
@@ -441,7 +458,7 @@ extern "C" fn archive_read_format_rar_has_encrypted_entries(
     return ARCHIVE_RAR_DEFINED_PARAM.archive_read_format_encryption_dont_know;
 }
 
-extern "C" fn archive_read_format_rar_bid(
+unsafe extern "C" fn archive_read_format_rar_bid(
     mut a: *mut archive_read,
     mut best_bid: libc::c_int,
 ) -> libc::c_int {
@@ -509,7 +526,7 @@ extern "C" fn archive_read_format_rar_bid(
     return 0 as libc::c_int;
 }
 
-extern "C" fn skip_sfx(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn skip_sfx(mut a: *mut archive_read) -> libc::c_int {
     let mut h: *const libc::c_void = 0 as *const libc::c_void;
     let mut p: *const libc::c_char = 0 as *const libc::c_char;
     let mut q: *const libc::c_char = 0 as *const libc::c_char;
@@ -570,7 +587,7 @@ extern "C" fn skip_sfx(mut a: *mut archive_read) -> libc::c_int {
     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
 }
 
-extern "C" fn archive_read_format_rar_options(
+unsafe extern "C" fn archive_read_format_rar_options(
     mut a: *mut archive_read,
     mut key: *const libc::c_char,
     mut val: *const libc::c_char,
@@ -612,7 +629,7 @@ extern "C" fn archive_read_format_rar_options(
     return ARCHIVE_RAR_DEFINED_PARAM.archive_warn;
 }
 
-extern "C" fn archive_read_format_rar_read_header(
+unsafe extern "C" fn archive_read_format_rar_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> libc::c_int {
@@ -883,7 +900,7 @@ extern "C" fn archive_read_format_rar_read_header(
     }
 }
 
-extern "C" fn archive_read_format_rar_read_data(
+unsafe extern "C" fn archive_read_format_rar_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -951,7 +968,9 @@ extern "C" fn archive_read_format_rar_read_data(
     return ret;
 }
 
-extern "C" fn archive_read_format_rar_read_data_skip(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_rar_read_data_skip(
+    mut a: *mut archive_read,
+) -> libc::c_int {
     let mut rar: *mut rar = 0 as *mut rar;
     let mut bytes_skipped: int64_t = 0;
     let mut ret: libc::c_int = 0;
@@ -987,7 +1006,7 @@ extern "C" fn archive_read_format_rar_read_data_skip(mut a: *mut archive_read) -
     return ARCHIVE_RAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn archive_read_format_rar_seek_data(
+unsafe extern "C" fn archive_read_format_rar_seek_data(
     mut a: *mut archive_read,
     mut offset: int64_t,
     mut whence: libc::c_int,
@@ -1006,8 +1025,6 @@ extern "C" fn archive_read_format_rar_seek_data(
                 client_offset = safe_rar.offset_seek
             } else if whence == ARCHIVE_RAR_DEFINED_PARAM.seek_end {
                 client_offset = safe_rar.unp_size
-            } else if whence == ARCHIVE_RAR_DEFINED_PARAM.seek_set {
-                client_offset = 0 as libc::c_int as int64_t
             } else {
                 client_offset = 0 as libc::c_int as int64_t
             }
@@ -1204,7 +1221,7 @@ extern "C" fn archive_read_format_rar_seek_data(
     return ARCHIVE_RAR_DEFINED_PARAM.archive_failed as int64_t;
 }
 
-extern "C" fn archive_read_format_rar_cleanup(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_rar_cleanup(mut a: *mut archive_read) -> libc::c_int {
     let mut rar: *mut rar = 0 as *mut rar;
     rar = unsafe { (*(*a).format).data as *mut rar };
     let safe_rar = unsafe { &mut *rar };
@@ -1224,7 +1241,7 @@ extern "C" fn archive_read_format_rar_cleanup(mut a: *mut archive_read) -> libc:
     return ARCHIVE_RAR_DEFINED_PARAM.archive_ok;
 }
 /* Support functions */
-extern "C" fn read_header(
+unsafe extern "C" fn read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut head_type: libc::c_char,
@@ -1910,7 +1927,7 @@ extern "C" fn read_header(
     return ret;
 }
 
-extern "C" fn get_time(mut ttime: libc::c_int) -> time_t {
+unsafe extern "C" fn get_time(mut ttime: libc::c_int) -> time_t {
     let mut tm: tm = tm {
         tm_sec: 0,
         tm_min: 0,
@@ -1934,7 +1951,7 @@ extern "C" fn get_time(mut ttime: libc::c_int) -> time_t {
     return mktime_safe(&mut tm);
 }
 
-extern "C" fn read_exttime(
+unsafe extern "C" fn read_exttime(
     mut p: *const libc::c_char,
     mut rar: *mut rar,
     mut endp: *const libc::c_char,
@@ -2056,7 +2073,7 @@ extern "C" fn read_exttime(
     return 0 as libc::c_int;
 }
 
-extern "C" fn read_symlink_stored(
+unsafe extern "C" fn read_symlink_stored(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut sconv: *mut archive_string_conv,
@@ -2094,7 +2111,7 @@ extern "C" fn read_symlink_stored(
     return ret;
 }
 
-extern "C" fn read_data_stored(
+unsafe extern "C" fn read_data_stored(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -2149,7 +2166,7 @@ extern "C" fn read_data_stored(
     return ARCHIVE_RAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn read_data_compressed(
+unsafe extern "C" fn read_data_compressed(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -2465,7 +2482,7 @@ extern "C" fn read_data_compressed(
     return ret;
 }
 
-extern "C" fn parse_codes(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn parse_codes(mut a: *mut archive_read) -> libc::c_int {
     let mut current_block: u64;
     let mut i: libc::c_int = 0;
     let mut j: libc::c_int = 0;
@@ -3066,7 +3083,7 @@ extern "C" fn parse_codes(mut a: *mut archive_read) -> libc::c_int {
     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
 }
 
-extern "C" fn free_codes(mut a: *mut archive_read) {
+unsafe extern "C" fn free_codes(mut a: *mut archive_read) {
     let mut rar: *mut rar = unsafe { (*(*a).format).data as *mut rar };
     let safe_rar = unsafe { &mut *rar };
     free_safe(safe_rar.maincode.tree as *mut libc::c_void);
@@ -3099,7 +3116,7 @@ extern "C" fn free_codes(mut a: *mut archive_read) {
     );
 }
 
-extern "C" fn read_next_symbol(
+unsafe extern "C" fn read_next_symbol(
     mut a: *mut archive_read,
     mut code: *mut huffman_code,
 ) -> libc::c_int {
@@ -3193,7 +3210,7 @@ extern "C" fn read_next_symbol(
     return unsafe { (*(*code).tree.offset(node as isize)).branches[0 as libc::c_int as usize] };
 }
 
-extern "C" fn create_code(
+unsafe extern "C" fn create_code(
     mut a: *mut archive_read,
     mut code: *mut huffman_code,
     mut lengths: *mut libc::c_uchar,
@@ -3244,7 +3261,7 @@ extern "C" fn create_code(
     return ARCHIVE_RAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn add_value(
+unsafe extern "C" fn add_value(
     mut a: *mut archive_read,
     mut code: *mut huffman_code,
     mut value: libc::c_int,
@@ -3371,7 +3388,7 @@ extern "C" fn add_value(
     return ARCHIVE_RAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn new_node(mut code: *mut huffman_code) -> libc::c_int {
+unsafe extern "C" fn new_node(mut code: *mut huffman_code) -> libc::c_int {
     let mut new_tree: *mut libc::c_void = 0 as *mut libc::c_void;
     let safe_code = unsafe { &mut *code };
     if safe_code.numallocatedentries == safe_code.numentries {
@@ -3399,7 +3416,10 @@ extern "C" fn new_node(mut code: *mut huffman_code) -> libc::c_int {
     return 1 as libc::c_int;
 }
 
-extern "C" fn make_table(mut a: *mut archive_read, mut code: *mut huffman_code) -> libc::c_int {
+unsafe extern "C" fn make_table(
+    mut a: *mut archive_read,
+    mut code: *mut huffman_code,
+) -> libc::c_int {
     let safe_code = unsafe { &mut *code };
     if safe_code.maxlength < safe_code.minlength || safe_code.maxlength > 10 as libc::c_int {
         safe_code.tablesize = 10 as libc::c_int
@@ -3421,7 +3441,7 @@ extern "C" fn make_table(mut a: *mut archive_read, mut code: *mut huffman_code) 
     );
 }
 
-extern "C" fn make_table_recurse(
+unsafe extern "C" fn make_table_recurse(
     mut a: *mut archive_read,
     mut code: *mut huffman_code,
     mut node: libc::c_int,
@@ -3503,7 +3523,7 @@ static mut lengthb_min: libc::c_int = 0;
 // Initialized in run_static_initializers
 static mut offsetb_min: libc::c_int = 0;
 
-extern "C" fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
+unsafe extern "C" fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
     let mut current_block: u64;
     static mut lengthbases: [libc::c_uchar; 28] = [
         0 as libc::c_int as libc::c_uchar,
@@ -4052,7 +4072,7 @@ extern "C" fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
     };
 }
 
-extern "C" fn copy_from_lzss_window(
+unsafe extern "C" fn copy_from_lzss_window(
     mut a: *mut archive_read,
     mut buffer: *mut *const libc::c_void,
     mut startpos: int64_t,
@@ -4154,7 +4174,7 @@ extern "C" fn copy_from_lzss_window(
     return ARCHIVE_RAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn rar_read_ahead(
+unsafe extern "C" fn rar_read_ahead(
     mut a: *mut archive_read,
     mut min: size_t,
     mut avail: *mut ssize_t,
@@ -4199,23 +4219,11 @@ extern "C" fn rar_read_ahead(
     return h;
 }
 
-extern "C" fn run_static_initializers() {
+unsafe extern "C" fn run_static_initializers() {
     unsafe {
-        lengthb_min = if ((::std::mem::size_of::<[libc::c_uchar; 28]>() as libc::c_ulong)
+        lengthb_min = (::std::mem::size_of::<[libc::c_uchar; 28]>() as libc::c_ulong)
             .wrapping_div(::std::mem::size_of::<libc::c_uchar>() as libc::c_ulong)
-            as libc::c_int)
-            < (::std::mem::size_of::<[libc::c_uchar; 28]>() as libc::c_ulong)
-                .wrapping_div(::std::mem::size_of::<libc::c_uchar>() as libc::c_ulong)
-                as libc::c_int
-        {
-            (::std::mem::size_of::<[libc::c_uchar; 28]>() as libc::c_ulong)
-                .wrapping_div(::std::mem::size_of::<libc::c_uchar>() as libc::c_ulong)
-                as libc::c_int
-        } else {
-            (::std::mem::size_of::<[libc::c_uchar; 28]>() as libc::c_ulong)
-                .wrapping_div(::std::mem::size_of::<libc::c_uchar>() as libc::c_ulong)
-                as libc::c_int
-        };
+            as libc::c_int
     }
     unsafe {
         offsetb_min = if ((::std::mem::size_of::<[libc::c_uint; 60]>() as libc::c_ulong)

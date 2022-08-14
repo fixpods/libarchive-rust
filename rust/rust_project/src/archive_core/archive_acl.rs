@@ -6,7 +6,7 @@ use rust_ffi::ffi_struct::struct_transfer::*;
 static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
     {
         let mut init = nfsv4_acl_perm_map_struct {
-            perm: 0x8 as libc::c_int | 0x8 as libc::c_int,
+            perm: 0x8 as libc::c_int,
             c: 'r' as i32 as libc::c_char,
             wc: 'r' as wchar_t,
         };
@@ -14,7 +14,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
     },
     {
         let mut init = nfsv4_acl_perm_map_struct {
-            perm: 0x10 as libc::c_int | 0x10 as libc::c_int,
+            perm: 0x10 as libc::c_int,
             c: 'w' as i32 as libc::c_char,
             wc: 'w' as wchar_t,
         };
@@ -30,7 +30,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
     },
     {
         let mut init = nfsv4_acl_perm_map_struct {
-            perm: 0x20 as libc::c_int | 0x20 as libc::c_int,
+            perm: 0x20 as libc::c_int,
             c: 'p' as i32 as libc::c_char,
             wc: 'p' as wchar_t,
         };
@@ -181,7 +181,7 @@ static mut nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
 static mut nfsv4_acl_flag_map_size: libc::c_int = 0;
 
 #[no_mangle]
-pub extern "C" fn archive_acl_clear(mut acl: *mut archive_acl) {
+pub unsafe extern "C" fn archive_acl_clear(mut acl: *mut archive_acl) {
     let safe_acl = unsafe { &mut *acl };
     let mut ap: *mut archive_acl_entry = 0 as *mut archive_acl_entry;
     while !(safe_acl).acl_head.is_null() {
@@ -201,7 +201,7 @@ pub extern "C" fn archive_acl_clear(mut acl: *mut archive_acl) {
 }
 
 #[no_mangle]
-pub extern "C" fn archive_acl_copy(mut dest: *mut archive_acl, mut src: *mut archive_acl) {
+pub unsafe extern "C" fn archive_acl_copy(mut dest: *mut archive_acl, mut src: *mut archive_acl) {
     let safe_dest = unsafe { &mut *dest };
     let safe_src = unsafe { &mut *src };
     let mut ap: *mut archive_acl_entry = 0 as *mut archive_acl_entry;
@@ -1924,17 +1924,13 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
                     field[(1 as libc::c_int + n) as usize].end,
                     &mut permset,
                 ) == 0
+                    || is_nfs4_flags_w(
+                        field[(2 as libc::c_int + n) as usize].start,
+                        field[(2 as libc::c_int + n) as usize].end,
+                        &mut permset,
+                    ) == 0
                 {
                     /* Invalid NFSv4 perms, skip entry */
-                    ret = ARCHIVE_ACL_DEFINED_PARAM.archive_warn;
-                    continue;
-                } else if is_nfs4_flags_w(
-                    field[(2 as libc::c_int + n) as usize].start,
-                    field[(2 as libc::c_int + n) as usize].end,
-                    &mut permset,
-                ) == 0
-                {
-                    /* Invalid NFSv4 flags, skip entry */
                     ret = ARCHIVE_ACL_DEFINED_PARAM.archive_warn;
                     continue;
                 } else {
@@ -2578,15 +2574,11 @@ pub unsafe extern "C" fn archive_acl_from_text_l(
                     field[(1 as libc::c_int + n) as usize].end,
                     &mut permset,
                 ) == 0
-                {
-                    /* Invalid NFSv4 perms, skip entry */
-                    ret = -(20 as libc::c_int);
-                    continue;
-                } else if is_nfs4_flags(
-                    field[(2 as libc::c_int + n) as usize].start,
-                    field[(2 as libc::c_int + n) as usize].end,
-                    &mut permset,
-                ) == 0
+                    || is_nfs4_flags(
+                        field[(2 as libc::c_int + n) as usize].start,
+                        field[(2 as libc::c_int + n) as usize].end,
+                        &mut permset,
+                    ) == 0
                 {
                     /* Invalid NFSv4 flags, skip entry */
                     ret = -(20 as libc::c_int);

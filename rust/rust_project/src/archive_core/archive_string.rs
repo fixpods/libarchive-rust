@@ -137,7 +137,7 @@ unsafe extern "C" fn archive_wstring_append(
 }
 
 #[no_mangle]
-pub extern "C" fn archive_array_append(
+pub unsafe extern "C" fn archive_array_append(
     mut as_0: *mut archive_string,
     mut p: *const libc::c_char,
     mut s: size_t,
@@ -146,7 +146,7 @@ pub extern "C" fn archive_array_append(
 }
 
 #[no_mangle]
-pub extern "C" fn archive_string_concat(
+pub unsafe extern "C" fn archive_string_concat(
     mut dest: *mut archive_string,
     mut src: *mut archive_string,
 ) {
@@ -163,7 +163,7 @@ pub extern "C" fn archive_string_concat(
 }
 
 #[no_mangle]
-pub extern "C" fn archive_wstring_concat(
+pub unsafe extern "C" fn archive_wstring_concat(
     mut dest: *mut archive_wstring,
     mut src: *mut archive_wstring,
 ) {
@@ -180,7 +180,7 @@ pub extern "C" fn archive_wstring_concat(
 }
 
 #[no_mangle]
-pub extern "C" fn archive_string_free(mut as_0: *mut archive_string) {
+pub unsafe extern "C" fn archive_string_free(mut as_0: *mut archive_string) {
     let safe_as_0 = unsafe { &mut *as_0 };
     (safe_as_0).length = 0 as libc::c_int as size_t;
     (safe_as_0).buffer_length = 0 as libc::c_int as size_t;
@@ -189,7 +189,7 @@ pub extern "C" fn archive_string_free(mut as_0: *mut archive_string) {
 }
 
 #[no_mangle]
-pub extern "C" fn archive_wstring_free(mut as_0: *mut archive_wstring) {
+pub unsafe extern "C" fn archive_wstring_free(mut as_0: *mut archive_wstring) {
     let safe_as_0 = unsafe { &mut *as_0 };
     (safe_as_0).length = 0 as libc::c_int as size_t;
     (safe_as_0).buffer_length = 0 as libc::c_int as size_t;

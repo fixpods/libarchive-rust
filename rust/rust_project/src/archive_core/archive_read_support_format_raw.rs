@@ -13,7 +13,7 @@ pub struct raw_info {
 }
 
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_raw(mut _a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_raw(mut _a: *mut archive) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut r: libc::c_int = 0;
     let mut magic_test: libc::c_int = __archive_check_magic_safe(
@@ -45,16 +45,16 @@ pub extern "C" fn archive_read_support_format_raw(mut _a: *mut archive) -> libc:
         b"raw\x00" as *const u8 as *const libc::c_char,
         Some(
             archive_read_format_raw_bid
-                as extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
         ),
         None,
         Some(
             archive_read_format_raw_read_header
-                as extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
         ),
         Some(
             archive_read_format_raw_read_data
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *mut *const libc::c_void,
                     _: *mut size_t,
@@ -63,10 +63,13 @@ pub extern "C" fn archive_read_support_format_raw(mut _a: *mut archive) -> libc:
         ),
         Some(
             archive_read_format_raw_read_data_skip
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         None,
-        Some(archive_read_format_raw_cleanup as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+        Some(
+            archive_read_format_raw_cleanup
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
+        ),
         None,
         None,
     );
@@ -76,7 +79,7 @@ pub extern "C" fn archive_read_support_format_raw(mut _a: *mut archive) -> libc:
     return r;
 }
 
-extern "C" fn archive_read_format_raw_bid(
+unsafe extern "C" fn archive_read_format_raw_bid(
     mut a: *mut archive_read,
     mut best_bid: libc::c_int,
 ) -> libc::c_int {
@@ -89,7 +92,7 @@ extern "C" fn archive_read_format_raw_bid(
     return -(1 as libc::c_int);
 }
 
-extern "C" fn archive_read_format_raw_read_header(
+unsafe extern "C" fn archive_read_format_raw_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> libc::c_int {
@@ -108,7 +111,7 @@ extern "C" fn archive_read_format_raw_read_header(
     return __archive_read_header_safe(a, entry);
 }
 
-extern "C" fn archive_read_format_raw_read_data(
+unsafe extern "C" fn archive_read_format_raw_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -151,7 +154,9 @@ extern "C" fn archive_read_format_raw_read_data(
     };
 }
 
-extern "C" fn archive_read_format_raw_read_data_skip(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_raw_read_data_skip(
+    mut a: *mut archive_read,
+) -> libc::c_int {
     let info = unsafe { &mut *((*(*a).format).data as *mut raw_info) };
     /* Consume the bytes we read last time. */
     if info.unconsumed != 0 {
@@ -162,7 +167,7 @@ extern "C" fn archive_read_format_raw_read_data_skip(mut a: *mut archive_read) -
     return ARCHIVE_RAW_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn archive_read_format_raw_cleanup(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_raw_cleanup(mut a: *mut archive_read) -> libc::c_int {
     let safe_a_format = unsafe { &mut *(*a).format };
     let info = unsafe { &mut *((*(*a).format).data as *mut raw_info) };
     free_safe(info as *mut raw_info as *mut libc::c_void);

@@ -122,7 +122,7 @@ pub union archive_temporary_u {
 }
 
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut r: libc::c_int = 0;
     let mut magic_test: libc::c_int = __archive_check_magic_safe(
@@ -157,11 +157,11 @@ pub extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -> libc:
         b"lha\x00" as *const u8 as *const libc::c_char,
         Some(
             archive_read_format_lha_bid
-                as extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int,
         ),
         Some(
             archive_read_format_lha_options
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *const libc::c_char,
                     _: *const libc::c_char,
@@ -169,11 +169,11 @@ pub extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -> libc:
         ),
         Some(
             archive_read_format_lha_read_header
-                as extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
         ),
         Some(
             archive_read_format_lha_read_data
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *mut *const libc::c_void,
                     _: *mut size_t,
@@ -182,10 +182,13 @@ pub extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -> libc:
         ),
         Some(
             archive_read_format_lha_read_data_skip
-                as extern "C" fn(_: *mut archive_read) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
         ),
         None,
-        Some(archive_read_format_lha_cleanup as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+        Some(
+            archive_read_format_lha_cleanup
+                as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int,
+        ),
         None,
         None,
     );
@@ -195,7 +198,7 @@ pub extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -> libc:
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn lha_check_header_format(mut h: *const libc::c_void) -> size_t {
+unsafe extern "C" fn lha_check_header_format(mut h: *const libc::c_void) -> size_t {
     let mut p: *const libc::c_uchar = h as *const libc::c_uchar;
     let mut next_skip_bytes: size_t = 0;
     let mut current_block_11: u64;
@@ -330,7 +333,7 @@ extern "C" fn lha_check_header_format(mut h: *const libc::c_void) -> size_t {
 }
 
 /* Minimum header size. */
-extern "C" fn archive_read_format_lha_bid(
+unsafe extern "C" fn archive_read_format_lha_bid(
     mut a: *mut archive_read,
     mut best_bid: libc::c_int,
 ) -> libc::c_int {
@@ -389,7 +392,7 @@ extern "C" fn archive_read_format_lha_bid(
     return 0 as libc::c_int;
 }
 
-extern "C" fn archive_read_format_lha_options(
+unsafe extern "C" fn archive_read_format_lha_options(
     mut a: *mut archive_read,
     mut key: *const libc::c_char,
     mut val: *const libc::c_char,
@@ -427,7 +430,7 @@ extern "C" fn archive_read_format_lha_options(
     return ARCHIVE_LHA_DEFINED_PARAM.archive_warn;
 }
 
-extern "C" fn lha_skip_sfx(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn lha_skip_sfx(mut a: *mut archive_read) -> libc::c_int {
     let mut h: *const libc::c_void = 0 as *const libc::c_void;
     let mut p: *const libc::c_char = 0 as *const libc::c_char;
     let mut q: *const libc::c_char = 0 as *const libc::c_char;
@@ -476,7 +479,7 @@ extern "C" fn lha_skip_sfx(mut a: *mut archive_read) -> libc::c_int {
     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
 }
 
-extern "C" fn truncated_error(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn truncated_error(mut a: *mut archive_read) -> libc::c_int {
     archive_set_error_safe!(
         &mut (*a).archive as *mut archive,
         ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
@@ -485,7 +488,7 @@ extern "C" fn truncated_error(mut a: *mut archive_read) -> libc::c_int {
     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
 }
 
-extern "C" fn archive_read_format_lha_read_header(
+unsafe extern "C" fn archive_read_format_lha_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> libc::c_int {
@@ -883,7 +886,7 @@ extern "C" fn archive_read_format_lha_read_header(
  * Replace a DOS path separator '\' by a character '/'.
  * Some multi-byte character set have  a character '\' in its second byte.
  */
-extern "C" fn lha_replace_path_separator(mut lha: &mut lha, mut entry: *mut archive_entry) {
+unsafe extern "C" fn lha_replace_path_separator(mut lha: &mut lha, mut entry: *mut archive_entry) {
     let mut wp: *const wchar_t = 0 as *const wchar_t;
     let mut i: size_t = 0;
     wp = archive_entry_pathname_w_safe(entry);
@@ -930,7 +933,10 @@ extern "C" fn lha_replace_path_separator(mut lha: &mut lha, mut entry: *mut arch
     };
 }
 
-extern "C" fn lha_read_file_header_0(mut a: *mut archive_read, mut lha: &mut lha) -> libc::c_int {
+unsafe extern "C" fn lha_read_file_header_0(
+    mut a: *mut archive_read,
+    mut lha: &mut lha,
+) -> libc::c_int {
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut extdsize: libc::c_int = 0;
     let mut namelen: libc::c_int = 0;
@@ -1042,7 +1048,10 @@ extern "C" fn lha_read_file_header_0(mut a: *mut archive_read, mut lha: &mut lha
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn lha_read_file_header_1(mut a: *mut archive_read, mut lha: &mut lha) -> libc::c_int {
+unsafe extern "C" fn lha_read_file_header_1(
+    mut a: *mut archive_read,
+    mut lha: &mut lha,
+) -> libc::c_int {
     let mut current_block: u64;
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut extdsize: size_t = 0;
@@ -1177,7 +1186,10 @@ extern "C" fn lha_read_file_header_1(mut a: *mut archive_read, mut lha: &mut lha
     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
 }
 
-extern "C" fn lha_read_file_header_2(mut a: *mut archive_read, mut lha: &mut lha) -> libc::c_int {
+unsafe extern "C" fn lha_read_file_header_2(
+    mut a: *mut archive_read,
+    mut lha: &mut lha,
+) -> libc::c_int {
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut extdsize: size_t = 0;
     let mut err: libc::c_int = 0;
@@ -1265,7 +1277,10 @@ extern "C" fn lha_read_file_header_2(mut a: *mut archive_read, mut lha: &mut lha
     return err;
 }
 
-extern "C" fn lha_read_file_header_3(mut a: *mut archive_read, mut lha: &mut lha) -> libc::c_int {
+unsafe extern "C" fn lha_read_file_header_3(
+    mut a: *mut archive_read,
+    mut lha: &mut lha,
+) -> libc::c_int {
     let mut p: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut extdsize: size_t = 0;
     let mut err: libc::c_int = 0;
@@ -1360,7 +1375,7 @@ extern "C" fn lha_read_file_header_3(mut a: *mut archive_read, mut lha: &mut lha
 * headers.
 *
 */
-extern "C" fn lha_read_file_extended_header(
+unsafe extern "C" fn lha_read_file_extended_header(
     mut a: *mut archive_read,
     mut lha: &mut lha,
     mut crc: *mut uint16_t,
@@ -1802,7 +1817,7 @@ extern "C" fn lha_read_file_extended_header(
     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
 }
 
-extern "C" fn lha_end_of_entry(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn lha_end_of_entry(mut a: *mut archive_read) -> libc::c_int {
     let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
     let mut r: libc::c_int = ARCHIVE_LHA_DEFINED_PARAM.archive_eof;
     if lha.end_of_entry_cleanup == 0 {
@@ -1822,7 +1837,7 @@ extern "C" fn lha_end_of_entry(mut a: *mut archive_read) -> libc::c_int {
     return r;
 }
 
-extern "C" fn archive_read_format_lha_read_data(
+unsafe extern "C" fn archive_read_format_lha_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -1860,7 +1875,7 @@ extern "C" fn archive_read_format_lha_read_data(
 * Returns ARCHIVE_OK if successful, ARCHIVE_FATAL otherwise, sets
 * lha->end_of_entry if it consumes all of the data.
 */
-extern "C" fn lha_read_data_none(
+unsafe extern "C" fn lha_read_data_none(
     mut a: &mut archive_read,
     mut buff: &mut *const libc::c_void,
     mut size: &mut size_t,
@@ -1912,7 +1927,7 @@ extern "C" fn lha_read_data_none(
 * unsupported, ARCHIVE_FATAL otherwise, sets lha->end_of_entry if it consumes
 * all of the data.
 */
-extern "C" fn lha_read_data_lzh(
+unsafe extern "C" fn lha_read_data_lzh(
     mut a: &mut archive_read,
     mut buff: &mut *const libc::c_void,
     mut size: &mut size_t,
@@ -2016,7 +2031,9 @@ extern "C" fn lha_read_data_lzh(
 /*
  * Skip a file content.
  */
-extern "C" fn archive_read_format_lha_read_data_skip(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_lha_read_data_skip(
+    mut a: *mut archive_read,
+) -> libc::c_int {
     let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
     let mut bytes_skipped: int64_t = 0;
     if lha.entry_unconsumed != 0 {
@@ -2042,7 +2059,7 @@ extern "C" fn archive_read_format_lha_read_data_skip(mut a: *mut archive_read) -
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn archive_read_format_lha_cleanup(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn archive_read_format_lha_cleanup(mut a: *mut archive_read) -> libc::c_int {
     let safe_a_format = unsafe { &mut *(*a).format };
     let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
     lzh_decode_free(&mut lha.strm);
@@ -2066,7 +2083,7 @@ extern "C" fn archive_read_format_lha_cleanup(mut a: *mut archive_read) -> libc:
 *   2. a filename is 'xxx/bbb'
 *  then a archived pathname is 'xxx/bbb|aaa/bb/cc'
 */
-extern "C" fn lha_parse_linkname(
+unsafe extern "C" fn lha_parse_linkname(
     mut linkname: &mut archive_wstring,
     mut pathname: &mut archive_wstring,
 ) -> libc::c_int {
@@ -2089,7 +2106,7 @@ extern "C" fn lha_parse_linkname(
 }
 
 /* Convert an MSDOS-style date/time into Unix-style time. */
-extern "C" fn lha_dos_time(mut p: *const libc::c_uchar) -> time_t {
+unsafe extern "C" fn lha_dos_time(mut p: *const libc::c_uchar) -> time_t {
     let mut msTime: libc::c_int = 0; /* Years since 1900. */
     let mut msDate: libc::c_int = 0; /* Month number.     */
     let mut ts: tm = tm {
@@ -2124,7 +2141,7 @@ extern "C" fn lha_dos_time(mut p: *const libc::c_uchar) -> time_t {
 }
 
 /* Convert an MS-Windows-style date/time into Unix-style time. */
-extern "C" fn lha_win_time(mut wintime: uint64_t, mut ns: &mut libc::c_long) -> time_t {
+unsafe extern "C" fn lha_win_time(mut wintime: uint64_t, mut ns: &mut libc::c_long) -> time_t {
     if wintime as libc::c_ulonglong >= ARCHIVE_LHA_DEFINED_PARAM.epoc_time {
         wintime = (wintime as libc::c_ulonglong).wrapping_sub(ARCHIVE_LHA_DEFINED_PARAM.epoc_time)
             as uint64_t as uint64_t; /* 1970-01-01 00:00:00 (UTC) */
@@ -2141,7 +2158,7 @@ extern "C" fn lha_win_time(mut wintime: uint64_t, mut ns: &mut libc::c_long) -> 
     };
 }
 
-extern "C" fn lha_calcsum(
+unsafe extern "C" fn lha_calcsum(
     mut sum: libc::c_uchar,
     mut pp: *const libc::c_void,
     mut offset: libc::c_int,
@@ -2160,7 +2177,7 @@ extern "C" fn lha_calcsum(
 
 static mut crc16tbl: [[uint16_t; 256]; 2] = [[0; 256]; 2];
 
-extern "C" fn lha_crc16_init() {
+unsafe extern "C" fn lha_crc16_init() {
     let mut i: libc::c_uint = 0;
     let mut crc16init: libc::c_int = 0 as libc::c_int;
     if crc16init != 0 {
@@ -2198,7 +2215,7 @@ extern "C" fn lha_crc16_init() {
     }
 }
 
-extern "C" fn lha_crc16(
+unsafe extern "C" fn lha_crc16(
     mut crc: uint16_t,
     mut pp: *const libc::c_void,
     mut len: size_t,
@@ -2331,7 +2348,7 @@ extern "C" fn lha_crc16(
  * Returns ARCHIVE_FATAL if initialization failed; memory allocation
  * error occurred.
  */
-extern "C" fn lzh_decode_init(
+unsafe extern "C" fn lzh_decode_init(
     mut strm: &mut lzh_stream,
     mut method: *const libc::c_char,
 ) -> libc::c_int {
@@ -2423,7 +2440,7 @@ extern "C" fn lzh_decode_init(
 /*
  * Release LZHUF decoder.
  */
-extern "C" fn lzh_decode_free(mut strm: &mut lzh_stream) {
+unsafe extern "C" fn lzh_decode_free(mut strm: &mut lzh_stream) {
     if strm.ds.is_null() {
         return;
     }
@@ -2473,7 +2490,7 @@ static cache_masks: [uint16_t; 20] = [
  * Returns 1 if the cache buffer is full.
  * Returns 0 if the cache buffer is not full; input buffer is empty.
  */
-extern "C" fn lzh_br_fillup(mut strm: &mut lzh_stream, mut br: &mut lzh_br) -> libc::c_int {
+unsafe extern "C" fn lzh_br_fillup(mut strm: &mut lzh_stream, mut br: &mut lzh_br) -> libc::c_int {
     let mut n: libc::c_int = (ARCHIVE_LHA_DEFINED_PARAM.cache_bits as libc::c_ulong)
         .wrapping_sub(br.cache_avail as libc::c_ulong) as libc::c_int;
     loop {
@@ -2565,7 +2582,7 @@ extern "C" fn lzh_br_fillup(mut strm: &mut lzh_stream, mut br: &mut lzh_br) -> l
     }
 }
 
-extern "C" fn lzh_decode(mut strm: &mut lzh_stream, mut last: libc::c_int) -> libc::c_int {
+unsafe extern "C" fn lzh_decode(mut strm: &mut lzh_stream, mut last: libc::c_int) -> libc::c_int {
     let mut ds = unsafe { &mut *strm.ds };
     let mut avail_in: libc::c_int = 0;
     let mut r: libc::c_int = 0;
@@ -2587,7 +2604,7 @@ extern "C" fn lzh_decode(mut strm: &mut lzh_stream, mut last: libc::c_int) -> li
     return r;
 }
 
-extern "C" fn lzh_emit_window(mut strm: &mut lzh_stream, mut s: size_t) {
+unsafe extern "C" fn lzh_emit_window(mut strm: &mut lzh_stream, mut s: size_t) {
     let ds = unsafe { &mut *strm.ds };
     strm.ref_ptr = ds.w_buff;
     strm.avail_out = s as libc::c_int;
@@ -2614,7 +2631,10 @@ extern "C" fn lzh_emit_window(mut strm: &mut lzh_stream, mut s: size_t) {
  *    zeros are treated as the mark of the end of the data although the zeros
  *    is dummy, not the file data.
  */
-extern "C" fn lzh_read_blocks(mut strm: &mut lzh_stream, mut last: libc::c_int) -> libc::c_int {
+unsafe extern "C" fn lzh_read_blocks(
+    mut strm: &mut lzh_stream,
+    mut last: libc::c_int,
+) -> libc::c_int {
     let mut current_block: u64;
     let mut ds = unsafe { &mut *strm.ds };
     let mut br = &mut ds.br;
@@ -3029,7 +3049,10 @@ extern "C" fn lzh_read_blocks(mut strm: &mut lzh_stream, mut last: libc::c_int) 
     return ds.error;
 }
 
-extern "C" fn lzh_decode_blocks(mut strm: &mut lzh_stream, mut last: libc::c_int) -> libc::c_int {
+unsafe extern "C" fn lzh_decode_blocks(
+    mut strm: &mut lzh_stream,
+    mut last: libc::c_int,
+) -> libc::c_int {
     let mut current_block: u64;
     let mut ds = unsafe { &mut *strm.ds };
     let mut bre: lzh_br = ds.br;
@@ -3310,7 +3333,7 @@ extern "C" fn lzh_decode_blocks(mut strm: &mut lzh_stream, mut last: libc::c_int
     };
 }
 
-extern "C" fn lzh_huffman_init(
+unsafe extern "C" fn lzh_huffman_init(
     mut hf: &mut huffman,
     mut len_size: size_t,
     mut tbl_bits: libc::c_int,
@@ -3354,7 +3377,7 @@ extern "C" fn lzh_huffman_init(
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn lzh_huffman_free(mut hf: &mut huffman) {
+unsafe extern "C" fn lzh_huffman_free(mut hf: &mut huffman) {
     free_safe(hf.bitlen as *mut libc::c_void);
     free_safe(hf.tbl as *mut libc::c_void);
     free_safe(hf.tree as *mut libc::c_void);
@@ -3397,7 +3420,7 @@ static bitlen_tbl: [libc::c_char; 1024] = [
     14, 14, 14, 14, 15, 15, 16, 0,
 ];
 
-extern "C" fn lzh_read_pt_bitlen(
+unsafe extern "C" fn lzh_read_pt_bitlen(
     mut strm: &mut lzh_stream,
     mut start: libc::c_int,
     mut end: libc::c_int,
@@ -3456,7 +3479,7 @@ extern "C" fn lzh_read_pt_bitlen(
     return i;
 }
 
-extern "C" fn lzh_make_fake_table(mut hf: &mut huffman, mut c: uint16_t) -> libc::c_int {
+unsafe extern "C" fn lzh_make_fake_table(mut hf: &mut huffman, mut c: uint16_t) -> libc::c_int {
     if c as libc::c_int >= hf.len_size {
         return 0 as libc::c_int;
     }
@@ -3476,7 +3499,7 @@ extern "C" fn lzh_make_fake_table(mut hf: &mut huffman, mut c: uint16_t) -> libc
 /*
  * Make a huffman coding table.
  */
-extern "C" fn lzh_make_huffman_table(mut hf: &mut huffman) -> libc::c_int {
+unsafe extern "C" fn lzh_make_huffman_table(mut hf: &mut huffman) -> libc::c_int {
     let mut tbl: *mut uint16_t = 0 as *mut uint16_t;
     let mut bitlen: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut bitptn: [libc::c_int; 17] = [0; 17];
@@ -3739,7 +3762,7 @@ extern "C" fn lzh_make_huffman_table(mut hf: &mut huffman) -> libc::c_int {
     return 1 as libc::c_int;
 }
 
-extern "C" fn lzh_decode_huffman_tree(
+unsafe extern "C" fn lzh_decode_huffman_tree(
     mut hf: &mut huffman,
     mut rbits: libc::c_uint,
     mut c: libc::c_int,
@@ -3764,7 +3787,10 @@ extern "C" fn lzh_decode_huffman_tree(
     return c;
 }
 
-extern "C" fn lzh_decode_huffman(mut hf: &mut huffman, mut rbits: libc::c_uint) -> libc::c_int {
+unsafe extern "C" fn lzh_decode_huffman(
+    mut hf: &mut huffman,
+    mut rbits: libc::c_uint,
+) -> libc::c_int {
     let mut c: libc::c_int = 0;
     /*
      * At first search an index table for a bit pattern.

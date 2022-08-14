@@ -246,7 +246,7 @@ fn _mkgmtime_safe(__tp: *mut tm) -> time_t {
 }
 
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_xar(mut _a: *mut archive) -> libc::c_int {
+pub unsafe extern "C" fn archive_read_support_format_xar(mut _a: *mut archive) -> libc::c_int {
     let mut xar: *mut xar = 0 as *mut xar;
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut r: libc::c_int = 0;
@@ -281,24 +281,24 @@ pub extern "C" fn archive_read_support_format_xar(mut _a: *mut archive) -> libc:
         a,
         xar as *mut libc::c_void,
         b"xar\x00" as *const u8 as *const libc::c_char,
-        Some(xar_bid as extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int),
+        Some(xar_bid as unsafe extern "C" fn(_: *mut archive_read, _: libc::c_int) -> libc::c_int),
         None,
         Some(
             xar_read_header
-                as extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
+                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> libc::c_int,
         ),
         Some(
             xar_read_data
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut archive_read,
                     _: *mut *const libc::c_void,
                     _: *mut size_t,
                     _: *mut int64_t,
                 ) -> libc::c_int,
         ),
-        Some(xar_read_data_skip as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+        Some(xar_read_data_skip as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int),
         None,
-        Some(xar_cleanup as extern "C" fn(_: *mut archive_read) -> libc::c_int),
+        Some(xar_cleanup as unsafe extern "C" fn(_: *mut archive_read) -> libc::c_int),
         None,
         None,
     );
@@ -308,7 +308,7 @@ pub extern "C" fn archive_read_support_format_xar(mut _a: *mut archive) -> libc:
     return r;
 }
 
-extern "C" fn PRINT_TOC(mut d: libc::c_int, mut outbytes: libc::c_int) {
+unsafe extern "C" fn PRINT_TOC(mut d: libc::c_int, mut outbytes: libc::c_int) {
     match () {
         #[cfg(DEBUG_PRINT_TOC)]
         _ => {
@@ -326,7 +326,7 @@ extern "C" fn PRINT_TOC(mut d: libc::c_int, mut outbytes: libc::c_int) {
     }
 }
 
-extern "C" fn xar_bid(mut a: *mut archive_read, mut best_bid: libc::c_int) -> libc::c_int {
+unsafe extern "C" fn xar_bid(mut a: *mut archive_read, mut best_bid: libc::c_int) -> libc::c_int {
     let mut b: *const libc::c_uchar = 0 as *const libc::c_uchar;
     let mut bid: libc::c_int = 0;
     /* UNUSED */
@@ -375,7 +375,7 @@ extern "C" fn xar_bid(mut a: *mut archive_read, mut best_bid: libc::c_int) -> li
     return bid;
 }
 
-extern "C" fn read_toc(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn read_toc(mut a: *mut archive_read) -> libc::c_int {
     let mut xar: *mut xar = 0 as *mut xar;
     let mut file: *mut xar_file = 0 as *mut xar_file;
     let mut b: *const libc::c_uchar = 0 as *const libc::c_uchar;
@@ -547,7 +547,7 @@ extern "C" fn read_toc(mut a: *mut archive_read) -> libc::c_int {
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn xar_read_header(
+unsafe extern "C" fn xar_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> libc::c_int {
@@ -834,7 +834,7 @@ extern "C" fn xar_read_header(
     return r;
 }
 
-extern "C" fn xar_read_data(
+unsafe extern "C" fn xar_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -922,7 +922,7 @@ extern "C" fn xar_read_data(
     return r;
 }
 
-extern "C" fn xar_read_data_skip(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn xar_read_data_skip(mut a: *mut archive_read) -> libc::c_int {
     let mut xar: *mut xar = 0 as *mut xar;
     let mut bytes_skipped: int64_t = 0;
     xar = unsafe { (*(*a).format).data as *mut xar };
@@ -945,7 +945,7 @@ extern "C" fn xar_read_data_skip(mut a: *mut archive_read) -> libc::c_int {
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn xar_cleanup(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn xar_cleanup(mut a: *mut archive_read) -> libc::c_int {
     let mut xar: *mut xar = 0 as *mut xar;
     let mut hdlink: *mut hdlink = 0 as *mut hdlink;
     let mut i: libc::c_int = 0;
@@ -979,7 +979,10 @@ extern "C" fn xar_cleanup(mut a: *mut archive_read) -> libc::c_int {
     return r;
 }
 
-extern "C" fn move_reading_point(mut a: *mut archive_read, mut offset: uint64_t) -> libc::c_int {
+unsafe extern "C" fn move_reading_point(
+    mut a: *mut archive_read,
+    mut offset: uint64_t,
+) -> libc::c_int {
     let mut xar: *mut xar = 0 as *mut xar;
     xar = unsafe { (*(*a).format).data as *mut xar };
     let mut safe_xar = unsafe { &mut *xar };
@@ -1015,7 +1018,7 @@ extern "C" fn move_reading_point(mut a: *mut archive_read, mut offset: uint64_t)
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn rd_contents_init(
+unsafe extern "C" fn rd_contents_init(
     mut a: *mut archive_read,
     mut encoding: enctype,
     mut a_sum_alg: libc::c_int,
@@ -1032,7 +1035,7 @@ extern "C" fn rd_contents_init(
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn rd_contents(
+unsafe extern "C" fn rd_contents(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
@@ -1085,7 +1088,7 @@ extern "C" fn rd_contents(
  * locale settings; you cannot simply substitute strtol here, since
  * it does obey locale.
  */
-extern "C" fn atol10(mut p: *const libc::c_char, mut char_cnt: size_t) -> uint64_t {
+unsafe extern "C" fn atol10(mut p: *const libc::c_char, mut char_cnt: size_t) -> uint64_t {
     let mut l: uint64_t = 0;
     let mut digit: libc::c_int = 0;
     if char_cnt == 0 as libc::c_int as libc::c_ulong {
@@ -1109,7 +1112,7 @@ extern "C" fn atol10(mut p: *const libc::c_char, mut char_cnt: size_t) -> uint64
     return l;
 }
 
-extern "C" fn atol8(mut p: *const libc::c_char, mut char_cnt: size_t) -> int64_t {
+unsafe extern "C" fn atol8(mut p: *const libc::c_char, mut char_cnt: size_t) -> int64_t {
     let mut l: int64_t = 0;
     let mut digit: libc::c_int = 0;
     if char_cnt == 0 as libc::c_int as libc::c_ulong {
@@ -1133,7 +1136,7 @@ extern "C" fn atol8(mut p: *const libc::c_char, mut char_cnt: size_t) -> int64_t
     return l;
 }
 
-extern "C" fn atohex(
+unsafe extern "C" fn atohex(
     mut b: *mut libc::c_uchar,
     mut bsize: size_t,
     mut p: *const libc::c_char,
@@ -1194,7 +1197,7 @@ extern "C" fn atohex(
     return fbsize.wrapping_sub(bsize);
 }
 
-extern "C" fn time_from_tm(mut t: *mut tm) -> time_t {
+unsafe extern "C" fn time_from_tm(mut t: *mut tm) -> time_t {
     /* Use platform timegm() if available. */
     #[cfg(HAVE_TIMEGM)]
     return timegm_safe(t);
@@ -1215,7 +1218,7 @@ extern "C" fn time_from_tm(mut t: *mut tm) -> time_t {
         as time_t;
 }
 
-extern "C" fn parse_time(mut p: *const libc::c_char, mut n: size_t) -> time_t {
+unsafe extern "C" fn parse_time(mut p: *const libc::c_char, mut n: size_t) -> time_t {
     let mut tm: tm = tm {
         tm_sec: 0,
         tm_min: 0,
@@ -1303,7 +1306,7 @@ extern "C" fn parse_time(mut p: *const libc::c_char, mut n: size_t) -> time_t {
     return t;
 }
 
-extern "C" fn heap_add_entry(
+unsafe extern "C" fn heap_add_entry(
     mut a: *mut archive_read,
     mut heap: *mut heap_queue,
     mut file: *mut xar_file,
@@ -1388,7 +1391,7 @@ extern "C" fn heap_add_entry(
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn heap_get_entry(mut heap: *mut heap_queue) -> *mut xar_file {
+unsafe extern "C" fn heap_get_entry(mut heap: *mut heap_queue) -> *mut xar_file {
     let mut a_id: uint64_t = 0;
     let mut b_id: uint64_t = 0;
     let mut c_id: uint64_t = 0;
@@ -1447,7 +1450,7 @@ extern "C" fn heap_get_entry(mut heap: *mut heap_queue) -> *mut xar_file {
     }
 }
 
-extern "C" fn add_link(
+unsafe extern "C" fn add_link(
     mut a: *mut archive_read,
     mut xar: *mut xar,
     mut file: *mut xar_file,
@@ -1487,7 +1490,7 @@ extern "C" fn add_link(
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn _checksum_init(mut sumwrk: *mut chksumwork, mut sum_alg: libc::c_int) {
+unsafe extern "C" fn _checksum_init(mut sumwrk: *mut chksumwork, mut sum_alg: libc::c_int) {
     unsafe { (*sumwrk).alg = sum_alg };
     match sum_alg {
         CKSUM_SHA1 => {
@@ -1506,7 +1509,7 @@ extern "C" fn _checksum_init(mut sumwrk: *mut chksumwork, mut sum_alg: libc::c_i
     };
 }
 
-extern "C" fn _checksum_update(
+unsafe extern "C" fn _checksum_update(
     mut sumwrk: *mut chksumwork,
     mut buff: *const libc::c_void,
     mut size: size_t,
@@ -1535,7 +1538,7 @@ extern "C" fn _checksum_update(
     };
 }
 
-extern "C" fn _checksum_final(
+unsafe extern "C" fn _checksum_final(
     mut sumwrk: *mut chksumwork,
     mut val: *const libc::c_void,
     mut len: size_t,
@@ -1587,7 +1590,7 @@ extern "C" fn _checksum_final(
     return r;
 }
 
-extern "C" fn checksum_init(
+unsafe extern "C" fn checksum_init(
     mut a: *mut archive_read,
     mut a_sum_alg: libc::c_int,
     mut e_sum_alg: libc::c_int,
@@ -1599,7 +1602,7 @@ extern "C" fn checksum_init(
     _checksum_init(&mut safe_xar.e_sumwrk, e_sum_alg);
 }
 
-extern "C" fn checksum_update(
+unsafe extern "C" fn checksum_update(
     mut a: *mut archive_read,
     mut abuff: *const libc::c_void,
     mut asize: size_t,
@@ -1613,7 +1616,7 @@ extern "C" fn checksum_update(
     _checksum_update(&mut safe_xar.e_sumwrk, ebuff, esize);
 }
 
-extern "C" fn checksum_final(
+unsafe extern "C" fn checksum_final(
     mut a: *mut archive_read,
     mut a_sum_val: *const libc::c_void,
     mut a_sum_len: size_t,
@@ -1639,7 +1642,10 @@ extern "C" fn checksum_final(
     return r;
 }
 
-extern "C" fn decompression_init(mut a: *mut archive_read, mut encoding: enctype) -> libc::c_int {
+unsafe extern "C" fn decompression_init(
+    mut a: *mut archive_read,
+    mut encoding: enctype,
+) -> libc::c_int {
     let mut xar: *mut xar = 0 as *mut xar;
     let mut detail: *const libc::c_char = 0 as *const libc::c_char;
     let mut r: libc::c_int = 0;
@@ -1822,7 +1828,7 @@ extern "C" fn decompression_init(mut a: *mut archive_read, mut encoding: enctype
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn decompress(
+unsafe extern "C" fn decompress(
     mut a: *mut archive_read,
     mut buff: *mut *const libc::c_void,
     mut outbytes: *mut size_t,
@@ -1990,7 +1996,7 @@ extern "C" fn decompress(
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn decompression_cleanup(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn decompression_cleanup(mut a: *mut archive_read) -> libc::c_int {
     let mut xar: *mut xar = 0 as *mut xar;
     let mut r: libc::c_int = 0;
     xar = unsafe { (*(*a).format).data as *mut xar };
@@ -2039,7 +2045,7 @@ extern "C" fn decompression_cleanup(mut a: *mut archive_read) -> libc::c_int {
     return r;
 }
 
-extern "C" fn checksum_cleanup(mut a: *mut archive_read) {
+unsafe extern "C" fn checksum_cleanup(mut a: *mut archive_read) {
     let mut xar: *mut xar = 0 as *mut xar;
     xar = unsafe { (*(*a).format).data as *mut xar };
     let mut safe_xar = unsafe { &mut *xar };
@@ -2055,7 +2061,7 @@ extern "C" fn checksum_cleanup(mut a: *mut archive_read) {
     );
 }
 
-extern "C" fn xmlattr_cleanup(mut list: *mut xmlattr_list) {
+unsafe extern "C" fn xmlattr_cleanup(mut list: *mut xmlattr_list) {
     let mut attr: *mut xmlattr = 0 as *mut xmlattr;
     let mut next: *mut xmlattr = 0 as *mut xmlattr;
     attr = unsafe { (*list).first };
@@ -2070,7 +2076,7 @@ extern "C" fn xmlattr_cleanup(mut list: *mut xmlattr_list) {
     unsafe { (*list).last = &mut (*list).first };
 }
 
-extern "C" fn file_new(
+unsafe extern "C" fn file_new(
     mut a: *mut archive_read,
     mut xar: *mut xar,
     mut list: *mut xmlattr_list,
@@ -2117,7 +2123,7 @@ extern "C" fn file_new(
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn file_free(mut file: *mut xar_file) {
+unsafe extern "C" fn file_free(mut file: *mut xar_file) {
     let mut xattr: *mut xattr = 0 as *mut xattr;
     let mut safe_file = unsafe { &mut *file };
     archive_string_free_safe(&mut safe_file.pathname);
@@ -2135,7 +2141,7 @@ extern "C" fn file_free(mut file: *mut xar_file) {
     free_safe(file as *mut libc::c_void);
 }
 
-extern "C" fn xattr_new(
+unsafe extern "C" fn xattr_new(
     mut a: *mut archive_read,
     mut xar: *mut xar,
     mut list: *mut xmlattr_list,
@@ -2183,12 +2189,12 @@ extern "C" fn xattr_new(
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn xattr_free(mut xattr: *mut xattr) {
+unsafe extern "C" fn xattr_free(mut xattr: *mut xattr) {
     archive_string_free_safe(&mut unsafe { *xattr }.name);
     free_safe(xattr as *mut libc::c_void);
 }
 
-extern "C" fn getencoding(mut list: *mut xmlattr_list) -> libc::c_int {
+unsafe extern "C" fn getencoding(mut list: *mut xmlattr_list) -> libc::c_int {
     let mut attr: *mut xmlattr = 0 as *mut xmlattr;
     let mut encoding: enctype = NONE;
     attr = unsafe { *list }.first;
@@ -2235,7 +2241,7 @@ extern "C" fn getencoding(mut list: *mut xmlattr_list) -> libc::c_int {
     return encoding as libc::c_int;
 }
 
-extern "C" fn getsumalgorithm(mut list: *mut xmlattr_list) -> libc::c_int {
+unsafe extern "C" fn getsumalgorithm(mut list: *mut xmlattr_list) -> libc::c_int {
     let mut attr: *mut xmlattr = 0 as *mut xmlattr;
     let mut alg: libc::c_int = CKSUM_NONE;
     unsafe {
@@ -2276,7 +2282,7 @@ extern "C" fn getsumalgorithm(mut list: *mut xmlattr_list) -> libc::c_int {
     return alg;
 }
 
-extern "C" fn unknowntag_start(
+unsafe extern "C" fn unknowntag_start(
     mut a: *mut archive_read,
     mut xar: *mut xar,
     mut name: *const libc::c_char,
@@ -2316,7 +2322,7 @@ extern "C" fn unknowntag_start(
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn unknowntag_end(mut xar: *mut xar, mut name: *const libc::c_char) {
+unsafe extern "C" fn unknowntag_end(mut xar: *mut xar, mut name: *const libc::c_char) {
     let mut tag: *mut unknown_tag = 0 as *mut unknown_tag;
     let mut safe_xar = unsafe { &mut *xar };
     tag = safe_xar.unknowntags;
@@ -2334,7 +2340,7 @@ extern "C" fn unknowntag_end(mut xar: *mut xar, mut name: *const libc::c_char) {
     };
 }
 
-extern "C" fn xml_start(
+unsafe extern "C" fn xml_start(
     mut a: *mut archive_read,
     mut name: *const libc::c_char,
     mut list: *mut xmlattr_list,
@@ -2744,7 +2750,7 @@ extern "C" fn xml_start(
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn xml_end(mut userData: *mut libc::c_void, mut name: *const libc::c_char) {
+unsafe extern "C" fn xml_end(mut userData: *mut libc::c_void, mut name: *const libc::c_char) {
     let mut a: *mut archive_read = 0 as *mut archive_read;
     let mut xar: *mut xar = 0 as *mut xar;
     a = userData as *mut archive_read;
@@ -3581,7 +3587,7 @@ static mut base64: [libc::c_int; 256] = [
     -(1 as libc::c_int),
 ];
 
-extern "C" fn strappend_base64(
+unsafe extern "C" fn strappend_base64(
     mut xar: *mut xar,
     mut as_0: *mut archive_string,
     mut s: *const libc::c_char,
@@ -3661,7 +3667,7 @@ extern "C" fn strappend_base64(
     };
 }
 
-extern "C" fn is_string(
+unsafe extern "C" fn is_string(
     mut known: *const libc::c_char,
     mut data: *const libc::c_char,
     mut len: size_t,
@@ -3676,7 +3682,7 @@ extern "C" fn is_string(
     );
 }
 
-extern "C" fn xml_data(
+unsafe extern "C" fn xml_data(
     mut userData: *mut libc::c_void,
     mut s: *const libc::c_char,
     mut len: libc::c_int,
@@ -3993,7 +3999,7 @@ extern "C" fn xml_data(
 /*
  * BSD file flags.
  */
-extern "C" fn xml_parse_file_flags(
+unsafe extern "C" fn xml_parse_file_flags(
     mut xar: *mut xar,
     mut name: *const libc::c_char,
 ) -> libc::c_int {
@@ -4082,7 +4088,10 @@ extern "C" fn xml_parse_file_flags(
 /*
  * Linux file flags.
  */
-extern "C" fn xml_parse_file_ext2(mut xar: *mut xar, mut name: *const libc::c_char) -> libc::c_int {
+unsafe extern "C" fn xml_parse_file_ext2(
+    mut xar: *mut xar,
+    mut name: *const libc::c_char,
+) -> libc::c_int {
     let mut flag: *const libc::c_char = 0 as *const libc::c_char;
     let mut safe_xar = unsafe { &mut *xar };
     if strcmp_safe(
@@ -4206,7 +4215,7 @@ extern "C" fn xml_parse_file_ext2(mut xar: *mut xar, mut name: *const libc::c_ch
 
 #[cfg(HAVE_LIBXML_XMLREADER_H)]
 #[cfg(HAVE_LIBXML_XMLREADER_H)]
-extern "C" fn xml2_xmlattr_setup(
+unsafe extern "C" fn xml2_xmlattr_setup(
     mut a: *mut archive_read,
     mut list: *mut xmlattr_list,
     mut reader: xmlTextReaderPtr,
@@ -4268,7 +4277,7 @@ extern "C" fn xml2_xmlattr_setup(
 }
 
 #[cfg(HAVE_LIBXML_XMLREADER_H)]
-extern "C" fn xml2_read_cb(
+unsafe extern "C" fn xml2_read_cb(
     mut context: *mut libc::c_void,
     mut buffer: *mut libc::c_char,
     mut len: libc::c_int,
@@ -4301,13 +4310,13 @@ extern "C" fn xml2_read_cb(
 }
 
 #[cfg(HAVE_LIBXML_XMLREADER_H)]
-extern "C" fn xml2_close_cb(mut context: *mut libc::c_void) -> libc::c_int {
+unsafe extern "C" fn xml2_close_cb(mut context: *mut libc::c_void) -> libc::c_int {
     /* UNUSED */
     return 0 as libc::c_int;
 }
 
 #[cfg(HAVE_LIBXML_XMLREADER_H)]
-extern "C" fn xml2_error_hdr(
+unsafe extern "C" fn xml2_error_hdr(
     mut arg: *mut libc::c_void,
     mut msg: *const libc::c_char,
     mut severity: xmlParserSeverities,
@@ -4339,7 +4348,7 @@ extern "C" fn xml2_error_hdr(
 }
 
 #[cfg(HAVE_LIBXML_XMLREADER_H)]
-extern "C" fn xml2_read_toc(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn xml2_read_toc(mut a: *mut archive_read) -> libc::c_int {
     let mut reader: xmlTextReaderPtr = 0 as *mut xmlTextReader;
     let mut list: xmlattr_list = xmlattr_list {
         first: 0 as *mut xmlattr,
@@ -4350,13 +4359,13 @@ extern "C" fn xml2_read_toc(mut a: *mut archive_read) -> libc::c_int {
     reader = xmlReaderForIO_safe(
         Some(
             xml2_read_cb
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut libc::c_void,
                     _: *mut libc::c_char,
                     _: libc::c_int,
                 ) -> libc::c_int,
         ),
-        Some(xml2_close_cb as extern "C" fn(_: *mut libc::c_void) -> libc::c_int),
+        Some(xml2_close_cb as unsafe extern "C" fn(_: *mut libc::c_void) -> libc::c_int),
         a as *mut libc::c_void,
         0 as *const libc::c_char,
         0 as *const libc::c_char,
@@ -4374,7 +4383,7 @@ extern "C" fn xml2_read_toc(mut a: *mut archive_read) -> libc::c_int {
         reader,
         Some(
             xml2_error_hdr
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut libc::c_void,
                     _: *const libc::c_char,
                     _: xmlParserSeverities,
@@ -4438,7 +4447,7 @@ extern "C" fn xml2_read_toc(mut a: *mut archive_read) -> libc::c_int {
 /* defined(HAVE_BSDXML_H) || defined(HAVE_EXPAT_H) */
 #[no_mangle]
 #[cfg(any(HAVE_EXPAT_H, HAVE_BSDXML_H))]
-extern "C" fn expat_xmlattr_setup(
+unsafe extern "C" fn expat_xmlattr_setup(
     mut a: *mut archive_read,
     mut list: *mut xmlattr_list,
     mut atts: *mut *const XML_Char,
@@ -4484,7 +4493,7 @@ extern "C" fn expat_xmlattr_setup(
 
 #[no_mangle]
 #[cfg(any(HAVE_EXPAT_H, HAVE_BSDXML_H))]
-extern "C" fn expat_start_cb(
+unsafe extern "C" fn expat_start_cb(
     mut userData: *mut libc::c_void,
     mut name: *const XML_Char,
     mut atts: *mut *const XML_Char,
@@ -4507,7 +4516,7 @@ extern "C" fn expat_start_cb(
 
 #[no_mangle]
 #[cfg(any(HAVE_EXPAT_H, HAVE_BSDXML_H))]
-extern "C" fn expat_end_cb(mut userData: *mut libc::c_void, mut name: *const XML_Char) {
+unsafe extern "C" fn expat_end_cb(mut userData: *mut libc::c_void, mut name: *const XML_Char) {
     let mut ud: *mut expat_userData = userData as *mut expat_userData;
     xml_end(
         unsafe { (*ud).archive as *mut libc::c_void },
@@ -4517,7 +4526,7 @@ extern "C" fn expat_end_cb(mut userData: *mut libc::c_void, mut name: *const XML
 
 #[no_mangle]
 #[cfg(any(HAVE_EXPAT_H, HAVE_BSDXML_H))]
-extern "C" fn expat_data_cb(
+unsafe extern "C" fn expat_data_cb(
     mut userData: *mut libc::c_void,
     mut s: *const XML_Char,
     mut len: libc::c_int,
@@ -4528,7 +4537,7 @@ extern "C" fn expat_data_cb(
 
 #[no_mangle]
 #[cfg(any(HAVE_EXPAT_H, HAVE_BSDXML_H))]
-extern "C" fn expat_read_toc(mut a: *mut archive_read) -> libc::c_int {
+unsafe extern "C" fn expat_read_toc(mut a: *mut archive_read) -> libc::c_int {
     let mut xar: *mut xar = 0 as *mut xar;
     let mut parser: XML_Parser = 0 as *mut XML_ParserStruct;
     let mut ud: expat_userData = expat_userData {
@@ -4555,19 +4564,23 @@ extern "C" fn expat_read_toc(mut a: *mut archive_read) -> libc::c_int {
         parser,
         Some(
             expat_start_cb
-                as extern "C" fn(
+                as unsafe extern "C" fn(
                     _: *mut libc::c_void,
                     _: *const XML_Char,
                     _: *mut *const XML_Char,
                 ) -> (),
         ),
-        Some(expat_end_cb as extern "C" fn(_: *mut libc::c_void, _: *const XML_Char) -> ()),
+        Some(expat_end_cb as unsafe extern "C" fn(_: *mut libc::c_void, _: *const XML_Char) -> ()),
     );
     XML_SetCharacterDataHandler_safe(
         parser,
         Some(
             expat_data_cb
-                as extern "C" fn(_: *mut libc::c_void, _: *const XML_Char, _: libc::c_int) -> (),
+                as unsafe extern "C" fn(
+                    _: *mut libc::c_void,
+                    _: *const XML_Char,
+                    _: libc::c_int,
+                ) -> (),
         ),
     );
     safe_xar.xmlsts = INIT;
