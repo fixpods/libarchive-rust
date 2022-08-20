@@ -189,6 +189,7 @@ libarchive_la_SOURCES= \
 	libarchive/archive_read_support_format_xar.c \
 	libarchive/archive_read_support_format_zip.c \
 	libarchive/archive_string.c \
+	libarchive/archive_system.c \
 	libarchive/archive_string.h \
 	libarchive/archive_string_composition.h \
 	libarchive/archive_string_sprintf.c \
@@ -390,6 +391,7 @@ libarchive_test_SOURCES= \
 	libarchive/test/test_archive_read_support.c \
 	libarchive/test/test_archive_set_error.c \
 	libarchive/test/test_archive_string.c \
+	libarchive/test/test_archive_system.c \
 	libarchive/test/test_archive_string_conversion.c \
 	libarchive/test/test_archive_write_add_filter_by_name.c \
 	libarchive/test/test_archive_write_set_filter_option.c \
