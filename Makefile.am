@@ -358,7 +358,6 @@ test_utils_SOURCES= \
 libarchive_test_SOURCES= \
 	$(libarchive_la_SOURCES) \
 	$(test_utils_SOURCES) \
-	libarchive/test/test_archive_system.c \
 	libarchive/test/read_open_memory.c \
 	libarchive/test/test.h \
 	libarchive/test/test_acl_nfs4.c \
@@ -635,6 +634,7 @@ libarchive_test_SOURCES= \
 	libarchive/test/test_write_open_memory.c \
 	libarchive/test/test_write_read_format_zip.c \
 	libarchive/test/test_xattr_platform.c \
+	libarchive/test/test_archive_system.c \
 	libarchive/test/test_zip_filename_encoding.c
 
 libarchive_test_CPPFLAGS= \
