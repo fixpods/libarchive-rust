@@ -39,7 +39,6 @@ IF(ENABLE_TEST)
     test_archive_read_support.c
     test_archive_set_error.c
     test_archive_string.c
-    test_archive_system.c
     test_archive_string_conversion.c
     test_archive_write_add_filter_by_name.c
     test_archive_write_set_filter_option.c
