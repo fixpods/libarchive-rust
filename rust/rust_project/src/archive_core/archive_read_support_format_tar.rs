@@ -3845,8 +3845,13 @@ pub unsafe extern "C" fn archive_test_tohex(mut c: libc::c_int) -> libc::c_int {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_pax_attribute(mut _a: *mut archive, mut entry: *mut archive_entry,
-                                                    mut key: *const libc::c_char, mut value: *const libc::c_char, mut value_length: size_t) -> libc::c_int {
+pub unsafe extern "C" fn archive_test_pax_attribute(
+    mut _a: *mut archive,
+    mut entry: *mut archive_entry,
+    mut key: *const libc::c_char,
+    mut value: *const libc::c_char,
+    mut value_length: size_t
+) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut tar: *mut tar = 0 as *mut tar;
     tar = calloc_safe(

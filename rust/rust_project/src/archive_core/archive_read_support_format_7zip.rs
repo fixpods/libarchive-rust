@@ -5255,7 +5255,9 @@ unsafe extern "C" fn Bcj2_Decode(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_check_7zip_header_in_sfx(mut p: *const libc::c_char) -> libc::c_int {
+pub unsafe extern "C" fn archive_test_check_7zip_header_in_sfx(
+    mut p: *const libc::c_char
+) -> libc::c_int {
     check_7zip_header_in_sfx(p);
     return 0 as libc::c_int;
 }
