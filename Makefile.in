@@ -892,6 +892,7 @@ am__libarchive_test_SOURCES_DIST = libarchive/archive_acl.c \
 	libarchive/test/test_read_filter_program.c \
 	libarchive/test/test_read_filter_program_signature.c \
 	libarchive/test/test_read_filter_uudecode.c \
+	libarchive/test/test_archive_system.c \
 	libarchive/test/test_read_format_7zip.c \
 	libarchive/test/test_read_format_7zip_encryption_data.c \
 	libarchive/test/test_read_format_7zip_encryption_partially.c \
@@ -1304,6 +1305,7 @@ am_libarchive_test_OBJECTS = $(am__objects_19) $(am__objects_20) \
 	libarchive/test/test-test_read_filter_program.$(OBJEXT) \
 	libarchive/test/test-test_read_filter_program_signature.$(OBJEXT) \
 	libarchive/test/test-test_read_filter_uudecode.$(OBJEXT) \
+	libarchive/test/test-test_archive_system.$(OBJEXT) \
 	libarchive/test/test-test_read_format_7zip.$(OBJEXT) \
 	libarchive/test/test-test_read_format_7zip_encryption_data.$(OBJEXT) \
 	libarchive/test/test-test_read_format_7zip_encryption_partially.$(OBJEXT) \
@@ -1931,6 +1933,7 @@ am__depfiles_remade = cat/$(DEPDIR)/bsdcat-bsdcat.Po \
 	libarchive/test/$(DEPDIR)/test-test_read_filter_program.Po \
 	libarchive/test/$(DEPDIR)/test-test_read_filter_program_signature.Po \
 	libarchive/test/$(DEPDIR)/test-test_read_filter_uudecode.Po \
+	libarchive/test/$(DEPDIR)/test-test_archive_system.Po \
 	libarchive/test/$(DEPDIR)/test-test_read_format_7zip.Po \
 	libarchive/test/$(DEPDIR)/test-test_read_format_7zip_encryption_data.Po \
 	libarchive/test/$(DEPDIR)/test-test_read_format_7zip_encryption_header.Po \
@@ -2969,6 +2972,7 @@ libarchive_test_SOURCES = \
 	libarchive/test/test_read_filter_program.c \
 	libarchive/test/test_read_filter_program_signature.c \
 	libarchive/test/test_read_filter_uudecode.c \
+	libarchive/test/test_archive_system.c \
 	libarchive/test/test_read_format_7zip.c \
 	libarchive/test/test_read_format_7zip_encryption_data.c \
 	libarchive/test/test_read_format_7zip_encryption_partially.c \
@@ -5376,6 +5380,9 @@ libarchive/test/test-test_read_filter_program_signature.$(OBJEXT):  \
 libarchive/test/test-test_read_filter_uudecode.$(OBJEXT):  \
 	libarchive/test/$(am__dirstamp) \
 	libarchive/test/$(DEPDIR)/$(am__dirstamp)
+libarchive/test/test-test_archive_system.$(OBJEXT):  \
+	libarchive/test/$(am__dirstamp) \
+	libarchive/test/$(DEPDIR)/$(am__dirstamp)
 libarchive/test/test-test_read_format_7zip.$(OBJEXT):  \
 	libarchive/test/$(am__dirstamp) \
 	libarchive/test/$(DEPDIR)/$(am__dirstamp)
@@ -6383,6 +6390,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@libarchive/test/$(DEPDIR)/test-test_read_filter_program.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@libarchive/test/$(DEPDIR)/test-test_read_filter_program_signature.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@libarchive/test/$(DEPDIR)/test-test_read_filter_uudecode.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@libarchive/test/$(DEPDIR)/test-test_archive_system.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@libarchive/test/$(DEPDIR)/test-test_read_format_7zip.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@libarchive/test/$(DEPDIR)/test-test_read_format_7zip_encryption_data.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@libarchive/test/$(DEPDIR)/test-test_read_format_7zip_encryption_header.Po@am__quote@ # am--include-marker
@@ -11928,6 +11936,20 @@ libarchive/test/test-test_read_filter_uudecode.obj: libarchive/test/test_read_fi
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libarchive_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libarchive/test/test-test_read_filter_uudecode.obj `if test -f 'libarchive/test/test_read_filter_uudecode.c'; then $(CYGPATH_W) 'libarchive/test/test_read_filter_uudecode.c'; else $(CYGPATH_W) '$(srcdir)/libarchive/test/test_read_filter_uudecode.c'; fi`
 
+libarchive/test/test-test_archive_system.o: libarchive/test/test_archive_system.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libarchive_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libarchive/test/test-test_archive_system.o -MD -MP -MF libarchive/test/$(DEPDIR)/test-test_archive_system.Tpo -c -o libarchive/test/test-test_archive_system.o `test -f 'libarchive/test/test_archive_system.c' || echo '$(srcdir)/'`libarchive/test/test_archive_system.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) libarchive/test/$(DEPDIR)/test-test_archive_system.Tpo libarchive/test/$(DEPDIR)/test-test_archive_system.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libarchive/test/test_archive_system.c' object='libarchive/test/test-test_archive_system.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libarchive_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libarchive/test/test-test_archive_system.o `test -f 'libarchive/test/test_archive_system.c' || echo '$(srcdir)/'`libarchive/test/test_archive_system.c
+
+libarchive/test/test-test_archive_system.obj: libarchive/test/test_archive_system.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libarchive_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libarchive/test/test-test_archive_system.obj -MD -MP -MF libarchive/test/$(DEPDIR)/test-test_archive_system.Tpo -c -o libarchive/test/test-test_archive_system.obj `if test -f 'libarchive/test/test_archive_system.c'; then $(CYGPATH_W) 'libarchive/test/test_archive_system.c'; else $(CYGPATH_W) '$(srcdir)/libarchive/test/test_archive_system.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) libarchive/test/$(DEPDIR)/test-test_archive_system.Tpo libarchive/test/$(DEPDIR)/test-test_archive_system.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libarchive/test/test_archive_system.c' object='libarchive/test/test-test_archive_system.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libarchive_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libarchive/test/test-test_archive_system.obj `if test -f 'libarchive/test/test_archive_system.c'; then $(CYGPATH_W) 'libarchive/test/test_archive_system.c'; else $(CYGPATH_W) '$(srcdir)/libarchive/test/test_archive_system.c'; fi`
+
 
 libarchive/test/test-test_read_format_7zip.o: libarchive/test/test_read_format_7zip.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libarchive_test_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libarchive/test/test-test_read_format_7zip.o -MD -MP -MF libarchive/test/$(DEPDIR)/test-test_read_format_7zip.Tpo -c -o libarchive/test/test-test_read_format_7zip.o `test -f 'libarchive/test/test_read_format_7zip.c' || echo '$(srcdir)/'`libarchive/test/test_read_format_7zip.c
@@ -15639,6 +15661,7 @@ distclean: distclean-am
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_filter_program.Po
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_filter_program_signature.Po
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_filter_uudecode.Po
+	-rm -f libarchive/test/$(DEPDIR)/test-test_archive_system.Po
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_format_7zip.Po
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_format_7zip_encryption_data.Po
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_format_7zip_encryption_header.Po
@@ -16381,6 +16404,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_filter_program.Po
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_filter_program_signature.Po
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_filter_uudecode.Po
+	-rm -f libarchive/test/$(DEPDIR)/test-test_archive_system.Po
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_format_7zip.Po
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_format_7zip_encryption_data.Po
 	-rm -f libarchive/test/$(DEPDIR)/test-test_read_format_7zip_encryption_header.Po
