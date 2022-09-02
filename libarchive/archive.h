@@ -445,13 +445,6 @@ extern "C"
 	__LA_DECL int archive_read_support_format_by_code(struct archive *, int);
 	__LA_DECL int archive_read_support_format_cab(struct archive *);
 	__LA_DECL int archive_read_support_format_cpio(struct archive *);
-	__LA_DECL int archive_test_check_7zip_header_in_sfx(const char *);
-	__LA_DECL int archive_test_trad_enc_init(struct archive *, const uint8_t *, uint8_t *);
-	__LA_DECL int archive_test_zip_read_mac_metadata(struct archive *, struct archive_entry *);
-	__LA_DECL int archive_test_expose_parent_dirs(struct archive *, const char *, size_t);
-	__LA_DECL int archive_test_tohex(int);
-	__LA_DECL int archive_test_pax_attribute(struct archive *, struct archive_entry *, 
-const char *, const char *, size_t);
 #ifdef COMPILE_WITH_RUST
 	extern __LA_DECL int archive_read_support_format_empty(struct archive *);
 	extern __LA_DECL int archive_read_support_format_iso9660(struct archive *);
@@ -468,13 +461,6 @@ const char *, const char *, size_t);
 	extern __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 	extern __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 	extern __LA_DECL int archive_read_support_format_all(struct archive *);
-	extern __LA_DECL int archive_test_check_7zip_header_in_sfx(const char *);
-	extern __LA_DECL int archive_test_trad_enc_init(struct archive *, const uint8_t *, uint8_t *);
-	extern __LA_DECL int archive_test_zip_read_mac_metadata(struct archive *, struct archive_entry *);
-	extern __LA_DECL int archive_test_expose_parent_dirs(struct archive *, const char *, size_t);
-	extern __LA_DECL int archive_test_tohex(int);
-	extern __LA_DECL int archive_test_pax_attribute(struct archive *, struct archive_entry *, 
-const char *, const char *, size_t);
 #else
 __LA_DECL int archive_read_support_format_empty(struct archive *);
 __LA_DECL int archive_read_support_format_iso9660(struct archive *);
@@ -491,13 +477,6 @@ __LA_DECL int archive_read_support_format_7zip(struct archive *);
 __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 __LA_DECL int archive_read_support_format_all(struct archive *);
-__LA_DECL int archive_test_check_7zip_header_in_sfx(const char *);
-__LA_DECL int archive_test_trad_enc_init(struct archive *, const uint8_t *, uint8_t *);
-__LA_DECL int archive_test_zip_read_mac_metadata(struct archive *, struct archive_entry *);
-__LA_DECL int archive_test_expose_parent_dirs(struct archive *, const char *, size_t);
-__LA_DECL int archive_test_tohex(int);
-__LA_DECL int archive_test_pax_attribute(struct archive *, struct archive_entry *, 
-const char *, const char *, size_t);
 #endif
 
 	__LA_DECL int archive_read_support_format_mtree(struct archive *);
