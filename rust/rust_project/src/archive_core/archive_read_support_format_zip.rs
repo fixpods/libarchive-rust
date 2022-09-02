@@ -6033,7 +6033,6 @@ unsafe extern "C" fn run_static_initializers() {
 static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];
 /*# vim:set noet:*/
 
-
 #[no_mangle]
 pub unsafe extern "C" fn archive_test_trad_enc_init(
     mut _a: *mut archive,
