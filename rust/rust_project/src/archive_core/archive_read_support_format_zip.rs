@@ -6049,9 +6049,10 @@ pub unsafe extern "C" fn archive_test_trad_enc_init(
     trad_enc_init(
         trad_enc_ctx,
         b"11" as *const u8 as *const libc::c_char,
-        20, key,
+        20,
+        key,
         10 as libc::c_int as size_t,
-        crcchk
+        crcchk,
     );
     return 0 as libc::c_int;
 }
@@ -6082,7 +6083,7 @@ pub unsafe extern "C" fn archive_test_zip_read_mac_metadata(
 pub unsafe extern "C" fn archive_test_expose_parent_dirs(
     mut _a: *mut archive,
     mut name: *const libc::c_char,
-    mut name_length: size_t
+    mut name_length: size_t,
 ) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut zip = 0 as *mut zip;
