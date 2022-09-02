@@ -6038,7 +6038,7 @@ static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];
 pub unsafe extern "C" fn archive_test_trad_enc_init(
     mut _a: *mut archive,
     mut key: *const uint8_t,
-    mut crcchk: *mut uint8_t
+    mut crcchk: *mut uint8_t,
 ) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut trad_enc_ctx: *mut trad_enc_ctx = 0 as *mut trad_enc_ctx;
@@ -6060,7 +6060,7 @@ pub unsafe extern "C" fn archive_test_trad_enc_init(
 #[no_mangle]
 pub unsafe extern "C" fn archive_test_zip_read_mac_metadata(
     mut _a: *mut archive,
-    mut entry: *mut archive_entry
+    mut entry: *mut archive_entry,
 ) -> libc::c_int {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip_entry: *mut zip_entry = 0 as *mut zip_entry;
