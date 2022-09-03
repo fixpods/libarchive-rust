@@ -3836,3 +3836,28 @@ unsafe extern "C" fn tohex(mut c: libc::c_int) -> libc::c_int {
         return -(1 as libc::c_int);
     };
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_tohex(mut c: libc::c_int) -> libc::c_int {
+    tohex(c);
+    url_decode(b"11" as *const u8 as *const libc::c_char);
+    return 0 as libc::c_int;
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_pax_attribute(
+    mut _a: *mut archive,
+    mut entry: *mut archive_entry,
+    mut key: *const libc::c_char,
+    mut value: *const libc::c_char,
+    mut value_length: size_t,
+) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut tar: *mut tar = 0 as *mut tar;
+    tar = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<tar>() as libc::c_ulong,
+    ) as *mut tar;
+    pax_attribute(a, tar, entry, key, value, value_length);
+    return 0 as libc::c_int;
+}

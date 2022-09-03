@@ -81,6 +81,78 @@ test_filter_or_format(enabler enable)
 	test_failure(archive_write_disk_new, enable, archive_write_free);
 }
 
+static void
+test_7zip()
+{
+	char p1[6] = {0x1C,0x1C,0x1C,0x1C,0x1C,0x1C};
+	char p2[6] = {0x37,0x37,0x37,0x37,0x37,0x37};
+	char p3[6] = {0x7A,0x7A,0x7A,0x7A,0x7A,0x7A};
+	char p4[6] = {0xBC,0xBC,0xBC,0xBC,0xBC,0xBC};
+	char p5[6] = {0xAF,0xAF,0xAF,0xAF,0xAF,0xAF};
+	char p6[6] = {0x27,0x27,0x27,0x27,0x27,0x27};
+	char p7[6] = {0x2C,0x2C,0x2C,0x2C,0x2C,0x2C};
+	char p8[6] = "7z\xBC\xAF\x27\x1C";
+	char *input = p1;
+	archive_test_check_7zip_header_in_sfx(input);
+	input = p2;
+	archive_test_check_7zip_header_in_sfx(input);
+	input = p3;
+	archive_test_check_7zip_header_in_sfx(input);
+	input = p4;
+	archive_test_check_7zip_header_in_sfx(input);
+	input = p5;
+	archive_test_check_7zip_header_in_sfx(input);
+	input = p6;
+	archive_test_check_7zip_header_in_sfx(input);
+	input = p7;
+	archive_test_check_7zip_header_in_sfx(input);
+	input = p8;
+	archive_test_check_7zip_header_in_sfx(input);
+}
+
+void
+test_zip()
+{
+	const char *refname = "test_read_format_zip.zip";
+	extract_reference_file(refname);
+	struct archive *a;
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, refname, 10240));
+	const uint8_t key[12];
+	uint8_t crcchk[12];
+	archive_test_trad_enc_init(a, key, crcchk);
+
+	struct archive_entry *entry = archive_entry_new();
+	archive_test_zip_read_mac_metadata(a, entry);
+
+	archive_test_expose_parent_dirs(a, "aa", 20);
+
+
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+void test_tar()
+{
+	archive_test_tohex((int)'0');
+	archive_test_tohex((int)'A');
+	archive_test_tohex((int)'a');
+	archive_test_tohex(-1);
+	struct archive *a;
+	assert((a = archive_read_new()) != NULL);
+	struct archive_entry *entry = archive_entry_new();
+	archive_test_pax_attribute(a, entry, "LIBARCHIVE.symlinktype", "file", 20);
+	archive_test_pax_attribute(a, entry, "LIBARCHIVE.symlinktype", "dir", 20);
+	archive_test_pax_attribute(a, entry, "SCHILY.devmajor", "dir", 20);
+	archive_test_pax_attribute(a, entry, "SCHILY.devminor", "dir", 20);
+	archive_test_pax_attribute(a, entry, "SCHILY.realsize", "dir", 20);
+	archive_test_pax_attribute(a, entry, "hdrcharset", "ISO-IR 10646 2000 UTF-8", 20);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
 DEFINE_TEST(test_archive_read_support)
 {
 	test_filter_or_format(archive_read_support_format_7zip);
@@ -144,4 +216,8 @@ DEFINE_TEST(test_archive_read_support)
 	test_filter_or_format(archive_read_support_filter_rpm);
 	test_filter_or_format(archive_read_support_filter_uu);
 	test_filter_or_format(archive_read_support_filter_xz);
+
+	test_7zip();
+	test_zip();
+	test_tar();
 }

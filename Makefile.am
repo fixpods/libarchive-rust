@@ -634,7 +634,6 @@ libarchive_test_SOURCES= \
 	libarchive/test/test_write_open_memory.c \
 	libarchive/test/test_write_read_format_zip.c \
 	libarchive/test/test_xattr_platform.c \
-	libarchive/test/test_archive_system.c \
 	libarchive/test/test_zip_filename_encoding.c
 
 libarchive_test_CPPFLAGS= \
