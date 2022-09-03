@@ -5257,7 +5257,63 @@ unsafe extern "C" fn Bcj2_Decode(
 #[no_mangle]
 pub unsafe extern "C" fn archive_test_check_7zip_header_in_sfx(
     mut p: *const libc::c_char,
-) -> libc::c_int {
+) {
     check_7zip_header_in_sfx(p);
-    return 0 as libc::c_int;
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_skip_sfx(
+    mut _a: *mut archive,
+    mut bytes_avail: ssize_t,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    skip_sfx(a, bytes_avail);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_init_decompression(
+    mut _a: *mut archive,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut _7zip: *mut _7zip = 0 as *mut _7zip;
+    _7zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7zip>() as libc::c_ulong,
+    ) as *mut _7zip;
+    let mut coder1: *mut _7z_coder = 0 as *mut _7z_coder;
+    coder1 = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7z_coder>() as libc::c_ulong,
+    ) as *mut _7z_coder;
+    let mut coder2: *mut _7z_coder = 0 as *mut _7z_coder;
+    coder2 = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7z_coder>() as libc::c_ulong,
+    ) as *mut _7z_coder;
+    (*(coder1)).codec = 0x030401 as libc::c_ulong;
+    (*(coder1)).propertiesSize = 4 as uint64_t;
+    (*(_7zip)).ppmd7_valid = 1 as libc::c_int;
+    (*(coder2)).codec = 0x03030103 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
+    (*(coder2)).codec = 0x030401 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
+    (*(coder1)).codec = 0x21 as libc::c_ulong;
+    (*(coder2)).codec = 0x03030205 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
+    (*(coder2)).codec = 0x03030401 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
+    (*(coder2)).codec = 0x03030501 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
+    (*(coder2)).codec = 0x03030701 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
+    (*(coder2)).codec = 0x03030104 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
+    (*(coder2)).codec = 0x03030805 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
+    (*(coder1)).codec = 0x03 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
+    (*(coder1)).codec = 0x06F10702 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
+    (*(coder1)).codec = 0x06F10701 as libc::c_ulong;
+    init_decompression(a, _7zip, coder1, coder2);
 }

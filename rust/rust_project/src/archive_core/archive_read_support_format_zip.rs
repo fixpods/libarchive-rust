@@ -6038,7 +6038,7 @@ pub unsafe extern "C" fn archive_test_trad_enc_init(
     mut _a: *mut archive,
     mut key: *const uint8_t,
     mut crcchk: *mut uint8_t,
-) -> libc::c_int {
+) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut trad_enc_ctx: *mut trad_enc_ctx = 0 as *mut trad_enc_ctx;
     trad_enc_ctx = calloc_safe(
@@ -6053,14 +6053,13 @@ pub unsafe extern "C" fn archive_test_trad_enc_init(
         10 as libc::c_int as size_t,
         crcchk,
     );
-    return 0 as libc::c_int;
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn archive_test_zip_read_mac_metadata(
     mut _a: *mut archive,
     mut entry: *mut archive_entry,
-) -> libc::c_int {
+) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip_entry: *mut zip_entry = 0 as *mut zip_entry;
     zip_entry = calloc_safe(
@@ -6075,7 +6074,6 @@ pub unsafe extern "C" fn archive_test_zip_read_mac_metadata(
     (*(zip_entry)).compressed_size =
         (5 as libc::c_int * 1024 as libc::c_int * 1024 as libc::c_int) as int64_t;
     zip_read_mac_metadata(a, entry, zip_entry);
-    return 0 as libc::c_int;
 }
 
 #[no_mangle]
@@ -6083,10 +6081,9 @@ pub unsafe extern "C" fn archive_test_expose_parent_dirs(
     mut _a: *mut archive,
     mut name: *const libc::c_char,
     mut name_length: size_t,
-) -> libc::c_int {
+) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut zip = 0 as *mut zip;
     zip = unsafe { (*(*a).format).data as *mut zip };
     expose_parent_dirs(zip, name, name_length);
-    return 0 as libc::c_int;
 }
