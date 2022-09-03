@@ -5255,25 +5255,18 @@ unsafe extern "C" fn Bcj2_Decode(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_check_7zip_header_in_sfx(
-    mut p: *const libc::c_char,
-) {
+pub unsafe extern "C" fn archive_test_check_7zip_header_in_sfx(mut p: *const libc::c_char) {
     check_7zip_header_in_sfx(p);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_skip_sfx(
-    mut _a: *mut archive,
-    mut bytes_avail: ssize_t,
-) {
+pub unsafe extern "C" fn archive_test_skip_sfx(mut _a: *mut archive, mut bytes_avail: ssize_t) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     skip_sfx(a, bytes_avail);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_init_decompression(
-    mut _a: *mut archive,
-) {
+pub unsafe extern "C" fn archive_test_init_decompression(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut _7zip: *mut _7zip = 0 as *mut _7zip;
     _7zip = calloc_safe(

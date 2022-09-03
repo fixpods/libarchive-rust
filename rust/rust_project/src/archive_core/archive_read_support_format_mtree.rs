@@ -3332,8 +3332,7 @@ pub unsafe extern "C" fn archive_test_parse_keyword(
         1 as libc::c_int as libc::c_ulong,
         ::std::mem::size_of::<mtree_entry>() as libc::c_ulong,
     ) as *mut mtree_entry;
-    (*(mtree_option)).value =
-        b"optional" as *const u8 as *mut libc::c_char;
+    (*(mtree_option)).value = b"optional" as *const u8 as *mut libc::c_char;
     parse_keyword(a, mtree, entry, mtree_option, parsed_kws);
 }
 
