@@ -108,9 +108,22 @@ test_7zip()
 	archive_test_check_7zip_header_in_sfx(input);
 	input = p8;
 	archive_test_check_7zip_header_in_sfx(input);
+
+	const char *refname = "test_read_format_7zip_empty_file.7z";
+	struct archive *a;
+	extract_reference_file(refname);
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, refname, 10240));
+	archive_test_skip_sfx(a, 0x27001);
+	archive_test_skip_sfx(a, 0x27000);
+	archive_test_init_decompression(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
-void
+static void
 test_zip()
 {
 	const char *refname = "test_read_format_zip.zip";
@@ -134,7 +147,8 @@ test_zip()
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
-void test_tar()
+static void
+test_tar()
 {
 	archive_test_tohex((int)'0');
 	archive_test_tohex((int)'A');
@@ -149,6 +163,26 @@ void test_tar()
 	archive_test_pax_attribute(a, entry, "SCHILY.devminor", "dir", 20);
 	archive_test_pax_attribute(a, entry, "SCHILY.realsize", "dir", 20);
 	archive_test_pax_attribute(a, entry, "hdrcharset", "ISO-IR 10646 2000 UTF-8", 20);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+static void
+test_mtree()
+{
+	struct archive *a;
+	assert((a = archive_read_new()) != NULL);
+	struct archive_entry *entry = archive_entry_new();
+	int p[] = {1,2,3,4,5};
+	int *p1 = p;
+	archive_test_parse_keyword(a, entry, p1);
+	archive_test_process_global_unset(a, "123");
+	char *sp1[] = {"x","x","x","x"};
+	char ** sp = sp1;
+	archive_test_la_strsep(sp, "2");
+	sp = NULL;
+	archive_test_la_strsep(sp, "2");
+	archive_test_parse_digest(a, entry, "", 0x00000007);
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -220,4 +254,5 @@ DEFINE_TEST(test_archive_read_support)
 	test_7zip();
 	test_zip();
 	test_tar();
+	test_mtree();
 }

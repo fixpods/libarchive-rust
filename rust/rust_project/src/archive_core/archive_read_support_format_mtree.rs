@@ -3309,3 +3309,63 @@ unsafe extern "C" fn readline(
         }
     }
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_parse_keyword(
+    mut _a: *mut archive,
+    mut entry: *mut archive_entry,
+    mut parsed_kws: *mut libc::c_int,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut mtree: *mut mtree = 0 as *mut mtree;
+    mtree = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<mtree>() as libc::c_ulong,
+    ) as *mut mtree;
+    let mut mtree_option: *mut mtree_option = 0 as *mut mtree_option;
+    mtree_option = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<mtree_option>() as libc::c_ulong,
+    ) as *mut mtree_option;
+    let mut mtree_entry: *mut mtree_entry = 0 as *mut mtree_entry;
+    mtree_entry = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<mtree_entry>() as libc::c_ulong,
+    ) as *mut mtree_entry;
+    (*(mtree_option)).value = b"optional" as *const u8 as *mut libc::c_char;
+    parse_keyword(a, mtree, entry, mtree_option, parsed_kws);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_process_global_unset(
+    mut _a: *mut archive,
+    mut line: *const libc::c_char,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut mtree_option: *mut mtree_option = 0 as *mut mtree_option;
+    mtree_option = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<mtree_option>() as libc::c_ulong,
+    ) as *mut mtree_option;
+    let mut mtree_option2: *mut *mut mtree_option = mtree_option as *mut *mut mtree_option;
+    process_global_unset(a, mtree_option2, line);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_la_strsep(
+    mut sp: *mut *mut libc::c_char,
+    mut sep: *const libc::c_char,
+) {
+    la_strsep(sp, sep);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_parse_digest(
+    mut _a: *mut archive_read,
+    mut entry: *mut archive_entry,
+    mut digest: *const libc::c_char,
+    mut type_0: libc::c_int,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    parse_digest(a, entry, digest, type_0);
+}
