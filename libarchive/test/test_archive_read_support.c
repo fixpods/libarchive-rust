@@ -124,6 +124,37 @@ test_7zip()
 }
 
 static void
+test_ar()
+{
+		archive_test_archive_read_support_format_ar();
+	size_t size = 2;
+	size_t * size2 = &size;
+	int64_t offset = 1;
+	int64_t * offset2 = &offset;
+	void * buff = {NULL, NULL};
+	void ** buff2 = &buff;
+	char p[] = {'_','_','.','S','Y','M','D','E','F','1',
+    '1','1','1','1','1','1','1','1','1','1',
+    '1','1','1','1','1','1','1','1','1','1',
+    '1','1','1','1','1','1','1','1','1','1',
+    '1','1','1','1','1','1','1','1','1','1',
+    '1','1','1','1','1','1','1','1', '`','\n'};
+	const char *h = p;
+	const char reffile[] = "test_read_format_ar.ar";
+	struct archive *a;
+	extract_reference_file(reffile);
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, reffile, 10240));
+	struct archive_entry *entry = archive_entry_new();
+	archive_test__ar_read_header(a, entry, h, 1);
+	archive_test_archive_read_format_ar_read_data(a, buff2, size2, offset2);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+static void
 test_zip()
 {
 	const char *refname = "test_read_format_zip.zip";
@@ -252,6 +283,7 @@ DEFINE_TEST(test_archive_read_support)
 	test_filter_or_format(archive_read_support_filter_xz);
 
 	test_7zip();
+	test_ar();
 	test_zip();
 	test_tar();
 	test_mtree();

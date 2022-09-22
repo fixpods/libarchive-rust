@@ -445,6 +445,10 @@ extern "C"
 	__LA_DECL int archive_read_support_format_by_code(struct archive *, int);
 	__LA_DECL int archive_read_support_format_cab(struct archive *);
 	__LA_DECL int archive_read_support_format_cpio(struct archive *);
+/*新增测试用例 */
+	__LA_DECL void archive_test__ar_read_header(struct archive *, struct archive_entry *, const char *, size_t *);
+	__LA_DECL void archive_test_archive_read_support_format_ar();
+	__LA_DECL void archive_test_archive_read_format_ar_read_data(struct archive *, const void **, size_t *, int64_t *);
 	__LA_DECL void archive_test_trad_enc_init(struct archive *, const uint8_t *, uint8_t *);
 	__LA_DECL void archive_test_zip_read_mac_metadata(struct archive *, struct archive_entry *);
 	__LA_DECL void archive_test_expose_parent_dirs(struct archive *, const char *, size_t);
@@ -476,6 +480,10 @@ const char *, const char *, size_t);
 	extern __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 	extern __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 	extern __LA_DECL int archive_read_support_format_all(struct archive *);
+/*新增测试用例 */
+	extern __LA_DECL void archive_test__ar_read_header(struct archive *, struct archive_entry *, const char *, size_t *);
+	extern __LA_DECL void archive_test_archive_read_support_format_ar();
+	extern __LA_DECL void archive_test_archive_read_format_ar_read_data(struct archive *, const void **, size_t *, int64_t *);
 	extern __LA_DECL void archive_test_trad_enc_init(struct archive *, const uint8_t *, uint8_t *);
 	extern __LA_DECL void archive_test_zip_read_mac_metadata(struct archive *, struct archive_entry *);
 	extern __LA_DECL void archive_test_expose_parent_dirs(struct archive *, const char *, size_t);
@@ -506,6 +514,10 @@ __LA_DECL int archive_read_support_format_7zip(struct archive *);
 __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 __LA_DECL int archive_read_support_format_all(struct archive *);
+/*新增测试用例 */
+__LA_DECL void archive_test__ar_read_header(struct archive *, struct archive_entry *, const char *, size_t *);
+__LA_DECL void archive_test_archive_read_support_format_ar();
+__LA_DECL void archive_test_archive_read_format_ar_read_data(struct archive *, const void **, size_t *, int64_t *);
 __LA_DECL void archive_test_trad_enc_init(struct archive *, const uint8_t *, uint8_t *);
 __LA_DECL void archive_test_zip_read_mac_metadata(struct archive *, struct archive_entry *);
 __LA_DECL void archive_test_expose_parent_dirs(struct archive *, const char *, size_t);
