@@ -820,7 +820,7 @@ pub unsafe extern "C" fn archive_test_archive_read_format_ar_read_data(
     mut _a: *mut archive,
     mut buff: *mut *const libc::c_void,
     mut size: *mut size_t,
-    mut offset: *mut int64_t
+    mut offset: *mut int64_t,
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut ar: *mut ar = 0 as *mut ar;
@@ -866,7 +866,7 @@ pub unsafe extern "C" fn archive_test__ar_read_header(
     mut _a: *mut archive,
     mut entry: *mut archive_entry,
     mut h: *const libc::c_char,
-    mut unconsumed: *mut size_t
+    mut unconsumed: *mut size_t,
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     (*a).archive.archive_format = ARCHIVE_AR_DEFINED_PARAM.archive_format_ar;
