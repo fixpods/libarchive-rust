@@ -4674,9 +4674,7 @@ unsafe extern "C" fn lzx_decode_huffman(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_cab_skip_sfx(
-    mut _a: *mut archive,
-) {
+pub unsafe extern "C" fn archive_test_cab_skip_sfx(mut _a: *mut archive) {⏎
     let mut a: *mut archive_read = _a as *mut archive_read;
     cab_skip_sfx(a);
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
@@ -4740,21 +4738,30 @@ pub unsafe extern "C" fn archive_test_lzx_read_blocks() {
     (*lzx_dec).block_bytes_avail = 4 as size_t;
     (*strm).avail_out = 2 as int64_t;
     (*strm).avail_in = 1 as int64_t;
-    let mut p1: [libc::c_uchar; 4] =
-        ['1' as i32 as libc::c_uchar, '2' as i32 as libc::c_uchar,
-            '3' as i32 as libc::c_uchar, '4' as i32 as libc::c_uchar];
-    let mut p2: [libc::c_uchar; 4] =
-        ['1' as i32 as libc::c_uchar, '2' as i32 as libc::c_uchar,
-            '3' as i32 as libc::c_uchar, '4' as i32 as libc::c_uchar];
-    (*strm).next_out = &p1 as *const [libc::c_uchar; 4] as *mut [libc::c_uchar; 4] as
-        *mut libc::c_uchar;
-    (*strm).next_in = &p2 as *const [libc::c_uchar; 4] as *mut [libc::c_uchar; 4] as
-        *const libc::c_uchar;
-    let mut p: [libc::c_uchar; 4] =
-        ['1' as i32 as libc::c_uchar, '2' as i32 as libc::c_uchar,
-            '3' as i32 as libc::c_uchar, '4' as i32 as libc::c_uchar];
-    (*lzx_dec).w_buff = &p as *const [libc::c_uchar; 4] as *mut [libc::c_uchar; 4] as
-        *mut libc::c_uchar;
+    let mut p1: [libc::c_uchar; 4] = [
+        '1' as i32 as libc::c_uchar,
+        '2' as i32 as libc::c_uchar,
+        '3' as i32 as libc::c_uchar,
+        '4' as i32 as libc::c_uchar,
+    ];
+    let mut p2: [libc::c_uchar; 4] = [
+        '1' as i32 as libc::c_uchar,
+        '2' as i32 as libc::c_uchar,
+        '3' as i32 as libc::c_uchar,
+        '4' as i32 as libc::c_uchar,
+    ];
+    (*strm).next_out =
+        &p1 as *const [libc::c_uchar; 4] as *mut [libc::c_uchar; 4] as *mut libc::c_uchar;
+    (*strm).next_in =
+        &p2 as *const [libc::c_uchar; 4] as *mut [libc::c_uchar; 4] as *const libc::c_uchar;
+    let mut p: [libc::c_uchar; 4] = [
+        '1' as i32 as libc::c_uchar,
+        '2' as i32 as libc::c_uchar,
+        '3' as i32 as libc::c_uchar,
+        '4' as i32 as libc::c_uchar,
+    ];
+    (*lzx_dec).w_buff =
+        &p as *const [libc::c_uchar; 4] as *mut [libc::c_uchar; 4] as *mut libc::c_uchar;
     (*lzx_dec).w_pos = 1 as libc::c_int;
     (*lzx_dec).w_size = 4 as libc::c_int;
     (*lzx_dec).w_mask = 1 as libc::c_int;
@@ -4827,9 +4834,7 @@ pub unsafe extern "C" fn archive_test_archive_read_support_format_cab() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_archive_read_format_cab_options(
-    mut _a: *mut archive,
-) {
+pub unsafe extern "C" fn archive_test_archive_read_format_cab_options(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
     cab = unsafe {
@@ -4839,25 +4844,23 @@ pub unsafe extern "C" fn archive_test_archive_read_format_cab_options(
         )
     } as *mut cab;
     (*(*a).format).data = cab as *mut libc::c_void;
-    archive_read_format_cab_options(a,
-                                    b"hdrcharset\x00" as *const u8 as *const libc::c_char,
-                                    b"h\x00" as *const u8 as *const libc::c_char);
+    archive_read_format_cab_options(
+        a,
+        b"hdrcharset\x00" as *const u8 as *const libc::c_char,
+        b"h\x00" as *const u8 as *const libc::c_char,
+    );
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_cab_read_data(
-    mut _a: *mut archive,
-) {
+pub unsafe extern "C" fn archive_test_cab_read_data(mut _a: *mut archive) {
     let mut size: size_t = 0;
     let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
     let mut offset: int64_t = 0;
     let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
     let mut buff: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
-    let mut buff2: *mut *const libc::c_void =
-        unsafe {
-            &buff as *const *mut libc::c_void as *mut *mut libc::c_void as
-                *mut *const libc::c_void
-        };
+    let mut buff2: *mut *const libc::c_void = unsafe {
+        &buff as *const *mut libc::c_void as *mut *mut libc::c_void as *mut *const libc::c_void
+    };
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
     cab = unsafe {
@@ -4872,9 +4875,7 @@ pub unsafe extern "C" fn archive_test_cab_read_data(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_cab_consume_cfdata(
-    mut _a: *mut archive,
-) {
+pub unsafe extern "C" fn archive_test_cab_consume_cfdata(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
     cab = unsafe {
@@ -4919,19 +4920,15 @@ pub unsafe extern "C" fn archive_test_cab_consume_cfdata(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_archive_read_format_cab_read_data(
-    mut _a: *mut archive,
-) {
+pub unsafe extern "C" fn archive_test_archive_read_format_cab_read_data(mut _a: *mut archive) {
     let mut size: size_t = 0;
     let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
     let mut offset: int64_t = 0;
     let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
     let mut buff: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
-    let mut buff2: *mut *const libc::c_void =
-        unsafe {
-            &buff as *const *mut libc::c_void as *mut *mut libc::c_void as
-                *mut *const libc::c_void
-        };
+    let mut buff2: *mut *const libc::c_void = unsafe {
+        &buff as *const *mut libc::c_void as *mut *mut libc::c_void as *mut *const libc::c_void
+    };
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
     cab = unsafe {
@@ -4954,9 +4951,7 @@ pub unsafe extern "C" fn archive_test_archive_read_format_cab_read_data(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_cab_next_cfdata(
-    mut _a: *mut archive,
-) {
+pub unsafe extern "C" fn archive_test_cab_next_cfdata(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
     cab = unsafe {
@@ -4988,9 +4983,7 @@ pub unsafe extern "C" fn archive_test_cab_next_cfdata(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_cab_checksum_update(
-    mut _a: *mut archive,
-) {
+pub unsafe extern "C" fn archive_test_cab_checksum_update(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
     cab = unsafe {
@@ -5020,8 +5013,7 @@ pub unsafe extern "C" fn archive_test_cab_checksum_update(
     (*cffolder).cfdata_count = 1;
     (*cab).entry_cffolder = cffolder;
     cab_next_cfdata(a);
-    let mut p: *mut libc::c_char
-        = b"hdrcharset\x00" as *const u8 as *mut libc::c_char;
+    let mut p: *mut libc::c_char = b"hdrcharset\x00" as *const u8 as *mut libc::c_char;
     (*cfdata).sum_ptr = p as *mut libc::c_void;
     (*cfdata).sum_extra_avail = 3;
     cab_checksum_update(a, 4);
@@ -5049,16 +5041,13 @@ unsafe extern "C" fn archive_test_lzx_huffman_init(
         )
     } as *mut huffman;
     (*huffman).len_size = 1;
-    let mut bitlen: *mut libc::c_uchar
-        = b"abc\x00" as *const u8 as *mut libc::c_uchar;
+    let mut bitlen: *mut libc::c_uchar = b"abc\x00" as *const u8 as *mut libc::c_uchar;
     (*huffman).bitlen = bitlen as *mut libc::c_uchar;
     lzx_huffman_init(huffman, len_size, tbl_bits);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_cab_read_ahead_cfdata_none(
-    mut _a: *mut archive,
-) {
+pub unsafe extern "C" fn archive_test_cab_read_ahead_cfdata_none(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
     cab = unsafe {
