@@ -4674,7 +4674,7 @@ unsafe extern "C" fn lzx_decode_huffman(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_cab_skip_sfx(mut _a: *mut archive) {⏎
+pub unsafe extern "C" fn archive_test_cab_skip_sfx(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     cab_skip_sfx(a);
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
