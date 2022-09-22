@@ -155,6 +155,35 @@ test_ar()
 }
 
 static void
+test_cab()
+{
+	const void *p;
+	const char refname[] = "test_read_format_cab_1.cab";
+	struct archive *a;
+	extract_reference_file(refname);
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, refname, 10240));
+	archive_test_cab_checksum_cfdata(p, 3, 1);
+	archive_test_lzx_br_fillup();
+	archive_test_lzx_huffman_init(1, 1);
+	archive_test_lzx_br_fixup();
+	archive_test_archive_read_support_format_cab();
+	archive_test_cab_consume_cfdata(a);
+	archive_test_archive_read_format_cab_read_data(a);
+	archive_test_cab_next_cfdata(a);
+	archive_test_cab_checksum_update(a);
+	archive_test_archive_read_format_cab_options(a);
+	archive_test_cab_skip_sfx(a);
+	archive_test_cab_read_data(a);
+	archive_test_cab_read_ahead_cfdata_none(a);
+	archive_test_lzx_read_blocks();
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+static void
 test_zip()
 {
 	const char *refname = "test_read_format_zip.zip";
@@ -284,6 +313,7 @@ DEFINE_TEST(test_archive_read_support)
 
 	test_7zip();
 	test_ar();
+	test_cab();
 	test_zip();
 	test_tar();
 	test_mtree();
