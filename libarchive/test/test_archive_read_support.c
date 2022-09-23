@@ -232,6 +232,38 @@ test_iso9660()
 
 
 static void
+test_lha()
+{
+	unsigned char pp[] = {
+		'1','1','-','l','z','s','-','1','1','1',
+		'1','1','1','1','z','s','1','1','1','1',
+		0};
+	const unsigned char *p = pp;
+	const void *h = (unsigned char *)p;
+	struct archive *a;
+	const char reffile[] = "test_read_format_lha_lh7.lzh";
+	extract_reference_file(reffile);
+	struct archive_entry *entry = archive_entry_new();
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, reffile, 10240));
+	archive_test_lha_check_header_format(h);
+	archive_test_lzh_read_blocks();
+	archive_test_lzh_decode_blocks();
+	archive_test_lzh_emit_window();
+	archive_test_lzh_decode_huffman_tree();
+	archive_test_archive_read_support_format_lha(a);
+	archive_test_archive_read_format_lha_options(a, "hdrcharset", NULL);
+	archive_test_lha_skip_sfx(a);
+	archive_test_lha_read_data_none(a);
+	archive_test_lha_read_data_lzh(a);
+	archive_test_truncated_error(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+static void
 test_zip()
 {
 	const char *refname = "test_read_format_zip.zip";
@@ -363,6 +395,7 @@ DEFINE_TEST(test_archive_read_support)
 	test_ar();
 	test_cab();
 	test_iso9660();
+	test_lha();
 	test_zip();
 	test_tar();
 	test_mtree();
