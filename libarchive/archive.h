@@ -446,6 +446,17 @@ extern "C"
 	__LA_DECL int archive_read_support_format_cab(struct archive *);
 	__LA_DECL int archive_read_support_format_cpio(struct archive *);
 /*新增测试用例 */
+	__LA_DECL void archive_test_archive_read_support_format_lha();
+	__LA_DECL void archive_test_lha_check_header_format(const void *);
+	__LA_DECL void archive_test_archive_read_format_lha_options(struct archive *, const char *, const char *);
+	__LA_DECL void archive_test_lha_skip_sfx(struct archive *);
+	__LA_DECL void archive_test_lha_read_data_none(struct archive *);
+	__LA_DECL void archive_test_lha_read_data_lzh(struct archive *);
+	__LA_DECL void archive_test_lzh_emit_window();
+	__LA_DECL void archive_test_lzh_decode_huffman_tree();
+	__LA_DECL void archive_test_truncated_error(struct archive *);
+	__LA_DECL void archive_test_lzh_decode_blocks();
+	__LA_DECL void archive_test_lzh_read_blocks();
 	__LA_DECL void archive_test_isNull(const unsigned char *, unsigned , unsigned);
 	__LA_DECL void archive_test_isVolumePartition(const unsigned char *);
 	__LA_DECL void archive_test_isodate17(const unsigned char *);
@@ -505,6 +516,17 @@ extern "C"
 	extern __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 	extern __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
+	extern __LA_DECL void archive_test_archive_read_support_format_lha();
+	extern __LA_DECL void archive_test_lha_check_header_format(const void *);
+	extern __LA_DECL void archive_test_archive_read_format_lha_options(struct archive *, const char *, const char *);
+	extern __LA_DECL void archive_test_lha_skip_sfx(struct archive *);
+	extern __LA_DECL void archive_test_lha_read_data_none(struct archive *);
+	extern __LA_DECL void archive_test_lha_read_data_lzh(struct archive *);
+	extern __LA_DECL void archive_test_lzh_emit_window();
+	extern __LA_DECL void archive_test_lzh_decode_huffman_tree();
+	extern __LA_DECL void archive_test_truncated_error(struct archive *);
+	extern __LA_DECL void archive_test_lzh_decode_blocks();
+	extern __LA_DECL void archive_test_lzh_read_blocks();
 	extern __LA_DECL void archive_test_isNull(const unsigned char *, unsigned , unsigned);
 	extern __LA_DECL void archive_test_isVolumePartition(const unsigned char *);
 	extern __LA_DECL void archive_test_isodate17(const unsigned char *);
@@ -563,6 +585,17 @@ __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
+__LA_DECL void archive_test_archive_read_support_format_lha();
+__LA_DECL void archive_test_lha_check_header_format(const void *);
+__LA_DECL void archive_test_archive_read_format_lha_options(struct archive *, const char *, const char *);
+__LA_DECL void archive_test_lha_skip_sfx(struct archive *);
+__LA_DECL void archive_test_lha_read_data_none(struct archive *);
+__LA_DECL void archive_test_lha_read_data_lzh(struct archive *);
+__LA_DECL void archive_test_lzh_emit_window();
+__LA_DECL void archive_test_lzh_decode_huffman_tree();
+__LA_DECL void archive_test_truncated_error(struct archive *);
+__LA_DECL void archive_test_lzh_decode_blocks();
+__LA_DECL void archive_test_lzh_read_blocks();
 __LA_DECL void archive_test_isNull(const unsigned char *, unsigned , unsigned);
 __LA_DECL void archive_test_isVolumePartition(const unsigned char *);
 __LA_DECL void archive_test_isodate17(const unsigned char *);
