@@ -1982,7 +1982,7 @@ unsafe extern "C" fn lha_read_data_lzh(
      */
     lha_safe.strm.next_in =
         __archive_read_ahead_safe(a, 1 as libc::c_int as size_t, &mut bytes_avail)
-        as *const libc::c_uchar;
+            as *const libc::c_uchar;
     if bytes_avail <= 0 as libc::c_int as libc::c_long {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
