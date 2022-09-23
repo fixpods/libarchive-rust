@@ -2604,7 +2604,7 @@ unsafe extern "C" fn lzh_decode(mut strm: &mut lzh_stream, mut last: libc::c_int
     return r;
 }
 
-unsafe extern "C" fn lzh_emit_window(mut strm: *mut lzh_stream, mut s: size_t) {
+unsafe extern "C" fn lzh_emit_window(mut strm: &mut lzh_stream, mut s: size_t) {
     let strm_safe = unsafe { &mut *strm };
     let ds = unsafe { &mut *strm_safe.ds };
     strm_safe.ref_ptr = ds.w_buff;
@@ -2633,12 +2633,12 @@ unsafe extern "C" fn lzh_emit_window(mut strm: *mut lzh_stream, mut s: size_t) {
  *    is dummy, not the file data.
  */
 unsafe extern "C" fn lzh_read_blocks(
-    mut strm: *mut lzh_stream,
+    mut strm: &mut lzh_stream,
     mut last: libc::c_int,
 ) -> libc::c_int {
     let strm_safe = unsafe { &mut *strm };
     let mut current_block: u64;
-    let mut ds = unsafe { &mut *strm_safe.ds };
+    let mut ds = unsafe { &mut *strm.ds };
     let mut br = &mut ds.br;
     let mut c: libc::c_int = 0 as libc::c_int;
     let mut i: libc::c_int = 0;
@@ -2652,7 +2652,7 @@ unsafe extern "C" fn lzh_read_blocks(
              * in particular, there are no reference data at
              * the beginning of the decompression.
              */
-            if !(br.cache_avail >= 16 as libc::c_int || lzh_br_fillup(&mut *strm_safe, br) != 0) {
+            if !(br.cache_avail >= 16 as libc::c_int || lzh_br_fillup(strm_safe, br) != 0) {
                 if last == 0 {
                     /* We need following data. */
                     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
@@ -2667,7 +2667,7 @@ unsafe extern "C" fn lzh_read_blocks(
                     break;
                 } else {
                     if ds.w_pos > 0 as libc::c_int {
-                        lzh_emit_window(&mut *strm_safe, ds.w_pos as size_t);
+                        lzh_emit_window(strm_safe, ds.w_pos as size_t);
                         ds.w_pos = 0 as libc::c_int;
                         return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
                     }
@@ -2719,321 +2719,321 @@ unsafe extern "C" fn lzh_read_blocks(
             /* Note: ST_RD_PT_1, ST_RD_PT_2 and ST_RD_PT_4 are
              * used in reading both a literal table and a
              * position table. */
+            {
+                if !(br.cache_avail >= ds.pt.len_bits
+                    || lzh_br_fillup(strm_safe, br) != 0
+                    || br.cache_avail >= ds.pt.len_bits)
                 {
-                    if !(br.cache_avail >= ds.pt.len_bits
-                        || lzh_br_fillup(&mut *strm_safe, br) != 0
-                        || br.cache_avail >= ds.pt.len_bits)
-                    {
-                        if last != 0 {
-                            break; /* Truncated data. */
-                        }
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_1;
-                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                    } else {
-                        ds.pt.len_avail = (br.cache_buffer >> br.cache_avail - ds.pt.len_bits)
-                            as uint16_t as libc::c_int
-                            & cache_masks[ds.pt.len_bits as usize] as libc::c_int;
-                        br.cache_avail -= ds.pt.len_bits
+                    if last != 0 {
+                        break; /* Truncated data. */
                     }
-                    current_block = 15806087812640832660;
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_1;
+                    return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+                } else {
+                    ds.pt.len_avail = (br.cache_buffer >> br.cache_avail - ds.pt.len_bits)
+                        as uint16_t as libc::c_int
+                        & cache_masks[ds.pt.len_bits as usize] as libc::c_int;
+                    br.cache_avail -= ds.pt.len_bits
                 }
+                current_block = 15806087812640832660;
+            }
             _ => {}
         }
         match current_block {
             15806087812640832660 =>
             /* FALL THROUGH */
-                {
-                    if ds.pt.len_avail == 0 as libc::c_int {
-                        /* Invalid data. */
-                        /* There is no bitlen. */
-                        if !(br.cache_avail >= ds.pt.len_bits
-                            || lzh_br_fillup(&mut *strm_safe, br) != 0
-                            || br.cache_avail >= ds.pt.len_bits)
-                        {
-                            if last != 0 {
-                                break; /* Truncated data.*/
-                            } /* Invalid data. */
-                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_2;
-                            return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                        } else {
-                            let len_bits = ds.pt.len_bits;
-                            if lzh_make_fake_table(
-                                &mut ds.pt,
-                                ((br.cache_buffer >> br.cache_avail - len_bits) as uint16_t
-                                    as libc::c_int
-                                    & cache_masks[len_bits as usize] as libc::c_int)
-                                    as uint16_t,
-                            ) == 0
-                            {
-                                break;
-                            }
-                            br.cache_avail -= ds.pt.len_bits;
-                            if ds.reading_position != 0 {
-                                ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal
-                            } else {
-                                ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_1
-                            }
-                            continue;
-                        }
+            {
+                if ds.pt.len_avail == 0 as libc::c_int {
+                    /* Invalid data. */
+                    /* There is no bitlen. */
+                    if !(br.cache_avail >= ds.pt.len_bits
+                        || lzh_br_fillup(strm_safe, br) != 0
+                        || br.cache_avail >= ds.pt.len_bits)
+                    {
+                        if last != 0 {
+                            break; /* Truncated data.*/
+                        } /* Invalid data. */
+                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_2;
+                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
                     } else {
-                        if ds.pt.len_avail > ds.pt.len_size {
+                        let len_bits = ds.pt.len_bits;
+                        if lzh_make_fake_table(
+                            &mut ds.pt,
+                            ((br.cache_buffer >> br.cache_avail - len_bits) as uint16_t
+                                as libc::c_int
+                                & cache_masks[len_bits as usize] as libc::c_int)
+                                as uint16_t,
+                        ) == 0
+                        {
                             break;
                         }
-                        ds.loop_0 = 0 as libc::c_int;
-                        memset_safe(
-                            ds.pt.freq.as_mut_ptr() as *mut libc::c_void,
-                            0 as libc::c_int,
-                            ::std::mem::size_of::<[libc::c_int; 17]>() as libc::c_ulong,
-                        );
-                        if ds.pt.len_avail < 3 as libc::c_int || ds.pt.len_size == ds.pos_pt_len_size {
-                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_4;
-                            continue;
+                        br.cache_avail -= ds.pt.len_bits;
+                        if ds.reading_position != 0 {
+                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal
+                        } else {
+                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_1
                         }
+                        continue;
                     }
-                    current_block = 14809079967989167248;
+                } else {
+                    if ds.pt.len_avail > ds.pt.len_size {
+                        break;
+                    }
+                    ds.loop_0 = 0 as libc::c_int;
+                    memset_safe(
+                        ds.pt.freq.as_mut_ptr() as *mut libc::c_void,
+                        0 as libc::c_int,
+                        ::std::mem::size_of::<[libc::c_int; 17]>() as libc::c_ulong,
+                    );
+                    if ds.pt.len_avail < 3 as libc::c_int || ds.pt.len_size == ds.pos_pt_len_size {
+                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_4;
+                        continue;
+                    }
                 }
+                current_block = 14809079967989167248;
+            }
             _ => {}
         }
         match current_block {
             14809079967989167248 =>
             /* FALL THROUGH */
-                {
-                    ds.loop_0 = lzh_read_pt_bitlen(&mut *strm_safe, ds.loop_0, 3 as libc::c_int); /* Invalid data. */
-                    if ds.loop_0 < 3 as libc::c_int {
-                        if ds.loop_0 < 0 as libc::c_int || last != 0 {
-                            break;
-                        }
-                        /* Not completed, get following data. */
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_3;
-                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                    } else if !(br.cache_avail >= 2 as libc::c_int
-                        || lzh_br_fillup(&mut *strm_safe, br) != 0
-                        || br.cache_avail >= 2 as libc::c_int)
-                    {
-                        /* There are some null in bitlen of the literal. */
-                        if last != 0 {
-                            break; /* Truncated data. */
-                        } /* Invalid data. */
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_3;
-                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                    } else {
-                        c = (br.cache_buffer >> br.cache_avail - 2 as libc::c_int) as uint16_t
-                            as libc::c_int
-                            & cache_masks[2 as libc::c_int as usize] as libc::c_int;
-                        br.cache_avail -= 2 as libc::c_int;
-                        if c > ds.pt.len_avail - 3 as libc::c_int {
-                            break;
-                        }
-                        i = 3 as libc::c_int;
-                        loop {
-                            let fresh8 = c;
-                            c = c - 1;
-                            if !(fresh8 > 0 as libc::c_int) {
-                                break;
-                            }
-                            let fresh9 = i;
-                            i = i + 1;
-                            unsafe {
-                                *ds.pt.bitlen.offset(fresh9 as isize) =
-                                    0 as libc::c_int as libc::c_uchar
-                            }
-                        }
-                        ds.loop_0 = i
+            {
+                ds.loop_0 = lzh_read_pt_bitlen(strm_safe, ds.loop_0, 3 as libc::c_int); /* Invalid data. */
+                if ds.loop_0 < 3 as libc::c_int {
+                    if ds.loop_0 < 0 as libc::c_int || last != 0 {
+                        break;
                     }
-                    current_block = 11402235509028400542;
+                    /* Not completed, get following data. */
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_3;
+                    return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+                } else if !(br.cache_avail >= 2 as libc::c_int
+                    || lzh_br_fillup(strm_safe, br) != 0
+                    || br.cache_avail >= 2 as libc::c_int)
+                {
+                    /* There are some null in bitlen of the literal. */
+                    if last != 0 {
+                        break; /* Truncated data. */
+                    } /* Invalid data. */
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_3;
+                    return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+                } else {
+                    c = (br.cache_buffer >> br.cache_avail - 2 as libc::c_int) as uint16_t
+                        as libc::c_int
+                        & cache_masks[2 as libc::c_int as usize] as libc::c_int;
+                    br.cache_avail -= 2 as libc::c_int;
+                    if c > ds.pt.len_avail - 3 as libc::c_int {
+                        break;
+                    }
+                    i = 3 as libc::c_int;
+                    loop {
+                        let fresh8 = c;
+                        c = c - 1;
+                        if !(fresh8 > 0 as libc::c_int) {
+                            break;
+                        }
+                        let fresh9 = i;
+                        i = i + 1;
+                        unsafe {
+                            *ds.pt.bitlen.offset(fresh9 as isize) =
+                                0 as libc::c_int as libc::c_uchar
+                        }
+                    }
+                    ds.loop_0 = i
                 }
+                current_block = 11402235509028400542;
+            }
             _ => {}
         }
         match current_block {
             11402235509028400542 =>
             /* FALL THROUGH */
-                {
-                    ds.loop_0 = lzh_read_pt_bitlen(&mut *strm_safe, ds.loop_0, ds.pt.len_avail); /* Invalid data. */
-                    if ds.loop_0 < ds.pt.len_avail {
-                        if ds.loop_0 < 0 as libc::c_int || last != 0 {
-                            break;
-                        }
-                        /* Not completed, get following data. */
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_4; /* Invalid data */
-                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                    } else {
-                        if lzh_make_huffman_table(&mut ds.pt) == 0 {
-                            break;
-                        }
-                        if ds.reading_position != 0 {
-                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal;
-                            continue;
-                        }
+            {
+                ds.loop_0 = lzh_read_pt_bitlen(strm_safe, ds.loop_0, ds.pt.len_avail); /* Invalid data. */
+                if ds.loop_0 < ds.pt.len_avail {
+                    if ds.loop_0 < 0 as libc::c_int || last != 0 {
+                        break;
                     }
-                    current_block = 8266133950150071838;
+                    /* Not completed, get following data. */
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_4; /* Invalid data */
+                    return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+                } else {
+                    if lzh_make_huffman_table(&mut ds.pt) == 0 {
+                        break;
+                    }
+                    if ds.reading_position != 0 {
+                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal;
+                        continue;
+                    }
                 }
+                current_block = 8266133950150071838;
+            }
             _ => {}
         }
         match current_block {
             8266133950150071838 =>
             /* FALL THROUGH */
+            {
+                if !(br.cache_avail >= ds.lt.len_bits
+                    || lzh_br_fillup(strm_safe, br) != 0
+                    || br.cache_avail >= ds.lt.len_bits)
                 {
-                    if !(br.cache_avail >= ds.lt.len_bits
-                        || lzh_br_fillup(&mut *strm_safe, br) != 0
-                        || br.cache_avail >= ds.lt.len_bits)
-                    {
-                        if last != 0 {
-                            break; /* Truncated data. */
-                        }
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_1;
-                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                    } else {
-                        ds.lt.len_avail = (br.cache_buffer >> br.cache_avail - ds.lt.len_bits)
-                            as uint16_t as libc::c_int
-                            & cache_masks[ds.lt.len_bits as usize] as libc::c_int;
-                        br.cache_avail -= ds.lt.len_bits
+                    if last != 0 {
+                        break; /* Truncated data. */
                     }
-                    current_block = 340123238355120661;
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_1;
+                    return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+                } else {
+                    ds.lt.len_avail = (br.cache_buffer >> br.cache_avail - ds.lt.len_bits)
+                        as uint16_t as libc::c_int
+                        & cache_masks[ds.lt.len_bits as usize] as libc::c_int;
+                    br.cache_avail -= ds.lt.len_bits
                 }
+                current_block = 340123238355120661;
+            }
             _ => {}
         }
         match current_block {
             340123238355120661 =>
             /* FALL THROUGH */
-                {
-                    if ds.lt.len_avail == 0 as libc::c_int {
-                        /* Invalid data */
-                        /* There is no bitlen. */
-                        if !(br.cache_avail >= ds.lt.len_bits
-                            || lzh_br_fillup(&mut *strm_safe, br) != 0
-                            || br.cache_avail >= ds.lt.len_bits)
-                        {
-                            if last != 0 {
-                                break; /* Truncated data.*/
-                            } /* Invalid data */
-                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_2;
-                            return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                        } else {
-                            let len_bits = ds.lt.len_bits;
-                            if lzh_make_fake_table(
-                                &mut ds.lt,
-                                ((br.cache_buffer >> br.cache_avail - len_bits) as uint16_t
-                                    as libc::c_int
-                                    & cache_masks[len_bits as usize] as libc::c_int)
-                                    as uint16_t,
-                            ) == 0
-                            {
-                                break;
-                            }
-                            br.cache_avail -= ds.lt.len_bits;
-                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pos_data_1;
-                            continue;
-                        }
+            {
+                if ds.lt.len_avail == 0 as libc::c_int {
+                    /* Invalid data */
+                    /* There is no bitlen. */
+                    if !(br.cache_avail >= ds.lt.len_bits
+                        || lzh_br_fillup(strm_safe, br) != 0
+                        || br.cache_avail >= ds.lt.len_bits)
+                    {
+                        if last != 0 {
+                            break; /* Truncated data.*/
+                        } /* Invalid data */
+                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_2;
+                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
                     } else {
-                        if ds.lt.len_avail > ds.lt.len_size {
+                        let len_bits = ds.lt.len_bits;
+                        if lzh_make_fake_table(
+                            &mut ds.lt,
+                            ((br.cache_buffer >> br.cache_avail - len_bits) as uint16_t
+                                as libc::c_int
+                                & cache_masks[len_bits as usize] as libc::c_int)
+                                as uint16_t,
+                        ) == 0
+                        {
                             break;
                         }
-                        ds.loop_0 = 0 as libc::c_int;
-                        memset_safe(
-                            ds.lt.freq.as_mut_ptr() as *mut libc::c_void,
-                            0 as libc::c_int,
-                            ::std::mem::size_of::<[libc::c_int; 17]>() as libc::c_ulong,
-                        );
+                        br.cache_avail -= ds.lt.len_bits;
+                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pos_data_1;
+                        continue;
                     }
-                    current_block = 4937514680701116003;
+                } else {
+                    if ds.lt.len_avail > ds.lt.len_size {
+                        break;
+                    }
+                    ds.loop_0 = 0 as libc::c_int;
+                    memset_safe(
+                        ds.lt.freq.as_mut_ptr() as *mut libc::c_void,
+                        0 as libc::c_int,
+                        ::std::mem::size_of::<[libc::c_int; 17]>() as libc::c_ulong,
+                    );
                 }
+                current_block = 4937514680701116003;
+            }
             _ => {}
         }
         match current_block {
             4937514680701116003 =>
             /* FALL THROUGH */
-                {
-                    i = ds.loop_0; /* Truncated data.*/
-                    while i < ds.lt.len_avail {
-                        if !(br.cache_avail >= ds.pt.max_bits
-                            || lzh_br_fillup(&mut *strm_safe, br) != 0
-                            || br.cache_avail >= ds.pt.max_bits)
-                        {
-                            if last != 0 {
-                                break 's_19;
+            {
+                i = ds.loop_0; /* Truncated data.*/
+                while i < ds.lt.len_avail {
+                    if !(br.cache_avail >= ds.pt.max_bits
+                        || lzh_br_fillup(strm_safe, br) != 0
+                        || br.cache_avail >= ds.pt.max_bits)
+                    {
+                        if last != 0 {
+                            break 's_19;
+                        }
+                        ds.loop_0 = i;
+                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_3;
+                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+                    } else {
+                        rbits = ((br.cache_buffer >> br.cache_avail - ds.pt.max_bits) as uint16_t
+                            as libc::c_int
+                            & cache_masks[ds.pt.max_bits as usize] as libc::c_int)
+                            as libc::c_uint;
+                        c = lzh_decode_huffman(&mut ds.pt, rbits);
+                        if c > 2 as libc::c_int {
+                            /* Note: 'c' will never be more than
+                             * eighteen since it's limited by
+                             * PT_BITLEN_SIZE, which is being set
+                             * to ds->pt.len_size through
+                             * ds->literal_pt_len_size. */
+                            br.cache_avail -=
+                                unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int;
+                            c -= 2 as libc::c_int;
+                            ds.lt.freq[c as usize] += 1;
+                            let fresh10 = i;
+                            i = i + 1;
+                            unsafe { *ds.lt.bitlen.offset(fresh10 as isize) = c as libc::c_uchar }
+                        } else if c == 0 as libc::c_int {
+                            br.cache_avail -=
+                                unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int;
+                            let fresh11 = i;
+                            i = i + 1;
+                            unsafe {
+                                *ds.lt.bitlen.offset(fresh11 as isize) =
+                                    0 as libc::c_int as libc::c_uchar
                             }
-                            ds.loop_0 = i;
-                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_3;
-                            return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
                         } else {
-                            rbits = ((br.cache_buffer >> br.cache_avail - ds.pt.max_bits) as uint16_t
-                                as libc::c_int
-                                & cache_masks[ds.pt.max_bits as usize] as libc::c_int)
-                                as libc::c_uint;
-                            c = lzh_decode_huffman(&mut ds.pt, rbits);
-                            if c > 2 as libc::c_int {
-                                /* Note: 'c' will never be more than
-                                 * eighteen since it's limited by
-                                 * PT_BITLEN_SIZE, which is being set
-                                 * to ds->pt.len_size through
-                                 * ds->literal_pt_len_size. */
-                                br.cache_avail -=
-                                    unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int;
-                                c -= 2 as libc::c_int;
-                                ds.lt.freq[c as usize] += 1;
-                                let fresh10 = i;
-                                i = i + 1;
-                                unsafe { *ds.lt.bitlen.offset(fresh10 as isize) = c as libc::c_uchar }
-                            } else if c == 0 as libc::c_int {
-                                br.cache_avail -=
-                                    unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int;
-                                let fresh11 = i;
-                                i = i + 1;
-                                unsafe {
-                                    *ds.lt.bitlen.offset(fresh11 as isize) =
-                                        0 as libc::c_int as libc::c_uchar
-                                }
+                            /* c == 1 or c == 2 */
+                            let mut n: libc::c_int = if c == 1 as libc::c_int {
+                                4 as libc::c_int
                             } else {
-                                /* c == 1 or c == 2 */
-                                let mut n: libc::c_int = if c == 1 as libc::c_int {
-                                    4 as libc::c_int
-                                } else {
-                                    9 as libc::c_int
-                                }; /* Invalid data */
-                                if !(br.cache_avail
-                                    >= unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int + n
-                                    || lzh_br_fillup(&mut *strm_safe, br) != 0
-                                    || br.cache_avail
+                                9 as libc::c_int
+                            }; /* Invalid data */
+                            if !(br.cache_avail
+                                >= unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int + n
+                                || lzh_br_fillup(strm_safe, br) != 0
+                                || br.cache_avail
                                     >= unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int
-                                    + n)
-                                {
-                                    if last != 0 {
-                                        break 's_19; /* Invalid data */
-                                    }
-                                    ds.loop_0 = i;
-                                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_3;
-                                    return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                                } else {
-                                    br.cache_avail -=
-                                        unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int;
-                                    c = (br.cache_buffer >> br.cache_avail - n) as uint16_t
-                                        as libc::c_int
-                                        & cache_masks[n as usize] as libc::c_int;
-                                    br.cache_avail -= n;
-                                    c += if n == 4 as libc::c_int {
-                                        3 as libc::c_int
-                                    } else {
-                                        20 as libc::c_int
-                                    };
-                                    if i + c > ds.lt.len_avail {
-                                        break 's_19;
-                                    }
-                                    memset_safe(
-                                        unsafe { &mut *ds.lt.bitlen.offset(i as isize) }
-                                            as *mut libc::c_uchar
-                                            as *mut libc::c_void,
-                                        0 as libc::c_int,
-                                        c as libc::c_ulong,
-                                    );
-                                    i += c
+                                        + n)
+                            {
+                                if last != 0 {
+                                    break 's_19; /* Invalid data */
                                 }
+                                ds.loop_0 = i;
+                                ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_3;
+                                return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+                            } else {
+                                br.cache_avail -=
+                                    unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int;
+                                c = (br.cache_buffer >> br.cache_avail - n) as uint16_t
+                                    as libc::c_int
+                                    & cache_masks[n as usize] as libc::c_int;
+                                br.cache_avail -= n;
+                                c += if n == 4 as libc::c_int {
+                                    3 as libc::c_int
+                                } else {
+                                    20 as libc::c_int
+                                };
+                                if i + c > ds.lt.len_avail {
+                                    break 's_19;
+                                }
+                                memset_safe(
+                                    unsafe { &mut *ds.lt.bitlen.offset(i as isize) }
+                                        as *mut libc::c_uchar
+                                        as *mut libc::c_void,
+                                    0 as libc::c_int,
+                                    c as libc::c_ulong,
+                                );
+                                i += c
                             }
                         }
                     }
-                    if i > ds.lt.len_avail || lzh_make_huffman_table(&mut ds.lt) == 0 {
-                        break;
-                    }
                 }
+                if i > ds.lt.len_avail || lzh_make_huffman_table(&mut ds.lt) == 0 {
+                    break;
+                }
+            }
             _ => {}
         }
         /* FALL THROUGH */
@@ -3052,12 +3052,12 @@ unsafe extern "C" fn lzh_read_blocks(
 }
 
 unsafe extern "C" fn lzh_decode_blocks(
-    mut strm: *mut lzh_stream,
+    mut strm: &mut lzh_stream,
     mut last: libc::c_int,
 ) -> libc::c_int {
     let strm_safe = unsafe { &mut *strm };
     let mut current_block: u64;
-    let mut ds = unsafe { &mut *strm_safe.ds };
+    let mut ds = unsafe { &mut *strm.ds };
     let mut bre: lzh_br = ds.br;
     let mut lt = &mut ds.lt;
     let mut pt = &mut ds.pt;
@@ -3107,7 +3107,7 @@ unsafe extern "C" fn lzh_decode_blocks(
                      * as much as we need after lzh_br_read_ahead()
                      * failed. */
                     if !(bre.cache_avail >= lt_max_bits
-                        || lzh_br_fillup(&mut *strm_safe, &mut bre) != 0
+                        || lzh_br_fillup(strm_safe, &mut bre) != 0
                         || bre.cache_avail >= lt_max_bits)
                     {
                         if last == 0 {
@@ -3167,157 +3167,157 @@ unsafe extern "C" fn lzh_decode_blocks(
                             continue;
                         }
                         w_pos = 0 as libc::c_int;
-                        lzh_emit_window(&mut *strm_safe, w_size as size_t);
+                        lzh_emit_window(strm_safe, w_size as size_t);
                         current_block = 13987783605104790504;
                         break 's_43;
                     }
                 }
                 2708592659331960804 =>
                 /* FALL THROUGH */
-                    {
-                        if copy_pos > 1 as libc::c_int {
-                            /* We need an additional adjustment number to
-                             * the position. */
-                            let mut p: libc::c_int = copy_pos - 1 as libc::c_int; /* Truncated data.*/
-                            if !(bre.cache_avail >= p
-                                || lzh_br_fillup(&mut *strm_safe, &mut bre) != 0
-                                || bre.cache_avail >= p)
-                            {
-                                if last != 0 {
-                                    current_block = 5132186702048523172;
-                                    break 's_43;
-                                }
-                                state = ARCHIVE_LHA_DEFINED_PARAM.st_get_pos_2;
-                                ds.copy_len = copy_len;
-                                ds.copy_pos = copy_pos;
-                                current_block = 13987783605104790504;
+                {
+                    if copy_pos > 1 as libc::c_int {
+                        /* We need an additional adjustment number to
+                         * the position. */
+                        let mut p: libc::c_int = copy_pos - 1 as libc::c_int; /* Truncated data.*/
+                        if !(bre.cache_avail >= p
+                            || lzh_br_fillup(strm_safe, &mut bre) != 0
+                            || bre.cache_avail >= p)
+                        {
+                            if last != 0 {
+                                current_block = 5132186702048523172;
                                 break 's_43;
-                            } else {
-                                copy_pos = ((1 as libc::c_int) << p)
-                                    + ((bre.cache_buffer >> bre.cache_avail - p) as uint16_t
+                            }
+                            state = ARCHIVE_LHA_DEFINED_PARAM.st_get_pos_2;
+                            ds.copy_len = copy_len;
+                            ds.copy_pos = copy_pos;
+                            current_block = 13987783605104790504;
+                            break 's_43;
+                        } else {
+                            copy_pos = ((1 as libc::c_int) << p)
+                                + ((bre.cache_buffer >> bre.cache_avail - p) as uint16_t
                                     as libc::c_int
                                     & cache_masks[p as usize] as libc::c_int);
-                                bre.cache_avail -= p
-                            }
+                            bre.cache_avail -= p
                         }
-                        /* The position is actually a distance from the last
-                         * code we had extracted and thus we have to convert
-                         * it to a position of the window. */
-                        copy_pos = w_pos - copy_pos - 1 as libc::c_int & w_mask;
-                        /* FALL THROUGH */
-                        current_block = 7343950298149844727;
                     }
+                    /* The position is actually a distance from the last
+                     * code we had extracted and thus we have to convert
+                     * it to a position of the window. */
+                    copy_pos = w_pos - copy_pos - 1 as libc::c_int & w_mask;
+                    /* FALL THROUGH */
+                    current_block = 7343950298149844727;
+                }
                 11885127744888120434 =>
                 /*
                  * Get a reference position.
                  */
+                {
+                    if !(bre.cache_avail >= pt_max_bits
+                        || lzh_br_fillup(strm_safe, &mut bre) != 0
+                        || bre.cache_avail >= pt_max_bits)
                     {
-                        if !(bre.cache_avail >= pt_max_bits
-                            || lzh_br_fillup(&mut *strm_safe, &mut bre) != 0
-                            || bre.cache_avail >= pt_max_bits)
-                        {
-                            if last == 0 {
-                                state = ARCHIVE_LHA_DEFINED_PARAM.st_get_pos_1;
-                                ds.copy_len = copy_len;
-                                current_block = 13987783605104790504;
-                                break 's_43;
-                            } else {
-                                copy_pos = lzh_decode_huffman(
-                                    pt,
-                                    ((bre.cache_buffer << pt_max_bits - bre.cache_avail) as uint16_t
-                                        as libc::c_int
-                                        & cache_masks[pt_max_bits as usize] as libc::c_int)
-                                        as libc::c_uint,
-                                );
-                                bre.cache_avail -=
-                                    unsafe { *pt_bitlen.offset(copy_pos as isize) } as libc::c_int;
-                                if !(bre.cache_avail >= 0 as libc::c_int) {
-                                    current_block = 5132186702048523172;
-                                    break 's_43;
-                                } else {
-                                    current_block = 2708592659331960804;
-                                }
-                            }
-                            /* Over read. */
+                        if last == 0 {
+                            state = ARCHIVE_LHA_DEFINED_PARAM.st_get_pos_1;
+                            ds.copy_len = copy_len;
+                            current_block = 13987783605104790504;
+                            break 's_43;
                         } else {
                             copy_pos = lzh_decode_huffman(
                                 pt,
-                                ((bre.cache_buffer >> bre.cache_avail - pt_max_bits) as uint16_t
+                                ((bre.cache_buffer << pt_max_bits - bre.cache_avail) as uint16_t
                                     as libc::c_int
                                     & cache_masks[pt_max_bits as usize] as libc::c_int)
                                     as libc::c_uint,
                             );
                             bre.cache_avail -=
                                 unsafe { *pt_bitlen.offset(copy_pos as isize) } as libc::c_int;
-                            current_block = 2708592659331960804;
+                            if !(bre.cache_avail >= 0 as libc::c_int) {
+                                current_block = 5132186702048523172;
+                                break 's_43;
+                            } else {
+                                current_block = 2708592659331960804;
+                            }
                         }
+                    /* Over read. */
+                    } else {
+                        copy_pos = lzh_decode_huffman(
+                            pt,
+                            ((bre.cache_buffer >> bre.cache_avail - pt_max_bits) as uint16_t
+                                as libc::c_int
+                                & cache_masks[pt_max_bits as usize] as libc::c_int)
+                                as libc::c_uint,
+                        );
+                        bre.cache_avail -=
+                            unsafe { *pt_bitlen.offset(copy_pos as isize) } as libc::c_int;
+                        current_block = 2708592659331960804;
                     }
+                }
                 _ =>
                 /*
                  * Copy `copy_len' bytes as extracted data from
                  * the window into the output buffer.
                  */
-                    {
-                        let mut l: libc::c_int = 0;
-                        l = copy_len;
-                        if copy_pos > w_pos {
-                            if l > w_size - copy_pos {
-                                l = w_size - copy_pos
-                            }
-                        } else if l > w_size - w_pos {
-                            l = w_size - w_pos
+                {
+                    let mut l: libc::c_int = 0;
+                    l = copy_len;
+                    if copy_pos > w_pos {
+                        if l > w_size - copy_pos {
+                            l = w_size - copy_pos
                         }
-                        if copy_pos + l < w_pos || w_pos + l < copy_pos {
-                            /* No overlap. */
-                            memcpy_safe(
-                                unsafe { w_buff.offset(w_pos as isize) } as *mut libc::c_void,
-                                unsafe { w_buff.offset(copy_pos as isize) } as *const libc::c_void,
-                                l as libc::c_ulong,
-                            );
-                        } else {
-                            let mut s: *const libc::c_uchar = 0 as *const libc::c_uchar;
-                            let mut d: *mut libc::c_uchar = 0 as *mut libc::c_uchar;
-                            let mut li: libc::c_int = 0;
-                            d = unsafe { w_buff.offset(w_pos as isize) };
-                            s = unsafe { w_buff.offset(copy_pos as isize) };
-                            li = 0 as libc::c_int;
-                            while li < l - 1 as libc::c_int {
-                                unsafe {
-                                    *d.offset(li as isize) = *s.offset(li as isize);
-                                }
-                                li += 1;
-                                unsafe {
-                                    *d.offset(li as isize) = *s.offset(li as isize);
-                                }
-                                li += 1
+                    } else if l > w_size - w_pos {
+                        l = w_size - w_pos
+                    }
+                    if copy_pos + l < w_pos || w_pos + l < copy_pos {
+                        /* No overlap. */
+                        memcpy_safe(
+                            unsafe { w_buff.offset(w_pos as isize) } as *mut libc::c_void,
+                            unsafe { w_buff.offset(copy_pos as isize) } as *const libc::c_void,
+                            l as libc::c_ulong,
+                        );
+                    } else {
+                        let mut s: *const libc::c_uchar = 0 as *const libc::c_uchar;
+                        let mut d: *mut libc::c_uchar = 0 as *mut libc::c_uchar;
+                        let mut li: libc::c_int = 0;
+                        d = unsafe { w_buff.offset(w_pos as isize) };
+                        s = unsafe { w_buff.offset(copy_pos as isize) };
+                        li = 0 as libc::c_int;
+                        while li < l - 1 as libc::c_int {
+                            unsafe {
+                                *d.offset(li as isize) = *s.offset(li as isize);
                             }
-                            if li < l {
-                                unsafe { *d.offset(li as isize) = *s.offset(li as isize) }
+                            li += 1;
+                            unsafe {
+                                *d.offset(li as isize) = *s.offset(li as isize);
                             }
+                            li += 1
                         }
-                        w_pos += l;
-                        if w_pos == w_size {
-                            w_pos = 0 as libc::c_int;
-                            lzh_emit_window(&mut *strm_safe, w_size as size_t);
-                            if copy_len <= l {
-                                state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal
-                            } else {
-                                state = ARCHIVE_LHA_DEFINED_PARAM.st_copy_data;
-                                ds.copy_len = copy_len - l;
-                                ds.copy_pos = copy_pos + l & w_mask
-                            }
-                            current_block = 13987783605104790504;
-                            break 's_43;
-                        } else if copy_len <= l {
-                            /* A copy of current pattern ended. */
-                            state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal;
-                            break;
-                        } else {
-                            copy_len -= l;
-                            copy_pos = copy_pos + l & w_mask;
-                            current_block = 7343950298149844727;
+                        if li < l {
+                            unsafe { *d.offset(li as isize) = *s.offset(li as isize) }
                         }
                     }
+                    w_pos += l;
+                    if w_pos == w_size {
+                        w_pos = 0 as libc::c_int;
+                        lzh_emit_window(strm_safe, w_size as size_t);
+                        if copy_len <= l {
+                            state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal
+                        } else {
+                            state = ARCHIVE_LHA_DEFINED_PARAM.st_copy_data;
+                            ds.copy_len = copy_len - l;
+                            ds.copy_pos = copy_pos + l & w_mask
+                        }
+                        current_block = 13987783605104790504;
+                        break 's_43;
+                    } else if copy_len <= l {
+                        /* A copy of current pattern ended. */
+                        state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal;
+                        break;
+                    } else {
+                        copy_len -= l;
+                        copy_pos = copy_pos + l & w_mask;
+                        current_block = 7343950298149844727;
+                    }
+                }
             }
         }
     }
@@ -3766,7 +3766,7 @@ unsafe extern "C" fn lzh_make_huffman_table(mut hf: &mut huffman) -> libc::c_int
 }
 
 unsafe extern "C" fn lzh_decode_huffman_tree(
-    mut hf: *mut huffman,
+    mut hf: &mut huffman,
     mut rbits: libc::c_uint,
     mut c: libc::c_int,
 ) -> libc::c_int {
