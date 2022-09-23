@@ -1909,7 +1909,8 @@ unsafe extern "C" fn lha_read_data_none(
     if bytes_avail > lha_safe.entry_bytes_remaining {
         bytes_avail = lha_safe.entry_bytes_remaining
     }
-    lha_safe.entry_crc_calculated = lha_crc16(lha_safe.entry_crc_calculated, *buff, bytes_avail as size_t);
+    lha_safe.entry_crc_calculated =
+        lha_crc16(lha_safe.entry_crc_calculated, *buff, bytes_avail as size_t);
     *size = bytes_avail as size_t;
     *offset = lha_safe.entry_offset;
     lha_safe.entry_offset += bytes_avail;
@@ -1979,7 +1980,8 @@ unsafe extern "C" fn lha_read_data_lzh(
      * available bytes; asking for more than that forces the
      * decompressor to combine reads by copying data.
      */
-    lha_safe.strm.next_in = __archive_read_ahead_safe(a, 1 as libc::c_int as size_t, &mut bytes_avail)
+    lha_safe.strm.next_in =
+        __archive_read_ahead_safe(a, 1 as libc::c_int as size_t, &mut bytes_avail)
         as *const libc::c_uchar;
     if bytes_avail <= 0 as libc::c_int as libc::c_long {
         archive_set_error_safe!(
