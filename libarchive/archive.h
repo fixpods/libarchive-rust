@@ -446,6 +446,16 @@ extern "C"
 	__LA_DECL int archive_read_support_format_cab(struct archive *);
 	__LA_DECL int archive_read_support_format_cpio(struct archive *);
 /*新增测试用例 */
+	__LA_DECL void archive_test_isNull(const unsigned char *, unsigned , unsigned);
+	__LA_DECL void archive_test_isVolumePartition(const unsigned char *);
+	__LA_DECL void archive_test_isodate17(const unsigned char *);
+	__LA_DECL void archive_test_parse_rockridge_SL1(const unsigned char *, int );
+	__LA_DECL void archive_test_parse_rockridge_TF1(const unsigned char *, int );
+	__LA_DECL void archive_test_parse_rockridge_NM1(const unsigned char *, int );
+	__LA_DECL void archive_test_parse_rockridge(struct archive *, const unsigned char *, const unsigned char *);
+	__LA_DECL void archive_test_archive_read_support_format_iso9660();
+	__LA_DECL void archive_test_read_children(struct archive *_a);
+	__LA_DECL void archive_test_archive_read_format_iso9660_read_data(struct archive *);
 	__LA_DECL void archive_test_lzx_br_fixup();
 	__LA_DECL void archive_test_cab_skip_sfx(struct archive *);
 	__LA_DECL void archive_test_archive_read_support_format_cab();
@@ -468,8 +478,7 @@ extern "C"
 	__LA_DECL void archive_test_zip_read_mac_metadata(struct archive *, struct archive_entry *);
 	__LA_DECL void archive_test_expose_parent_dirs(struct archive *, const char *, size_t);
 	__LA_DECL void archive_test_tohex(int);
-	__LA_DECL void archive_test_pax_attribute(struct archive *, struct archive_entry *,
-const char *, const char *, size_t);
+	__LA_DECL void archive_test_pax_attribute(struct archive *, struct archive_entry *, const char *, const char *, size_t);
 	__LA_DECL void archive_test_parse_keyword(struct archive *, struct archive_entry *, int *);
 	__LA_DECL void archive_test_process_global_unset(struct archive *, const char *);
 	__LA_DECL void archive_test_la_strsep(char **, const char *);
@@ -496,6 +505,16 @@ const char *, const char *, size_t);
 	extern __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 	extern __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
+	extern __LA_DECL void archive_test_isNull(const unsigned char *, unsigned , unsigned);
+	extern __LA_DECL void archive_test_isVolumePartition(const unsigned char *);
+	extern __LA_DECL void archive_test_isodate17(const unsigned char *);
+	extern __LA_DECL void archive_test_parse_rockridge_SL1(const unsigned char *, int );
+	extern __LA_DECL void archive_test_parse_rockridge_TF1(const unsigned char *, int );
+	extern __LA_DECL void archive_test_parse_rockridge_NM1(const unsigned char *, int );
+	extern __LA_DECL void archive_test_parse_rockridge(struct archive *, const unsigned char *, const unsigned char *);
+	extern __LA_DECL void archive_test_archive_read_support_format_iso9660();
+	extern __LA_DECL void archive_test_read_children(struct archive *_a);
+	extern __LA_DECL void archive_test_archive_read_format_iso9660_read_data(struct archive *);
 	extern __LA_DECL void archive_test_lzx_br_fixup();
 	extern __LA_DECL void archive_test_cab_skip_sfx(struct archive *);
 	extern __LA_DECL void archive_test_archive_read_support_format_cab();
@@ -518,8 +537,7 @@ const char *, const char *, size_t);
 	extern __LA_DECL void archive_test_zip_read_mac_metadata(struct archive *, struct archive_entry *);
 	extern __LA_DECL void archive_test_expose_parent_dirs(struct archive *, const char *, size_t);
 	extern __LA_DECL void archive_test_tohex(int);
-	extern __LA_DECL void archive_test_pax_attribute(struct archive *, struct archive_entry *,
-const char *, const char *, size_t);
+	extern __LA_DECL void archive_test_pax_attribute(struct archive *, struct archive_entry *, const char *, const char *, size_t);
 	extern __LA_DECL void archive_test_parse_keyword(struct archive *, struct archive_entry *, int *);
 	extern __LA_DECL void archive_test_process_global_unset(struct archive *, const char *);
 	extern __LA_DECL void archive_test_la_strsep(char **, const char *);
@@ -545,6 +563,16 @@ __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
+__LA_DECL void archive_test_isNull(const unsigned char *, unsigned , unsigned);
+__LA_DECL void archive_test_isVolumePartition(const unsigned char *);
+__LA_DECL void archive_test_isodate17(const unsigned char *);
+__LA_DECL void archive_test_parse_rockridge_SL1(const unsigned char *, int );
+__LA_DECL void archive_test_parse_rockridge_TF1(const unsigned char *, int );
+__LA_DECL void archive_test_parse_rockridge_NM1(const unsigned char *, int );
+__LA_DECL void archive_test_parse_rockridge(struct archive *, const unsigned char *, const unsigned char *);
+__LA_DECL void archive_test_archive_read_support_format_iso9660();
+__LA_DECL void archive_test_read_children(struct archive *_a);
+__LA_DECL void archive_test_archive_read_format_iso9660_read_data(struct archive *);
 __LA_DECL void archive_test_lzx_br_fixup();
 __LA_DECL void archive_test_cab_skip_sfx(struct archive *);
 __LA_DECL void archive_test_archive_read_support_format_cab();
@@ -567,8 +595,7 @@ __LA_DECL void archive_test_trad_enc_init(struct archive *, const uint8_t *, uin
 __LA_DECL void archive_test_zip_read_mac_metadata(struct archive *, struct archive_entry *);
 __LA_DECL void archive_test_expose_parent_dirs(struct archive *, const char *, size_t);
 __LA_DECL void archive_test_tohex(int);
-__LA_DECL void archive_test_pax_attribute(struct archive *, struct archive_entry *,
-const char *, const char *, size_t);
+__LA_DECL void archive_test_pax_attribute(struct archive *, struct archive_entry *, const char *, const char *, size_t);
 __LA_DECL void archive_test_parse_keyword(struct archive *, struct archive_entry *, int *);
 __LA_DECL void archive_test_process_global_unset(struct archive *, const char *);
 __LA_DECL void archive_test_la_strsep(char **, const char *);

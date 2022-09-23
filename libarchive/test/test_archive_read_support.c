@@ -184,6 +184,54 @@ test_cab()
 }
 
 static void
+test_iso9660()
+{
+	archive_test_isNull("123", 1, 4096);
+	unsigned char s[] = {3,-1,-1,-1,-1,-1,1,0,-1,-1};
+    unsigned char *h = s;
+	archive_test_isVolumePartition(h);
+	archive_test_isodate17("111111111111111111111111111111");
+	unsigned char data[] = {0, 0x10,0x10,0x20,0x20,0x20,0x30,0x30};
+	unsigned char *data3 = data;
+	archive_test_parse_rockridge_SL1(data3, 8);
+	unsigned char data2[] = {0, 0x20,0x20,0x20,0x20,0x20,0x30,0x30};
+	unsigned char *data4 = data2;
+	archive_test_parse_rockridge_SL1(data4, 8);
+	data[0] = 0x8c;
+	archive_test_parse_rockridge_TF1(data3, 18);
+	data[0] = 0x81;
+	archive_test_parse_rockridge_TF1(data3, 18);
+	data[0] = 0x82;
+	archive_test_parse_rockridge_TF1(data3, 18);
+	data[0] = 0x84;
+	archive_test_parse_rockridge_TF1(data3, 18);
+	data[0] = 0x88;
+	archive_test_parse_rockridge_TF1(data3, 18);
+	data[0] = 4;
+	archive_test_parse_rockridge_NM1(data3, 18);
+	unsigned char pp[] = {'P', 'N', 20, 1,'P','N'};
+    const unsigned char *p = pp;
+    const unsigned char *end = p + p[2];
+	archive_test_archive_read_support_format_iso9660();
+	const char *refname = "test_read_format_iso_xorriso.iso.Z";
+	struct archive *a;
+	extract_reference_file(refname);
+	assert((a = archive_read_new()) != NULL);
+	assertEqualInt(0, archive_read_support_filter_all(a));
+	assertEqualInt(0, archive_read_support_format_all(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_open_filename(a, refname, 10240));
+	archive_test_archive_read_format_iso9660_read_data(a);
+	archive_test_parse_rockridge(a, p, end);
+	pp[0] = 'S';
+	pp[1] = 'T';
+	pp[2] = 4;
+	archive_test_parse_rockridge(a, p, end);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+
+static void
 test_zip()
 {
 	const char *refname = "test_read_format_zip.zip";
@@ -314,6 +362,7 @@ DEFINE_TEST(test_archive_read_support)
 	test_7zip();
 	test_ar();
 	test_cab();
+	test_iso9660();
 	test_zip();
 	test_tar();
 	test_mtree();
