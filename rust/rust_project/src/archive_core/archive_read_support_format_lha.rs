@@ -2609,7 +2609,8 @@ unsafe extern "C" fn lzh_emit_window(mut strm: &mut lzh_stream, mut s: size_t) {
     let ds = unsafe { &mut *strm_safe.ds };
     strm_safe.ref_ptr = ds.w_buff;
     strm_safe.avail_out = s as libc::c_int;
-    strm_safe.total_out = (strm_safe.total_out as libc::c_ulong).wrapping_add(s) as int64_t as int64_t;
+    strm_safe.total_out =
+        (strm_safe.total_out as libc::c_ulong).wrapping_add(s) as int64_t as int64_t;
 }
 
 /*
