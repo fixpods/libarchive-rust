@@ -2604,7 +2604,7 @@ unsafe extern "C" fn lzh_decode(mut strm: &mut lzh_stream, mut last: libc::c_int
     return r;
 }
 
-unsafe extern "C" fn lzh_emit_window(mut strm: &mut lzh_stream, mut s: size_t) {
+unsafe extern "C" fn lzh_emit_window(mut strm: *mut lzh_stream, mut s: size_t) {
     let strm_safe = unsafe { &mut *strm };
     let ds = unsafe { &mut *strm_safe.ds };
     strm_safe.ref_ptr = ds.w_buff;
@@ -2634,7 +2634,7 @@ unsafe extern "C" fn lzh_emit_window(mut strm: &mut lzh_stream, mut s: size_t) {
  *    is dummy, not the file data.
  */
 unsafe extern "C" fn lzh_read_blocks(
-    mut strm: &mut lzh_stream,
+    mut strm: *mut lzh_stream,
     mut last: libc::c_int,
 ) -> libc::c_int {
     let strm_safe = unsafe { &mut *strm };
@@ -3053,7 +3053,7 @@ unsafe extern "C" fn lzh_read_blocks(
 }
 
 unsafe extern "C" fn lzh_decode_blocks(
-    mut strm: &mut lzh_stream,
+    mut strm: *mut lzh_stream,
     mut last: libc::c_int,
 ) -> libc::c_int {
     let strm_safe = unsafe { &mut *strm };
@@ -3767,7 +3767,7 @@ unsafe extern "C" fn lzh_make_huffman_table(mut hf: &mut huffman) -> libc::c_int
 }
 
 unsafe extern "C" fn lzh_decode_huffman_tree(
-    mut hf: &mut huffman,
+    mut hf: *mut huffman,
     mut rbits: libc::c_uint,
     mut c: libc::c_int,
 ) -> libc::c_int {
