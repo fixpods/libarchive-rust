@@ -1876,18 +1876,19 @@ unsafe extern "C" fn archive_read_format_lha_read_data(
 * lha->end_of_entry if it consumes all of the data.
 */
 unsafe extern "C" fn lha_read_data_none(
-    mut a: &mut archive_read,
-    mut buff: &mut *const libc::c_void,
-    mut size: &mut size_t,
-    mut offset: &mut int64_t,
+    mut a: *mut archive_read,
+    mut buff: *mut *const libc::c_void,
+    mut size: *mut size_t,
+    mut offset: *mut int64_t,
 ) -> libc::c_int {
-    let mut lha = unsafe { &mut *((*a.format).data as *mut lha) };
+    let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
+    let lha_safe = unsafe { &mut *lha };
     let mut bytes_avail: ssize_t = 0;
-    if lha.entry_bytes_remaining == 0 as libc::c_int as libc::c_long {
+    if lha_safe.entry_bytes_remaining == 0 as libc::c_int as libc::c_long {
         *buff = 0 as *const libc::c_void;
         *size = 0 as libc::c_int as size_t;
-        *offset = lha.entry_offset;
-        lha.end_of_entry = 1 as libc::c_int as libc::c_char;
+        *offset = lha_safe.entry_offset;
+        lha_safe.end_of_entry = 1 as libc::c_int as libc::c_char;
         return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
     }
     /*
@@ -1905,18 +1906,18 @@ unsafe extern "C" fn lha_read_data_none(
         );
         return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
     }
-    if bytes_avail > lha.entry_bytes_remaining {
-        bytes_avail = lha.entry_bytes_remaining
+    if bytes_avail > lha_safe.entry_bytes_remaining {
+        bytes_avail = lha_safe.entry_bytes_remaining
     }
-    lha.entry_crc_calculated = lha_crc16(lha.entry_crc_calculated, *buff, bytes_avail as size_t);
+    lha_safe.entry_crc_calculated = lha_crc16(lha_safe.entry_crc_calculated, *buff, bytes_avail as size_t);
     *size = bytes_avail as size_t;
-    *offset = lha.entry_offset;
-    lha.entry_offset += bytes_avail;
-    lha.entry_bytes_remaining -= bytes_avail;
-    if lha.entry_bytes_remaining == 0 as libc::c_int as libc::c_long {
-        lha.end_of_entry = 1 as libc::c_int as libc::c_char
+    *offset = lha_safe.entry_offset;
+    lha_safe.entry_offset += bytes_avail;
+    lha_safe.entry_bytes_remaining -= bytes_avail;
+    if lha_safe.entry_bytes_remaining == 0 as libc::c_int as libc::c_long {
+        lha_safe.end_of_entry = 1 as libc::c_int as libc::c_char
     }
-    lha.entry_unconsumed = bytes_avail;
+    lha_safe.entry_unconsumed = bytes_avail;
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
@@ -1928,17 +1929,18 @@ unsafe extern "C" fn lha_read_data_none(
 * all of the data.
 */
 unsafe extern "C" fn lha_read_data_lzh(
-    mut a: &mut archive_read,
-    mut buff: &mut *const libc::c_void,
-    mut size: &mut size_t,
-    mut offset: &mut int64_t,
+    mut a: *mut archive_read,
+    mut buff: *mut *const libc::c_void,
+    mut size: *mut size_t,
+    mut offset: *mut int64_t,
 ) -> libc::c_int {
-    let mut lha = unsafe { &mut *((*a.format).data as *mut lha) };
+    let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
+    let lha_safe = unsafe { &mut *lha };
     let mut bytes_avail: ssize_t = 0;
     let mut r: libc::c_int = 0;
     /* If we haven't yet read any data, initialize the decompressor. */
-    if lha.decompress_init == 0 {
-        r = lzh_decode_init(&mut lha.strm, lha.method.as_mut_ptr());
+    if lha_safe.decompress_init == 0 {
+        r = lzh_decode_init(&mut lha_safe.strm, lha_safe.method.as_mut_ptr());
         if r == ARCHIVE_LHA_DEFINED_PARAM.archive_ok {
         } else if r == ARCHIVE_LHA_DEFINED_PARAM.archive_failed {
             /* Unsupported compression. */
@@ -1950,9 +1952,9 @@ unsafe extern "C" fn lha_read_data_lzh(
                 ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
                 b"Unsupported lzh compression method -%c%c%c-\x00" as *const u8
                     as *const libc::c_char,
-                lha.method[0 as libc::c_int as usize] as libc::c_int,
-                lha.method[1 as libc::c_int as usize] as libc::c_int,
-                lha.method[2 as libc::c_int as usize] as libc::c_int
+                lha_safe.method[0 as libc::c_int as usize] as libc::c_int,
+                lha_safe.method[1 as libc::c_int as usize] as libc::c_int,
+                lha_safe.method[2 as libc::c_int as usize] as libc::c_int
             );
             /* We know compressed size; just skip it. */
             archive_read_format_lha_read_data_skip(a);
@@ -1967,9 +1969,9 @@ unsafe extern "C" fn lha_read_data_lzh(
             return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
         }
         /* We've initialized decompression for this stream. */
-        lha.decompress_init = 1 as libc::c_int as libc::c_char;
-        lha.strm.avail_out = 0 as libc::c_int;
-        lha.strm.total_out = 0 as libc::c_int as int64_t
+        lha_safe.decompress_init = 1 as libc::c_int as libc::c_char;
+        lha_safe.strm.avail_out = 0 as libc::c_int;
+        lha_safe.strm.total_out = 0 as libc::c_int as int64_t
     }
     /*
      * Note: '1' here is a performance optimization.
@@ -1977,7 +1979,7 @@ unsafe extern "C" fn lha_read_data_lzh(
      * available bytes; asking for more than that forces the
      * decompressor to combine reads by copying data.
      */
-    lha.strm.next_in = __archive_read_ahead_safe(a, 1 as libc::c_int as size_t, &mut bytes_avail)
+    lha_safe.strm.next_in = __archive_read_ahead_safe(a, 1 as libc::c_int as size_t, &mut bytes_avail)
         as *const libc::c_uchar;
     if bytes_avail <= 0 as libc::c_int as libc::c_long {
         archive_set_error_safe!(
@@ -1987,19 +1989,19 @@ unsafe extern "C" fn lha_read_data_lzh(
         );
         return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
     }
-    if bytes_avail > lha.entry_bytes_remaining {
-        bytes_avail = lha.entry_bytes_remaining
+    if bytes_avail > lha_safe.entry_bytes_remaining {
+        bytes_avail = lha_safe.entry_bytes_remaining
     }
-    lha.strm.avail_in = bytes_avail as libc::c_int;
-    lha.strm.total_in = 0 as libc::c_int as int64_t;
-    lha.strm.avail_out = 0 as libc::c_int;
+    lha_safe.strm.avail_in = bytes_avail as libc::c_int;
+    lha_safe.strm.total_in = 0 as libc::c_int as int64_t;
+    lha_safe.strm.avail_out = 0 as libc::c_int;
     r = lzh_decode(
-        &mut lha.strm,
-        (bytes_avail == lha.entry_bytes_remaining) as libc::c_int,
+        &mut lha_safe.strm,
+        (bytes_avail == lha_safe.entry_bytes_remaining) as libc::c_int,
     );
     if r == ARCHIVE_LHA_DEFINED_PARAM.archive_ok {
     } else if r == ARCHIVE_LHA_DEFINED_PARAM.archive_eof {
-        lha.end_of_entry = 1 as libc::c_int as libc::c_char
+        lha_safe.end_of_entry = 1 as libc::c_int as libc::c_char
     } else {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -2008,20 +2010,20 @@ unsafe extern "C" fn lha_read_data_lzh(
         );
         return ARCHIVE_LHA_DEFINED_PARAM.archive_failed;
     }
-    lha.entry_unconsumed = lha.strm.total_in;
-    lha.entry_bytes_remaining -= lha.strm.total_in;
-    if lha.strm.avail_out != 0 {
-        *offset = lha.entry_offset;
-        *size = lha.strm.avail_out as size_t;
-        *buff = lha.strm.ref_ptr as *const libc::c_void;
-        lha.entry_crc_calculated = lha_crc16(lha.entry_crc_calculated, *buff, *size);
-        lha.entry_offset =
-            (lha.entry_offset as libc::c_ulong).wrapping_add(*size) as int64_t as int64_t
+    lha_safe.entry_unconsumed = lha_safe.strm.total_in;
+    lha_safe.entry_bytes_remaining -= lha_safe.strm.total_in;
+    if lha_safe.strm.avail_out != 0 {
+        *offset = lha_safe.entry_offset;
+        *size = lha_safe.strm.avail_out as size_t;
+        *buff = lha_safe.strm.ref_ptr as *const libc::c_void;
+        lha_safe.entry_crc_calculated = lha_crc16(lha_safe.entry_crc_calculated, *buff, *size);
+        lha_safe.entry_offset =
+            (lha_safe.entry_offset as libc::c_ulong).wrapping_add(*size) as int64_t as int64_t
     } else {
-        *offset = lha.entry_offset;
+        *offset = lha_safe.entry_offset;
         *size = 0 as libc::c_int as size_t;
         *buff = 0 as *const libc::c_void;
-        if lha.end_of_entry != 0 {
+        if lha_safe.end_of_entry != 0 {
             return lha_end_of_entry(a);
         }
     }
@@ -2639,7 +2641,7 @@ unsafe extern "C" fn lzh_read_blocks(
 ) -> libc::c_int {
     let strm_safe = unsafe { &mut *strm };
     let mut current_block: u64;
-    let mut ds = unsafe { &mut *strm.ds };
+    let mut ds = unsafe { &mut *strm_safe.ds };
     let mut br = &mut ds.br;
     let mut c: libc::c_int = 0 as libc::c_int;
     let mut i: libc::c_int = 0;
@@ -3058,7 +3060,7 @@ unsafe extern "C" fn lzh_decode_blocks(
 ) -> libc::c_int {
     let strm_safe = unsafe { &mut *strm };
     let mut current_block: u64;
-    let mut ds = unsafe { &mut *strm.ds };
+    let mut ds = unsafe { &mut *strm_safe.ds };
     let mut bre: lzh_br = ds.br;
     let mut lt = &mut ds.lt;
     let mut pt = &mut ds.pt;
