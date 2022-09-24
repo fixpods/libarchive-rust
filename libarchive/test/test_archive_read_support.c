@@ -108,7 +108,6 @@ test_7zip()
 	archive_test_check_7zip_header_in_sfx(input);
 	input = p8;
 	archive_test_check_7zip_header_in_sfx(input);
-
 	const char *refname = "test_read_format_7zip_empty_file.7z";
 	struct archive *a;
 	extract_reference_file(refname);
@@ -126,7 +125,7 @@ test_7zip()
 static void
 test_ar()
 {
-		archive_test_archive_read_support_format_ar();
+	archive_test_archive_read_support_format_ar();
 	size_t size = 2;
 	size_t * size2 = &size;
 	int64_t offset = 1;
@@ -230,14 +229,13 @@ test_iso9660()
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
-
 static void
 test_lha()
 {
 	unsigned char pp[] = {
-		'1','1','-','l','z','s','-','1','1','1',
-		'1','1','1','1','z','s','1','1','1','1',
-		0};
+	'1','1','-','l','z','s','-','1','1','1',
+	'1','1','1','1','z','s','1','1','1','1',
+	0};
 	const unsigned char *p = pp;
 	const void *h = (unsigned char *)p;
 	struct archive *a;
@@ -259,50 +257,6 @@ test_lha()
 	archive_test_lha_read_data_none(a);
 	archive_test_lha_read_data_lzh(a);
 	archive_test_truncated_error(a);
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
-}
-
-static void
-test_zip()
-{
-	const char *refname = "test_read_format_zip.zip";
-	extract_reference_file(refname);
-	struct archive *a;
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, refname, 10240));
-	const uint8_t key[12];
-	uint8_t crcchk[12];
-	archive_test_trad_enc_init(a, key, crcchk);
-
-	struct archive_entry *entry = archive_entry_new();
-	archive_test_zip_read_mac_metadata(a, entry);
-
-	archive_test_expose_parent_dirs(a, "aa", 20);
-
-
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
-}
-
-static void
-test_tar()
-{
-	archive_test_tohex((int)'0');
-	archive_test_tohex((int)'A');
-	archive_test_tohex((int)'a');
-	archive_test_tohex(-1);
-	struct archive *a;
-	assert((a = archive_read_new()) != NULL);
-	struct archive_entry *entry = archive_entry_new();
-	archive_test_pax_attribute(a, entry, "LIBARCHIVE.symlinktype", "file", 20);
-	archive_test_pax_attribute(a, entry, "LIBARCHIVE.symlinktype", "dir", 20);
-	archive_test_pax_attribute(a, entry, "SCHILY.devmajor", "dir", 20);
-	archive_test_pax_attribute(a, entry, "SCHILY.devminor", "dir", 20);
-	archive_test_pax_attribute(a, entry, "SCHILY.realsize", "dir", 20);
-	archive_test_pax_attribute(a, entry, "hdrcharset", "ISO-IR 10646 2000 UTF-8", 20);
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -335,6 +289,76 @@ test_mtree()
 	archive_test_parse_keyword(a, entry, p1);
 	archive_test_process_global_unset(a, "123");
 	archive_test_parse_digest(a, entry, "", 0x00000007);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+static void
+test_rar()
+{
+	struct archive *a;
+	const char reffile[] = "test_read_format_rar.rar";
+	extract_reference_file(reffile);
+	struct archive_entry *entry = archive_entry_new();
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, reffile, 10240));
+	archive_test_make_table_recurse(a);
+	archive_test_rar_br_preparation(a);
+	archive_test_rar_skip_sfx(a);
+	archive_test_archive_read_format_rar_options(a);
+	size_t size = 2;
+	size_t * size2 = &size;
+	int64_t offset = 1;
+	int64_t * offset2 = &offset;
+	void * buff = {NULL, NULL};
+	const void ** buff2 = &buff;
+	archive_test_archive_read_format_rar_read_data(a, buff2, size2, offset2);
+	archive_test_archive_read_format_rar_seek_data(a);
+	archive_test_read_data_stored(a, buff2, size2, offset2);
+	archive_test_copy_from_lzss_window(a, buff2, 1, 2);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+
+static void
+test_zip()
+{
+	const char *refname = "test_read_format_zip.zip";
+	extract_reference_file(refname);
+	struct archive *a;
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, refname, 10240));
+	const uint8_t key[12];
+	uint8_t crcchk[12];
+	archive_test_trad_enc_init(a, key, crcchk);
+	struct archive_entry *entry = archive_entry_new();
+	archive_test_zip_read_mac_metadata(a, entry);
+	archive_test_expose_parent_dirs(a, "aa", 20);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+static void
+test_tar()
+{
+	archive_test_tohex((int)'0');
+	archive_test_tohex((int)'A');
+	archive_test_tohex((int)'a');
+	archive_test_tohex(-1);
+	struct archive *a;
+	assert((a = archive_read_new()) != NULL);
+	struct archive_entry *entry = archive_entry_new();
+	archive_test_pax_attribute(a, entry, "LIBARCHIVE.symlinktype", "file", 20);
+	archive_test_pax_attribute(a, entry, "LIBARCHIVE.symlinktype", "dir", 20);
+	archive_test_pax_attribute(a, entry, "SCHILY.devmajor", "dir", 20);
+	archive_test_pax_attribute(a, entry, "SCHILY.devminor", "dir", 20);
+	archive_test_pax_attribute(a, entry, "SCHILY.realsize", "dir", 20);
+	archive_test_pax_attribute(a, entry, "hdrcharset", "ISO-IR 10646 2000 UTF-8", 20);
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -409,6 +433,7 @@ DEFINE_TEST(test_archive_read_support)
 	test_iso9660();
 	test_lha();
 	test_mtree();
+	test_rar();
 	test_zip();
 	test_tar();
 }

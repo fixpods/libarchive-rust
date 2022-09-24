@@ -446,6 +446,14 @@ extern "C"
 	__LA_DECL int archive_read_support_format_cab(struct archive *);
 	__LA_DECL int archive_read_support_format_cpio(struct archive *);
 /*新增测试用例 */
+	__LA_DECL void archive_test_make_table_recurse(struct archive *);
+	__LA_DECL void archive_test_rar_br_preparation(struct archive *);
+	__LA_DECL void archive_test_rar_skip_sfx(struct archive *);
+	__LA_DECL void archive_test_archive_read_format_rar_options(struct archive *);
+	__LA_DECL void archive_test_archive_read_format_rar_read_data(struct archive *, const void **, size_t *, int64_t *);
+	__LA_DECL void archive_test_archive_read_format_rar_seek_data(struct archive *);
+	__LA_DECL void archive_test_read_data_stored(struct archive *, const void **, size_t *, int64_t *);
+	__LA_DECL void archive_test_copy_from_lzss_window(struct archive *, const void **, int64_t, int);
 	__LA_DECL void archive_test_bid_keyword_list();
 	__LA_DECL void archive_test_mtree_atol();
 	__LA_DECL void archive_test_bid_keyword();
@@ -521,6 +529,14 @@ extern "C"
 	extern __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 	extern __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
+	extern __LA_DECL void archive_test_make_table_recurse(struct archive *);
+	extern __LA_DECL void archive_test_rar_br_preparation(struct archive *);
+	extern __LA_DECL void archive_test_rar_skip_sfx(struct archive *);
+	extern __LA_DECL void archive_test_archive_read_format_rar_options(struct archive *);
+	extern __LA_DECL void archive_test_archive_read_format_rar_read_data(struct archive *, const void **, size_t *, int64_t *);
+	extern __LA_DECL void archive_test_archive_read_format_rar_seek_data(struct archive *);
+	extern __LA_DECL void archive_test_read_data_stored(struct archive *, const void **, size_t *, int64_t *);
+	extern __LA_DECL void archive_test_copy_from_lzss_window(struct archive *, const void **, int64_t, int);
 	extern __LA_DECL void archive_test_bid_keyword_list();
 	extern __LA_DECL void archive_test_mtree_atol();
 	extern __LA_DECL void archive_test_bid_keyword();
@@ -595,6 +611,14 @@ __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
+__LA_DECL void archive_test_make_table_recurse(struct archive *);
+__LA_DECL void archive_test_rar_br_preparation(struct archive *);
+__LA_DECL void archive_test_rar_skip_sfx(struct archive *);
+__LA_DECL void archive_test_archive_read_format_rar_options(struct archive *);
+__LA_DECL void archive_test_archive_read_format_rar_read_data(struct archive *, const void **, size_t *, int64_t *);
+__LA_DECL void archive_test_archive_read_format_rar_seek_data(struct archive *);
+__LA_DECL void archive_test_read_data_stored(struct archive *, const void **, size_t *, int64_t *);
+__LA_DECL void archive_test_copy_from_lzss_window(struct archive *, const void **, int64_t, int);
 __LA_DECL void archive_test_bid_keyword_list();
 __LA_DECL void archive_test_mtree_atol();
 __LA_DECL void archive_test_bid_keyword();
