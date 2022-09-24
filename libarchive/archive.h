@@ -446,11 +446,6 @@ extern "C"
 	__LA_DECL int archive_read_support_format_cab(struct archive *);
 	__LA_DECL int archive_read_support_format_cpio(struct archive *);
 /*新增测试用例 */
-	__LA_DECL void archive_test_bid_keyword_list();
-	__LA_DECL void archive_test_mtree_atol();
-	__LA_DECL void archive_test_bid_keyword();
-	__LA_DECL void archive_test_archive_read_format_mtree_options(struct archive *);
-	__LA_DECL void archive_test_parse_device(struct archive *);
 	__LA_DECL void archive_test_archive_read_support_format_lha();
 	__LA_DECL void archive_test_lha_check_header_format(const void *);
 	__LA_DECL void archive_test_archive_read_format_lha_options(struct archive *, const char *, const char *);
@@ -521,11 +516,6 @@ extern "C"
 	extern __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 	extern __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
-	extern __LA_DECL void archive_test_bid_keyword_list();
-	extern __LA_DECL void archive_test_mtree_atol();
-	extern __LA_DECL void archive_test_bid_keyword();
-	extern __LA_DECL void archive_test_archive_read_format_mtree_options(struct archive *);
-	extern __LA_DECL void archive_test_parse_device(struct archive *);
 	extern __LA_DECL void archive_test_archive_read_support_format_lha();
 	extern __LA_DECL void archive_test_lha_check_header_format(const void *);
 	extern __LA_DECL void archive_test_archive_read_format_lha_options(struct archive *, const char *, const char *);
@@ -595,11 +585,6 @@ __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
-__LA_DECL void archive_test_bid_keyword_list();
-__LA_DECL void archive_test_mtree_atol();
-__LA_DECL void archive_test_bid_keyword();
-__LA_DECL void archive_test_archive_read_format_mtree_options(struct archive *);
-__LA_DECL void archive_test_parse_device(struct archive *);
 __LA_DECL void archive_test_archive_read_support_format_lha();
 __LA_DECL void archive_test_lha_check_header_format(const void *);
 __LA_DECL void archive_test_archive_read_format_lha_options(struct archive *, const char *, const char *);
