@@ -310,18 +310,30 @@ test_tar()
 static void
 test_mtree()
 {
-	struct archive *a;
-	assert((a = archive_read_new()) != NULL);
-	struct archive_entry *entry = archive_entry_new();
+	archive_test_archive_read_support_format_mtree();
 	int p[] = {1,2,3,4,5};
 	int *p1 = p;
-	archive_test_parse_keyword(a, entry, p1);
-	archive_test_process_global_unset(a, "123");
 	char *sp1[] = {"x","x","x","x"};
 	char ** sp = sp1;
 	archive_test_la_strsep(sp, "2");
 	sp = NULL;
 	archive_test_la_strsep(sp, "2");
+	archive_test_bid_keyword();
+	archive_test_bid_keyword_list();
+	archive_test_mtree_atol();
+	struct archive *a;
+	const char reffile[] = "test_read_format_mtree_noprint.mtree";
+	extract_reference_file(reffile);
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, reffile, 11));
+	struct archive_entry *entry = archive_entry_new();
+	archive_test_archive_read_format_mtree_options(a);
+	archive_test_parse_device(a);
+	archive_test_read_header(a, entry);
+	archive_test_parse_keyword(a, entry, p1);
+	archive_test_process_global_unset(a, "123");
 	archive_test_parse_digest(a, entry, "", 0x00000007);
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
@@ -396,7 +408,7 @@ DEFINE_TEST(test_archive_read_support)
 	test_cab();
 	test_iso9660();
 	test_lha();
+	test_mtree();
 	test_zip();
 	test_tar();
-	test_mtree();
 }
