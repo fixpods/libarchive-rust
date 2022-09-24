@@ -4249,3 +4249,153 @@ unsafe extern "C" fn run_static_initializers() {
 #[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
 #[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
 static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_make_table_recurse(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut huffman_code: *mut huffman_code = 0 as *mut huffman_code;
+    huffman_code = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<huffman_code>() as libc::c_ulong,
+        )
+    } as *mut huffman_code;
+    let mut huffman_table_entry: *mut huffman_table_entry = 0 as *mut huffman_table_entry;
+    huffman_table_entry = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<huffman_table_entry>() as libc::c_ulong,
+        )
+    } as *mut huffman_table_entry;
+    make_table_recurse(a, huffman_code, 0, huffman_table_entry, 0, 0);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_rar_br_preparation(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar: *mut rar = 0 as *mut rar;
+    rar = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar>() as libc::c_ulong,
+        )
+    } as *mut rar;
+    (*rar).bytes_remaining = 1;
+    let mut rar_br: *mut rar_br = 0 as *mut rar_br;
+    rar_br = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar_br>() as libc::c_ulong,
+        )
+    } as *mut rar_br;
+    (*rar_br).avail_in = -1;
+    (*(*a).format).data = rar as *mut libc::c_void;
+    rar_br_preparation(a, rar_br);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_rar_skip_sfx(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
+    archive_read_filter = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read_filter>() as libc::c_ulong,
+        )
+    } as *mut archive_read_filter;
+    (*archive_read_filter).fatal = 'a' as libc::c_char;
+    (*a).filter = archive_read_filter as *mut archive_read_filter;
+    skip_sfx(a);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_archive_read_format_rar_options(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    archive_read_format_rar_options(
+        a,
+        b"hdrcharset\x00" as *const u8 as *const libc::c_char,
+        b"hdrcharset\x00" as *const u8 as *const libc::c_char,
+    );
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_archive_read_format_rar_read_data(
+    mut _a: *mut archive,
+    mut buff: *mut *const libc::c_void,
+    mut size: *mut size_t,
+    mut offset: *mut int64_t,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar: *mut rar = 0 as *mut rar;
+    rar = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar>() as libc::c_ulong,
+        )
+    } as *mut rar;
+    (*(*a).format).data = rar as *mut libc::c_void;
+    archive_read_format_rar_read_data(a, buff, size, offset);
+    (*rar).offset_seek = 1;
+    (*rar).unp_size = 2;
+    (*(*a).format).data = rar as *mut libc::c_void;
+    archive_read_format_rar_read_data(a, buff, size, offset);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_archive_read_format_rar_seek_data(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar: *mut rar = 0 as *mut rar;
+    rar = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar>() as libc::c_ulong,
+        )
+    } as *mut rar;
+    (*rar).compression_method = 0x31;
+    (*(*a).format).data = rar as *mut libc::c_void;
+    archive_read_format_rar_seek_data(a, 1, 1);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_read_data_stored(
+    mut _a: *mut archive,
+    mut buff: *mut *const libc::c_void,
+    mut size: *mut size_t,
+    mut offset: *mut int64_t,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar: *mut rar = 0 as *mut rar;
+    rar = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar>() as libc::c_ulong,
+        )
+    } as *mut rar;
+    (*rar).bytes_remaining = 0;
+    (*rar).main_flags = 1;
+    (*(*a).format).data = rar as *mut libc::c_void;
+    read_data_stored(a, buff, size, offset);
+    (*rar).file_crc = 1;
+    (*rar).crc_calculated = 2;
+    (*(*a).format).data = rar as *mut libc::c_void;
+    read_data_stored(a, buff, size, offset);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_copy_from_lzss_window(
+    mut _a: *mut archive,
+    mut buffer: *mut *const libc::c_void,
+    mut startpos: int64_t,
+    mut length: libc::c_int,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar: *mut rar = 0 as *mut rar;
+    rar = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar>() as libc::c_ulong,
+        )
+    } as *mut rar;
+    (*rar).lzss.mask = 1;
+    copy_from_lzss_window(a, buffer, startpos, length);
+}
