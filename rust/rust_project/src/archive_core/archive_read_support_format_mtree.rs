@@ -3404,14 +3404,8 @@ pub unsafe extern "C" fn archive_test_read_header(
 
 #[no_mangle]
 unsafe extern "C" fn archive_test_parse_device(mut a: *mut archive) {
-    let mut pdevp: [dev_t; 4] = [
-        1 as dev_t,
-        2 as dev_t,
-        3 as dev_t,
-        4 as dev_t,
-    ];
-    let mut pdev: *mut dev_t
-        = &pdevp as *const [dev_t; 4] as *mut [dev_t; 4] as *mut dev_t;
+    let mut pdevp: [dev_t; 4] = [1 as dev_t, 2 as dev_t, 3 as dev_t, 4 as dev_t];
+    let mut pdev: *mut dev_t = &pdevp as *const [dev_t; 4] as *mut [dev_t; 4] as *mut dev_t;
     let mut valp: [libc::c_char; 5] = [
         '1' as i32 as libc::c_char,
         '2' as i32 as libc::c_char,
