@@ -5400,8 +5400,7 @@ pub unsafe extern "C" fn archive_test_Bcj2_Decode() {
     (*zip).odd_bcj[1] = 'b' as libc::c_uchar;
     (*zip).odd_bcj_size = 1;
     let mut p: [uint8_t; 3] = [1 as uint8_t, 2 as uint8_t, 3 as uint8_t];
-    let mut outBuf: *mut uint8_t =
-        &p as *const [uint8_t; 3] as *mut [uint8_t; 3] as *mut uint8_t;
+    let mut outBuf: *mut uint8_t = &p as *const [uint8_t; 3] as *mut [uint8_t; 3] as *mut uint8_t;
     Bcj2_Decode(zip, outBuf, 1);
 }
 
@@ -5434,8 +5433,7 @@ pub unsafe extern "C" fn archive_test_x86_Convert() {
         0xE8 as uint8_t,
         0xE8 as uint8_t,
     ];
-    let mut data: *mut uint8_t =
-        &data2 as *const [uint8_t; 6] as *mut [uint8_t; 6] as *mut uint8_t;
+    let mut data: *mut uint8_t = &data2 as *const [uint8_t; 6] as *mut [uint8_t; 6] as *mut uint8_t;
     (*zip).bcj_prevMask = 15;
     (*zip).bcj_prevPosT = 3;
     (*zip).bcj_ip = 0;
