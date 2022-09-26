@@ -6037,3 +6037,191 @@ pub unsafe extern "C" fn archive_mstring_update_utf8(
     /* All conversions succeeded. */
     return 0 as libc::c_int;
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_best_effort_strncat_utf16(
+    mut _p: *const libc::c_void,
+    mut bytes: size_t,
+) {
+    let mut archive_string: *mut archive_string = 0 as *mut archive_string;
+    archive_string = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string>() as libc::c_ulong,
+        )
+    } as *mut archive_string;
+    let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
+    archive_string_conv = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string_conv>() as libc::c_ulong,
+        )
+    } as *mut archive_string_conv;
+    best_effort_strncat_from_utf16be(archive_string, _p, bytes, archive_string_conv);
+    best_effort_strncat_from_utf16le(archive_string, _p, bytes, archive_string_conv);
+    best_effort_strncat_to_utf16be(archive_string, _p, bytes, archive_string_conv);
+    best_effort_strncat_to_utf16le(archive_string, _p, bytes, archive_string_conv);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_strncat_from_utf8_libarchive2(
+    mut _p: *const libc::c_void,
+    mut bytes: size_t,
+) {
+    let mut archive_string: *mut archive_string = 0 as *mut archive_string;
+    archive_string = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string>() as libc::c_ulong,
+        )
+    } as *mut archive_string;
+    let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
+    archive_string_conv = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string_conv>() as libc::c_ulong,
+        )
+    } as *mut archive_string_conv;
+    strncat_from_utf8_libarchive2(archive_string, _p, bytes, archive_string_conv);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_string_append_unicode(
+    mut _p: *const libc::c_void,
+    mut bytes: size_t,
+) {
+    let mut archive_string: *mut archive_string = 0 as *mut archive_string;
+    archive_string = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string>() as libc::c_ulong,
+        )
+    } as *mut archive_string;
+    let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
+    archive_string_conv = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string_conv>() as libc::c_ulong,
+        )
+    } as *mut archive_string_conv;
+    archive_string_append_unicode(archive_string, _p, bytes, archive_string_conv);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_invalid_mbs(
+    mut _p: *const libc::c_void,
+    mut bytes: size_t,
+) {
+    let mut archive_string: *mut archive_string = 0 as *mut archive_string;
+    archive_string = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string>() as libc::c_ulong,
+        )
+    } as *mut archive_string;
+    let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
+    archive_string_conv = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string_conv>() as libc::c_ulong,
+        )
+    } as *mut archive_string_conv;
+    invalid_mbs(_p, bytes, archive_string_conv);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_unicode_to_utf16be(
+    mut p: *mut libc::c_char,
+    mut remaining: size_t,
+    mut uc: uint32_t,
+) -> size_t {
+    return unicode_to_utf16be(p, remaining, uc);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_unicode_to_utf16le(
+    mut p: *mut libc::c_char,
+    mut remaining: size_t,
+    mut uc: uint32_t,
+) -> size_t {
+    return unicode_to_utf16le(p, remaining, uc);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_best_effort_strncat_in_locale(
+    mut _p: *const libc::c_void,
+    mut length: size_t,
+) {
+    let mut archive_string: *mut archive_string = 0 as *mut archive_string;
+    archive_string = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string>() as libc::c_ulong,
+        )
+    } as *mut archive_string;
+    let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
+    archive_string_conv = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string_conv>() as libc::c_ulong,
+        )
+    } as *mut archive_string_conv;
+    (*archive_string_conv).same = 1;
+    best_effort_strncat_in_locale(archive_string, _p, length, archive_string_conv);
+    (*archive_string_conv).same = 0;
+    best_effort_strncat_in_locale(archive_string, _p, length, archive_string_conv);
+    (*archive_string_conv).flag = (1<<8);
+    best_effort_strncat_in_locale(archive_string, _p, length, archive_string_conv);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_setup_converter() {
+    let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
+    archive_string_conv = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string_conv>() as libc::c_ulong,
+        )
+    } as *mut archive_string_conv;
+    (*archive_string_conv).flag = (1<<4);
+    setup_converter(archive_string_conv);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_string_normalize_D(
+    mut _p: *const libc::c_void,
+    mut len: size_t,
+) {
+    let mut archive_string: *mut archive_string = 0 as *mut archive_string;
+    archive_string = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string>() as libc::c_ulong,
+        )
+    } as *mut archive_string;
+    let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
+    archive_string_conv = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_string_conv>() as libc::c_ulong,
+        )
+    } as *mut archive_string_conv;
+    (*archive_string_conv).flag = (1<<10) | (1<<11);
+    archive_string_normalize_D(archive_string, _p, len, archive_string_conv);
+    (*archive_string_conv).flag = (1<<12) | (1<<13);
+    archive_string_normalize_D(archive_string, _p, len, archive_string_conv);
+    (*archive_string_conv).flag = (1<<11);
+    archive_string_normalize_D(archive_string, _p, len, archive_string_conv);
+    (*archive_string_conv).flag = (1<<13);
+    archive_string_normalize_D(archive_string, _p, len, archive_string_conv);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_utf16_to_unicode(
+    mut pwc: *mut uint32_t,
+    mut s: *const libc::c_char,
+    mut n: size_t,
+    mut be: libc::c_int,
+) -> libc::c_int {
+    return utf16_to_unicode(pwc, s, n, be);
+}
