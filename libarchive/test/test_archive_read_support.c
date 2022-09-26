@@ -84,6 +84,9 @@ test_filter_or_format(enabler enable)
 static void
 test_7zip()
 {
+	archive_test_fileTimeToUtc();
+	archive_test_Bcj2_Decode();
+	archive_test_x86_Convert();
 	char p1[6] = {0x1C,0x1C,0x1C,0x1C,0x1C,0x1C};
 	char p2[6] = {0x37,0x37,0x37,0x37,0x37,0x37};
 	char p3[6] = {0x7A,0x7A,0x7A,0x7A,0x7A,0x7A};
@@ -108,6 +111,7 @@ test_7zip()
 	archive_test_check_7zip_header_in_sfx(input);
 	input = p8;
 	archive_test_check_7zip_header_in_sfx(input);
+	archive_test_archive_read_support_format_7zip();
 	const char *refname = "test_read_format_7zip_empty_file.7z";
 	struct archive *a;
 	extract_reference_file(refname);
@@ -117,7 +121,15 @@ test_7zip()
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, refname, 10240));
 	archive_test_skip_sfx(a, 0x27001);
 	archive_test_skip_sfx(a, 0x27000);
+	archive_test_read_stream(a);
+	archive_test_archive_read_format_7zip_bid(a);
+	archive_test_get_uncompressed_data(a);
+	archive_test_decode_encoded_header_info(a);
+	archive_test_extract_pack_stream(a);
+	archive_test_seek_pack(a);
 	archive_test_init_decompression(a);
+	archive_test_ppmd_read(a);
+	archive_test_decompress(a);
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -327,28 +339,28 @@ static void
 test_zip()
 {
 	const char *refname = "test_read_format_zip.zip";
-    	extract_reference_file(refname);
-    	struct archive *a;
-    	assert((a = archive_read_new()) != NULL);
-    	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-    	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-    	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, refname, 10240));
-    	const uint8_t key[12];
-    	uint8_t crcchk[12];
-    	archive_test_trad_enc_init(a, key, crcchk);
-    	struct archive_entry *entry = archive_entry_new();
-    	archive_test_zip_read_mac_metadata(a, entry);
-    	archive_test_expose_parent_dirs(a, "aa", 20);
-    	const void * _p;
-    	archive_test_check_authentication_code(a, _p);
-    	archive_test_read_format_zip_read_data(a);
-    	archive_test_archive_read_format_zip_options(a, "compat-2x", "");
-    	archive_test_archive_read_format_zip_options(a, "hdrcharset", NULL);
-    	archive_test_archive_read_format_zip_options(a, "ignorecrc32", NULL);
-    	archive_test_zipx_ppmd8_init(a);
-    	archive_test_cmp_key(_p);
-    	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-    	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	extract_reference_file(refname);
+	struct archive *a;
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, refname, 10240));
+	const uint8_t key[12];
+	uint8_t crcchk[12];
+	archive_test_trad_enc_init(a, key, crcchk);
+	struct archive_entry *entry = archive_entry_new();
+	archive_test_zip_read_mac_metadata(a, entry);
+	archive_test_expose_parent_dirs(a, "aa", 20);
+	const void * _p;
+	archive_test_check_authentication_code(a, _p);
+	archive_test_read_format_zip_read_data(a);
+	archive_test_archive_read_format_zip_options(a, "compat-2x", "");
+	archive_test_archive_read_format_zip_options(a, "hdrcharset", NULL);
+	archive_test_archive_read_format_zip_options(a, "ignorecrc32", NULL);
+	archive_test_zipx_ppmd8_init(a);
+	archive_test_cmp_key(_p);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
 static void
