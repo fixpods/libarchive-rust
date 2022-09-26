@@ -233,9 +233,9 @@ static void
 test_lha()
 {
 	unsigned char pp[] = {
-		'1','1','-','l','z','s','-','1','1','1',
-		'1','1','1','1','z','s','1','1','1','1',
-		0};
+	'1','1','-','l','z','s','-','1','1','1',
+	'1','1','1','1','z','s','1','1','1','1',
+	0};
 	const unsigned char *p = pp;
 	const void *h = (unsigned char *)p;
 	struct archive *a;
@@ -322,6 +322,7 @@ test_rar()
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
+
 static void
 test_zip()
 {
@@ -343,19 +344,21 @@ test_zip()
 }
 
 static void
-test_string()
+test_tar()
 {
+	archive_test_tohex((int)'0');
+	archive_test_tohex((int)'A');
+	archive_test_tohex((int)'a');
+	archive_test_tohex(-1);
 	struct archive *a;
 	assert((a = archive_read_new()) != NULL);
-	const void *_p;
-	archive_test_best_effort_strncat_utf16(_p, 0);
-	archive_test_best_effort_strncat_utf16("test", 4);
-	archive_test_strncat_from_utf8_libarchive2(_p, 0);
-	archive_test_strncat_from_utf8_libarchive2("test", 4);
-	archive_test_archive_string_append_unicode(_p, 0);
-	archive_test_archive_string_append_unicode("test", 4);
-	archive_test_invalid_mbs(_p, 0);
-	archive_test_best_effort_strncat_in_locale("tes？", 4);
+	struct archive_entry *entry = archive_entry_new();
+	archive_test_pax_attribute(a, entry, "LIBARCHIVE.symlinktype", "file", 20);
+	archive_test_pax_attribute(a, entry, "LIBARCHIVE.symlinktype", "dir", 20);
+	archive_test_pax_attribute(a, entry, "SCHILY.devmajor", "dir", 20);
+	archive_test_pax_attribute(a, entry, "SCHILY.devminor", "dir", 20);
+	archive_test_pax_attribute(a, entry, "SCHILY.realsize", "dir", 20);
+	archive_test_pax_attribute(a, entry, "hdrcharset", "ISO-IR 10646 2000 UTF-8", 20);
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
@@ -433,5 +436,4 @@ DEFINE_TEST(test_archive_read_support)
 	test_rar();
 	test_zip();
 	test_tar();
-	test_string();
 }
