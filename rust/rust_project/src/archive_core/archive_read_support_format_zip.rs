@@ -6087,3 +6087,76 @@ pub unsafe extern "C" fn archive_test_expose_parent_dirs(
     zip = unsafe { (*(*a).format).data as *mut zip };
     expose_parent_dirs(zip, name, name_length);
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_check_authentication_code(
+    mut _a: *mut archive,
+    mut _p: *const libc::c_void,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut zip: *mut zip = 0 as *mut zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<zip>() as libc::c_ulong,
+    ) as *mut zip;
+    (*(*a).format).data = zip as *mut libc::c_void;
+    check_authentication_code(a, _p);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_format_zip_options(
+    mut _a: *mut archive,
+    mut key: *const libc::c_char,
+    mut val: *const libc::c_char,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    archive_read_format_zip_options(a, key, val);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_zipx_ppmd8_init(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut zip: *mut zip = 0 as *mut zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<zip>() as libc::c_ulong,
+    ) as *mut zip;
+    (*zip).ppmd8_valid = 'a' as libc::c_char;
+    zipx_ppmd8_init(a, zip);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_cmp_key(
+    mut n: *const archive_rb_node,
+    mut key: *const libc::c_void,
+) {
+    let mut archive_rb_node: *mut archive_rb_node = 0 as *mut archive_rb_node;
+    archive_rb_node = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<archive_rb_node>() as libc::c_ulong,
+    ) as *mut archive_rb_node;
+    cmp_key(archive_rb_node, key);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_read_format_zip_read_data(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut zip: *mut zip = 0 as *mut zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<zip>() as libc::c_ulong,
+    ) as *mut zip;
+    (*zip).has_encrypted_entries = -1;
+    (*zip).entry_uncompressed_bytes_read = 0;
+    (*zip).end_of_entry = 'a' as libc::c_char;
+    (*(*a).format).data = zip as *mut libc::c_void;
+    let mut size: size_t = 0;
+    let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
+    let mut offset: int64_t = 0;
+    let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
+    let mut buff: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
+    let mut buff2: *mut *const libc::c_void = unsafe {
+        &buff as *const *mut libc::c_void as *mut *mut libc::c_void as *mut *const libc::c_void
+    };
+    archive_read_format_zip_read_data(a, buff2, size2, offset2);
+}

@@ -6108,10 +6108,7 @@ pub unsafe extern "C" fn archive_test_archive_string_append_unicode(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_invalid_mbs(
-    mut _p: *const libc::c_void,
-    mut bytes: size_t,
-) {
+pub unsafe extern "C" fn archive_test_invalid_mbs(mut _p: *const libc::c_void, mut bytes: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
     archive_string = unsafe {
         calloc_safe(
@@ -6170,7 +6167,7 @@ pub unsafe extern "C" fn archive_test_best_effort_strncat_in_locale(
     best_effort_strncat_in_locale(archive_string, _p, length, archive_string_conv);
     (*archive_string_conv).same = 0;
     best_effort_strncat_in_locale(archive_string, _p, length, archive_string_conv);
-    (*archive_string_conv).flag = (1<<8);
+    (*archive_string_conv).flag = (1 << 8);
     best_effort_strncat_in_locale(archive_string, _p, length, archive_string_conv);
 }
 
@@ -6183,7 +6180,7 @@ pub unsafe extern "C" fn archive_test_setup_converter() {
             ::std::mem::size_of::<archive_string_conv>() as libc::c_ulong,
         )
     } as *mut archive_string_conv;
-    (*archive_string_conv).flag = (1<<4);
+    (*archive_string_conv).flag = (1 << 4);
     setup_converter(archive_string_conv);
 }
 
@@ -6206,13 +6203,13 @@ pub unsafe extern "C" fn archive_test_archive_string_normalize_D(
             ::std::mem::size_of::<archive_string_conv>() as libc::c_ulong,
         )
     } as *mut archive_string_conv;
-    (*archive_string_conv).flag = (1<<10) | (1<<11);
+    (*archive_string_conv).flag = (1 << 10) | (1 << 11);
     archive_string_normalize_D(archive_string, _p, len, archive_string_conv);
-    (*archive_string_conv).flag = (1<<12) | (1<<13);
+    (*archive_string_conv).flag = (1 << 12) | (1 << 13);
     archive_string_normalize_D(archive_string, _p, len, archive_string_conv);
-    (*archive_string_conv).flag = (1<<11);
+    (*archive_string_conv).flag = (1 << 11);
     archive_string_normalize_D(archive_string, _p, len, archive_string_conv);
-    (*archive_string_conv).flag = (1<<13);
+    (*archive_string_conv).flag = (1 << 13);
     archive_string_normalize_D(archive_string, _p, len, archive_string_conv);
 }
 

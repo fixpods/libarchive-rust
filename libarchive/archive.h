@@ -446,6 +446,21 @@ extern "C"
 	__LA_DECL int archive_read_support_format_cab(struct archive *);
 	__LA_DECL int archive_read_support_format_cpio(struct archive *);
 /*新增测试用例 */
+	__LA_DECL void archive_test_check_authentication_code(struct archive *, const void *);
+	__LA_DECL void archive_test_archive_read_format_zip_options(struct archive *, const char *, const char *);
+	__LA_DECL void archive_test_zipx_ppmd8_init(struct archive *);
+	__LA_DECL void archive_test_cmp_key(const void *key);
+	__LA_DECL void archive_test_read_format_zip_read_data(struct archive *_a);
+	__LA_DECL void archive_test_best_effort_strncat_utf16(const void *, size_t);
+	__LA_DECL void archive_test_strncat_from_utf8_libarchive2(const void *, size_t);
+	__LA_DECL void archive_test_archive_string_append_unicode(const void *, size_t);
+	__LA_DECL void archive_test_invalid_mbs(const void *, size_t);
+	__LA_DECL size_t archive_test_unicode_to_utf16be(char *p, size_t remaining, uint32_t uc);
+	__LA_DECL size_t archive_test_unicode_to_utf16le(char *p, size_t remaining, uint32_t uc);
+	__LA_DECL void archive_test_best_effort_strncat_in_locale(const void *_p, size_t length);
+	__LA_DECL void archive_test_setup_converter();
+	__LA_DECL void archive_test_archive_string_normalize_D(const void *_p, size_t len);
+	__LA_DECL int archive_test_utf16_to_unicode(uint32_t *pwc, const char *s, size_t n, int be);
 	__LA_DECL void archive_test_make_table_recurse(struct archive *);
 	__LA_DECL void archive_test_rar_br_preparation(struct archive *);
 	__LA_DECL void archive_test_rar_skip_sfx(struct archive *);
@@ -529,6 +544,11 @@ extern "C"
 	extern __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 	extern __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
+	extern __LA_DECL void archive_test_check_authentication_code(struct archive *, const void *);
+	extern __LA_DECL void archive_test_archive_read_format_zip_options(struct archive *, const char *, const char *);
+	extern __LA_DECL void archive_test_zipx_ppmd8_init(struct archive *);
+	extern __LA_DECL void archive_test_cmp_key(const void *key);
+	extern __LA_DECL void archive_test_read_format_zip_read_data(struct archive *_a);
 	extern __LA_DECL void archive_test_make_table_recurse(struct archive *);
 	extern __LA_DECL void archive_test_rar_br_preparation(struct archive *);
 	extern __LA_DECL void archive_test_rar_skip_sfx(struct archive *);
@@ -611,6 +631,11 @@ __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
+__LA_DECL void archive_test_check_authentication_code(struct archive *, const void *);
+__LA_DECL void archive_test_archive_read_format_zip_options(struct archive *, const char *, const char *);
+__LA_DECL void archive_test_zipx_ppmd8_init(struct archive *);
+__LA_DECL void archive_test_cmp_key(const void *key);
+__LA_DECL void archive_test_read_format_zip_read_data(struct archive *_a);
 __LA_DECL void archive_test_make_table_recurse(struct archive *);
 __LA_DECL void archive_test_rar_br_preparation(struct archive *);
 __LA_DECL void archive_test_rar_skip_sfx(struct archive *);
