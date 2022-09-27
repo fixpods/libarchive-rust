@@ -383,6 +383,48 @@ test_tar()
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
+static void
+test_warc()
+{
+	struct archive *a = archive_read_new();
+	const char reffile[] = "test_read_format_warc.warc";
+	extract_reference_file(reffile);
+	struct archive_entry *entry = archive_entry_new();
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, reffile, 10240));
+	size_t size = 4;
+	size_t * size2 = &size;
+	int64_t offset = 4;
+	int64_t * offset2 = &offset;
+	void * buff = "test";
+	const void ** buff2 = &buff;
+	archive_test__warc_read(a, buff2, size2, offset2);
+	archive_test__warc_rdhdr(a, entry);
+	archive_test_archive_read_support_format_warc();
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+static void
+test_string()
+{
+	struct archive *a;
+	assert((a = archive_read_new()) != NULL);
+	const void *_p;
+	archive_test_best_effort_strncat_utf16(_p, 0);
+	archive_test_best_effort_strncat_utf16("test", 4);
+	archive_test_strncat_from_utf8_libarchive2(_p, 0);
+	archive_test_strncat_from_utf8_libarchive2("test", 4);
+	archive_test_archive_string_append_unicode(_p, 0);
+	archive_test_archive_string_append_unicode("test", 4);
+	archive_test_invalid_mbs(_p, 0);
+	archive_test_best_effort_strncat_in_locale("tes？", 4);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
 DEFINE_TEST(test_archive_read_support)
 {
 	test_filter_or_format(archive_read_support_format_7zip);
@@ -456,4 +498,6 @@ DEFINE_TEST(test_archive_read_support)
 	test_rar();
 	test_zip();
 	test_tar();
+	test_warc();
+	test_string();
 }

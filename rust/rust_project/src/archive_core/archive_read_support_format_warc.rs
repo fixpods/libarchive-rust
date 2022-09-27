@@ -1071,3 +1071,60 @@ unsafe extern "C" fn _warc_find_eol(
     return hit;
 }
 /* archive_read_support_format_warc.c ends here */
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test__warc_rdhdr(
+    mut _a: *mut archive,
+    mut entry: *mut archive_entry,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
+    archive_read_filter = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<archive_read_filter>() as libc::c_ulong,
+    ) as *mut archive_read_filter;
+    (*archive_read_filter).fatal = 'a' as libc::c_char;
+    (*a).filter = archive_read_filter;
+    _warc_rdhdr(a, entry);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_support_format_warc() {
+    let mut archive_read: *mut archive_read = 0 as *mut archive_read;
+    archive_read = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read>() as libc::c_ulong,
+        )
+    } as *mut archive_read;
+    (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
+    (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
+    archive_read_support_format_warc(&mut (*archive_read).archive as *mut archive);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test__warc_read(
+    mut _a: *mut archive,
+    mut buf: *mut *const libc::c_void,
+    mut bsz: *mut size_t,
+    mut off: *mut int64_t,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut warc_s: *mut warc_s = 0 as *mut warc_s;
+    warc_s = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<warc_s>() as libc::c_ulong,
+        )
+    } as *mut warc_s;
+    (*warc_s).unconsumed = 1;
+    (*warc_s).cntoff = 1;
+    (*warc_s).cntoff = 2;
+    (*(*a).format).data = warc_s as *mut libc::c_void;
+    _warc_read(a, buf, bsz, off);
+    (*warc_s).unconsumed = 0;
+    (*warc_s).cntoff = 1;
+    (*warc_s).cntoff = 2;
+    (*(*a).format).data = warc_s as *mut libc::c_void;
+    _warc_read(a, buf, bsz, off);
+}

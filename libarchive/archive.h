@@ -446,6 +446,10 @@ extern "C"
 	__LA_DECL int archive_read_support_format_cab(struct archive *);
 	__LA_DECL int archive_read_support_format_cpio(struct archive *);
 /*新增测试用例 */
+	__LA_DECL void archive_test__warc_rdhdr(struct archive *, struct archive_entry *);
+	__LA_DECL void archive_test_archive_read_support_format_warc();
+	__LA_DECL void archive_test__warc_read(struct archive *_a, const void **buf, size_t *bsz, int64_t *off);
+	__LA_DECL void archive_test__warc_rdver();
 	__LA_DECL void archive_test_archive_read_support_format_7zip();
 	__LA_DECL void archive_test_ppmd_read(struct archive *);
 	__LA_DECL void archive_test_decompress(struct archive *);
@@ -559,6 +563,10 @@ extern "C"
 	extern __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 	extern __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
+	extern	__LA_DECL void archive_test__warc_rdhdr(struct archive *, struct archive_entry *);
+	extern __LA_DECL void archive_test_archive_read_support_format_warc();
+	extern __LA_DECL void archive_test__warc_read(struct archive *_a, const void **buf, size_t *bsz, int64_t *off);
+	extern __LA_DECL void archive_test__warc_rdver();
 	extern __LA_DECL void archive_test_archive_read_support_format_7zip();
 	extern __LA_DECL void archive_test_ppmd_read(struct archive *);
 	extern __LA_DECL void archive_test_decompress(struct archive *);
@@ -661,6 +669,10 @@ __LA_DECL int archive_read_support_format_zip_seekable(struct archive *);
 __LA_DECL int archive_read_support_format_zip_streamable(struct archive *);
 __LA_DECL int archive_read_support_format_all(struct archive *);
 /*新增测试用例 */
+__LA_DECL void archive_test__warc_rdhdr(struct archive *, struct archive_entry *);
+__LA_DECL void archive_test_archive_read_support_format_warc();
+__LA_DECL void archive_test__warc_read(struct archive *_a, const void **buf, size_t *bsz, int64_t *off);
+__LA_DECL void archive_test__warc_rdver();
 __LA_DECL void archive_test_archive_read_support_format_7zip();
 __LA_DECL void archive_test_ppmd_read(struct archive *);
 __LA_DECL void archive_test_decompress(struct archive *);
