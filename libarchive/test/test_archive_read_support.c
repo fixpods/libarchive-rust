@@ -441,6 +441,52 @@ test_raw()
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
+static void
+test_rar5()
+{
+	struct archive *a;
+	const char reffile[] = "test_read_format_rar.rar";
+	extract_reference_file(reffile);
+	struct archive_entry *entry = archive_entry_new();
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, reffile, 10240));
+	int res_empty_function = archive_test_rar5_empty_function(a);
+	assertEqualInt(res_empty_function, -32);
+	uint8_t dst[5] = "test";
+	uint8_t window[11] = "helloworld";
+	size_t size = 0;
+	size_t * size2 = &size;
+	int64_t offset = 1;
+	int64_t * offset2 = &offset;
+	void * buff = {NULL, NULL};
+	const void ** buff2 = &buff;
+	archive_test_circular_memcpy(dst, window, 1, 1, 2);
+	int res1_rar5_read_data = archive_test_rar5_read_data(a, buff2, size2, offset2, 0);
+	int res2_rar5_read_data = archive_test_rar5_read_data(a, buff2, size2, offset2, 1);
+	int res_do_unpack = archive_test_do_unpack(a, buff2, size2, offset2);
+	int res1_run_filter = archive_test_run_filter(a, 0);
+	int res2_run_filter = archive_test_run_filter(a, 1);
+	archive_test_push_data(a, dst, 1, 2);
+	int res_process_head_file = archive_test_process_head_file(a, entry, 0);
+	uint64_t where = 0;
+	ssize_t extra_data_size = 0;
+	int res1_parse_htime_item = archive_test_parse_htime_item(a, '1', &where, &extra_data_size);
+	int res2_parse_htime_item = archive_test_parse_htime_item(a, 0, &where, &extra_data_size);
+	archive_test_init_unpack();
+	int res1_do_unstore_file = archive_test_do_unstore_file(a, buff2, size2, offset2, 0);
+	int res2_do_unstore_file = archive_test_do_unstore_file(a, buff2, size2, offset2, 1);
+	int res1_merge_block = archive_test_merge_block(a, extra_data_size, &dst, 1);
+	int res2_merge_block = archive_test_merge_block(a, -9, &dst, 0);
+	int res3_merge_block = archive_test_merge_block(a, 0, &dst, 0);
+	int res_parse_tables = archive_test_parse_tables(a, dst);
+	int res_parse_block_header = archive_test_parse_block_header(a, dst, &extra_data_size);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
+
 DEFINE_TEST(test_archive_read_support)
 {
 	test_filter_or_format(archive_read_support_format_7zip);
@@ -517,4 +563,5 @@ DEFINE_TEST(test_archive_read_support)
 	test_warc();
 	test_string();
 	test_raw();
+	test_rar5();
 }
