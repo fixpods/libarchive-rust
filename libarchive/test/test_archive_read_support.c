@@ -425,6 +425,22 @@ test_string()
 	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
 
+static void
+test_raw()
+{
+	struct archive *a;
+	const char *reffile1 = "test_read_format_raw.data";
+	extract_reference_file(reffile1);
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_raw(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, reffile1, 512));
+	archive_test_archive_read_format_raw_read_data_skip(a);
+	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+}
+
 DEFINE_TEST(test_archive_read_support)
 {
 	test_filter_or_format(archive_read_support_format_7zip);
@@ -500,4 +516,5 @@ DEFINE_TEST(test_archive_read_support)
 	test_tar();
 	test_warc();
 	test_string();
+	test_raw();
 }
