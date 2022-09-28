@@ -1876,18 +1876,19 @@ unsafe extern "C" fn archive_read_format_lha_read_data(
 * lha->end_of_entry if it consumes all of the data.
 */
 unsafe extern "C" fn lha_read_data_none(
-    mut a: &mut archive_read,
-    mut buff: &mut *const libc::c_void,
-    mut size: &mut size_t,
-    mut offset: &mut int64_t,
+    mut a: *mut archive_read,
+    mut buff: *mut *const libc::c_void,
+    mut size: *mut size_t,
+    mut offset: *mut int64_t,
 ) -> libc::c_int {
-    let mut lha = unsafe { &mut *((*a.format).data as *mut lha) };
+    let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
+    let lha_safe = unsafe { &mut *lha };
     let mut bytes_avail: ssize_t = 0;
-    if lha.entry_bytes_remaining == 0 as libc::c_int as libc::c_long {
+    if lha_safe.entry_bytes_remaining == 0 as libc::c_int as libc::c_long {
         *buff = 0 as *const libc::c_void;
         *size = 0 as libc::c_int as size_t;
-        *offset = lha.entry_offset;
-        lha.end_of_entry = 1 as libc::c_int as libc::c_char;
+        *offset = lha_safe.entry_offset;
+        lha_safe.end_of_entry = 1 as libc::c_int as libc::c_char;
         return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
     }
     /*
@@ -1905,18 +1906,19 @@ unsafe extern "C" fn lha_read_data_none(
         );
         return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
     }
-    if bytes_avail > lha.entry_bytes_remaining {
-        bytes_avail = lha.entry_bytes_remaining
+    if bytes_avail > lha_safe.entry_bytes_remaining {
+        bytes_avail = lha_safe.entry_bytes_remaining
     }
-    lha.entry_crc_calculated = lha_crc16(lha.entry_crc_calculated, *buff, bytes_avail as size_t);
+    lha_safe.entry_crc_calculated =
+        lha_crc16(lha_safe.entry_crc_calculated, *buff, bytes_avail as size_t);
     *size = bytes_avail as size_t;
-    *offset = lha.entry_offset;
-    lha.entry_offset += bytes_avail;
-    lha.entry_bytes_remaining -= bytes_avail;
-    if lha.entry_bytes_remaining == 0 as libc::c_int as libc::c_long {
-        lha.end_of_entry = 1 as libc::c_int as libc::c_char
+    *offset = lha_safe.entry_offset;
+    lha_safe.entry_offset += bytes_avail;
+    lha_safe.entry_bytes_remaining -= bytes_avail;
+    if lha_safe.entry_bytes_remaining == 0 as libc::c_int as libc::c_long {
+        lha_safe.end_of_entry = 1 as libc::c_int as libc::c_char
     }
-    lha.entry_unconsumed = bytes_avail;
+    lha_safe.entry_unconsumed = bytes_avail;
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
@@ -1928,17 +1930,18 @@ unsafe extern "C" fn lha_read_data_none(
 * all of the data.
 */
 unsafe extern "C" fn lha_read_data_lzh(
-    mut a: &mut archive_read,
-    mut buff: &mut *const libc::c_void,
-    mut size: &mut size_t,
-    mut offset: &mut int64_t,
+    mut a: *mut archive_read,
+    mut buff: *mut *const libc::c_void,
+    mut size: *mut size_t,
+    mut offset: *mut int64_t,
 ) -> libc::c_int {
-    let mut lha = unsafe { &mut *((*a.format).data as *mut lha) };
+    let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
+    let lha_safe = unsafe { &mut *lha };
     let mut bytes_avail: ssize_t = 0;
     let mut r: libc::c_int = 0;
     /* If we haven't yet read any data, initialize the decompressor. */
-    if lha.decompress_init == 0 {
-        r = lzh_decode_init(&mut lha.strm, lha.method.as_mut_ptr());
+    if lha_safe.decompress_init == 0 {
+        r = lzh_decode_init(&mut lha_safe.strm, lha_safe.method.as_mut_ptr());
         if r == ARCHIVE_LHA_DEFINED_PARAM.archive_ok {
         } else if r == ARCHIVE_LHA_DEFINED_PARAM.archive_failed {
             /* Unsupported compression. */
@@ -1950,9 +1953,9 @@ unsafe extern "C" fn lha_read_data_lzh(
                 ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
                 b"Unsupported lzh compression method -%c%c%c-\x00" as *const u8
                     as *const libc::c_char,
-                lha.method[0 as libc::c_int as usize] as libc::c_int,
-                lha.method[1 as libc::c_int as usize] as libc::c_int,
-                lha.method[2 as libc::c_int as usize] as libc::c_int
+                lha_safe.method[0 as libc::c_int as usize] as libc::c_int,
+                lha_safe.method[1 as libc::c_int as usize] as libc::c_int,
+                lha_safe.method[2 as libc::c_int as usize] as libc::c_int
             );
             /* We know compressed size; just skip it. */
             archive_read_format_lha_read_data_skip(a);
@@ -1967,9 +1970,9 @@ unsafe extern "C" fn lha_read_data_lzh(
             return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
         }
         /* We've initialized decompression for this stream. */
-        lha.decompress_init = 1 as libc::c_int as libc::c_char;
-        lha.strm.avail_out = 0 as libc::c_int;
-        lha.strm.total_out = 0 as libc::c_int as int64_t
+        lha_safe.decompress_init = 1 as libc::c_int as libc::c_char;
+        lha_safe.strm.avail_out = 0 as libc::c_int;
+        lha_safe.strm.total_out = 0 as libc::c_int as int64_t
     }
     /*
      * Note: '1' here is a performance optimization.
@@ -1977,8 +1980,9 @@ unsafe extern "C" fn lha_read_data_lzh(
      * available bytes; asking for more than that forces the
      * decompressor to combine reads by copying data.
      */
-    lha.strm.next_in = __archive_read_ahead_safe(a, 1 as libc::c_int as size_t, &mut bytes_avail)
-        as *const libc::c_uchar;
+    lha_safe.strm.next_in =
+        __archive_read_ahead_safe(a, 1 as libc::c_int as size_t, &mut bytes_avail)
+            as *const libc::c_uchar;
     if bytes_avail <= 0 as libc::c_int as libc::c_long {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -1987,19 +1991,19 @@ unsafe extern "C" fn lha_read_data_lzh(
         );
         return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
     }
-    if bytes_avail > lha.entry_bytes_remaining {
-        bytes_avail = lha.entry_bytes_remaining
+    if bytes_avail > lha_safe.entry_bytes_remaining {
+        bytes_avail = lha_safe.entry_bytes_remaining
     }
-    lha.strm.avail_in = bytes_avail as libc::c_int;
-    lha.strm.total_in = 0 as libc::c_int as int64_t;
-    lha.strm.avail_out = 0 as libc::c_int;
+    lha_safe.strm.avail_in = bytes_avail as libc::c_int;
+    lha_safe.strm.total_in = 0 as libc::c_int as int64_t;
+    lha_safe.strm.avail_out = 0 as libc::c_int;
     r = lzh_decode(
-        &mut lha.strm,
-        (bytes_avail == lha.entry_bytes_remaining) as libc::c_int,
+        &mut lha_safe.strm,
+        (bytes_avail == lha_safe.entry_bytes_remaining) as libc::c_int,
     );
     if r == ARCHIVE_LHA_DEFINED_PARAM.archive_ok {
     } else if r == ARCHIVE_LHA_DEFINED_PARAM.archive_eof {
-        lha.end_of_entry = 1 as libc::c_int as libc::c_char
+        lha_safe.end_of_entry = 1 as libc::c_int as libc::c_char
     } else {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -2008,20 +2012,20 @@ unsafe extern "C" fn lha_read_data_lzh(
         );
         return ARCHIVE_LHA_DEFINED_PARAM.archive_failed;
     }
-    lha.entry_unconsumed = lha.strm.total_in;
-    lha.entry_bytes_remaining -= lha.strm.total_in;
-    if lha.strm.avail_out != 0 {
-        *offset = lha.entry_offset;
-        *size = lha.strm.avail_out as size_t;
-        *buff = lha.strm.ref_ptr as *const libc::c_void;
-        lha.entry_crc_calculated = lha_crc16(lha.entry_crc_calculated, *buff, *size);
-        lha.entry_offset =
-            (lha.entry_offset as libc::c_ulong).wrapping_add(*size) as int64_t as int64_t
+    lha_safe.entry_unconsumed = lha_safe.strm.total_in;
+    lha_safe.entry_bytes_remaining -= lha_safe.strm.total_in;
+    if lha_safe.strm.avail_out != 0 {
+        *offset = lha_safe.entry_offset;
+        *size = lha_safe.strm.avail_out as size_t;
+        *buff = lha_safe.strm.ref_ptr as *const libc::c_void;
+        lha_safe.entry_crc_calculated = lha_crc16(lha_safe.entry_crc_calculated, *buff, *size);
+        lha_safe.entry_offset =
+            (lha_safe.entry_offset as libc::c_ulong).wrapping_add(*size) as int64_t as int64_t
     } else {
-        *offset = lha.entry_offset;
+        *offset = lha_safe.entry_offset;
         *size = 0 as libc::c_int as size_t;
         *buff = 0 as *const libc::c_void;
-        if lha.end_of_entry != 0 {
+        if lha_safe.end_of_entry != 0 {
             return lha_end_of_entry(a);
         }
     }
@@ -2604,11 +2608,13 @@ unsafe extern "C" fn lzh_decode(mut strm: &mut lzh_stream, mut last: libc::c_int
     return r;
 }
 
-unsafe extern "C" fn lzh_emit_window(mut strm: &mut lzh_stream, mut s: size_t) {
-    let ds = unsafe { &mut *strm.ds };
-    strm.ref_ptr = ds.w_buff;
-    strm.avail_out = s as libc::c_int;
-    strm.total_out = (strm.total_out as libc::c_ulong).wrapping_add(s) as int64_t as int64_t;
+unsafe extern "C" fn lzh_emit_window(mut strm: *mut lzh_stream, mut s: size_t) {
+    let strm_safe = unsafe { &mut *strm };
+    let ds = unsafe { &mut *strm_safe.ds };
+    strm_safe.ref_ptr = ds.w_buff;
+    strm_safe.avail_out = s as libc::c_int;
+    strm_safe.total_out =
+        (strm_safe.total_out as libc::c_ulong).wrapping_add(s) as int64_t as int64_t;
 }
 
 /*
@@ -2632,11 +2638,12 @@ unsafe extern "C" fn lzh_emit_window(mut strm: &mut lzh_stream, mut s: size_t) {
  *    is dummy, not the file data.
  */
 unsafe extern "C" fn lzh_read_blocks(
-    mut strm: &mut lzh_stream,
+    mut strm: *mut lzh_stream,
     mut last: libc::c_int,
 ) -> libc::c_int {
+    let strm_safe = unsafe { &mut *strm };
     let mut current_block: u64;
-    let mut ds = unsafe { &mut *strm.ds };
+    let mut ds = unsafe { &mut *strm_safe.ds };
     let mut br = &mut ds.br;
     let mut c: libc::c_int = 0 as libc::c_int;
     let mut i: libc::c_int = 0;
@@ -2650,7 +2657,7 @@ unsafe extern "C" fn lzh_read_blocks(
              * in particular, there are no reference data at
              * the beginning of the decompression.
              */
-            if !(br.cache_avail >= 16 as libc::c_int || lzh_br_fillup(strm, br) != 0) {
+            if !(br.cache_avail >= 16 as libc::c_int || lzh_br_fillup(strm_safe, br) != 0) {
                 if last == 0 {
                     /* We need following data. */
                     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
@@ -2665,7 +2672,7 @@ unsafe extern "C" fn lzh_read_blocks(
                     break;
                 } else {
                     if ds.w_pos > 0 as libc::c_int {
-                        lzh_emit_window(strm, ds.w_pos as size_t);
+                        lzh_emit_window(strm_safe, ds.w_pos as size_t);
                         ds.w_pos = 0 as libc::c_int;
                         return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
                     }
@@ -2719,7 +2726,7 @@ unsafe extern "C" fn lzh_read_blocks(
              * position table. */
             {
                 if !(br.cache_avail >= ds.pt.len_bits
-                    || lzh_br_fillup(strm, br) != 0
+                    || lzh_br_fillup(strm_safe, br) != 0
                     || br.cache_avail >= ds.pt.len_bits)
                 {
                     if last != 0 {
@@ -2745,7 +2752,7 @@ unsafe extern "C" fn lzh_read_blocks(
                     /* Invalid data. */
                     /* There is no bitlen. */
                     if !(br.cache_avail >= ds.pt.len_bits
-                        || lzh_br_fillup(strm, br) != 0
+                        || lzh_br_fillup(strm_safe, br) != 0
                         || br.cache_avail >= ds.pt.len_bits)
                     {
                         if last != 0 {
@@ -2796,7 +2803,7 @@ unsafe extern "C" fn lzh_read_blocks(
             14809079967989167248 =>
             /* FALL THROUGH */
             {
-                ds.loop_0 = lzh_read_pt_bitlen(strm, ds.loop_0, 3 as libc::c_int); /* Invalid data. */
+                ds.loop_0 = lzh_read_pt_bitlen(strm_safe, ds.loop_0, 3 as libc::c_int); /* Invalid data. */
                 if ds.loop_0 < 3 as libc::c_int {
                     if ds.loop_0 < 0 as libc::c_int || last != 0 {
                         break;
@@ -2805,7 +2812,7 @@ unsafe extern "C" fn lzh_read_blocks(
                     ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_3;
                     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
                 } else if !(br.cache_avail >= 2 as libc::c_int
-                    || lzh_br_fillup(strm, br) != 0
+                    || lzh_br_fillup(strm_safe, br) != 0
                     || br.cache_avail >= 2 as libc::c_int)
                 {
                     /* There are some null in bitlen of the literal. */
@@ -2846,7 +2853,7 @@ unsafe extern "C" fn lzh_read_blocks(
             11402235509028400542 =>
             /* FALL THROUGH */
             {
-                ds.loop_0 = lzh_read_pt_bitlen(strm, ds.loop_0, ds.pt.len_avail); /* Invalid data. */
+                ds.loop_0 = lzh_read_pt_bitlen(strm_safe, ds.loop_0, ds.pt.len_avail); /* Invalid data. */
                 if ds.loop_0 < ds.pt.len_avail {
                     if ds.loop_0 < 0 as libc::c_int || last != 0 {
                         break;
@@ -2872,7 +2879,7 @@ unsafe extern "C" fn lzh_read_blocks(
             /* FALL THROUGH */
             {
                 if !(br.cache_avail >= ds.lt.len_bits
-                    || lzh_br_fillup(strm, br) != 0
+                    || lzh_br_fillup(strm_safe, br) != 0
                     || br.cache_avail >= ds.lt.len_bits)
                 {
                     if last != 0 {
@@ -2898,7 +2905,7 @@ unsafe extern "C" fn lzh_read_blocks(
                     /* Invalid data */
                     /* There is no bitlen. */
                     if !(br.cache_avail >= ds.lt.len_bits
-                        || lzh_br_fillup(strm, br) != 0
+                        || lzh_br_fillup(strm_safe, br) != 0
                         || br.cache_avail >= ds.lt.len_bits)
                     {
                         if last != 0 {
@@ -2944,7 +2951,7 @@ unsafe extern "C" fn lzh_read_blocks(
                 i = ds.loop_0; /* Truncated data.*/
                 while i < ds.lt.len_avail {
                     if !(br.cache_avail >= ds.pt.max_bits
-                        || lzh_br_fillup(strm, br) != 0
+                        || lzh_br_fillup(strm_safe, br) != 0
                         || br.cache_avail >= ds.pt.max_bits)
                     {
                         if last != 0 {
@@ -2990,7 +2997,7 @@ unsafe extern "C" fn lzh_read_blocks(
                             }; /* Invalid data */
                             if !(br.cache_avail
                                 >= unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int + n
-                                || lzh_br_fillup(strm, br) != 0
+                                || lzh_br_fillup(strm_safe, br) != 0
                                 || br.cache_avail
                                     >= unsafe { *ds.pt.bitlen.offset(c as isize) } as libc::c_int
                                         + n)
@@ -3050,11 +3057,12 @@ unsafe extern "C" fn lzh_read_blocks(
 }
 
 unsafe extern "C" fn lzh_decode_blocks(
-    mut strm: &mut lzh_stream,
+    mut strm: *mut lzh_stream,
     mut last: libc::c_int,
 ) -> libc::c_int {
+    let strm_safe = unsafe { &mut *strm };
     let mut current_block: u64;
-    let mut ds = unsafe { &mut *strm.ds };
+    let mut ds = unsafe { &mut *strm_safe.ds };
     let mut bre: lzh_br = ds.br;
     let mut lt = &mut ds.lt;
     let mut pt = &mut ds.pt;
@@ -3104,7 +3112,7 @@ unsafe extern "C" fn lzh_decode_blocks(
                      * as much as we need after lzh_br_read_ahead()
                      * failed. */
                     if !(bre.cache_avail >= lt_max_bits
-                        || lzh_br_fillup(strm, &mut bre) != 0
+                        || lzh_br_fillup(strm_safe, &mut bre) != 0
                         || bre.cache_avail >= lt_max_bits)
                     {
                         if last == 0 {
@@ -3164,7 +3172,7 @@ unsafe extern "C" fn lzh_decode_blocks(
                             continue;
                         }
                         w_pos = 0 as libc::c_int;
-                        lzh_emit_window(strm, w_size as size_t);
+                        lzh_emit_window(strm_safe, w_size as size_t);
                         current_block = 13987783605104790504;
                         break 's_43;
                     }
@@ -3177,7 +3185,7 @@ unsafe extern "C" fn lzh_decode_blocks(
                          * the position. */
                         let mut p: libc::c_int = copy_pos - 1 as libc::c_int; /* Truncated data.*/
                         if !(bre.cache_avail >= p
-                            || lzh_br_fillup(strm, &mut bre) != 0
+                            || lzh_br_fillup(strm_safe, &mut bre) != 0
                             || bre.cache_avail >= p)
                         {
                             if last != 0 {
@@ -3210,7 +3218,7 @@ unsafe extern "C" fn lzh_decode_blocks(
                  */
                 {
                     if !(bre.cache_avail >= pt_max_bits
-                        || lzh_br_fillup(strm, &mut bre) != 0
+                        || lzh_br_fillup(strm_safe, &mut bre) != 0
                         || bre.cache_avail >= pt_max_bits)
                     {
                         if last == 0 {
@@ -3295,7 +3303,7 @@ unsafe extern "C" fn lzh_decode_blocks(
                     w_pos += l;
                     if w_pos == w_size {
                         w_pos = 0 as libc::c_int;
-                        lzh_emit_window(strm, w_size as size_t);
+                        lzh_emit_window(strm_safe, w_size as size_t);
                         if copy_len <= l {
                             state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal
                         } else {
@@ -3763,19 +3771,20 @@ unsafe extern "C" fn lzh_make_huffman_table(mut hf: &mut huffman) -> libc::c_int
 }
 
 unsafe extern "C" fn lzh_decode_huffman_tree(
-    mut hf: &mut huffman,
+    mut hf: *mut huffman,
     mut rbits: libc::c_uint,
     mut c: libc::c_int,
 ) -> libc::c_int {
+    let hf_safe = unsafe { &mut *hf };
     let mut ht: *mut htree_t = 0 as *mut htree_t;
     let mut extlen: libc::c_int = 0;
-    ht = hf.tree;
-    extlen = hf.shift_bits;
-    while c >= hf.len_avail {
-        c -= hf.len_avail;
+    ht = hf_safe.tree;
+    extlen = hf_safe.shift_bits;
+    while c >= hf_safe.len_avail {
+        c -= hf_safe.len_avail;
         let fresh17 = extlen;
         extlen = extlen - 1;
-        if fresh17 <= 0 as libc::c_int || c >= hf.tree_used {
+        if fresh17 <= 0 as libc::c_int || c >= hf_safe.tree_used {
             return 0 as libc::c_int;
         }
         if rbits & (1 as libc::c_uint) << extlen != 0 {
@@ -3802,4 +3811,221 @@ unsafe extern "C" fn lzh_decode_huffman(
     }
     /* This bit pattern needs to be found out at a huffman tree. */
     return lzh_decode_huffman_tree(hf, rbits, c);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_support_format_lha() {
+    let mut archive_read: *mut archive_read = 0 as *mut archive_read;
+    archive_read = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read>() as libc::c_ulong,
+        )
+    } as *mut archive_read;
+    (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
+    (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
+    archive_read_support_format_lha(&mut (*archive_read).archive as *mut archive);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_lha_check_header_format(mut h: *const libc::c_void) {
+    lha_check_header_format(h);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_archive_read_format_lha_options(
+    mut _a: *mut archive,
+    mut key: *const libc::c_char,
+    mut val: *const libc::c_char,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    archive_read_format_lha_options(a, key, val);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_lha_skip_sfx(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    lha_skip_sfx(a);
+    let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
+    archive_read_filter = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read_filter>() as libc::c_ulong,
+        )
+    } as *mut archive_read_filter;
+    (*a).filter = archive_read_filter as *mut archive_read_filter;
+    (*archive_read_filter).fatal = 'a' as libc::c_char;
+    lha_skip_sfx(a);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_lha_read_data_none(mut _a: *mut archive) {
+    let mut size: size_t = 2;
+    let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
+    let mut offset: int64_t = 1;
+    let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
+    let mut buff: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
+    let mut buff2: *mut *const libc::c_void = unsafe {
+        &buff as *const *mut libc::c_void as *mut *mut libc::c_void as *mut *const libc::c_void
+    };
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut lha: *mut lha = 0 as *mut lha;
+    lha = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lha>() as libc::c_ulong,
+        )
+    } as *mut lha;
+    (*lha).entry_bytes_remaining = 0;
+    (*(*a).format).data = lha as *mut libc::c_void;
+    lha_read_data_none(a, buff2, size2, offset2);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_lha_read_data_lzh(mut _a: *mut archive) {
+    let mut size: size_t = 2;
+    let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
+    let mut offset: int64_t = 1;
+    let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
+    let mut buff: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
+    let mut buff2: *mut *const libc::c_void = unsafe {
+        &buff as *const *mut libc::c_void as *mut *mut libc::c_void as *mut *const libc::c_void
+    };
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut lha: *mut lha = 0 as *mut lha;
+    lha = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lha>() as libc::c_ulong,
+        )
+    } as *mut lha;
+    (*lha).decompress_init = 0;
+    (*lha).method[0] = 'a' as libc::c_char;
+    (*(*a).format).data = lha as *mut libc::c_void;
+    lha_read_data_lzh(a, buff2, size2, offset2);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_lzh_emit_window() {
+    let mut lzh_stream: *mut lzh_stream = 0 as *mut lzh_stream;
+    lzh_stream = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzh_stream>() as libc::c_ulong,
+        )
+    } as *mut lzh_stream;
+    let mut lzh_dec: *mut lzh_dec = 0 as *mut lzh_dec;
+    lzh_dec = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzh_dec>() as libc::c_ulong,
+        )
+    } as *mut lzh_dec;
+    (*lzh_stream).ds = lzh_dec as *mut lzh_dec;
+    (*lzh_dec).w_buff = 1 as *mut libc::c_uchar;
+    lzh_emit_window(lzh_stream, 1);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_lzh_decode_huffman_tree() {
+    let mut huffman: *mut huffman = 0 as *mut huffman;
+    huffman = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<huffman>() as libc::c_ulong,
+        )
+    } as *mut huffman;
+    let mut htree_t: *mut htree_t = 0 as *mut htree_t;
+    htree_t = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<htree_t>() as libc::c_ulong,
+        )
+    } as *mut htree_t;
+    (*huffman).tree = htree_t as *mut htree_t;
+    (*huffman).shift_bits = 1;
+    (*huffman).len_avail = 1;
+    (*huffman).tree_used = 2;
+    lzh_decode_huffman_tree(huffman, 1, 2);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_truncated_error(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    truncated_error(a);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_lzh_decode_blocks() {
+    let mut strm: *mut lzh_stream = 0 as *mut lzh_stream;
+    strm = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzh_stream>() as libc::c_ulong,
+        )
+    } as *mut lzh_stream;
+    let mut lzh_dec: *mut lzh_dec = 0 as *mut lzh_dec;
+    lzh_dec = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzh_dec>() as libc::c_ulong,
+        )
+    } as *mut lzh_dec;
+    (*strm).ds = lzh_dec as *mut lzh_dec;
+    (*lzh_dec).state = 10;
+    (*lzh_dec).br.cache_avail = -20;
+    (*lzh_dec).copy_pos = 2;
+    lzh_decode_blocks(strm, 0);
+    (*lzh_dec).state = 11;
+    lzh_decode_blocks(strm, 1);
+    lzh_decode_blocks(strm, 0);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_lzh_read_blocks() {
+    let mut strm: *mut lzh_stream = 0 as *mut lzh_stream;
+    strm = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzh_stream>() as libc::c_ulong,
+        )
+    } as *mut lzh_stream;
+    let mut lzh_dec: *mut lzh_dec = 0 as *mut lzh_dec;
+    lzh_dec = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzh_dec>() as libc::c_ulong,
+        )
+    } as *mut lzh_dec;
+    (*strm).ds = lzh_dec as *mut lzh_dec;
+    (*lzh_dec).pt.len_bits = 1;
+    (*lzh_dec).lt.len_bits = 1;
+    (*lzh_dec).pt.max_bits = 1;
+    (*lzh_dec).state = 1;
+    (*lzh_dec).br.cache_avail = -20;
+    (*lzh_dec).copy_pos = 2;
+    lzh_read_blocks(strm, 0);
+    lzh_read_blocks(strm, 1);
+    (*lzh_dec).state = 2;
+    lzh_read_blocks(strm, 1);
+    lzh_read_blocks(strm, 0);
+    (*lzh_dec).state = 3;
+    (*lzh_dec).loop_0 = 3;
+    lzh_read_blocks(strm, 1);
+    lzh_read_blocks(strm, 0);
+    (*lzh_dec).state = 4;
+    (*lzh_dec).pt.len_avail = 10000;
+    lzh_read_blocks(strm, 1);
+    lzh_read_blocks(strm, 0);
+    (*lzh_dec).state = 5;
+    lzh_read_blocks(strm, 1);
+    lzh_read_blocks(strm, 0);
+    (*lzh_dec).state = 6;
+    (*lzh_dec).lt.len_avail = 0;
+    lzh_read_blocks(strm, 1);
+    lzh_read_blocks(strm, 0);
+    (*lzh_dec).state = 7;
+    (*lzh_dec).lt.len_avail = 4;
+    lzh_read_blocks(strm, 1);
+    lzh_read_blocks(strm, 0);
 }

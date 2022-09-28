@@ -814,3 +814,68 @@ unsafe extern "C" fn ar_atol10(mut p: *const libc::c_char, mut char_cnt: libc::c
     }
     return l;
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_format_ar_read_data(
+    mut _a: *mut archive,
+    mut buff: *mut *const libc::c_void,
+    mut size: *mut size_t,
+    mut offset: *mut int64_t,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut ar: *mut ar = 0 as *mut ar;
+    ar = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<ar>() as libc::c_ulong,
+        )
+    } as *mut ar;
+    (*ar).entry_bytes_remaining = 0 as int64_t;
+    (*ar).entry_padding = 2147483647 as int64_t;
+    (*(*a).format).data = ar as *mut libc::c_void;
+    archive_read_format_ar_read_data(a, buff, size, offset);
+    (*ar).entry_bytes_remaining = 1 as int64_t;
+    let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
+    archive_read_filter = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read_filter>() as libc::c_ulong,
+        )
+    } as *mut archive_read_filter;
+    (*archive_read_filter).client_avail = 10000 as size_t;
+    (*archive_read_filter).end_of_file = 'a' as libc::c_char;
+    archive_read_format_ar_read_data(a, buff, size, offset);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_support_format_ar() {
+    let mut archive_read: *mut archive_read = 0 as *mut archive_read;
+    archive_read = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read>() as libc::c_ulong,
+        )
+    } as *mut archive_read;
+    (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
+    (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
+    archive_read_support_format_ar(&mut (*archive_read).archive as *mut archive);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test__ar_read_header(
+    mut _a: *mut archive,
+    mut entry: *mut archive_entry,
+    mut h: *const libc::c_char,
+    mut unconsumed: *mut size_t,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    (*a).archive.archive_format = ARCHIVE_AR_DEFINED_PARAM.archive_format_ar;
+    let mut ar: *mut ar = 0 as *mut ar;
+    ar = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<ar>() as libc::c_ulong,
+        )
+    } as *mut ar;
+    _ar_read_header(a, entry, ar, h, unconsumed);
+}

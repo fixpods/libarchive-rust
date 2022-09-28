@@ -4293,3 +4293,238 @@ pub unsafe extern "C" fn archive_read_support_format_rar5(mut _a: *mut archive) 
     }
     return ret;
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_rar5_empty_function(mut _a: *mut archive) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut res1: libc::c_int = rar5_capabilities(a);
+    let mut res2: libc::c_int = rar5_has_encrypted_entries(a);
+    let mut res3: libc::c_int = rar5_seek_data(a, 0, 0) as libc::c_int;
+    return res1 + res2 + res3;
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_circular_memcpy(
+    mut dst: *mut uint8_t,
+    mut window: *mut uint8_t,
+    mask: uint64_t,
+    mut start: int64_t,
+    mut end: int64_t,
+) {
+    circular_memcpy(dst, window, mask, start, end);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_rar5_read_data(
+    mut _a: *mut archive,
+    mut buff: *mut *const libc::c_void,
+    mut size: *mut size_t,
+    mut offset: *mut int64_t,
+    mut flag: libc::c_int,
+) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar5: *mut rar5 = 0 as *mut rar5;
+    rar5 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar5>() as libc::c_ulong,
+        )
+    } as *mut rar5;
+    if flag as libc::c_int != 0 as libc::c_int {
+        (*rar5).skip_mode = 0;
+        (*rar5).cstate.last_write_ptr = 1;
+        (*rar5).file.unpacked_size = 0;
+    };
+    (*(*a).format).data = rar5 as *mut libc::c_void;
+    return rar5_read_data(a, buff, size, offset);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_do_unpack(
+    mut _a: *mut archive,
+    mut buff: *mut *const libc::c_void,
+    mut size: *mut size_t,
+    mut offset: *mut int64_t,
+) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar5: *mut rar5 = 0 as *mut rar5;
+    rar5 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar5>() as libc::c_ulong,
+        )
+    } as *mut rar5;
+    (*rar5).cstate.method = 6;
+    return do_unpack(a, rar5, buff, size, offset);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_run_filter(
+    mut _a: *mut archive,
+    mut flag: libc::c_int,
+) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar5: *mut rar5 = 0 as *mut rar5;
+    rar5 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar5>() as libc::c_ulong,
+        )
+    } as *mut rar5;
+    let mut flt: *mut filter_info = 0 as *mut filter_info;
+    flt = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<filter_info>() as libc::c_ulong,
+        )
+    } as *mut filter_info;
+    (*(*a).format).data = rar5 as *mut libc::c_void;
+    return run_filter(a, flt);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_push_data(
+    mut _a: *mut archive,
+    mut buf: *const uint8_t,
+    mut idx_begin: int64_t,
+    mut idx_end: int64_t,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar5: *mut rar5 = 0 as *mut rar5;
+    rar5 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar5>() as libc::c_ulong,
+        )
+    } as *mut rar5;
+    (*rar5).cstate.window_mask = 1;
+    (*rar5).cstate.solid_offset = 0;
+    (*rar5).cstate.last_write_ptr = 0;
+    (*rar5).cstate.solid_offset = 0;
+    (*rar5).cstate.window_size = 1;
+    return push_data(a, rar5, buf, idx_begin, idx_end);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_process_head_file(
+    mut _a: *mut archive,
+    mut e: *mut archive_entry,
+    mut block_flags: size_t,
+) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar5: *mut rar5 = 0 as *mut rar5;
+    rar5 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar5>() as libc::c_ulong,
+        )
+    } as *mut rar5;
+    return process_head_file(a, rar5, e, block_flags);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_parse_htime_item(
+    mut _a: *mut archive,
+    mut unix_time: libc::c_char,
+    mut where_0: *mut uint64_t,
+    mut extra_data_size: *mut ssize_t,
+) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
+    archive_read_filter = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read_filter>() as libc::c_ulong,
+        )
+    } as *mut archive_read_filter;
+    (*archive_read_filter).fatal = 'a' as libc::c_char;
+    return parse_htime_item(a, unix_time, where_0, extra_data_size);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_init_unpack() {
+    let mut rar5: *mut rar5 = 0 as *mut rar5;
+    rar5 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar5>() as libc::c_ulong,
+        )
+    } as *mut rar5;
+    (*rar5).cstate.window_size = 0;
+    init_unpack(rar5);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_do_unstore_file(
+    mut _a: *mut archive,
+    mut buf: *mut *const libc::c_void,
+    mut size: *mut size_t,
+    mut offset: *mut int64_t,
+    mut bytes_remaining: libc::c_int,
+) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar5: *mut rar5 = 0 as *mut rar5;
+    rar5 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar5>() as libc::c_ulong,
+        )
+    } as *mut rar5;
+    (*rar5).file.bytes_remaining = bytes_remaining as ssize_t;
+    return do_unstore_file(a, rar5, buf, size, offset);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_merge_block(
+    mut _a: *mut archive,
+    mut block_size: ssize_t,
+    mut p: *mut *const uint8_t,
+    mut merge_mode: libc::c_int,
+) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar5: *mut rar5 = 0 as *mut rar5;
+    rar5 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar5>() as libc::c_ulong,
+        )
+    } as *mut rar5;
+    (*rar5).merge_mode = merge_mode;
+    (*(*a).format).data = rar5 as *mut libc::c_void;
+    return merge_block(a, block_size, p);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_parse_tables(
+    mut _a: *mut archive,
+    mut p: *const uint8_t,
+) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut rar5: *mut rar5 = 0 as *mut rar5;
+    rar5 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<rar5>() as libc::c_ulong,
+        )
+    } as *mut rar5;
+    (*rar5).cstate.cur_block_size = 0;
+    return parse_tables(a, rar5, p);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_parse_block_header(
+    mut _a: *mut archive,
+    mut p: *const uint8_t,
+    mut block_size: *mut ssize_t,
+) -> libc::c_int {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut hdr: *mut compressed_block_header = 0 as *mut compressed_block_header;
+    hdr = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<compressed_block_header>() as libc::c_ulong,
+        )
+    } as *mut compressed_block_header;
+    (*hdr).block_flags_u8 = 56;
+    return parse_block_header(a, p, block_size, hdr);
+}

@@ -47,6 +47,102 @@ __FBSDID("$FreeBSD$");
 	} while (0)
 
 static void
+test_archive_unicode_to_utf16be(void)
+{
+	size_t size_0 = archive_test_unicode_to_utf16be("", 0, 0x0000);
+	assertEqualInt(size_0, 0);
+	size_t size_1 = archive_test_unicode_to_utf16be("", 3, 0x10000);
+	assertEqualInt(size_1, 0);
+	char *p = (char *)malloc(3*sizeof(char));
+	size_t size_2 = archive_test_unicode_to_utf16be(p, 4, 0x10000);
+	assertEqualInt(size_2, 4);
+	size_t size_3 = archive_test_unicode_to_utf16be(p, 2, 0x000a);
+	assertEqualInt(size_3, 2);
+	free(p);
+}
+
+static void
+test_archive_unicode_to_utf16le(void)
+{
+	size_t size_0 = archive_test_unicode_to_utf16le("", 0, 0x0000);
+	assertEqualInt(size_0, 0);
+	size_t size_1 = archive_test_unicode_to_utf16le("", 3, 0x10000);
+	assertEqualInt(size_1, 0);
+	char *p = (char *)malloc(3*sizeof(char));
+	size_t size_2 = archive_test_unicode_to_utf16le(p, 4, 0x10000);
+	assertEqualInt(size_2, 4);
+	size_t size_3 = archive_test_unicode_to_utf16le(p, 2, 0x000a);
+	assertEqualInt(size_3, 2);
+	free(p);
+}
+
+static void
+test_archive_setup_converter(void)
+{
+	archive_test_setup_converter();
+}
+
+static void
+test_archive_iconv_strncat_in_locale(void)
+{
+	archive_test_iconv_strncat_in_locale("tests",4);
+}
+
+static void
+test_archive_mstring_update_utf8(void)
+{
+	struct archive_mstring *aes = (struct archive_mstring *)calloc(1, sizeof(*aes));
+	int res = archive_mstring_update_utf8(NULL, aes, NULL);
+	assertEqualInt(res, 0);
+}
+
+static void
+test_archive_mstring_copy_wcs_len(void)
+{
+	struct archive_mstring *aes = (struct archive_mstring *)calloc(1, sizeof(*aes));
+	int res = archive_mstring_copy_wcs_len(aes, NULL, 0);
+	assertEqualInt(res, 0);
+}
+
+static void
+test_archive_mstring_copy_utf8(void)
+{
+	struct archive_mstring *aes = (struct archive_mstring *)calloc(1, sizeof(*aes));
+	int res = archive_mstring_copy_utf8(aes, NULL);
+	assertEqualInt(res, 0);
+}
+
+static void
+test_archive_mstring_copy_mbs_len(void)
+{
+	struct archive_mstring *aes = (struct archive_mstring *)calloc(1, sizeof(*aes));
+	int res = archive_mstring_copy_mbs_len(aes, NULL, 0);
+	assertEqualInt(res, 0);
+}
+
+static void
+test_archive_string_normalize_D(void)
+{
+	archive_test_archive_string_normalize_D("", 0);
+}
+
+static int
+test_archive_utf16_to_unicode(void)
+{
+	uint32_t *pwc = (uint32_t *)calloc(1, sizeof(*pwc));
+	int res_1 = archive_test_utf16_to_unicode(pwc, "a", 1, 0);
+	assertEqualInt(res_1, -1);
+	char chs_2[3] = {(char)475, (char)475};
+	const char *s = chs_2;
+	int res_2 = archive_test_utf16_to_unicode(pwc, s, 2, 0);
+	assertEqualInt(res_2, -2);
+	char chs_3[3] = {(char)477, (char)477};
+	s = chs_3;
+	int res_3 = archive_test_utf16_to_unicode(pwc, s, 2, 0);
+	assertEqualInt(res_2, -2);
+}
+
+static void
 test_archive_string_ensure(void)
 {
 	struct archive_string s;
@@ -356,6 +452,18 @@ test_archive_string_sprintf(void)
 
 DEFINE_TEST(test_archive_string)
 {
+	test_archive_unicode_to_utf16be();
+	test_archive_unicode_to_utf16le();
+	test_archive_setup_converter();
+	// #if HAVE_ICONV
+	// test_archive_iconv_strncat_in_locale();
+	// #endif
+	test_archive_mstring_update_utf8();
+	test_archive_mstring_copy_wcs_len();
+	test_archive_mstring_copy_utf8();
+	test_archive_mstring_copy_mbs_len();
+	test_archive_string_normalize_D();
+	test_archive_utf16_to_unicode();
 	test_archive_string_ensure();
 	test_archive_strcat();
 	test_archive_strappend_char();

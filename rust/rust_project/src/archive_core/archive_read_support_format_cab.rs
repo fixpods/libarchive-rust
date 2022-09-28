@@ -4672,3 +4672,410 @@ unsafe extern "C" fn lzx_decode_huffman(
     }
     return 0 as libc::c_int;
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_cab_skip_sfx(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    cab_skip_sfx(a);
+    let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
+    archive_read_filter = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read_filter>() as libc::c_ulong,
+        )
+    } as *mut archive_read_filter;
+    (*archive_read_filter).fatal = 'a' as libc::c_char;
+    (*a).filter = archive_read_filter as *mut archive_read_filter;
+    cab_skip_sfx(a);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_lzx_br_fixup() {
+    let mut lzx_stream: *mut lzx_stream = 0 as *mut lzx_stream;
+    lzx_stream = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzx_stream>() as libc::c_ulong,
+        )
+    } as *mut lzx_stream;
+    let mut lzx_br: *mut lzx_br = 0 as *mut lzx_br;
+    lzx_br = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzx_br>() as libc::c_ulong,
+        )
+    } as *mut lzx_br;
+    (*lzx_stream).avail_in = 1 as int64_t;
+    (*lzx_br).have_odd = '1' as libc::c_char;
+    (*lzx_br).cache_avail = 1 as libc::c_int;
+    lzx_br_fixup(lzx_stream, lzx_br);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_lzx_read_blocks() {
+    let mut strm: *mut lzx_stream = 0 as *mut lzx_stream;
+    strm = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzx_stream>() as libc::c_ulong,
+        )
+    } as *mut lzx_stream;
+    let mut lzx_dec: *mut lzx_dec = 0 as *mut lzx_dec;
+    lzx_dec = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzx_dec>() as libc::c_ulong,
+        )
+    } as *mut lzx_dec;
+    (*lzx_dec).br.cache_avail = 0 as libc::c_int;
+    (*lzx_dec).state = ARCHIVE_CAB_DEFINED_PARAM.st_copy_uncomp1;
+    (*lzx_dec).block_bytes_avail = 20 as size_t;
+    (*strm).avail_out = 1 as int64_t;
+    (*strm).avail_in = 0 as int64_t;
+    (*strm).ds = lzx_dec as *mut lzx_dec;
+    lzx_read_blocks(strm, 1);
+    lzx_read_blocks(strm, 0);
+    (*lzx_dec).block_bytes_avail = 4 as size_t;
+    (*strm).avail_out = 2 as int64_t;
+    (*strm).avail_in = 1 as int64_t;
+    let mut p1: [libc::c_uchar; 4] = [
+        '1' as i32 as libc::c_uchar,
+        '2' as i32 as libc::c_uchar,
+        '3' as i32 as libc::c_uchar,
+        '4' as i32 as libc::c_uchar,
+    ];
+    let mut p2: [libc::c_uchar; 4] = [
+        '1' as i32 as libc::c_uchar,
+        '2' as i32 as libc::c_uchar,
+        '3' as i32 as libc::c_uchar,
+        '4' as i32 as libc::c_uchar,
+    ];
+    (*strm).next_out =
+        &p1 as *const [libc::c_uchar; 4] as *mut [libc::c_uchar; 4] as *mut libc::c_uchar;
+    (*strm).next_in =
+        &p2 as *const [libc::c_uchar; 4] as *mut [libc::c_uchar; 4] as *const libc::c_uchar;
+    let mut p: [libc::c_uchar; 4] = [
+        '1' as i32 as libc::c_uchar,
+        '2' as i32 as libc::c_uchar,
+        '3' as i32 as libc::c_uchar,
+        '4' as i32 as libc::c_uchar,
+    ];
+    (*lzx_dec).w_buff =
+        &p as *const [libc::c_uchar; 4] as *mut [libc::c_uchar; 4] as *mut libc::c_uchar;
+    (*lzx_dec).w_pos = 1 as libc::c_int;
+    (*lzx_dec).w_size = 4 as libc::c_int;
+    (*lzx_dec).w_mask = 1 as libc::c_int;
+    (*strm).ds = lzx_dec as *mut lzx_dec;
+    lzx_read_blocks(strm, 1);
+    (*lzx_dec).state = ARCHIVE_CAB_DEFINED_PARAM.st_copy_uncomp2;
+    (*lzx_dec).block_size = 1 as size_t;
+    (*strm).avail_in = 0 as int64_t;
+    (*strm).ds = lzx_dec as *mut lzx_dec;
+    lzx_read_blocks(strm, 1);
+    (*strm).avail_in = 1 as int64_t;
+    (*strm).ds = lzx_dec as *mut lzx_dec;
+    lzx_read_blocks(strm, 1);
+    (*lzx_dec).block_size = 2 as size_t;
+    (*strm).ds = lzx_dec as *mut lzx_dec;
+    lzx_read_blocks(strm, 1);
+    (*lzx_dec).state = ARCHIVE_CAB_DEFINED_PARAM.st_rd_r2;
+    (*lzx_dec).br.cache_avail = 33 as libc::c_int;
+    (*strm).ds = lzx_dec as *mut lzx_dec;
+    lzx_read_blocks(strm, 1);
+    (*lzx_dec).br.cache_avail = 17 as libc::c_int;
+    (*strm).ds = lzx_dec as *mut lzx_dec;
+    lzx_read_blocks(strm, 1);
+    (*lzx_dec).br.cache_avail = 15 as libc::c_int;
+    (*lzx_dec).rbytes_avail = 2 as libc::c_int;
+    (*lzx_dec).br.have_odd = 'a' as libc::c_char;
+    (*strm).ds = lzx_dec as *mut lzx_dec;
+    lzx_read_blocks(strm, 1);
+    (*lzx_dec).state = ARCHIVE_CAB_DEFINED_PARAM.st_rd_r0;
+    lzx_read_blocks(strm, 1);
+    (*lzx_dec).state = ARCHIVE_CAB_DEFINED_PARAM.st_rd_r1;
+    lzx_read_blocks(strm, 1);
+    (*lzx_dec).state = ARCHIVE_CAB_DEFINED_PARAM.st_rd_alignment;
+    (*strm).ds = lzx_dec as *mut lzx_dec;
+    lzx_read_blocks(strm, 1);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_lzx_br_fillup() {
+    let mut lzx_stream: *mut lzx_stream = 0 as *mut lzx_stream;
+    lzx_stream = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzx_stream>() as libc::c_ulong,
+        )
+    } as *mut lzx_stream;
+    let mut lzx_br: *mut lzx_br = 0 as *mut lzx_br;
+    lzx_br = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<lzx_br>() as libc::c_ulong,
+        )
+    } as *mut lzx_br;
+    (*lzx_br).cache_avail = 1 as libc::c_int;
+    (*lzx_stream).avail_in = 1 as int64_t;
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_support_format_cab() {
+    let mut archive_read: *mut archive_read = 0 as *mut archive_read;
+    archive_read = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read>() as libc::c_ulong,
+        )
+    } as *mut archive_read;
+    (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
+    (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
+    archive_read_support_format_cab(&mut (*archive_read).archive as *mut archive);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_format_cab_options(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut cab: *mut cab = 0 as *mut cab;
+    cab = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cab>() as libc::c_ulong,
+        )
+    } as *mut cab;
+    (*(*a).format).data = cab as *mut libc::c_void;
+    archive_read_format_cab_options(
+        a,
+        b"hdrcharset\x00" as *const u8 as *const libc::c_char,
+        b"h\x00" as *const u8 as *const libc::c_char,
+    );
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_cab_read_data(mut _a: *mut archive) {
+    let mut size: size_t = 0;
+    let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
+    let mut offset: int64_t = 0;
+    let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
+    let mut buff: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
+    let mut buff2: *mut *const libc::c_void = unsafe {
+        &buff as *const *mut libc::c_void as *mut *mut libc::c_void as *mut *const libc::c_void
+    };
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut cab: *mut cab = 0 as *mut cab;
+    cab = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cab>() as libc::c_ulong,
+        )
+    } as *mut cab;
+    (*cab).entry_bytes_remaining = 0 as int64_t;
+    (*(*a).format).data = cab as *mut libc::c_void;
+    cab_read_data(a, buff2, size2, offset2);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_cab_consume_cfdata(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut cab: *mut cab = 0 as *mut cab;
+    cab = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cab>() as libc::c_ulong,
+        )
+    } as *mut cab;
+    let mut cffolder: *mut cffolder = 0 as *mut cffolder;
+    cffolder = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cffolder>() as libc::c_ulong,
+        )
+    } as *mut cffolder;
+    let mut cffile: *mut cffile = 0 as *mut cffile;
+    cffile = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cffile>() as libc::c_ulong,
+        )
+    } as *mut cffile;
+    (*cffile).folder = 0xFFFD;
+    (*cab).entry_cffile = cffile;
+    (*cffolder).comptype = 0x0000;
+    (*cab).entry_cffolder = cffolder;
+    let mut cfdata: *mut cfdata = 0 as *mut cfdata;
+    cfdata = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cfdata>() as libc::c_ulong,
+        )
+    } as *mut cfdata;
+    (*cab).entry_cfdata = cfdata;
+    (*cfdata).unconsumed = 0;
+    (*cfdata).compressed_size = 1;
+    (*cfdata).uncompressed_bytes_remaining = 10;
+    (*(*a).format).data = cab as *mut libc::c_void;
+    cab_consume_cfdata(a, 20);
+    (*cfdata).uncompressed_bytes_remaining = 40;
+    cab_consume_cfdata(a, 20);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_format_cab_read_data(mut _a: *mut archive) {
+    let mut size: size_t = 0;
+    let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
+    let mut offset: int64_t = 0;
+    let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
+    let mut buff: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
+    let mut buff2: *mut *const libc::c_void = unsafe {
+        &buff as *const *mut libc::c_void as *mut *mut libc::c_void as *mut *const libc::c_void
+    };
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut cab: *mut cab = 0 as *mut cab;
+    cab = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cab>() as libc::c_ulong,
+        )
+    } as *mut cab;
+    (*(*a).format).data = cab as *mut libc::c_void;
+    let mut cffile: *mut cffile = 0 as *mut cffile;
+    cffile = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cffile>() as libc::c_ulong,
+        )
+    } as *mut cffile;
+    (*cffile).folder = 0xFFFF;
+    (*cab).entry_cffile = cffile;
+    archive_read_format_cab_read_data(a, buff2, size2, offset2);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_cab_next_cfdata(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut cab: *mut cab = 0 as *mut cab;
+    cab = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cab>() as libc::c_ulong,
+        )
+    } as *mut cab;
+    (*(*a).format).data = cab as *mut libc::c_void;
+    let mut cfdata: *mut cfdata = 0 as *mut cfdata;
+    cfdata = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cfdata>() as libc::c_ulong,
+        )
+    } as *mut cfdata;
+    (*cab).entry_cfdata = cfdata;
+    let mut cffolder: *mut cffolder = 0 as *mut cffolder;
+    cffolder = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cffolder>() as libc::c_ulong,
+        )
+    } as *mut cffolder;
+    (*cffolder).cfdata_index = 1;
+    (*cffolder).cfdata_count = 1;
+    (*cab).entry_cffolder = cffolder;
+    cab_next_cfdata(a);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_cab_checksum_update(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut cab: *mut cab = 0 as *mut cab;
+    cab = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cab>() as libc::c_ulong,
+        )
+    } as *mut cab;
+    (*(*a).format).data = cab as *mut libc::c_void;
+    let mut cfdata: *mut cfdata = 0 as *mut cfdata;
+    cfdata = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cfdata>() as libc::c_ulong,
+        )
+    } as *mut cfdata;
+    (*cab).entry_cfdata = cfdata;
+    (*cfdata).sum = 1;
+    let mut cffolder: *mut cffolder = 0 as *mut cffolder;
+    cffolder = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cffolder>() as libc::c_ulong,
+        )
+    } as *mut cffolder;
+    (*cffolder).cfdata_index = 1;
+    (*cffolder).cfdata_count = 1;
+    (*cab).entry_cffolder = cffolder;
+    cab_next_cfdata(a);
+    let mut p: *mut libc::c_char = b"hdrcharset\x00" as *const u8 as *mut libc::c_char;
+    (*cfdata).sum_ptr = p as *mut libc::c_void;
+    (*cfdata).sum_extra_avail = 3;
+    cab_checksum_update(a, 4);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_cab_checksum_cfdata(
+    mut p: *const libc::c_void,
+    mut bytes: size_t,
+    mut seed: uint32_t,
+) {
+    cab_checksum_cfdata(p, bytes, seed);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_lzx_huffman_init(
+    mut len_size: size_t,
+    mut tbl_bits: libc::c_int,
+) {
+    let mut huffman: *mut huffman = 0 as *mut huffman;
+    huffman = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<huffman>() as libc::c_ulong,
+        )
+    } as *mut huffman;
+    (*huffman).len_size = 1;
+    let mut bitlen: *mut libc::c_uchar = b"abc\x00" as *const u8 as *mut libc::c_uchar;
+    (*huffman).bitlen = bitlen as *mut libc::c_uchar;
+    lzx_huffman_init(huffman, len_size, tbl_bits);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_cab_read_ahead_cfdata_none(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut cab: *mut cab = 0 as *mut cab;
+    cab = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cab>() as libc::c_ulong,
+        )
+    } as *mut cab;
+    (*(*a).format).data = cab as *mut libc::c_void;
+    let mut cfdata: *mut cfdata = 0 as *mut cfdata;
+    cfdata = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<cfdata>() as libc::c_ulong,
+        )
+    } as *mut cfdata;
+    (*cab).entry_cfdata = cfdata;
+    (*(*a).format).data = cab as *mut libc::c_void;
+    let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
+    archive_read_filter = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read_filter>() as libc::c_ulong,
+        )
+    } as *mut archive_read_filter;
+    (*archive_read_filter).fatal = 'a' as libc::c_char;
+    (*a).filter = archive_read_filter as *mut archive_read_filter;
+    let mut availp: ssize_t = 1;
+    let mut avail: *mut ssize_t = &availp as *const ssize_t as *mut ssize_t;
+    cab_read_ahead_cfdata_none(a, avail);
+}

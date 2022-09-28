@@ -4264,3 +4264,167 @@ pub unsafe extern "C" fn dump_isodirrec(mut isodirrec: *const libc::c_uchar) {
         _ => {}
     }
 }
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_isNull(
+    mut h: *const libc::c_uchar,
+    mut offset: libc::c_uint,
+    mut bytes: libc::c_uint,
+) {
+    let mut iso9660: *mut iso9660 = 0 as *mut iso9660;
+    iso9660 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<iso9660>() as libc::c_ulong,
+        )
+    } as *mut iso9660;
+    isNull(iso9660, h, offset, bytes);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_isVolumePartition(mut h: *const libc::c_uchar) {
+    let mut iso9660: *mut iso9660 = 0 as *mut iso9660;
+    iso9660 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<iso9660>() as libc::c_ulong,
+        )
+    } as *mut iso9660;
+    isVolumePartition(iso9660, h);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_isodate17(mut v: *const libc::c_uchar) {
+    isodate17(v);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_parse_rockridge_SL1(
+    mut data: *const libc::c_uchar,
+    mut data_length: libc::c_int,
+) {
+    let mut file_info: *mut file_info = 0 as *mut file_info;
+    file_info = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<file_info>() as libc::c_ulong,
+        )
+    } as *mut file_info;
+    parse_rockridge_SL1(file_info, data, data_length);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_parse_rockridge_TF1(
+    mut data: *const libc::c_uchar,
+    mut data_length: libc::c_int,
+) {
+    let mut file_info: *mut file_info = 0 as *mut file_info;
+    file_info = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<file_info>() as libc::c_ulong,
+        )
+    } as *mut file_info;
+    parse_rockridge_TF1(file_info, data, data_length);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_parse_rockridge_NM1(
+    mut data: *const libc::c_uchar,
+    mut data_length: libc::c_int,
+) {
+    let mut file_info: *mut file_info = 0 as *mut file_info;
+    file_info = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<file_info>() as libc::c_ulong,
+        )
+    } as *mut file_info;
+    parse_rockridge_NM1(file_info, data, data_length);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_parse_rockridge(
+    mut _a: *mut archive,
+    mut p: *const libc::c_uchar,
+    mut end: *const libc::c_uchar,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut file_info: *mut file_info = 0 as *mut file_info;
+    file_info = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<file_info>() as libc::c_ulong,
+        )
+    } as *mut file_info;
+    parse_rockridge(a, file_info, p, end);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_support_format_iso9660() {
+    let mut archive_read: *mut archive_read = 0 as *mut archive_read;
+    archive_read = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read>() as libc::c_ulong,
+        )
+    } as *mut archive_read;
+    (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
+    (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
+    archive_read_support_format_iso9660(&mut (*archive_read).archive as *mut archive);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_format_iso9660_read_data(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut iso9660: *mut iso9660 = 0 as *mut iso9660;
+    iso9660 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<iso9660>() as libc::c_ulong,
+        )
+    } as *mut iso9660;
+    let mut content: *mut content = 0 as *mut content;
+    content = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<content>() as libc::c_ulong,
+        )
+    } as *mut content;
+    let mut content2: *mut content = 0 as *mut content;
+    content2 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<content>() as libc::c_ulong,
+        )
+    } as *mut content;
+    let mut content3: *mut content = 0 as *mut content;
+    content3 = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<content>() as libc::c_ulong,
+        )
+    } as *mut content;
+    (*iso9660).entry_bytes_remaining = 0;
+    (*iso9660).entry_bytes_unconsumed = 0;
+    (*iso9660).entry_content = content as *mut content;
+    (*iso9660).current_position = 0;
+    (*(*iso9660).entry_content).offset = 2;
+    (*content).next = content2 as *mut content;
+    (*content2).next = content3 as *mut content;
+    (*content2).offset = 1;
+    (*(*a).format).data = iso9660 as *mut libc::c_void;
+    let mut size: size_t = 0;
+    let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
+    let mut offset: int64_t = 0;
+    let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
+    let mut buff: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
+    let mut buff2: *mut *const libc::c_void = unsafe {
+        &buff as *const *mut libc::c_void as *mut *mut libc::c_void as *mut *const libc::c_void
+    };
+    archive_read_format_iso9660_read_data(a, buff2, size2, offset2);
+    (*content2).offset = 0;
+    (*content3).offset = 0;
+    (*iso9660).current_position = 1;
+    archive_read_format_iso9660_read_data(a, buff2, size2, offset2);
+}

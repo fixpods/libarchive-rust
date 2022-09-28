@@ -5310,3 +5310,265 @@ pub unsafe extern "C" fn archive_test_init_decompression(mut _a: *mut archive) {
     (*(coder1)).codec = 0x06F10701 as libc::c_ulong;
     init_decompression(a, _7zip, coder1, coder2);
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_support_format_7zip() {
+    let mut archive_read: *mut archive_read = 0 as *mut archive_read;
+    archive_read = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read>() as libc::c_ulong,
+        )
+    } as *mut archive_read;
+    (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
+    (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
+    archive_read_support_format_7zip(&mut (*archive_read).archive as *mut archive);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_ppmd_read(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut zip: *mut _7zip = 0 as *mut _7zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7zip>() as libc::c_ulong,
+    ) as *mut _7zip;
+    (*zip).ppstream.avail_in = 0;
+    let mut ibytein: *mut IByteIn = 0 as *mut IByteIn;
+    ibytein = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<IByteIn>() as libc::c_ulong,
+    ) as *mut IByteIn;
+    (*ibytein).a = a as *mut archive_read;
+    let mut p: *mut libc::c_void = ibytein as *mut libc::c_void;
+    ppmd_read(p);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_decompress(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut zip: *mut _7zip = 0 as *mut _7zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7zip>() as libc::c_ulong,
+    ) as *mut _7zip;
+    (*zip).codec = 0x20;
+    (*zip).codec2 = 0x03030103;
+    (*zip).odd_bcj_size = 1;
+    let mut buff2: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
+    let mut b2: *const libc::c_void = 0 as *const libc::c_void;
+    let mut outbytes: size_t = 0;
+    let mut outbytes2: *mut size_t = &outbytes as *const size_t as *mut size_t;
+    let mut used: size_t = 0;
+    let mut used2: *mut size_t = &used as *const size_t as *mut size_t;
+    decompress(a, zip, buff2, outbytes2, b2, used2);
+    (*zip).codec2 = 0x0303011B;
+    (*zip).tmp_stream_bytes_remaining = 1;
+    let mut used4: size_t = 0;
+    let mut used3: *mut size_t = &used4 as *const size_t as *mut size_t;
+    decompress(a, zip, buff2, outbytes2, b2, used3);
+    (*zip).codec2 = 0x03030111;
+    (*zip).codec = 0x030401;
+    (*zip).ppmd7_valid = 0;
+    decompress(a, zip, buff2, outbytes2, b2, used3);
+    (*zip).ppmd7_valid = 1;
+    (*zip).ppmd7_stat = 0;
+    (*zip).ppmd7_valid = 1;
+    (*zip).ppmd7_stat = 0;
+    (*zip).ppstream.overconsumed = 1;
+    let mut outbytes4: size_t = 0;
+    let mut outbytes3: *mut size_t = &outbytes4 as *const size_t as *mut size_t;
+    decompress(a, zip, buff2, outbytes3, b2, used3);
+    (*zip).codec = 0x030401;
+    decompress(a, zip, buff2, outbytes3, b2, used3);
+    (*zip).codec = 0;
+    (*zip).codec2 = 0x0303011B;
+    (*zip).tmp_stream_buff_size = 20;
+    (*zip).main_stream_bytes_remaining = 1;
+    decompress(a, zip, buff2, outbytes3, b2, used3);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_Bcj2_Decode() {
+    let mut zip: *mut _7zip = 0 as *mut _7zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7zip>() as libc::c_ulong,
+    ) as *mut _7zip;
+    (*zip).bcj_state = 1;
+    (*zip).odd_bcj[0] = 'a' as libc::c_uchar;
+    (*zip).odd_bcj[1] = 'b' as libc::c_uchar;
+    (*zip).odd_bcj_size = 1;
+    let mut p: [uint8_t; 3] = [1 as uint8_t, 2 as uint8_t, 3 as uint8_t];
+    let mut outBuf: *mut uint8_t = &p as *const [uint8_t; 3] as *mut [uint8_t; 3] as *mut uint8_t;
+    Bcj2_Decode(zip, outBuf, 1);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_x86_Convert() {
+    let mut zip: *mut _7zip = 0 as *mut _7zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7zip>() as libc::c_ulong,
+    ) as *mut _7zip;
+    (*zip).bcj_prevMask = 0x7;
+    (*zip).bcj_prevPosT = 2;
+    (*zip).bcj_ip = 0;
+    let mut data4: [uint8_t; 6] = [
+        0xE8 as uint8_t,
+        0xE8 as uint8_t,
+        0xE8 as uint8_t,
+        0xE8 as uint8_t,
+        0xE8 as uint8_t,
+        0xE8 as uint8_t,
+    ];
+    let mut data3: *mut uint8_t =
+        &data4 as *const [uint8_t; 6] as *mut [uint8_t; 6] as *mut uint8_t;
+    x86_Convert(zip, data3, 6);
+    let mut data2: [uint8_t; 6] = [
+        0xE8 as uint8_t,
+        0xE8 as uint8_t,
+        0xE8 as uint8_t,
+        0xE8 as uint8_t,
+        0xE8 as uint8_t,
+        0xE8 as uint8_t,
+    ];
+    let mut data: *mut uint8_t = &data2 as *const [uint8_t; 6] as *mut [uint8_t; 6] as *mut uint8_t;
+    (*zip).bcj_prevMask = 15;
+    (*zip).bcj_prevPosT = 3;
+    (*zip).bcj_ip = 0;
+    x86_Convert(zip, data, 6);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_seek_pack(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut zip: *mut _7zip = 0 as *mut _7zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7zip>() as libc::c_ulong,
+    ) as *mut _7zip;
+    (*(*a).format).data = zip as *mut libc::c_void;
+    (*zip).pack_stream_remaining = 0;
+    seek_pack(a);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_extract_pack_stream(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut zip: *mut _7zip = 0 as *mut _7zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7zip>() as libc::c_ulong,
+    ) as *mut _7zip;
+    (*(*a).format).data = zip as *mut libc::c_void;
+    extract_pack_stream(a, (64 * 1024) + 1);
+    let mut p1: [libc::c_uchar; 2] = ['1' as libc::c_uchar, '2' as libc::c_uchar];
+    let mut p2: *mut libc::c_uchar =
+        &p1 as *const [libc::c_uchar; 2] as *mut [libc::c_uchar; 2] as *mut libc::c_uchar;
+    let mut p3: [libc::c_uchar; 2] = ['1' as libc::c_uchar, '2' as libc::c_uchar];
+    let mut p4: *mut libc::c_uchar =
+        &p3 as *const [libc::c_uchar; 2] as *mut [libc::c_uchar; 2] as *mut libc::c_uchar;
+    (*zip).uncompressed_buffer = p2;
+    (*zip).uncompressed_buffer_pointer = p4;
+    (*zip).uncompressed_buffer_size = 1;
+    extract_pack_stream(a, 0);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_get_uncompressed_data(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut buff: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
+    let mut buff2: *mut *const libc::c_void = unsafe {
+        &buff as *const *mut libc::c_void as *mut *mut libc::c_void as *mut *const libc::c_void
+    };
+    let mut zip: *mut _7zip = 0 as *mut _7zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7zip>() as libc::c_ulong,
+    ) as *mut _7zip;
+    (*(*a).format).data = zip as *mut libc::c_void;
+    get_uncompressed_data(a, buff2, 1, 1);
+    (*zip).codec = 0;
+    (*zip).codec2 = 1;
+    let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
+    archive_read_filter = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<archive_read_filter>() as libc::c_ulong,
+    ) as *mut archive_read_filter;
+    (*archive_read_filter).fatal = 'a' as libc::c_char;
+    (*a).filter = archive_read_filter;
+    get_uncompressed_data(a, buff2, 1, 1);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_decode_encoded_header_info(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut _7z_stream_info: *mut _7z_stream_info = 0 as *mut _7z_stream_info;
+    _7z_stream_info = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7z_stream_info>() as libc::c_ulong,
+    ) as *mut _7z_stream_info;
+    (*_7z_stream_info).pi.numPackStreams = 0;
+    decode_encoded_header_info(a, _7z_stream_info);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_fileTimeToUtc() {
+    let mut timepp: [time_t; 2] = [1 as time_t, 2 as time_t];
+    let mut timep: *mut time_t = &timepp as *const [time_t; 2] as *mut [time_t; 2] as *mut time_t;
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_format_7zip_bid(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
+    filter = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<archive_read_filter>() as libc::c_ulong,
+    ) as *mut archive_read_filter;
+    (*filter).avail = 4096;
+    (*filter).client_total = 0x27000 + 4096;
+    (*filter).client_avail = 0x27000;
+    archive_read_format_7zip_bid(a, 31);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_read_stream(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut buff: *mut libc::c_void = 0 as *const libc::c_void as *mut libc::c_void;
+    let mut buff2: *mut *const libc::c_void = unsafe {
+        &buff as *const *mut libc::c_void as *mut *mut libc::c_void as *mut *const libc::c_void
+    };
+    let mut zip: *mut _7zip = 0 as *mut _7zip;
+    zip = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7zip>() as libc::c_ulong,
+    ) as *mut _7zip;
+    let mut _7zip_entry: *mut _7zip_entry = 0 as *mut _7zip_entry;
+    _7zip_entry = calloc_safe(
+        1 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7zip_entry>() as libc::c_ulong,
+    ) as *mut _7zip_entry;
+    let mut _7z_folder: *mut _7z_folder = 0 as *mut _7z_folder;
+    _7z_folder = calloc_safe(
+        2 as libc::c_int as libc::c_ulong,
+        ::std::mem::size_of::<_7z_folder>() as libc::c_ulong,
+    ) as *mut _7z_folder;
+    (*(*a).format).data = zip as *mut libc::c_void;
+    (*zip).uncompressed_buffer_bytes_remaining = 0;
+    (*zip).pack_stream_remaining = 0;
+    (*zip).header_is_being_read = 1;
+    read_stream(a, buff2, 0, 0);
+    (*zip).entry = _7zip_entry;
+    (*_7zip_entry).folderIndex = 1;
+    (*zip).si.ci.folders = _7z_folder;
+    (*zip).si.ci.numFolders = 0;
+    read_stream(a, buff2, 0, 0);
+    (*zip).si.ci.numFolders = 2;
+    (*zip).pack_stream_inbytes_remaining = 1;
+    read_stream(a, buff2, 0, 0);
+    (*zip).pack_stream_inbytes_remaining = 0;
+    (*zip).folder_outbytes_remaining = 1;
+    read_stream(a, buff2, 0, 0);
+}

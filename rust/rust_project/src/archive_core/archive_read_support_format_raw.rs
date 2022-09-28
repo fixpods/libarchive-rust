@@ -174,3 +174,18 @@ unsafe extern "C" fn archive_read_format_raw_cleanup(mut a: *mut archive_read) -
     safe_a_format.data = 0 as *mut libc::c_void;
     return ARCHIVE_RAW_DEFINED_PARAM.archive_ok;
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_format_raw_read_data_skip(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut raw_info: *mut raw_info = 0 as *mut raw_info;
+    raw_info = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<raw_info>() as libc::c_ulong,
+        )
+    } as *mut raw_info;
+    (*(*a).format).data = raw_info as *mut libc::c_void;
+    (*raw_info).unconsumed = 1;
+    archive_read_format_raw_read_data_skip(a);
+}

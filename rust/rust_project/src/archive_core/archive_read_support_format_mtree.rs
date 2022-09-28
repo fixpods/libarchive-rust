@@ -3369,3 +3369,107 @@ pub unsafe extern "C" fn archive_test_parse_digest(
     let mut a: *mut archive_read = _a as *mut archive_read;
     parse_digest(a, entry, digest, type_0);
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_archive_read_support_format_mtree() {
+    let mut archive_read: *mut archive_read = 0 as *mut archive_read;
+    archive_read = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<archive_read>() as libc::c_ulong,
+        )
+    } as *mut archive_read;
+    (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
+    (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
+    archive_read_support_format_mtree(&mut (*archive_read).archive as *mut archive);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn archive_test_read_header(
+    mut _a: *mut archive,
+    mut entry: *mut archive_entry,
+) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut mtree: *mut mtree = 0 as *mut mtree;
+    mtree = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<mtree>() as libc::c_ulong,
+        )
+    } as *mut mtree;
+    (*mtree).fd = 1;
+    (*(*a).format).data = mtree as *mut libc::c_void;
+    read_header(a, entry);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_parse_device(mut a: *mut archive) {
+    let mut pdevp: [dev_t; 4] = [1 as dev_t, 2 as dev_t, 3 as dev_t, 4 as dev_t];
+    let mut pdev: *mut dev_t = &pdevp as *const [dev_t; 4] as *mut [dev_t; 4] as *mut dev_t;
+    let mut valp: [libc::c_char; 5] = [
+        '1' as i32 as libc::c_char,
+        '2' as i32 as libc::c_char,
+        ',' as i32 as libc::c_char,
+        '3' as i32 as libc::c_char,
+        '4' as i32 as libc::c_char,
+    ];
+    let mut val: *mut libc::c_char =
+        &valp as *const [libc::c_char; 5] as *mut [libc::c_char; 5] as *mut libc::c_char;
+    parse_device(pdev, a, val);
+    let mut valp2: [libc::c_char; 9] = [
+        '1' as i32 as libc::c_char,
+        '2' as i32 as libc::c_char,
+        ',' as i32 as libc::c_char,
+        '3' as i32 as libc::c_char,
+        '8' as i32 as libc::c_char,
+        '6' as i32 as libc::c_char,
+        'b' as i32 as libc::c_char,
+        's' as i32 as libc::c_char,
+        'd' as i32 as libc::c_char,
+    ];
+    let mut val2: *mut libc::c_char =
+        &valp2 as *const [libc::c_char; 9] as *mut [libc::c_char; 9] as *mut libc::c_char;
+    parse_device(pdev, a, val2);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_archive_read_format_mtree_options(mut _a: *mut archive) {
+    let mut a: *mut archive_read = _a as *mut archive_read;
+    let mut mtree: *mut mtree = 0 as *mut mtree;
+    mtree = unsafe {
+        calloc_safe(
+            1 as libc::c_int as libc::c_ulong,
+            ::std::mem::size_of::<mtree>() as libc::c_ulong,
+        )
+    } as *mut mtree;
+    (*(*a).format).data = mtree as *mut libc::c_void;
+    archive_read_format_mtree_options(
+        a,
+        b"checkfs\x00" as *const u8 as *const libc::c_char,
+        b"None\x00" as *const u8 as *const libc::c_char,
+    );
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_bid_keyword() {
+    bid_keyword(b"rsd\x00" as *const u8 as *const libc::c_char, 3);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_bid_keyword_list() {
+    bid_keyword_list(b"12345\x00" as *const u8 as *const libc::c_char, 5, 1, 0);
+}
+
+#[no_mangle]
+unsafe extern "C" fn archive_test_mtree_atol() {
+    let mut p1: [libc::c_char; 3] = [
+        '0' as i32 as libc::c_char,
+        'x' as i32 as libc::c_char,
+        'x' as i32 as libc::c_char,
+    ];
+    let mut p2: *mut libc::c_char =
+        &p1 as *const [libc::c_char; 3] as *mut [libc::c_char; 3] as *mut libc::c_char;
+    let mut p: *mut *mut libc::c_char =
+        unsafe { &p2 as *const *mut libc::c_char as *mut *mut libc::c_char };
+    mtree_atol(p, 0);
+}
