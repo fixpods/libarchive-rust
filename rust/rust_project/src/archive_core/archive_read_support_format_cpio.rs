@@ -10,7 +10,7 @@ use super::archive_string::archive_string_default_conversion_for_read;
 pub struct cpio {
     pub magic: i32,
     pub read_header: Option<
-        unsafe extern "C" fn(
+        unsafe fn(
             _: *mut archive_read,
             _: *mut cpio,
             _: *mut archive_entry,
@@ -41,7 +41,7 @@ pub struct links_entry {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_cpio(mut _a: *mut archive) -> i32 {
+pub unsafe fn archive_read_support_format_cpio(mut _a: *mut archive) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cpio: *mut cpio = 0 as *mut cpio;
     let mut r: i32 = 0;
@@ -75,11 +75,11 @@ pub unsafe extern "C" fn archive_read_support_format_cpio(mut _a: *mut archive) 
         b"cpio\x00" as *const u8 as *const i8,
         Some(
             archive_read_format_cpio_bid
-                as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32,
+                as unsafe fn(_: *mut archive_read, _: i32) -> i32,
         ),
         Some(
             archive_read_format_cpio_options
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *const i8,
                     _: *const i8,
@@ -87,11 +87,11 @@ pub unsafe extern "C" fn archive_read_support_format_cpio(mut _a: *mut archive) 
         ),
         Some(
             archive_read_format_cpio_read_header
-                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
         ),
         Some(
             archive_read_format_cpio_read_data
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut *const (),
                     _: *mut size_t,
@@ -100,12 +100,12 @@ pub unsafe extern "C" fn archive_read_support_format_cpio(mut _a: *mut archive) 
         ),
         Some(
             archive_read_format_cpio_skip
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         None,
         Some(
             archive_read_format_cpio_cleanup
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         None,
         None,
@@ -116,7 +116,7 @@ pub unsafe extern "C" fn archive_read_support_format_cpio(mut _a: *mut archive) 
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn archive_read_format_cpio_bid(
+unsafe fn archive_read_format_cpio_bid(
     mut a: *mut archive_read,
     mut best_bid: i32,
 ) -> i32 {
@@ -141,7 +141,7 @@ unsafe extern "C" fn archive_read_format_cpio_bid(
         /* ASCII cpio archive (odc, POSIX.1) */
         cpio_safe.read_header = Some(
             header_odc
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut cpio,
                     _: *mut archive_entry,
@@ -163,7 +163,7 @@ unsafe extern "C" fn archive_read_format_cpio_bid(
         /* afio large ASCII cpio archive */
         cpio_safe.read_header = Some(
             header_odc
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut cpio,
                     _: *mut archive_entry,
@@ -185,7 +185,7 @@ unsafe extern "C" fn archive_read_format_cpio_bid(
         /* ASCII cpio archive (SVR4 without CRC) */
         cpio_safe.read_header = Some(
             header_newc
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut cpio,
                     _: *mut archive_entry,
@@ -208,7 +208,7 @@ unsafe extern "C" fn archive_read_format_cpio_bid(
         /* XXX TODO: Flag that we should check the CRC. XXX */
         cpio_safe.read_header = Some(
             header_newc
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut cpio,
                     _: *mut archive_entry,
@@ -229,7 +229,7 @@ unsafe extern "C" fn archive_read_format_cpio_bid(
         /* big-endian binary cpio archives */
         cpio_safe.read_header = Some(
             header_bin_be
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut cpio,
                     _: *mut archive_entry,
@@ -247,7 +247,7 @@ unsafe extern "C" fn archive_read_format_cpio_bid(
         /* little-endian binary cpio archives */
         cpio_safe.read_header = Some(
             header_bin_le
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut cpio,
                     _: *mut archive_entry,
@@ -263,7 +263,7 @@ unsafe extern "C" fn archive_read_format_cpio_bid(
     return bid;
 }
 
-unsafe extern "C" fn archive_read_format_cpio_options(
+unsafe fn archive_read_format_cpio_options(
     mut a: *mut archive_read,
     mut key: *const i8,
     mut val: *const i8,
@@ -331,7 +331,7 @@ unsafe extern "C" fn archive_read_format_cpio_options(
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_warn;
 }
 
-unsafe extern "C" fn archive_read_format_cpio_read_header(
+unsafe fn archive_read_format_cpio_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -470,7 +470,7 @@ unsafe extern "C" fn archive_read_format_cpio_read_header(
     }
     return r;
 }
-unsafe extern "C" fn archive_read_format_cpio_read_data(
+unsafe fn archive_read_format_cpio_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -521,7 +521,7 @@ unsafe extern "C" fn archive_read_format_cpio_read_data(
     };
 }
 
-unsafe extern "C" fn archive_read_format_cpio_skip(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_cpio_skip(mut a: *mut archive_read) -> i32 {
     let safe_a = unsafe { &mut *a };
     let safe_c = unsafe { &mut *((*(safe_a).format).data as *mut cpio) };
     let mut to_skip: int64_t =
@@ -539,7 +539,7 @@ unsafe extern "C" fn archive_read_format_cpio_skip(mut a: *mut archive_read) -> 
  * 07070[12] string.  This should be generalized and merged with
  * find_odc_header below.
  */
-unsafe extern "C" fn is_hex(mut p: *const i8, mut len: size_t) -> i32 {
+unsafe fn is_hex(mut p: *const i8, mut len: size_t) -> i32 {
     let safe_p = unsafe { &*p };
     loop {
         let fresh0 = len;
@@ -558,7 +558,7 @@ unsafe extern "C" fn is_hex(mut p: *const i8, mut len: size_t) -> i32 {
     }
     return 1 as i32;
 }
-unsafe extern "C" fn find_newc_header(mut a: *mut archive_read) -> i32 {
+unsafe fn find_newc_header(mut a: *mut archive_read) -> i32 {
     let mut h: *const () = 0 as *const ();
     let mut p: *const i8 = 0 as *const i8;
     let mut q: *const i8 = 0 as *const i8;
@@ -631,7 +631,7 @@ unsafe extern "C" fn find_newc_header(mut a: *mut archive_read) -> i32 {
     }
 }
 
-unsafe extern "C" fn header_newc(
+unsafe fn header_newc(
     mut a: *mut archive_read,
     mut cpio: *mut cpio,
     mut entry: *mut archive_entry,
@@ -793,7 +793,7 @@ unsafe extern "C" fn header_newc(
  * probably be easily generalized to handle all character-based
  * cpio variants.
  */
-unsafe extern "C" fn is_octal(mut p: *const i8, mut len: size_t) -> i32 {
+unsafe fn is_octal(mut p: *const i8, mut len: size_t) -> i32 {
     loop {
         let fresh1 = len;
         len = len.wrapping_sub(1);
@@ -808,7 +808,7 @@ unsafe extern "C" fn is_octal(mut p: *const i8, mut len: size_t) -> i32 {
     }
     return 1 as i32;
 }
-unsafe extern "C" fn is_afio_large(mut h: *const i8, mut len: size_t) -> i32 {
+unsafe fn is_afio_large(mut h: *const i8, mut len: size_t) -> i32 {
     if len < ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_HEADER_SIZE as u64 {
         return 0 as i32;
     }
@@ -858,7 +858,7 @@ unsafe extern "C" fn is_afio_large(mut h: *const i8, mut len: size_t) -> i32 {
     }
     return 1 as i32;
 }
-unsafe extern "C" fn find_odc_header(mut a: *mut archive_read) -> i32 {
+unsafe fn find_odc_header(mut a: *mut archive_read) -> i32 {
     let mut h: *const () = 0 as *const ();
     let mut p: *const i8 = 0 as *const i8;
     let mut q: *const i8 = 0 as *const i8;
@@ -953,7 +953,7 @@ unsafe extern "C" fn find_odc_header(mut a: *mut archive_read) -> i32 {
         skipped = (skipped as u64).wrapping_add(skip) as size_t as size_t
     }
 }
-unsafe extern "C" fn header_odc(
+unsafe fn header_odc(
     mut a: *mut archive_read,
     mut cpio: *mut cpio,
     mut entry: *mut archive_entry,
@@ -1077,7 +1077,7 @@ unsafe extern "C" fn header_odc(
  * to get a uncompressed file size while reading each header. It means
  * we also cannot uncompress file contents under our framework.
  */
-unsafe extern "C" fn header_afiol(
+unsafe fn header_afiol(
     mut a: *mut archive_read,
     mut cpio: *mut cpio,
     mut entry: *mut archive_entry,
@@ -1175,7 +1175,7 @@ unsafe extern "C" fn header_afiol(
     __archive_read_consume_safe(a, ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_HEADER_SIZE as int64_t);
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn header_bin_le(
+unsafe fn header_bin_le(
     mut a: *mut archive_read,
     mut cpio: *mut cpio,
     mut entry: *mut archive_entry,
@@ -1297,7 +1297,7 @@ unsafe extern "C" fn header_bin_le(
     __archive_read_consume_safe(a, ARCHIVE_CPIO_DEFINED_PARAM.BIN_HEADER_SIZE as int64_t);
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn header_bin_be(
+unsafe fn header_bin_be(
     mut a: *mut archive_read,
     mut cpio: *mut cpio,
     mut entry: *mut archive_entry,
@@ -1419,7 +1419,7 @@ unsafe extern "C" fn header_bin_be(
     __archive_read_consume_safe(a, ARCHIVE_CPIO_DEFINED_PARAM.BIN_HEADER_SIZE as int64_t);
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn archive_read_format_cpio_cleanup(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_cpio_cleanup(mut a: *mut archive_read) -> i32 {
     let mut cpio: *mut cpio = 0 as *mut cpio;
     let a_safe;
     let cpio_safe;
@@ -1444,7 +1444,7 @@ unsafe extern "C" fn archive_read_format_cpio_cleanup(mut a: *mut archive_read) 
     a_safe.data = 0 as *mut ();
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn le4(mut p: *const u8) -> int64_t {
+unsafe fn le4(mut p: *const u8) -> int64_t {
     return ((*p.offset(0 as i32 as isize) as i32) << 16 as i32)
         as i64
         + ((*p.offset(1 as i32 as isize) as int64_t) << 24 as i32)
@@ -1453,7 +1453,7 @@ unsafe extern "C" fn le4(mut p: *const u8) -> int64_t {
         + ((*p.offset(3 as i32 as isize) as i32) << 8 as i32)
             as i64;
 }
-unsafe extern "C" fn be4(mut p: *const u8) -> int64_t {
+unsafe fn be4(mut p: *const u8) -> int64_t {
     return ((*p.offset(0 as i32 as isize) as int64_t) << 24 as i32)
         + ((*p.offset(1 as i32 as isize) as i32) << 16 as i32)
             as i64
@@ -1466,7 +1466,7 @@ unsafe extern "C" fn be4(mut p: *const u8) -> int64_t {
  * locale settings; you cannot simply substitute strtol here, since
  * it does obey locale.
  */
-unsafe extern "C" fn atol8(mut p: *const i8, mut char_cnt: u32) -> int64_t {
+unsafe fn atol8(mut p: *const i8, mut char_cnt: u32) -> int64_t {
     let mut l: int64_t = 0;
     let mut digit: i32 = 0;
     l = 0 as i32 as int64_t;
@@ -1490,7 +1490,7 @@ unsafe extern "C" fn atol8(mut p: *const i8, mut char_cnt: u32) -> int64_t {
     }
     return l;
 }
-unsafe extern "C" fn atol16(mut p: *const i8, mut char_cnt: u32) -> int64_t {
+unsafe fn atol16(mut p: *const i8, mut char_cnt: u32) -> int64_t {
     let mut l: int64_t = 0;
     let mut digit: i32 = 0;
     l = 0 as i32 as int64_t;
@@ -1518,7 +1518,7 @@ unsafe extern "C" fn atol16(mut p: *const i8, mut char_cnt: u32) -> int64_t {
     }
     return l;
 }
-unsafe extern "C" fn record_hardlink(
+unsafe fn record_hardlink(
     mut a: *mut archive_read,
     mut cpio: *mut cpio,
     mut entry: *mut archive_entry,

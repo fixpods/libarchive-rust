@@ -122,7 +122,7 @@ pub union archive_temporary_u {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -> i32 {
+pub unsafe fn archive_read_support_format_lha(mut _a: *mut archive) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut r: i32 = 0;
     let mut magic_test: i32 = __archive_check_magic_safe(
@@ -157,11 +157,11 @@ pub unsafe extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -
         b"lha\x00" as *const u8 as *const i8,
         Some(
             archive_read_format_lha_bid
-                as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32,
+                as unsafe fn(_: *mut archive_read, _: i32) -> i32,
         ),
         Some(
             archive_read_format_lha_options
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *const i8,
                     _: *const i8,
@@ -169,11 +169,11 @@ pub unsafe extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -
         ),
         Some(
             archive_read_format_lha_read_header
-                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
         ),
         Some(
             archive_read_format_lha_read_data
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut *const (),
                     _: *mut size_t,
@@ -182,12 +182,12 @@ pub unsafe extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -
         ),
         Some(
             archive_read_format_lha_read_data_skip
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         None,
         Some(
             archive_read_format_lha_cleanup
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         None,
         None,
@@ -198,7 +198,7 @@ pub unsafe extern "C" fn archive_read_support_format_lha(mut _a: *mut archive) -
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn lha_check_header_format(mut h: *const ()) -> size_t {
+unsafe fn lha_check_header_format(mut h: *const ()) -> size_t {
     let mut p: *const u8 = h as *const u8;
     let mut next_skip_bytes: size_t = 0;
     let mut current_block_11: u64;
@@ -333,7 +333,7 @@ unsafe extern "C" fn lha_check_header_format(mut h: *const ()) -> size_t {
 }
 
 /* Minimum header size. */
-unsafe extern "C" fn archive_read_format_lha_bid(
+unsafe fn archive_read_format_lha_bid(
     mut a: *mut archive_read,
     mut best_bid: i32,
 ) -> i32 {
@@ -392,7 +392,7 @@ unsafe extern "C" fn archive_read_format_lha_bid(
     return 0 as i32;
 }
 
-unsafe extern "C" fn archive_read_format_lha_options(
+unsafe fn archive_read_format_lha_options(
     mut a: *mut archive_read,
     mut key: *const i8,
     mut val: *const i8,
@@ -430,7 +430,7 @@ unsafe extern "C" fn archive_read_format_lha_options(
     return ARCHIVE_LHA_DEFINED_PARAM.archive_warn;
 }
 
-unsafe extern "C" fn lha_skip_sfx(mut a: *mut archive_read) -> i32 {
+unsafe fn lha_skip_sfx(mut a: *mut archive_read) -> i32 {
     let mut h: *const () = 0 as *const ();
     let mut p: *const i8 = 0 as *const i8;
     let mut q: *const i8 = 0 as *const i8;
@@ -479,7 +479,7 @@ unsafe extern "C" fn lha_skip_sfx(mut a: *mut archive_read) -> i32 {
     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
 }
 
-unsafe extern "C" fn truncated_error(mut a: *mut archive_read) -> i32 {
+unsafe fn truncated_error(mut a: *mut archive_read) -> i32 {
     archive_set_error_safe!(
         &mut (*a).archive as *mut archive,
         ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
@@ -488,7 +488,7 @@ unsafe extern "C" fn truncated_error(mut a: *mut archive_read) -> i32 {
     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
 }
 
-unsafe extern "C" fn archive_read_format_lha_read_header(
+unsafe fn archive_read_format_lha_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -886,7 +886,7 @@ unsafe extern "C" fn archive_read_format_lha_read_header(
  * Replace a DOS path separator '\' by a character '/'.
  * Some multi-byte character set have  a character '\' in its second byte.
  */
-unsafe extern "C" fn lha_replace_path_separator(mut lha: &mut lha, mut entry: *mut archive_entry) {
+unsafe fn lha_replace_path_separator(mut lha: &mut lha, mut entry: *mut archive_entry) {
     let mut wp: *const wchar_t = 0 as *const wchar_t;
     let mut i: size_t = 0;
     wp = archive_entry_pathname_w_safe(entry);
@@ -933,7 +933,7 @@ unsafe extern "C" fn lha_replace_path_separator(mut lha: &mut lha, mut entry: *m
     };
 }
 
-unsafe extern "C" fn lha_read_file_header_0(
+unsafe fn lha_read_file_header_0(
     mut a: *mut archive_read,
     mut lha: &mut lha,
 ) -> i32 {
@@ -1048,7 +1048,7 @@ unsafe extern "C" fn lha_read_file_header_0(
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn lha_read_file_header_1(
+unsafe fn lha_read_file_header_1(
     mut a: *mut archive_read,
     mut lha: &mut lha,
 ) -> i32 {
@@ -1186,7 +1186,7 @@ unsafe extern "C" fn lha_read_file_header_1(
     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
 }
 
-unsafe extern "C" fn lha_read_file_header_2(
+unsafe fn lha_read_file_header_2(
     mut a: *mut archive_read,
     mut lha: &mut lha,
 ) -> i32 {
@@ -1277,7 +1277,7 @@ unsafe extern "C" fn lha_read_file_header_2(
     return err;
 }
 
-unsafe extern "C" fn lha_read_file_header_3(
+unsafe fn lha_read_file_header_3(
     mut a: *mut archive_read,
     mut lha: &mut lha,
 ) -> i32 {
@@ -1375,7 +1375,7 @@ unsafe extern "C" fn lha_read_file_header_3(
 * headers.
 *
 */
-unsafe extern "C" fn lha_read_file_extended_header(
+unsafe fn lha_read_file_extended_header(
     mut a: *mut archive_read,
     mut lha: &mut lha,
     mut crc: *mut uint16_t,
@@ -1817,7 +1817,7 @@ unsafe extern "C" fn lha_read_file_extended_header(
     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
 }
 
-unsafe extern "C" fn lha_end_of_entry(mut a: *mut archive_read) -> i32 {
+unsafe fn lha_end_of_entry(mut a: *mut archive_read) -> i32 {
     let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
     let mut r: i32 = ARCHIVE_LHA_DEFINED_PARAM.archive_eof;
     if lha.end_of_entry_cleanup == 0 {
@@ -1837,7 +1837,7 @@ unsafe extern "C" fn lha_end_of_entry(mut a: *mut archive_read) -> i32 {
     return r;
 }
 
-unsafe extern "C" fn archive_read_format_lha_read_data(
+unsafe fn archive_read_format_lha_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -1875,7 +1875,7 @@ unsafe extern "C" fn archive_read_format_lha_read_data(
 * Returns ARCHIVE_OK if successful, ARCHIVE_FATAL otherwise, sets
 * lha->end_of_entry if it consumes all of the data.
 */
-unsafe extern "C" fn lha_read_data_none(
+unsafe fn lha_read_data_none(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -1929,7 +1929,7 @@ unsafe extern "C" fn lha_read_data_none(
 * unsupported, ARCHIVE_FATAL otherwise, sets lha->end_of_entry if it consumes
 * all of the data.
 */
-unsafe extern "C" fn lha_read_data_lzh(
+unsafe fn lha_read_data_lzh(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -2035,7 +2035,7 @@ unsafe extern "C" fn lha_read_data_lzh(
 /*
  * Skip a file content.
  */
-unsafe extern "C" fn archive_read_format_lha_read_data_skip(
+unsafe fn archive_read_format_lha_read_data_skip(
     mut a: *mut archive_read,
 ) -> i32 {
     let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
@@ -2063,7 +2063,7 @@ unsafe extern "C" fn archive_read_format_lha_read_data_skip(
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn archive_read_format_lha_cleanup(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_lha_cleanup(mut a: *mut archive_read) -> i32 {
     let safe_a_format = unsafe { &mut *(*a).format };
     let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
     lzh_decode_free(&mut lha.strm);
@@ -2087,7 +2087,7 @@ unsafe extern "C" fn archive_read_format_lha_cleanup(mut a: *mut archive_read) -
 *   2. a filename is 'xxx/bbb'
 *  then a archived pathname is 'xxx/bbb|aaa/bb/cc'
 */
-unsafe extern "C" fn lha_parse_linkname(
+unsafe fn lha_parse_linkname(
     mut linkname: &mut archive_wstring,
     mut pathname: &mut archive_wstring,
 ) -> i32 {
@@ -2110,7 +2110,7 @@ unsafe extern "C" fn lha_parse_linkname(
 }
 
 /* Convert an MSDOS-style date/time into Unix-style time. */
-unsafe extern "C" fn lha_dos_time(mut p: *const u8) -> time_t {
+unsafe fn lha_dos_time(mut p: *const u8) -> time_t {
     let mut msTime: i32 = 0; /* Years since 1900. */
     let mut msDate: i32 = 0; /* Month number.     */
     let mut ts: tm = tm {
@@ -2145,7 +2145,7 @@ unsafe extern "C" fn lha_dos_time(mut p: *const u8) -> time_t {
 }
 
 /* Convert an MS-Windows-style date/time into Unix-style time. */
-unsafe extern "C" fn lha_win_time(mut wintime: uint64_t, mut ns: &mut i64) -> time_t {
+unsafe fn lha_win_time(mut wintime: uint64_t, mut ns: &mut i64) -> time_t {
     if wintime as u64 >= ARCHIVE_LHA_DEFINED_PARAM.epoc_time {
         wintime = (wintime as u64).wrapping_sub(ARCHIVE_LHA_DEFINED_PARAM.epoc_time)
             as uint64_t as uint64_t; /* 1970-01-01 00:00:00 (UTC) */
@@ -2162,7 +2162,7 @@ unsafe extern "C" fn lha_win_time(mut wintime: uint64_t, mut ns: &mut i64) -> ti
     };
 }
 
-unsafe extern "C" fn lha_calcsum(
+unsafe fn lha_calcsum(
     mut sum: u8,
     mut pp: *const (),
     mut offset: i32,
@@ -2181,7 +2181,7 @@ unsafe extern "C" fn lha_calcsum(
 
 static mut crc16tbl: [[uint16_t; 256]; 2] = [[0; 256]; 2];
 
-unsafe extern "C" fn lha_crc16_init() {
+unsafe fn lha_crc16_init() {
     let mut i: u32 = 0;
     let mut crc16init: i32 = 0 as i32;
     if crc16init != 0 {
@@ -2219,7 +2219,7 @@ unsafe extern "C" fn lha_crc16_init() {
     }
 }
 
-unsafe extern "C" fn lha_crc16(
+unsafe fn lha_crc16(
     mut crc: uint16_t,
     mut pp: *const (),
     mut len: size_t,
@@ -2352,7 +2352,7 @@ unsafe extern "C" fn lha_crc16(
  * Returns ARCHIVE_FATAL if initialization failed; memory allocation
  * error occurred.
  */
-unsafe extern "C" fn lzh_decode_init(
+unsafe fn lzh_decode_init(
     mut strm: &mut lzh_stream,
     mut method: *const i8,
 ) -> i32 {
@@ -2444,7 +2444,7 @@ unsafe extern "C" fn lzh_decode_init(
 /*
  * Release LZHUF decoder.
  */
-unsafe extern "C" fn lzh_decode_free(mut strm: &mut lzh_stream) {
+unsafe fn lzh_decode_free(mut strm: &mut lzh_stream) {
     if strm.ds.is_null() {
         return;
     }
@@ -2494,7 +2494,7 @@ static cache_masks: [uint16_t; 20] = [
  * Returns 1 if the cache buffer is full.
  * Returns 0 if the cache buffer is not full; input buffer is empty.
  */
-unsafe extern "C" fn lzh_br_fillup(mut strm: &mut lzh_stream, mut br: &mut lzh_br) -> i32 {
+unsafe fn lzh_br_fillup(mut strm: &mut lzh_stream, mut br: &mut lzh_br) -> i32 {
     let mut n: i32 = (ARCHIVE_LHA_DEFINED_PARAM.cache_bits as u64)
         .wrapping_sub(br.cache_avail as u64) as i32;
     loop {
@@ -2586,7 +2586,7 @@ unsafe extern "C" fn lzh_br_fillup(mut strm: &mut lzh_stream, mut br: &mut lzh_b
     }
 }
 
-unsafe extern "C" fn lzh_decode(mut strm: &mut lzh_stream, mut last: i32) -> i32 {
+unsafe fn lzh_decode(mut strm: &mut lzh_stream, mut last: i32) -> i32 {
     let mut ds = unsafe { &mut *strm.ds };
     let mut avail_in: i32 = 0;
     let mut r: i32 = 0;
@@ -2608,7 +2608,7 @@ unsafe extern "C" fn lzh_decode(mut strm: &mut lzh_stream, mut last: i32) -> i32
     return r;
 }
 
-unsafe extern "C" fn lzh_emit_window(mut strm: *mut lzh_stream, mut s: size_t) {
+unsafe fn lzh_emit_window(mut strm: *mut lzh_stream, mut s: size_t) {
     let strm_safe = unsafe { &mut *strm };
     let ds = unsafe { &mut *strm_safe.ds };
     strm_safe.ref_ptr = ds.w_buff;
@@ -2637,7 +2637,7 @@ unsafe extern "C" fn lzh_emit_window(mut strm: *mut lzh_stream, mut s: size_t) {
  *    zeros are treated as the mark of the end of the data although the zeros
  *    is dummy, not the file data.
  */
-unsafe extern "C" fn lzh_read_blocks(
+unsafe fn lzh_read_blocks(
     mut strm: *mut lzh_stream,
     mut last: i32,
 ) -> i32 {
@@ -3056,7 +3056,7 @@ unsafe extern "C" fn lzh_read_blocks(
     return ds.error;
 }
 
-unsafe extern "C" fn lzh_decode_blocks(
+unsafe fn lzh_decode_blocks(
     mut strm: *mut lzh_stream,
     mut last: i32,
 ) -> i32 {
@@ -3341,7 +3341,7 @@ unsafe extern "C" fn lzh_decode_blocks(
     };
 }
 
-unsafe extern "C" fn lzh_huffman_init(
+unsafe fn lzh_huffman_init(
     mut hf: &mut huffman,
     mut len_size: size_t,
     mut tbl_bits: i32,
@@ -3385,7 +3385,7 @@ unsafe extern "C" fn lzh_huffman_init(
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn lzh_huffman_free(mut hf: &mut huffman) {
+unsafe fn lzh_huffman_free(mut hf: &mut huffman) {
     free_safe(hf.bitlen as *mut ());
     free_safe(hf.tbl as *mut ());
     free_safe(hf.tree as *mut ());
@@ -3428,7 +3428,7 @@ static bitlen_tbl: [i8; 1024] = [
     14, 14, 14, 14, 15, 15, 16, 0,
 ];
 
-unsafe extern "C" fn lzh_read_pt_bitlen(
+unsafe fn lzh_read_pt_bitlen(
     mut strm: &mut lzh_stream,
     mut start: i32,
     mut end: i32,
@@ -3487,7 +3487,7 @@ unsafe extern "C" fn lzh_read_pt_bitlen(
     return i;
 }
 
-unsafe extern "C" fn lzh_make_fake_table(mut hf: &mut huffman, mut c: uint16_t) -> i32 {
+unsafe fn lzh_make_fake_table(mut hf: &mut huffman, mut c: uint16_t) -> i32 {
     if c as i32 >= hf.len_size {
         return 0 as i32;
     }
@@ -3507,7 +3507,7 @@ unsafe extern "C" fn lzh_make_fake_table(mut hf: &mut huffman, mut c: uint16_t) 
 /*
  * Make a huffman coding table.
  */
-unsafe extern "C" fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
+unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
     let mut tbl: *mut uint16_t = 0 as *mut uint16_t;
     let mut bitlen: *const u8 = 0 as *const u8;
     let mut bitptn: [i32; 17] = [0; 17];
@@ -3770,7 +3770,7 @@ unsafe extern "C" fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
     return 1 as i32;
 }
 
-unsafe extern "C" fn lzh_decode_huffman_tree(
+unsafe fn lzh_decode_huffman_tree(
     mut hf: *mut huffman,
     mut rbits: u32,
     mut c: i32,
@@ -3796,7 +3796,7 @@ unsafe extern "C" fn lzh_decode_huffman_tree(
     return c;
 }
 
-unsafe extern "C" fn lzh_decode_huffman(
+unsafe fn lzh_decode_huffman(
     mut hf: &mut huffman,
     mut rbits: u32,
 ) -> i32 {
@@ -3814,7 +3814,7 @@ unsafe extern "C" fn lzh_decode_huffman(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_archive_read_support_format_lha() {
+pub unsafe fn archive_test_archive_read_support_format_lha() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
     archive_read = unsafe {
         calloc_safe(
@@ -3828,12 +3828,12 @@ pub unsafe extern "C" fn archive_test_archive_read_support_format_lha() {
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_lha_check_header_format(mut h: *const ()) {
+unsafe fn archive_test_lha_check_header_format(mut h: *const ()) {
     lha_check_header_format(h);
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_archive_read_format_lha_options(
+unsafe fn archive_test_archive_read_format_lha_options(
     mut _a: *mut archive,
     mut key: *const i8,
     mut val: *const i8,
@@ -3843,7 +3843,7 @@ unsafe extern "C" fn archive_test_archive_read_format_lha_options(
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_lha_skip_sfx(mut _a: *mut archive) {
+unsafe fn archive_test_lha_skip_sfx(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     lha_skip_sfx(a);
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
@@ -3859,7 +3859,7 @@ unsafe extern "C" fn archive_test_lha_skip_sfx(mut _a: *mut archive) {
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_lha_read_data_none(mut _a: *mut archive) {
+unsafe fn archive_test_lha_read_data_none(mut _a: *mut archive) {
     let mut size: size_t = 2;
     let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
     let mut offset: int64_t = 1;
@@ -3882,7 +3882,7 @@ unsafe extern "C" fn archive_test_lha_read_data_none(mut _a: *mut archive) {
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_lha_read_data_lzh(mut _a: *mut archive) {
+unsafe fn archive_test_lha_read_data_lzh(mut _a: *mut archive) {
     let mut size: size_t = 2;
     let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
     let mut offset: int64_t = 1;
@@ -3906,7 +3906,7 @@ unsafe extern "C" fn archive_test_lha_read_data_lzh(mut _a: *mut archive) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_lzh_emit_window() {
+pub unsafe fn archive_test_lzh_emit_window() {
     let mut lzh_stream: *mut lzh_stream = 0 as *mut lzh_stream;
     lzh_stream = unsafe {
         calloc_safe(
@@ -3927,7 +3927,7 @@ pub unsafe extern "C" fn archive_test_lzh_emit_window() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_lzh_decode_huffman_tree() {
+pub unsafe fn archive_test_lzh_decode_huffman_tree() {
     let mut huffman: *mut huffman = 0 as *mut huffman;
     huffman = unsafe {
         calloc_safe(
@@ -3950,13 +3950,13 @@ pub unsafe extern "C" fn archive_test_lzh_decode_huffman_tree() {
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_truncated_error(mut _a: *mut archive) {
+unsafe fn archive_test_truncated_error(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     truncated_error(a);
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_lzh_decode_blocks() {
+unsafe fn archive_test_lzh_decode_blocks() {
     let mut strm: *mut lzh_stream = 0 as *mut lzh_stream;
     strm = unsafe {
         calloc_safe(
@@ -3982,7 +3982,7 @@ unsafe extern "C" fn archive_test_lzh_decode_blocks() {
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_lzh_read_blocks() {
+unsafe fn archive_test_lzh_read_blocks() {
     let mut strm: *mut lzh_stream = 0 as *mut lzh_stream;
     strm = unsafe {
         calloc_safe(

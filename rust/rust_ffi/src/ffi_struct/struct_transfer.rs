@@ -527,7 +527,7 @@ pub struct rar_br {
 #[repr(C)]
 pub struct IByteIn {
     pub a: *mut archive_read,
-    pub Read: Option<unsafe extern "C" fn(_: *mut ()) -> Byte>,
+    pub Read: Option<unsafe fn(_: *mut ()) -> Byte>,
 }
 
 #[derive(Copy, Clone)]
@@ -1307,7 +1307,7 @@ pub type xmlTextReaderPtr = *mut xmlTextReader;
 pub type xmlTextReaderLocatorPtr = *mut ();
 
 pub type xmlTextReaderErrorFunc = Option<
-    unsafe extern "C" fn(
+    unsafe fn(
         _: *mut (),
         _: *const i8,
         _: xmlParserSeverities,
@@ -1446,10 +1446,10 @@ pub struct archive_rb_node {
 }
 
 pub type archive_rbto_compare_key_fn =
-    Option<unsafe extern "C" fn(_: *const archive_rb_node, _: *const ()) -> i32>;
+    Option<unsafe fn(_: *const archive_rb_node, _: *const ()) -> i32>;
 
 pub type archive_rbto_compare_nodes_fn = Option<
-    unsafe extern "C" fn(_: *const archive_rb_node, _: *const archive_rb_node) -> i32,
+    unsafe fn(_: *const archive_rb_node, _: *const archive_rb_node) -> i32,
 >;
 #[derive(Copy, Clone)]
 #[repr(C)]

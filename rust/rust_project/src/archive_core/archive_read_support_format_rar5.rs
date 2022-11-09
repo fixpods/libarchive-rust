@@ -29,7 +29,7 @@ static mut rar5_signature_xor: [u8; 8] = [
 ];
 static mut g_unpack_window_size: size_t = 0x20000 as i32 as size_t;
 /* Clears the contents of this circular deque. */
-unsafe extern "C" fn cdeque_clear(mut d: *mut cdeque) {
+unsafe fn cdeque_clear(mut d: *mut cdeque) {
     let safe_d = unsafe { &mut *d };
     safe_d.size = 0 as i32 as uint16_t;
     safe_d.beg_pos = 0 as i32 as uint16_t;
@@ -38,7 +38,7 @@ unsafe extern "C" fn cdeque_clear(mut d: *mut cdeque) {
 /* Creates a new circular deque object. Capacity must be power of 2: 8, 16, 32,
  * 64, 256, etc. When the user will add another item above current capacity,
  * the circular deque will overwrite the oldest entry. */
-unsafe extern "C" fn cdeque_init(
+unsafe fn cdeque_init(
     mut d: *mut cdeque,
     mut max_capacity_power_of_2: i32,
 ) -> i32 {
@@ -63,21 +63,21 @@ unsafe extern "C" fn cdeque_init(
     };
 }
 /* Return the current size (not capacity) of circular deque `d`. */
-unsafe extern "C" fn cdeque_size(mut d: *mut cdeque) -> size_t {
+unsafe fn cdeque_size(mut d: *mut cdeque) -> size_t {
     let safe_d = unsafe { &mut *d };
     return safe_d.size as size_t;
 }
 /* Returns the first element of current circular deque. Note that this function
  * doesn't perform any bounds checking. If you need bounds checking, use
  * `cdeque_front()` function instead. */
-unsafe extern "C" fn cdeque_front_fast(mut d: *mut cdeque, mut value: *mut *mut ()) {
+unsafe fn cdeque_front_fast(mut d: *mut cdeque, mut value: *mut *mut ()) {
     let safe_d = unsafe { &mut *d };
     let safe_value = unsafe { &mut *value };
     unsafe { *safe_value = *(*d).arr.offset(safe_d.beg_pos as isize) as *mut () };
 }
 /* Returns the first element of current circular deque. This function
  * performs bounds checking. */
-unsafe extern "C" fn cdeque_front(
+unsafe fn cdeque_front(
     mut d: *mut cdeque,
     mut value: *mut *mut (),
 ) -> i32 {
@@ -91,7 +91,7 @@ unsafe extern "C" fn cdeque_front(
 }
 /* Pushes a new element into the end of this circular deque object. If current
  * size will exceed capacity, the oldest element will be overwritten. */
-unsafe extern "C" fn cdeque_push_back(
+unsafe fn cdeque_push_back(
     mut d: *mut cdeque,
     mut item: *mut (),
 ) -> i32 {
@@ -110,7 +110,7 @@ unsafe extern "C" fn cdeque_push_back(
 }
 /* Pops a front element of this circular deque object and returns its value.
  * This function doesn't perform any bounds checking. */
-unsafe extern "C" fn cdeque_pop_front_fast(mut d: *mut cdeque, mut value: *mut *mut ()) {
+unsafe fn cdeque_pop_front_fast(mut d: *mut cdeque, mut value: *mut *mut ()) {
     let safe_d = unsafe { &mut *d };
     let safe_value = unsafe { &mut *value };
     unsafe { *safe_value = *(*d).arr.offset(safe_d.beg_pos as isize) as *mut () };
@@ -120,7 +120,7 @@ unsafe extern "C" fn cdeque_pop_front_fast(mut d: *mut cdeque, mut value: *mut *
 }
 /* Pops a front element of this circular deque object and returns its value.
  * This function performs bounds checking. */
-unsafe extern "C" fn cdeque_pop_front(
+unsafe fn cdeque_pop_front(
     mut d: *mut cdeque,
     mut value: *mut *mut (),
 ) -> i32 {
@@ -135,17 +135,17 @@ unsafe extern "C" fn cdeque_pop_front(
     return CDE_OK as i32;
 }
 /* Convenience function to cast filter_info** to void **. */
-unsafe extern "C" fn cdeque_filter_p(mut f: *mut *mut filter_info) -> *mut *mut () {
+unsafe fn cdeque_filter_p(mut f: *mut *mut filter_info) -> *mut *mut () {
     return f as size_t as *mut *mut ();
 }
 /* Convenience function to cast filter_info* to void *. */
-unsafe extern "C" fn cdeque_filter(mut f: *mut filter_info) -> *mut () {
+unsafe fn cdeque_filter(mut f: *mut filter_info) -> *mut () {
     return f as size_t as *mut *mut () as *mut ();
 }
 /* Destroys this circular deque object. Deallocates the memory of the
  * collection buffer, but doesn't deallocate the memory of any pointer passed
  * to this deque as a value. */
-unsafe extern "C" fn cdeque_free(mut d: *mut cdeque) {
+unsafe fn cdeque_free(mut d: *mut cdeque) {
     if d.is_null() {
         return;
     }
@@ -161,30 +161,30 @@ unsafe extern "C" fn cdeque_free(mut d: *mut cdeque) {
 }
 
 #[inline]
-unsafe extern "C" fn bf_bit_size(mut hdr: *const compressed_block_header) -> uint8_t {
+unsafe fn bf_bit_size(mut hdr: *const compressed_block_header) -> uint8_t {
     return unsafe { ((*hdr).block_flags_u8 as i32 & 7 as i32) as uint8_t };
 }
 
 #[inline]
-unsafe extern "C" fn bf_byte_count(mut hdr: *const compressed_block_header) -> uint8_t {
+unsafe fn bf_byte_count(mut hdr: *const compressed_block_header) -> uint8_t {
     return unsafe {
         ((*hdr).block_flags_u8 as i32 >> 3 as i32 & 7 as i32) as uint8_t
     };
 }
 
 #[inline]
-unsafe extern "C" fn bf_is_table_present(mut hdr: *const compressed_block_header) -> uint8_t {
+unsafe fn bf_is_table_present(mut hdr: *const compressed_block_header) -> uint8_t {
     return unsafe {
         ((*hdr).block_flags_u8 as i32 >> 7 as i32 & 1 as i32) as uint8_t
     };
 }
 
 #[inline]
-unsafe extern "C" fn get_context(mut a: *mut archive_read) -> *mut rar5 {
+unsafe fn get_context(mut a: *mut archive_read) -> *mut rar5 {
     return unsafe { (*(*a).format).data as *mut rar5 };
 }
 /* Convenience functions used by filter implementations. */
-unsafe extern "C" fn circular_memcpy(
+unsafe fn circular_memcpy(
     mut dst: *mut uint8_t,
     mut window: *mut uint8_t,
     mask: uint64_t,
@@ -221,7 +221,7 @@ unsafe extern "C" fn circular_memcpy(
     };
 }
 
-unsafe extern "C" fn read_filter_data(mut rar: *mut rar5, mut offset: uint32_t) -> uint32_t {
+unsafe fn read_filter_data(mut rar: *mut rar5, mut offset: uint32_t) -> uint32_t {
     let mut linear_buf: [uint8_t; 4] = [0; 4];
     let safe_rar = unsafe { &mut *rar };
     circular_memcpy(
@@ -234,7 +234,7 @@ unsafe extern "C" fn read_filter_data(mut rar: *mut rar5, mut offset: uint32_t) 
     return archive_le32dec(linear_buf.as_mut_ptr() as *const ());
 }
 
-unsafe extern "C" fn write_filter_data(
+unsafe fn write_filter_data(
     mut rar: *mut rar5,
     mut offset: uint32_t,
     mut value: uint32_t,
@@ -248,7 +248,7 @@ unsafe extern "C" fn write_filter_data(
     );
 }
 /* Allocates a new filter descriptor and adds it to the filter array. */
-unsafe extern "C" fn add_new_filter(mut rar: *mut rar5) -> *mut filter_info {
+unsafe fn add_new_filter(mut rar: *mut rar5) -> *mut filter_info {
     let safe_rar = unsafe { &mut *rar };
     let mut f: *mut filter_info = calloc_safe(
         1 as i32 as u64,
@@ -261,7 +261,7 @@ unsafe extern "C" fn add_new_filter(mut rar: *mut rar5) -> *mut filter_info {
     return f;
 }
 
-unsafe extern "C" fn run_delta_filter(
+unsafe fn run_delta_filter(
     mut rar: *mut rar5,
     mut flt: *mut filter_info,
 ) -> i32 {
@@ -293,7 +293,7 @@ unsafe extern "C" fn run_delta_filter(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn run_e8e9_filter(
+unsafe fn run_e8e9_filter(
     mut rar: *mut rar5,
     mut flt: *mut filter_info,
     mut extended: i32,
@@ -351,7 +351,7 @@ unsafe extern "C" fn run_e8e9_filter(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn run_arm_filter(mut rar: *mut rar5, mut flt: *mut filter_info) -> i32 {
+unsafe fn run_arm_filter(mut rar: *mut rar5, mut flt: *mut filter_info) -> i32 {
     let mut i: ssize_t = 0 as i32 as ssize_t;
     let mut offset: uint32_t = 0;
     let safe_rar = unsafe { &mut *rar };
@@ -393,7 +393,7 @@ unsafe extern "C" fn run_arm_filter(mut rar: *mut rar5, mut flt: *mut filter_inf
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn run_filter(
+unsafe fn run_filter(
     mut a: *mut archive_read,
     mut flt: *mut filter_info,
 ) -> i32 {
@@ -460,7 +460,7 @@ unsafe extern "C" fn run_filter(
  * Next call of `use_data` will use the pointer, size and offset arguments
  * that are specified here. These arguments are pushed to the FIFO stack here,
  * and popped from the stack by the `use_data` function. */
-unsafe extern "C" fn push_data(
+unsafe fn push_data(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
     mut buf: *const uint8_t,
@@ -519,7 +519,7 @@ unsafe extern "C" fn push_data(
 
 /* Convenience function that submits the data to the user. It uses the
  * unpack window buffer as a source location. */
-unsafe extern "C" fn push_window_data(
+unsafe fn push_window_data(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
     mut idx_begin: int64_t,
@@ -529,7 +529,7 @@ unsafe extern "C" fn push_window_data(
     push_data(a, rar, safe_rar.cstate.window_buf, idx_begin, idx_end);
 }
 
-unsafe extern "C" fn apply_filters(mut a: *mut archive_read) -> i32 {
+unsafe fn apply_filters(mut a: *mut archive_read) -> i32 {
     let mut flt: *mut filter_info = 0 as *mut filter_info;
     let mut rar: *mut rar5 = get_context(a);
     let mut ret: i32 = 0;
@@ -586,7 +586,7 @@ unsafe extern "C" fn apply_filters(mut a: *mut archive_read) -> i32 {
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn dist_cache_push(mut rar: *mut rar5, mut value: i32) {
+unsafe fn dist_cache_push(mut rar: *mut rar5, mut value: i32) {
     let safe_rar = unsafe { &mut *rar };
     let mut q: *mut i32 = safe_rar.cstate.dist_cache.as_mut_ptr();
     unsafe {
@@ -597,7 +597,7 @@ unsafe extern "C" fn dist_cache_push(mut rar: *mut rar5, mut value: i32) {
     }
 }
 
-unsafe extern "C" fn dist_cache_touch(mut rar: *mut rar5, mut idx: i32) -> i32 {
+unsafe fn dist_cache_touch(mut rar: *mut rar5, mut idx: i32) -> i32 {
     let safe_rar = unsafe { &mut *rar };
     let mut q: *mut i32 = safe_rar.cstate.dist_cache.as_mut_ptr();
     let mut i: i32 = 0;
@@ -611,7 +611,7 @@ unsafe extern "C" fn dist_cache_touch(mut rar: *mut rar5, mut idx: i32) -> i32 {
     return dist;
 }
 
-unsafe extern "C" fn free_filters(mut rar: *mut rar5) {
+unsafe fn free_filters(mut rar: *mut rar5) {
     let safe_rar = unsafe { &mut *rar };
     let mut d: *mut cdeque = &mut safe_rar.cstate.filters;
     /* Free any remaining filters. All filters should be naturally
@@ -633,7 +633,7 @@ unsafe extern "C" fn free_filters(mut rar: *mut rar5) {
     safe_rar.cstate.last_block_length = 0 as i32 as ssize_t;
 }
 
-unsafe extern "C" fn reset_file_context(mut rar: *mut rar5) {
+unsafe fn reset_file_context(mut rar: *mut rar5) {
     let safe_rar = unsafe { &mut *rar };
     memset_safe(
         &mut safe_rar.file as *mut file_header as *mut (),
@@ -655,7 +655,7 @@ unsafe extern "C" fn reset_file_context(mut rar: *mut rar5) {
 }
 
 #[inline]
-unsafe extern "C" fn get_archive_read(
+unsafe fn get_archive_read(
     mut a: *mut archive,
     mut ar: *mut *mut archive_read,
 ) -> i32 {
@@ -672,7 +672,7 @@ unsafe extern "C" fn get_archive_read(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn read_ahead(
+unsafe fn read_ahead(
     mut a: *mut archive_read,
     mut how_many: size_t,
     mut ptr: *mut *const uint8_t,
@@ -689,7 +689,7 @@ unsafe extern "C" fn read_ahead(
     return 1 as i32;
 }
 
-unsafe extern "C" fn consume(mut a: *mut archive_read, mut how_many: int64_t) -> i32 {
+unsafe fn consume(mut a: *mut archive_read, mut how_many: int64_t) -> i32 {
     let mut ret: i32 = 0;
     ret = if how_many == __archive_read_consume_safe(a, how_many) {
         ARCHIVE_RAR5_DEFINED_PARAM.archive_ok
@@ -714,7 +714,7 @@ unsafe extern "C" fn consume(mut a: *mut archive_read, mut how_many: int64_t) ->
  * Returns 0 if there was an error. In this case, *pvalue contains an
  *           invalid value.
  */
-unsafe extern "C" fn read_var(
+unsafe fn read_var(
     mut a: *mut archive_read,
     mut pvalue: *mut uint64_t,
     mut pvalue_len: *mut uint64_t,
@@ -790,7 +790,7 @@ unsafe extern "C" fn read_var(
     return 1 as i32;
 }
 
-unsafe extern "C" fn read_var_sized(
+unsafe fn read_var_sized(
     mut a: *mut archive_read,
     mut pvalue: *mut size_t,
     mut pvalue_len: *mut size_t,
@@ -814,7 +814,7 @@ unsafe extern "C" fn read_var_sized(
     return ret;
 }
 
-unsafe extern "C" fn read_bits_32(
+unsafe fn read_bits_32(
     mut rar: *mut rar5,
     mut p: *const uint8_t,
     mut value: *mut uint32_t,
@@ -838,7 +838,7 @@ unsafe extern "C" fn read_bits_32(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn read_bits_16(
+unsafe fn read_bits_16(
     mut rar: *mut rar5,
     mut p: *const uint8_t,
     mut value: *mut uint16_t,
@@ -858,14 +858,14 @@ unsafe extern "C" fn read_bits_16(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn skip_bits(mut rar: *mut rar5, mut bits: i32) {
+unsafe fn skip_bits(mut rar: *mut rar5, mut bits: i32) {
     let safe_rar = unsafe { &mut *rar };
     let new_bits: i32 = safe_rar.bits.bit_addr as i32 + bits;
     safe_rar.bits.in_addr += new_bits >> 3 as i32;
     safe_rar.bits.bit_addr = (new_bits & 7 as i32) as int8_t;
 }
 /* n = up to 16 */
-unsafe extern "C" fn read_consume_bits(
+unsafe fn read_consume_bits(
     mut rar: *mut rar5,
     mut p: *const uint8_t,
     mut n: i32,
@@ -893,7 +893,7 @@ unsafe extern "C" fn read_consume_bits(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn read_u32(mut a: *mut archive_read, mut pvalue: *mut uint32_t) -> i32 {
+unsafe fn read_u32(mut a: *mut archive_read, mut pvalue: *mut uint32_t) -> i32 {
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let safe_pvalue = unsafe { &mut *pvalue };
     if read_ahead(a, 4 as i32 as size_t, &mut p) == 0 {
@@ -907,7 +907,7 @@ unsafe extern "C" fn read_u32(mut a: *mut archive_read, mut pvalue: *mut uint32_
     };
 }
 
-unsafe extern "C" fn read_u64(mut a: *mut archive_read, mut pvalue: *mut uint64_t) -> i32 {
+unsafe fn read_u64(mut a: *mut archive_read, mut pvalue: *mut uint64_t) -> i32 {
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let safe_pvalue = unsafe { &mut *pvalue };
     if read_ahead(a, 8 as i32 as size_t, &mut p) == 0 {
@@ -921,7 +921,7 @@ unsafe extern "C" fn read_u64(mut a: *mut archive_read, mut pvalue: *mut uint64_
     };
 }
 
-unsafe extern "C" fn bid_standard(mut a: *mut archive_read) -> i32 {
+unsafe fn bid_standard(mut a: *mut archive_read) -> i32 {
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let mut signature: [i8; 8] = [0; 8];
     rar5_signature(signature.as_mut_ptr());
@@ -944,7 +944,7 @@ unsafe extern "C" fn bid_standard(mut a: *mut archive_read) -> i32 {
     return -(1 as i32);
 }
 
-unsafe extern "C" fn rar5_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
+unsafe fn rar5_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
     let mut my_bid: i32 = 0;
     if best_bid > 30 as i32 {
         return -(1 as i32);
@@ -956,7 +956,7 @@ unsafe extern "C" fn rar5_bid(mut a: *mut archive_read, mut best_bid: i32) -> i3
     return -(1 as i32);
 }
 
-unsafe extern "C" fn rar5_options(
+unsafe fn rar5_options(
     mut a: *mut archive_read,
     mut key: *const i8,
     mut val: *const i8,
@@ -967,13 +967,13 @@ unsafe extern "C" fn rar5_options(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_warn;
 }
 
-unsafe extern "C" fn init_header(mut a: *mut archive_read) {
+unsafe fn init_header(mut a: *mut archive_read) {
     let safe_a = unsafe { &mut *a };
     safe_a.archive.archive_format = ARCHIVE_RAR5_DEFINED_PARAM.archive_format_rar_v5;
     safe_a.archive.archive_format_name = b"RAR5\x00" as *const u8 as *const i8;
 }
 
-unsafe extern "C" fn init_window_mask(mut rar: *mut rar5) {
+unsafe fn init_window_mask(mut rar: *mut rar5) {
     let safe_rar = unsafe { &mut *rar };
     if safe_rar.cstate.window_size != 0 {
         safe_rar.cstate.window_mask =
@@ -983,7 +983,7 @@ unsafe extern "C" fn init_window_mask(mut rar: *mut rar5) {
     };
 }
 
-unsafe extern "C" fn process_main_locator_extra_block(
+unsafe fn process_main_locator_extra_block(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
 ) -> i32 {
@@ -1007,7 +1007,7 @@ unsafe extern "C" fn process_main_locator_extra_block(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn parse_file_extra_hash(
+unsafe fn parse_file_extra_hash(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
     mut extra_data_size: *mut ssize_t,
@@ -1055,13 +1055,13 @@ unsafe extern "C" fn parse_file_extra_hash(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn time_win_to_unix(mut win_time: uint64_t) -> uint64_t {
+unsafe fn time_win_to_unix(mut win_time: uint64_t) -> uint64_t {
     let ns_in_sec: size_t = 10000000 as i32 as size_t;
     let sec_to_unix: uint64_t = 11644473600 as i64 as uint64_t;
     return win_time.wrapping_div(ns_in_sec).wrapping_sub(sec_to_unix);
 }
 
-unsafe extern "C" fn parse_htime_item(
+unsafe fn parse_htime_item(
     mut a: *mut archive_read,
     mut unix_time: i8,
     mut where_0: *mut uint64_t,
@@ -1087,7 +1087,7 @@ unsafe extern "C" fn parse_htime_item(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn parse_file_extra_version(
+unsafe fn parse_file_extra_version(
     mut a: *mut archive_read,
     mut e: *mut archive_entry,
     mut extra_data_size: *mut ssize_t,
@@ -1161,7 +1161,7 @@ unsafe extern "C" fn parse_file_extra_version(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn parse_file_extra_htime(
+unsafe fn parse_file_extra_htime(
     mut a: *mut archive_read,
     mut e: *mut archive_entry,
     mut rar: *mut rar5,
@@ -1214,7 +1214,7 @@ unsafe extern "C" fn parse_file_extra_htime(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn parse_file_extra_redir(
+unsafe fn parse_file_extra_redir(
     mut a: *mut archive_read,
     mut e: *mut archive_entry,
     mut rar: *mut rar5,
@@ -1306,7 +1306,7 @@ unsafe extern "C" fn parse_file_extra_redir(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn parse_file_extra_owner(
+unsafe fn parse_file_extra_owner(
     mut a: *mut archive_read,
     mut e: *mut archive_entry,
     mut extra_data_size: *mut ssize_t,
@@ -1412,7 +1412,7 @@ unsafe extern "C" fn parse_file_extra_owner(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn process_head_file_extra(
+unsafe fn process_head_file_extra(
     mut a: *mut archive_read,
     mut e: *mut archive_entry,
     mut rar: *mut rar5,
@@ -1486,7 +1486,7 @@ unsafe extern "C" fn process_head_file_extra(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn process_head_file(
+unsafe fn process_head_file(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
     mut entry: *mut archive_entry,
@@ -1803,7 +1803,7 @@ unsafe extern "C" fn process_head_file(
     };
 }
 
-unsafe extern "C" fn process_head_service(
+unsafe fn process_head_service(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
     mut entry: *mut archive_entry,
@@ -1827,7 +1827,7 @@ unsafe extern "C" fn process_head_service(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_retry;
 }
 
-unsafe extern "C" fn process_head_main(
+unsafe fn process_head_main(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
     mut entry: *mut archive_entry,
@@ -1924,7 +1924,7 @@ unsafe extern "C" fn process_head_main(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn skip_unprocessed_bytes(mut a: *mut archive_read) -> i32 {
+unsafe fn skip_unprocessed_bytes(mut a: *mut archive_read) -> i32 {
     let mut rar: *mut rar5 = get_context(a);
     let mut ret: i32 = 0;
     let safe_rar = unsafe { &mut *rar };
@@ -2000,7 +2000,7 @@ unsafe extern "C" fn skip_unprocessed_bytes(mut a: *mut archive_read) -> i32 {
  * <magic> block, <MAIN> block, and then we're standing on the proper
  * <FILE> block.
  */
-unsafe extern "C" fn process_base_block(
+unsafe fn process_base_block(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -2177,7 +2177,7 @@ unsafe extern "C" fn process_base_block(
     };
 }
 
-unsafe extern "C" fn skip_base_block(mut a: *mut archive_read) -> i32 {
+unsafe fn skip_base_block(mut a: *mut archive_read) -> i32 {
     let mut ret: i32 = 0;
     let mut rar: *mut rar5 = get_context(a);
     let safe_rar = unsafe { &mut *rar };
@@ -2203,7 +2203,7 @@ unsafe extern "C" fn skip_base_block(mut a: *mut archive_read) -> i32 {
     };
 }
 
-unsafe extern "C" fn rar5_read_header(
+unsafe fn rar5_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -2237,7 +2237,7 @@ unsafe extern "C" fn rar5_read_header(
     return ret;
 }
 
-unsafe extern "C" fn init_unpack(mut rar: *mut rar5) {
+unsafe fn init_unpack(mut rar: *mut rar5) {
     let safe_rar = unsafe { &mut *rar };
     safe_rar.file.calculated_crc32 = 0 as i32 as uint32_t;
     init_window_mask(rar);
@@ -2285,7 +2285,7 @@ unsafe extern "C" fn init_unpack(mut rar: *mut rar5) {
     );
 }
 
-unsafe extern "C" fn update_crc(mut rar: *mut rar5, mut p: *const uint8_t, mut to_read: size_t) {
+unsafe fn update_crc(mut rar: *mut rar5, mut p: *const uint8_t, mut to_read: size_t) {
     let mut verify_crc: i32 = 0;
     let safe_rar = unsafe { &mut *rar };
     if safe_rar.skip_mode != 0 {
@@ -2317,7 +2317,7 @@ unsafe extern "C" fn update_crc(mut rar: *mut rar5, mut p: *const uint8_t, mut t
     };
 }
 
-unsafe extern "C" fn create_decode_tables(
+unsafe fn create_decode_tables(
     mut bit_length: *mut uint8_t,
     mut table: *mut decode_table,
     mut size: i32,
@@ -2419,7 +2419,7 @@ unsafe extern "C" fn create_decode_tables(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn decode_number(
+unsafe fn decode_number(
     mut a: *mut archive_read,
     mut table: *mut decode_table,
     mut p: *const uint8_t,
@@ -2467,7 +2467,7 @@ unsafe extern "C" fn decode_number(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 /* Reads and parses Huffman tables from the beginning of the block. */
-unsafe extern "C" fn parse_tables(
+unsafe fn parse_tables(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
     mut p: *const uint8_t,
@@ -2709,7 +2709,7 @@ unsafe extern "C" fn parse_tables(
 
 /* Parses the block header, verifies its CRC byte, and saves the header
  * fields inside the `hdr` pointer. */
-unsafe extern "C" fn parse_block_header(
+unsafe fn parse_block_header(
     mut a: *mut archive_read,
     mut p: *const uint8_t,
     mut block_size: *mut ssize_t,
@@ -2788,7 +2788,7 @@ unsafe extern "C" fn parse_block_header(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 /* Convenience function used during filter processing. */
-unsafe extern "C" fn parse_filter_data(
+unsafe fn parse_filter_data(
     mut rar: *mut rar5,
     mut p: *const uint8_t,
     mut filter_data: *mut uint32_t,
@@ -2821,7 +2821,7 @@ unsafe extern "C" fn parse_filter_data(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 /* Function is used during sanity checking. */
-unsafe extern "C" fn is_valid_filter_block_start(
+unsafe fn is_valid_filter_block_start(
     mut rar: *mut rar5,
     mut start: uint32_t,
 ) -> i32 {
@@ -2843,7 +2843,7 @@ unsafe extern "C" fn is_valid_filter_block_start(
 }
 /* The function will create a new filter, read its parameters from the input
  * stream and add it to the filter collection. */
-unsafe extern "C" fn parse_filter(mut ar: *mut archive_read, mut p: *const uint8_t) -> i32 {
+unsafe fn parse_filter(mut ar: *mut archive_read, mut p: *const uint8_t) -> i32 {
     let mut block_start: uint32_t = 0;
     let mut block_length: uint32_t = 0;
     let mut filter_type: uint16_t = 0;
@@ -2910,7 +2910,7 @@ unsafe extern "C" fn parse_filter(mut ar: *mut archive_read, mut p: *const uint8
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn decode_code_length(
+unsafe fn decode_code_length(
     mut rar: *mut rar5,
     mut p: *const uint8_t,
     mut code: uint16_t,
@@ -2934,7 +2934,7 @@ unsafe extern "C" fn decode_code_length(
     return length;
 }
 
-unsafe extern "C" fn copy_string(
+unsafe fn copy_string(
     mut a: *mut archive_read,
     mut len: i32,
     mut dist: i32,
@@ -2971,7 +2971,7 @@ unsafe extern "C" fn copy_string(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn do_uncompress_block(
+unsafe fn do_uncompress_block(
     mut a: *mut archive_read,
     mut p: *const uint8_t,
 ) -> i32 {
@@ -3184,7 +3184,7 @@ unsafe extern "C" fn do_uncompress_block(
 }
 
 /* Binary search for the RARv5 signature. */
-unsafe extern "C" fn scan_for_signature(mut a: *mut archive_read) -> i32 {
+unsafe fn scan_for_signature(mut a: *mut archive_read) -> i32 {
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let chunk_size: i32 = 512 as i32;
     let mut i: ssize_t = 0;
@@ -3237,7 +3237,7 @@ unsafe extern "C" fn scan_for_signature(mut a: *mut archive_read) -> i32 {
 }
 /* This function will switch the multivolume archive file to another file,
  * i.e. from part03 to part 04. */
-unsafe extern "C" fn advance_multivolume(mut a: *mut archive_read) -> i32 {
+unsafe fn advance_multivolume(mut a: *mut archive_read) -> i32 {
     let mut lret: i32 = 0;
     let mut rar: *mut rar5 = get_context(a);
     let safe_rar = unsafe { &mut *rar };
@@ -3302,7 +3302,7 @@ unsafe extern "C" fn advance_multivolume(mut a: *mut archive_read) -> i32 {
  * partial block from the second multivolume archive file. The result is
  * a chunk of memory containing the whole block, and the stream pointer
  * is advanced to the next block in the second multivolume archive file. */
-unsafe extern "C" fn merge_block(
+unsafe fn merge_block(
     mut a: *mut archive_read,
     mut block_size: ssize_t,
     mut p: *mut *const uint8_t,
@@ -3433,7 +3433,7 @@ unsafe extern "C" fn merge_block(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn process_block(mut a: *mut archive_read) -> i32 {
+unsafe fn process_block(mut a: *mut archive_read) -> i32 {
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let mut rar: *mut rar5 = get_context(a);
     let mut ret: i32 = 0;
@@ -3579,7 +3579,7 @@ unsafe extern "C" fn process_block(mut a: *mut archive_read) -> i32 {
  *
  * Returns ARCHIVE_OK when those arguments can be used, ARCHIVE_RETRY
  * when there is no data on the stack. */
-unsafe extern "C" fn use_data(
+unsafe fn use_data(
     mut rar: *mut rar5,
     mut buf: *mut *const (),
     mut size: *mut size_t,
@@ -3618,7 +3618,7 @@ unsafe extern "C" fn use_data(
 /* Pushes the `buf`, `size` and `offset` arguments to the rar->cstate.dready
  * FIFO stack. Those values will be popped from this stack by the `use_data`
  * function. */
-unsafe extern "C" fn push_data_ready(
+unsafe fn push_data_ready(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
     mut buf: *const uint8_t,
@@ -3722,7 +3722,7 @@ unsafe extern "C" fn push_data_ready(
  * be seen as a kind of a non-turing-complete virtual machine that simply
  * tells the decompressor what it should do.
  * */
-unsafe extern "C" fn do_uncompress_file(mut a: *mut archive_read) -> i32 {
+unsafe fn do_uncompress_file(mut a: *mut archive_read) -> i32 {
     let mut rar: *mut rar5 = get_context(a);
     let mut ret: i32 = 0;
     let mut max_end_pos: int64_t = 0;
@@ -3814,7 +3814,7 @@ unsafe extern "C" fn do_uncompress_file(mut a: *mut archive_read) -> i32 {
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn uncompress_file(mut a: *mut archive_read) -> i32 {
+unsafe fn uncompress_file(mut a: *mut archive_read) -> i32 {
     let mut ret: i32 = 0;
     loop {
         /* Sometimes the uncompression function will return a
@@ -3827,7 +3827,7 @@ unsafe extern "C" fn uncompress_file(mut a: *mut archive_read) -> i32 {
     }
 }
 
-unsafe extern "C" fn do_unstore_file(
+unsafe fn do_unstore_file(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
     mut buf: *mut *const (),
@@ -3896,7 +3896,7 @@ unsafe extern "C" fn do_unstore_file(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn do_unpack(
+unsafe fn do_unpack(
     mut a: *mut archive_read,
     mut rar: *mut rar5,
     mut buf: *mut *const (),
@@ -3948,7 +3948,7 @@ unsafe extern "C" fn do_unpack(
     };
 }
 
-unsafe extern "C" fn verify_checksums(mut a: *mut archive_read) -> i32 {
+unsafe fn verify_checksums(mut a: *mut archive_read) -> i32 {
     let mut verify_crc: i32 = 0;
     let mut rar: *mut rar5 = get_context(a);
     let safe_rar = unsafe { &mut *rar };
@@ -4047,7 +4047,7 @@ unsafe extern "C" fn verify_checksums(mut a: *mut archive_read) -> i32 {
     return 0 as i32;
 }
 
-unsafe extern "C" fn verify_global_checksums(mut a: *mut archive_read) -> i32 {
+unsafe fn verify_global_checksums(mut a: *mut archive_read) -> i32 {
     return verify_checksums(a);
 }
 /* Forward function declarations. */
@@ -4055,7 +4055,7 @@ unsafe extern "C" fn verify_global_checksums(mut a: *mut archive_read) -> i32 {
  * Decryption function for the magic signature pattern. Check the comment near
  * the `rar5_signature_xor` symbol to read the rationale behind this.
  */
-unsafe extern "C" fn rar5_signature(mut buf: *mut i8) {
+unsafe fn rar5_signature(mut buf: *mut i8) {
     let mut i: size_t = 0;
     i = 0 as i32 as size_t;
     while i < ::std::mem::size_of::<[u8; 8]>() as u64 {
@@ -4067,7 +4067,7 @@ unsafe extern "C" fn rar5_signature(mut buf: *mut i8) {
     }
 }
 
-unsafe extern "C" fn rar5_read_data(
+unsafe fn rar5_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -4128,7 +4128,7 @@ unsafe extern "C" fn rar5_read_data(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn rar5_read_data_skip(mut a: *mut archive_read) -> i32 {
+unsafe fn rar5_read_data_skip(mut a: *mut archive_read) -> i32 {
     let mut rar: *mut rar5 = get_context(a);
     let safe_rar = unsafe { &mut *rar };
     if safe_rar.main.solid() != 0 {
@@ -4176,7 +4176,7 @@ unsafe extern "C" fn rar5_read_data_skip(mut a: *mut archive_read) -> i32 {
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn rar5_seek_data(
+unsafe fn rar5_seek_data(
     mut a: *mut archive_read,
     mut offset: int64_t,
     mut whence: i32,
@@ -4185,7 +4185,7 @@ unsafe extern "C" fn rar5_seek_data(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal as int64_t;
 }
 
-unsafe extern "C" fn rar5_cleanup(mut a: *mut archive_read) -> i32 {
+unsafe fn rar5_cleanup(mut a: *mut archive_read) -> i32 {
     let mut rar: *mut rar5 = get_context(a);
     let safe_rar = unsafe { &mut *rar };
     free_safe(safe_rar.cstate.window_buf as *mut ());
@@ -4198,16 +4198,16 @@ unsafe extern "C" fn rar5_cleanup(mut a: *mut archive_read) -> i32 {
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn rar5_capabilities(mut a: *mut archive_read) -> i32 {
+unsafe fn rar5_capabilities(mut a: *mut archive_read) -> i32 {
     return 0 as i32;
 }
 
-unsafe extern "C" fn rar5_has_encrypted_entries(mut _a: *mut archive_read) -> i32 {
+unsafe fn rar5_has_encrypted_entries(mut _a: *mut archive_read) -> i32 {
     /* Unsupported for now. */
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_read_format_encryption_unsupported;
 }
 
-unsafe extern "C" fn rar5_init(mut rar: *mut rar5) -> i32 {
+unsafe fn rar5_init(mut rar: *mut rar5) -> i32 {
     let safe_rar = unsafe { &mut *rar };
     memset_safe(
         rar as *mut (),
@@ -4221,7 +4221,7 @@ unsafe extern "C" fn rar5_init(mut rar: *mut rar5) -> i32 {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_rar5(mut _a: *mut archive) -> i32 {
+pub unsafe fn archive_read_support_format_rar5(mut _a: *mut archive) -> i32 {
     let mut ar: *mut archive_read = 0 as *mut archive_read;
     let mut ret: i32 = 0;
     let mut rar: *mut rar5 = 0 as *mut rar5;
@@ -4251,10 +4251,10 @@ pub unsafe extern "C" fn archive_read_support_format_rar5(mut _a: *mut archive) 
         ar,
         rar as *mut (),
         b"rar5\x00" as *const u8 as *const i8,
-        Some(rar5_bid as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32),
+        Some(rar5_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
         Some(
             rar5_options
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *const i8,
                     _: *const i8,
@@ -4262,30 +4262,30 @@ pub unsafe extern "C" fn archive_read_support_format_rar5(mut _a: *mut archive) 
         ),
         Some(
             rar5_read_header
-                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
         ),
         Some(
             rar5_read_data
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut *const (),
                     _: *mut size_t,
                     _: *mut int64_t,
                 ) -> i32,
         ),
-        Some(rar5_read_data_skip as unsafe extern "C" fn(_: *mut archive_read) -> i32),
+        Some(rar5_read_data_skip as unsafe fn(_: *mut archive_read) -> i32),
         Some(
             rar5_seek_data
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: int64_t,
                     _: i32,
                 ) -> int64_t,
         ),
-        Some(rar5_cleanup as unsafe extern "C" fn(_: *mut archive_read) -> i32),
-        Some(rar5_capabilities as unsafe extern "C" fn(_: *mut archive_read) -> i32),
+        Some(rar5_cleanup as unsafe fn(_: *mut archive_read) -> i32),
+        Some(rar5_capabilities as unsafe fn(_: *mut archive_read) -> i32),
         Some(
-            rar5_has_encrypted_entries as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+            rar5_has_encrypted_entries as unsafe fn(_: *mut archive_read) -> i32,
         ),
     );
     if ret != ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
@@ -4295,7 +4295,7 @@ pub unsafe extern "C" fn archive_read_support_format_rar5(mut _a: *mut archive) 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_rar5_empty_function(mut _a: *mut archive) -> i32 {
+pub unsafe fn archive_test_rar5_empty_function(mut _a: *mut archive) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut res1: i32 = rar5_capabilities(a);
     let mut res2: i32 = rar5_has_encrypted_entries(a);
@@ -4304,7 +4304,7 @@ pub unsafe extern "C" fn archive_test_rar5_empty_function(mut _a: *mut archive) 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_circular_memcpy(
+pub unsafe fn archive_test_circular_memcpy(
     mut dst: *mut uint8_t,
     mut window: *mut uint8_t,
     mask: uint64_t,
@@ -4315,7 +4315,7 @@ pub unsafe extern "C" fn archive_test_circular_memcpy(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_rar5_read_data(
+pub unsafe fn archive_test_rar5_read_data(
     mut _a: *mut archive,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -4340,7 +4340,7 @@ pub unsafe extern "C" fn archive_test_rar5_read_data(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_do_unpack(
+pub unsafe fn archive_test_do_unpack(
     mut _a: *mut archive,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -4359,7 +4359,7 @@ pub unsafe extern "C" fn archive_test_do_unpack(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_run_filter(
+pub unsafe fn archive_test_run_filter(
     mut _a: *mut archive,
     mut flag: i32,
 ) -> i32 {
@@ -4383,7 +4383,7 @@ pub unsafe extern "C" fn archive_test_run_filter(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_push_data(
+pub unsafe fn archive_test_push_data(
     mut _a: *mut archive,
     mut buf: *const uint8_t,
     mut idx_begin: int64_t,
@@ -4406,7 +4406,7 @@ pub unsafe extern "C" fn archive_test_push_data(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_process_head_file(
+pub unsafe fn archive_test_process_head_file(
     mut _a: *mut archive,
     mut e: *mut archive_entry,
     mut block_flags: size_t,
@@ -4423,7 +4423,7 @@ pub unsafe extern "C" fn archive_test_process_head_file(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_parse_htime_item(
+pub unsafe fn archive_test_parse_htime_item(
     mut _a: *mut archive,
     mut unix_time: i8,
     mut where_0: *mut uint64_t,
@@ -4442,7 +4442,7 @@ pub unsafe extern "C" fn archive_test_parse_htime_item(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_init_unpack() {
+pub unsafe fn archive_test_init_unpack() {
     let mut rar5: *mut rar5 = 0 as *mut rar5;
     rar5 = unsafe {
         calloc_safe(
@@ -4455,7 +4455,7 @@ pub unsafe extern "C" fn archive_test_init_unpack() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_do_unstore_file(
+pub unsafe fn archive_test_do_unstore_file(
     mut _a: *mut archive,
     mut buf: *mut *const (),
     mut size: *mut size_t,
@@ -4475,7 +4475,7 @@ pub unsafe extern "C" fn archive_test_do_unstore_file(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_merge_block(
+pub unsafe fn archive_test_merge_block(
     mut _a: *mut archive,
     mut block_size: ssize_t,
     mut p: *mut *const uint8_t,
@@ -4495,7 +4495,7 @@ pub unsafe extern "C" fn archive_test_merge_block(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_parse_tables(
+pub unsafe fn archive_test_parse_tables(
     mut _a: *mut archive,
     mut p: *const uint8_t,
 ) -> i32 {
@@ -4512,7 +4512,7 @@ pub unsafe extern "C" fn archive_test_parse_tables(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_parse_block_header(
+pub unsafe fn archive_test_parse_block_header(
     mut _a: *mut archive,
     mut p: *const uint8_t,
     mut block_size: *mut ssize_t,

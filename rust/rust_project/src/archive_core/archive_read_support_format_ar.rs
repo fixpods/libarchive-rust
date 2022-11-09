@@ -1,7 +1,6 @@
 use rust_ffi::archive_set_error_safe;
 use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
-use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 #[no_mangle]
@@ -39,36 +38,13 @@ pub unsafe extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) ->
             a,
             ar as *mut (),
             b"ar\x00" as *const u8 as *const i8,
-            Some(
-                archive_read_format_ar_bid
-                    as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32,
-            ),
+            Some(archive_read_format_ar_bid),
             None,
-            Some(
-                archive_read_format_ar_read_header
-                    as unsafe extern "C" fn(
-                        _: *mut archive_read,
-                        _: *mut archive_entry,
-                    ) -> i32,
-            ),
-            Some(
-                archive_read_format_ar_read_data
-                    as unsafe extern "C" fn(
-                        _: *mut archive_read,
-                        _: *mut *const (),
-                        _: *mut size_t,
-                        _: *mut int64_t,
-                    ) -> i32,
-            ),
-            Some(
-                archive_read_format_ar_skip
-                    as unsafe extern "C" fn(_: *mut archive_read) -> i32,
-            ),
+            Some(archive_read_format_ar_read_header),
+            Some(archive_read_format_ar_read_data),
+            Some(archive_read_format_ar_skip),
             None,
-            Some(
-                archive_read_format_ar_cleanup
-                    as unsafe extern "C" fn(_: *mut archive_read) -> i32,
-            ),
+            Some(archive_read_format_ar_cleanup),
             None,
             None,
         );
@@ -81,7 +57,7 @@ pub unsafe extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) ->
     return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn archive_read_format_ar_cleanup(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_ar_cleanup(mut a: *mut archive_read) -> i32 {
     let mut safe_a = unsafe { &mut *a };
     let mut ar: *mut ar = 0 as *mut ar;
     ar = unsafe { (*(*a).format).data as *mut ar };
@@ -91,7 +67,7 @@ unsafe extern "C" fn archive_read_format_ar_cleanup(mut a: *mut archive_read) ->
     return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn archive_read_format_ar_bid(
+unsafe fn archive_read_format_ar_bid(
     mut a: *mut archive_read,
     mut best_bid: i32,
 ) -> i32 {
@@ -117,7 +93,7 @@ unsafe extern "C" fn archive_read_format_ar_bid(
     }
     return -(1 as i32);
 }
-unsafe extern "C" fn _ar_read_header(
+unsafe fn _ar_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut ar: *mut ar,
@@ -495,7 +471,7 @@ unsafe extern "C" fn _ar_read_header(
     unsafe { archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr()) };
     return ar_parse_common_header(ar, entry, h);
 }
-unsafe extern "C" fn archive_read_format_ar_read_header(
+unsafe fn archive_read_format_ar_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -537,7 +513,7 @@ unsafe extern "C" fn archive_read_format_ar_read_header(
     }
     return ret;
 }
-unsafe extern "C" fn ar_parse_common_header(
+unsafe fn ar_parse_common_header(
     mut ar: *mut ar,
     mut entry: *mut archive_entry,
     mut h: *const i8,
@@ -587,7 +563,7 @@ unsafe extern "C" fn ar_parse_common_header(
     safe_ar.entry_bytes_remaining = n as int64_t;
     return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn archive_read_format_ar_read_data(
+unsafe fn archive_read_format_ar_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -649,7 +625,7 @@ unsafe extern "C" fn archive_read_format_ar_read_data(
         return ARCHIVE_AR_DEFINED_PARAM.archive_eof;
     };
 }
-unsafe extern "C" fn archive_read_format_ar_skip(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_ar_skip(mut a: *mut archive_read) -> i32 {
     let mut bytes_skipped: int64_t = 0;
     let mut ar: *mut ar = 0 as *mut ar;
     ar = unsafe { (*(*a).format).data as *mut ar };
@@ -669,7 +645,7 @@ unsafe extern "C" fn archive_read_format_ar_skip(mut a: *mut archive_read) -> i3
     safe_ar.entry_padding = 0 as i32 as int64_t;
     return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> i32 {
+unsafe fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> i32 {
     let mut current_block: u64;
     let mut ar: *mut ar = 0 as *mut ar;
     let mut p: *mut i8 = 0 as *mut i8;
@@ -733,7 +709,7 @@ unsafe extern "C" fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> i3
     ar_safe.strtab = 0 as *mut i8;
     return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
 }
-unsafe extern "C" fn ar_atol8(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
+unsafe fn ar_atol8(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
     let mut l: uint64_t = 0;
     let mut limit: uint64_t = 0;
     let mut last_digit_limit: uint64_t = 0;
@@ -774,7 +750,7 @@ unsafe extern "C" fn ar_atol8(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
     return l;
 }
 
-unsafe extern "C" fn ar_atol10(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
+unsafe fn ar_atol10(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
     let mut l: uint64_t = 0;
     let mut limit: uint64_t = 0;
     let mut last_digit_limit: uint64_t = 0;
@@ -816,7 +792,7 @@ unsafe extern "C" fn ar_atol10(mut p: *const i8, mut char_cnt: u32) -> uint64_t 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_archive_read_format_ar_read_data(
+pub unsafe fn archive_test_archive_read_format_ar_read_data(
     mut _a: *mut archive,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -848,7 +824,7 @@ pub unsafe extern "C" fn archive_test_archive_read_format_ar_read_data(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_archive_read_support_format_ar() {
+pub unsafe fn archive_test_archive_read_support_format_ar() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
     archive_read = unsafe {
         calloc_safe(
@@ -862,7 +838,7 @@ pub unsafe extern "C" fn archive_test_archive_read_support_format_ar() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test__ar_read_header(
+pub unsafe fn archive_test__ar_read_header(
     mut _a: *mut archive,
     mut entry: *mut archive_entry,
     mut h: *const i8,

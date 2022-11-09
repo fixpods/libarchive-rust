@@ -291,37 +291,37 @@ extern "C" {
         format_data: *mut (),
         name: *const i8,
         bid: Option<
-            unsafe extern "C" fn(a: *mut archive_read, best_bid: i32) -> i32,
+            unsafe fn(a: *mut archive_read, best_bid: i32) -> i32,
         >,
         options: Option<
-            unsafe extern "C" fn(
+            unsafe fn(
                 a: *mut archive_read,
                 key: *const i8,
                 val: *const i8,
             ) -> i32,
         >,
         read_header: Option<
-            unsafe extern "C" fn(a: *mut archive_read, entry: *mut archive_entry) -> i32,
+            unsafe fn(a: *mut archive_read, entry: *mut archive_entry) -> i32,
         >,
         read_data: Option<
-            unsafe extern "C" fn(
+            unsafe fn(
                 a: *mut archive_read,
                 buff: *mut *const (),
                 size: *mut size_t,
                 offset: *mut int64_t,
             ) -> i32,
         >,
-        read_data_skip: Option<unsafe extern "C" fn(a: *mut archive_read) -> i32>,
+        read_data_skip: Option<unsafe fn(a: *mut archive_read) -> i32>,
         seek_data: Option<
-            unsafe extern "C" fn(
+            unsafe fn(
                 a: *mut archive_read,
                 offset: int64_t,
                 whence: i32,
             ) -> int64_t,
         >,
-        cleanup: Option<unsafe extern "C" fn(a: *mut archive_read) -> i32>,
-        format_capabilities: Option<unsafe extern "C" fn(a: *mut archive_read) -> i32>,
-        has_encrypted_entries: Option<unsafe extern "C" fn(a: *mut archive_read) -> i32>,
+        cleanup: Option<unsafe fn(a: *mut archive_read) -> i32>,
+        format_capabilities: Option<unsafe fn(a: *mut archive_read) -> i32>,
+        has_encrypted_entries: Option<unsafe fn(a: *mut archive_read) -> i32>,
     ) -> i32;
 
     pub fn __archive_read_ahead(
@@ -1027,32 +1027,32 @@ pub fn __archive_read_register_format_safe(
     a: *mut archive_read,
     format_data: *mut (),
     name: *const i8,
-    bid: Option<unsafe extern "C" fn(a: *mut archive_read, best_bid: i32) -> i32>,
+    bid: Option<unsafe fn(a: *mut archive_read, best_bid: i32) -> i32>,
     options: Option<
-        unsafe extern "C" fn(
+        unsafe fn(
             a: *mut archive_read,
             key: *const i8,
             val: *const i8,
         ) -> i32,
     >,
     read_header: Option<
-        unsafe extern "C" fn(a: *mut archive_read, entry: *mut archive_entry) -> i32,
+        unsafe fn(a: *mut archive_read, entry: *mut archive_entry) -> i32,
     >,
     read_data: Option<
-        unsafe extern "C" fn(
+        unsafe fn(
             a: *mut archive_read,
             buff: *mut *const (),
             size: *mut size_t,
             offset: *mut int64_t,
         ) -> i32,
     >,
-    read_data_skip: Option<unsafe extern "C" fn(a: *mut archive_read) -> i32>,
+    read_data_skip: Option<unsafe fn(a: *mut archive_read) -> i32>,
     seek_data: Option<
-        unsafe extern "C" fn(a: *mut archive_read, offset: int64_t, whence: i32) -> int64_t,
+        unsafe fn(a: *mut archive_read, offset: int64_t, whence: i32) -> int64_t,
     >,
-    cleanup: Option<unsafe extern "C" fn(a: *mut archive_read) -> i32>,
-    format_capabilities: Option<unsafe extern "C" fn(a: *mut archive_read) -> i32>,
-    has_encrypted_entries: Option<unsafe extern "C" fn(a: *mut archive_read) -> i32>,
+    cleanup: Option<unsafe fn(a: *mut archive_read) -> i32>,
+    format_capabilities: Option<unsafe fn(a: *mut archive_read) -> i32>,
+    has_encrypted_entries: Option<unsafe fn(a: *mut archive_read) -> i32>,
 ) -> i32 {
     return unsafe {
         __archive_read_register_format(

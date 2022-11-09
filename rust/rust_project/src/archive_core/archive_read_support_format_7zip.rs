@@ -207,7 +207,7 @@ pub struct _7z_header_info {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_7zip(mut _a: *mut archive) -> i32 {
+pub unsafe fn archive_read_support_format_7zip(mut _a: *mut archive) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
     let mut r: i32 = 0;
@@ -246,48 +246,22 @@ pub unsafe extern "C" fn archive_read_support_format_7zip(mut _a: *mut archive) 
         a,
         zip as *mut (),
         b"7zip\x00" as *const u8 as *const i8,
-        Some(
-            archive_read_format_7zip_bid
-                as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32,
-        ),
+        Some(archive_read_format_7zip_bid),
         None,
-        Some(
-            archive_read_format_7zip_read_header
-                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
-        ),
-        Some(
-            archive_read_format_7zip_read_data
-                as unsafe extern "C" fn(
-                    _: *mut archive_read,
-                    _: *mut *const (),
-                    _: *mut size_t,
-                    _: *mut int64_t,
-                ) -> i32,
-        ),
-        Some(
-            archive_read_format_7zip_read_data_skip
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
-        ),
+        Some(archive_read_format_7zip_read_header),
+        Some(archive_read_format_7zip_read_data),
+        Some(archive_read_format_7zip_read_data_skip),
         None,
-        Some(
-            archive_read_format_7zip_cleanup
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
-        ),
-        Some(
-            archive_read_support_format_7zip_capabilities
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
-        ),
-        Some(
-            archive_read_format_7zip_has_encrypted_entries
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
-        ),
+        Some(archive_read_format_7zip_cleanup),
+        Some(archive_read_support_format_7zip_capabilities),
+        Some(archive_read_format_7zip_has_encrypted_entries),
     );
     if r != 0 as i32 {
         free_safe(zip as *mut ());
     }
     return 0 as i32;
 }
-unsafe extern "C" fn archive_read_support_format_7zip_capabilities(
+unsafe fn archive_read_support_format_7zip_capabilities(
     mut a: *mut archive_read,
 ) -> i32 {
     /* UNUSED */
@@ -296,7 +270,7 @@ unsafe extern "C" fn archive_read_support_format_7zip_capabilities(
 /* Maximum entry size. This limitation prevents reading intentional
 * corrupted 7-zip files on assuming there are not so many entries in
 * the files. */
-unsafe extern "C" fn archive_read_format_7zip_has_encrypted_entries(
+unsafe fn archive_read_format_7zip_has_encrypted_entries(
     mut _a: *mut archive_read,
 ) -> i32 {
     let safe__a = unsafe { &mut *_a };
@@ -309,7 +283,7 @@ unsafe extern "C" fn archive_read_format_7zip_has_encrypted_entries(
     }
     return -(1 as i32);
 }
-unsafe extern "C" fn archive_read_format_7zip_bid(
+unsafe fn archive_read_format_7zip_bid(
     mut a: *mut archive_read,
     mut best_bid: i32,
 ) -> i32 {
@@ -381,7 +355,7 @@ unsafe extern "C" fn archive_read_format_7zip_bid(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn check_7zip_header_in_sfx(mut p: *const i8) -> i32 {
+unsafe fn check_7zip_header_in_sfx(mut p: *const i8) -> i32 {
     match unsafe { *p.offset(5 as i32 as isize) as u8 as i32 } {
         28 => {
             if memcmp_safe(
@@ -418,7 +392,7 @@ unsafe extern "C" fn check_7zip_header_in_sfx(mut p: *const i8) -> i32 {
         _ => return 6 as i32,
     };
 }
-unsafe extern "C" fn skip_sfx(mut a: *mut archive_read, mut bytes_avail: ssize_t) -> i32 {
+unsafe fn skip_sfx(mut a: *mut archive_read, mut bytes_avail: ssize_t) -> i32 {
     let mut h: *const () = 0 as *const ();
     let mut p: *const i8 = 0 as *const i8;
     let mut q: *const i8 = 0 as *const i8;
@@ -493,7 +467,7 @@ unsafe extern "C" fn skip_sfx(mut a: *mut archive_read, mut bytes_avail: ssize_t
     };
     return -(30 as i32);
 }
-unsafe extern "C" fn archive_read_format_7zip_read_header(
+unsafe fn archive_read_format_7zip_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -714,7 +688,7 @@ unsafe extern "C" fn archive_read_format_7zip_read_header(
     (safe_a).archive.archive_format_name = (safe_zip).format_name.as_mut_ptr();
     return ret;
 }
-unsafe extern "C" fn archive_read_format_7zip_read_data(
+unsafe fn archive_read_format_7zip_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -814,7 +788,7 @@ unsafe extern "C" fn archive_read_format_7zip_read_data(
     (safe_zip).entry_offset += bytes;
     return ret;
 }
-unsafe extern "C" fn archive_read_format_7zip_read_data_skip(
+unsafe fn archive_read_format_7zip_read_data_skip(
     mut a: *mut archive_read,
 ) -> i32 {
     let mut zip: *mut _7zip = 0 as *mut _7zip;
@@ -842,7 +816,7 @@ unsafe extern "C" fn archive_read_format_7zip_read_data_skip(
     safe_zip.end_of_entry = 1 as i32 as i8;
     return 0 as i32;
 }
-unsafe extern "C" fn archive_read_format_7zip_cleanup(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_7zip_cleanup(mut a: *mut archive_read) -> i32 {
     let mut zip: *mut _7zip = 0 as *mut _7zip;
     zip = unsafe { (*(*a).format).data as *mut _7zip };
     let safe_zip = unsafe { &mut *zip };
@@ -859,7 +833,7 @@ unsafe extern "C" fn archive_read_format_7zip_cleanup(mut a: *mut archive_read) 
     unsafe { (*(*a).format).data = 0 as *mut () };
     return 0 as i32;
 }
-unsafe extern "C" fn read_consume(mut a: *mut archive_read) {
+unsafe fn read_consume(mut a: *mut archive_read) {
     let mut zip: *mut _7zip = unsafe { (*(*a).format).data as *mut _7zip };
     let safe_zip = unsafe { &mut *zip };
     if safe_zip.pack_stream_bytes_unconsumed != 0 {
@@ -874,7 +848,7 @@ unsafe extern "C" fn read_consume(mut a: *mut archive_read) {
 * Set an error code and choose an error message for liblzma.
 */
 #[cfg(HAVE_LZMA_H)]
-unsafe extern "C" fn set_error(mut a: *mut archive_read, mut ret: i32) {
+unsafe fn set_error(mut a: *mut archive_read, mut ret: i32) {
     let safe_a = unsafe { &mut *a };
     unsafe {
         match ret {
@@ -938,7 +912,7 @@ unsafe extern "C" fn set_error(mut a: *mut archive_read, mut ret: i32) {
         };
     }
 }
-unsafe extern "C" fn decode_codec_id(
+unsafe fn decode_codec_id(
     mut codecId: *const u8,
     mut id_size: size_t,
 ) -> u64 {
@@ -952,7 +926,7 @@ unsafe extern "C" fn decode_codec_id(
     }
     return id;
 }
-unsafe extern "C" fn ppmd_read(mut p: *mut ()) -> Byte {
+unsafe fn ppmd_read(mut p: *mut ()) -> Byte {
     let mut a: *mut archive_read = unsafe { (*(p as *mut IByteIn)).a };
     let mut zip: *mut _7zip = unsafe { (*(*a).format).data as *mut _7zip };
     let mut b: Byte = 0;
@@ -976,7 +950,7 @@ unsafe extern "C" fn ppmd_read(mut p: *mut ()) -> Byte {
     safe_zip.ppstream.total_in += 1;
     return b;
 }
-unsafe extern "C" fn init_decompression(
+unsafe fn init_decompression(
     mut a: *mut archive_read,
     mut zip: *mut _7zip,
     mut coder1: *const _7z_coder,
@@ -1434,7 +1408,7 @@ unsafe extern "C" fn init_decompression(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn decompress(
+unsafe fn decompress(
     mut a: *mut archive_read,
     mut zip: *mut _7zip,
     mut buff: *mut (),
@@ -1689,7 +1663,7 @@ unsafe extern "C" fn decompress(
             if (safe_zip).ppmd7_stat == 0 as i32 {
                 (safe_zip).bytein.a = a;
                 (safe_zip).bytein.Read =
-                    Some(ppmd_read as unsafe extern "C" fn(_: *mut ()) -> Byte);
+                    Some(ppmd_read as unsafe fn(_: *mut ()) -> Byte);
                 (safe_zip).range_dec.Stream = &mut (safe_zip).bytein;
                 r = unsafe {
                     __archive_ppmd7_functions
@@ -1840,7 +1814,7 @@ unsafe extern "C" fn decompress(
     }
     return ret;
 }
-unsafe extern "C" fn free_decompression(
+unsafe fn free_decompression(
     mut a: *mut archive_read,
     mut zip: *mut _7zip,
 ) -> i32 {
@@ -1895,7 +1869,7 @@ unsafe extern "C" fn free_decompression(
     }
     return r;
 }
-unsafe extern "C" fn parse_7zip_uint64(
+unsafe fn parse_7zip_uint64(
     mut a: *mut archive_read,
     mut val: *mut uint64_t,
 ) -> i32 {
@@ -1932,7 +1906,7 @@ unsafe extern "C" fn parse_7zip_uint64(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn read_Bools(
+unsafe fn read_Bools(
     mut a: *mut archive_read,
     mut data: *mut u8,
     mut num: size_t,
@@ -1963,12 +1937,12 @@ unsafe extern "C" fn read_Bools(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn free_Digest(mut d: *mut _7z_digests) {
+unsafe fn free_Digest(mut d: *mut _7z_digests) {
     let safe_d = unsafe { &mut *d };
     free_safe((safe_d).defineds as *mut ());
     free_safe((safe_d).digests as *mut ());
 }
-unsafe extern "C" fn read_Digests(
+unsafe fn read_Digests(
     mut a: *mut archive_read,
     mut d: *mut _7z_digests,
     mut num: size_t,
@@ -2027,13 +2001,13 @@ unsafe extern "C" fn read_Digests(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn free_PackInfo(mut pi: *mut _7z_pack_info) {
+unsafe fn free_PackInfo(mut pi: *mut _7z_pack_info) {
     let safe_pi = unsafe { &mut *pi };
     free_safe(safe_pi.sizes as *mut ());
     free_safe(safe_pi.positions as *mut ());
     free_Digest(&mut safe_pi.digest);
 }
-unsafe extern "C" fn read_PackInfo(
+unsafe fn read_PackInfo(
     mut a: *mut archive_read,
     mut pi: *mut _7z_pack_info,
 ) -> i32 {
@@ -2136,7 +2110,7 @@ unsafe extern "C" fn read_PackInfo(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn free_Folder(mut f: *mut _7z_folder) {
+unsafe fn free_Folder(mut f: *mut _7z_folder) {
     let mut i: u32 = 0;
     let safe_f = unsafe { &mut *f };
     if !(safe_f).coders.is_null() {
@@ -2154,7 +2128,7 @@ unsafe extern "C" fn free_Folder(mut f: *mut _7z_folder) {
     free_safe((safe_f).unPackSize as *mut ());
 }
 
-unsafe extern "C" fn free_CodersInfo(mut ci: *mut _7z_coders_info) {
+unsafe fn free_CodersInfo(mut ci: *mut _7z_coders_info) {
     let mut i: u32 = 0;
     let safe_ci = unsafe { &mut *ci };
     if !(safe_ci).folders.is_null() {
@@ -2166,7 +2140,7 @@ unsafe extern "C" fn free_CodersInfo(mut ci: *mut _7z_coders_info) {
         free_safe((safe_ci).folders as *mut ());
     };
 }
-unsafe extern "C" fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
+unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
     unsafe {
         let mut zip: *mut _7zip = (*(*a).format).data as *mut _7zip;
         let mut p: *const u8 = 0 as *const u8;
@@ -2380,7 +2354,7 @@ unsafe extern "C" fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folde
     }
 }
 
-unsafe extern "C" fn read_CodersInfo(
+unsafe fn read_CodersInfo(
     mut a: *mut archive_read,
     mut ci: *mut _7z_coders_info,
 ) -> i32 {
@@ -2599,7 +2573,7 @@ unsafe extern "C" fn read_CodersInfo(
     free_Digest(&mut digest);
     return -(1 as i32);
 }
-unsafe extern "C" fn folder_uncompressed_size(mut f: *mut _7z_folder) -> uint64_t {
+unsafe fn folder_uncompressed_size(mut f: *mut _7z_folder) -> uint64_t {
     let safe_f = unsafe { &mut *f };
     let mut n: i32 = safe_f.numOutStreams as i32;
     let mut pairs: u32 = safe_f.numBindPairs as u32;
@@ -2622,13 +2596,13 @@ unsafe extern "C" fn folder_uncompressed_size(mut f: *mut _7z_folder) -> uint64_
     }
     return 0 as i32 as uint64_t;
 }
-unsafe extern "C" fn free_SubStreamsInfo(mut ss: *mut _7z_substream_info) {
+unsafe fn free_SubStreamsInfo(mut ss: *mut _7z_substream_info) {
     let safe_ss = unsafe { &mut *ss };
     free_safe(safe_ss.unpackSizes as *mut ());
     free_safe(safe_ss.digestsDefined as *mut ());
     free_safe(safe_ss.digests as *mut ());
 }
-unsafe extern "C" fn read_SubStreamsInfo(
+unsafe fn read_SubStreamsInfo(
     mut a: *mut archive_read,
     mut ss: *mut _7z_substream_info,
     mut f: *mut _7z_folder,
@@ -2837,13 +2811,13 @@ unsafe extern "C" fn read_SubStreamsInfo(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn free_StreamsInfo(mut si: *mut _7z_stream_info) {
+unsafe fn free_StreamsInfo(mut si: *mut _7z_stream_info) {
     let safe_si = unsafe { &mut *si };
     free_PackInfo(&mut safe_si.pi);
     free_CodersInfo(&mut safe_si.ci);
     free_SubStreamsInfo(&mut safe_si.ss);
 }
-unsafe extern "C" fn read_StreamsInfo(
+unsafe fn read_StreamsInfo(
     mut a: *mut archive_read,
     mut si: *mut _7z_stream_info,
 ) -> i32 {
@@ -2942,14 +2916,14 @@ unsafe extern "C" fn read_StreamsInfo(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn free_Header(mut h: *mut _7z_header_info) {
+unsafe fn free_Header(mut h: *mut _7z_header_info) {
     let safe_h = unsafe { &mut *h };
     free_safe((safe_h).emptyStreamBools as *mut ());
     free_safe((safe_h).emptyFileBools as *mut ());
     free_safe((safe_h).antiBools as *mut ());
     free_safe((safe_h).attrBools as *mut ());
 }
-unsafe extern "C" fn read_Header(
+unsafe fn read_Header(
     mut a: *mut archive_read,
     mut h: *mut _7z_header_info,
     mut check_header_id: i32,
@@ -3434,7 +3408,7 @@ unsafe extern "C" fn read_Header(
         return 0 as i32;
     }
 }
-unsafe extern "C" fn fileTimeToUtc(
+unsafe fn fileTimeToUtc(
     mut fileTime: uint64_t,
     mut timep: *mut time_t,
     mut ns: *mut i64,
@@ -3457,7 +3431,7 @@ unsafe extern "C" fn fileTimeToUtc(
         }
     };
 }
-unsafe extern "C" fn read_Times(
+unsafe fn read_Times(
     mut a: *mut archive_read,
     mut h: *mut _7z_header_info,
     mut type_0: i32,
@@ -3583,7 +3557,7 @@ unsafe extern "C" fn read_Times(
     free_safe(timeBools as *mut ());
     return -(1 as i32);
 }
-unsafe extern "C" fn decode_encoded_header_info(
+unsafe fn decode_encoded_header_info(
     mut a: *mut archive_read,
     mut si: *mut _7z_stream_info,
 ) -> i32 {
@@ -3651,7 +3625,7 @@ unsafe extern "C" fn decode_encoded_header_info(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn header_bytes(
+unsafe fn header_bytes(
     mut a: *mut archive_read,
     mut rbytes: size_t,
 ) -> *const u8 {
@@ -3689,7 +3663,7 @@ unsafe extern "C" fn header_bytes(
     (safe_zip).header_crc32 = crc32_safe((safe_zip).header_crc32, p, rbytes as u32);
     return p;
 }
-unsafe extern "C" fn slurp_central_directory(
+unsafe fn slurp_central_directory(
     mut a: *mut archive_read,
     mut zip: *mut _7zip,
     mut header: *mut _7z_header_info,
@@ -3941,7 +3915,7 @@ unsafe extern "C" fn slurp_central_directory(
     (safe_zip).header_is_being_read = 0 as i32;
     return 0 as i32;
 }
-unsafe extern "C" fn get_uncompressed_data(
+unsafe fn get_uncompressed_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: size_t,
@@ -4012,7 +3986,7 @@ unsafe extern "C" fn get_uncompressed_data(
             .wrapping_sub(bytes_avail as u64) as size_t as size_t;
     return bytes_avail;
 }
-unsafe extern "C" fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> ssize_t {
+unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> ssize_t {
     let mut zip: *mut _7zip = unsafe { (*(*a).format).data as *mut _7zip };
     let mut bytes_avail: ssize_t = 0;
     let mut r: i32 = 0;
@@ -4244,7 +4218,7 @@ unsafe extern "C" fn extract_pack_stream(mut a: *mut archive_read, mut minimum: 
     (safe_zip).uncompressed_buffer_pointer = (safe_zip).uncompressed_buffer;
     return 0 as i32 as ssize_t;
 }
-unsafe extern "C" fn seek_pack(mut a: *mut archive_read) -> i32 {
+unsafe fn seek_pack(mut a: *mut archive_read) -> i32 {
     let mut zip: *mut _7zip = unsafe { (*(*a).format).data as *mut _7zip };
     let mut pack_offset: int64_t = 0;
     let safe_zip = unsafe { &mut *zip };
@@ -4288,7 +4262,7 @@ unsafe extern "C" fn seek_pack(mut a: *mut archive_read) -> i32 {
     (safe_zip).pack_stream_remaining = (safe_zip).pack_stream_remaining.wrapping_sub(1);
     return 0 as i32;
 }
-unsafe extern "C" fn read_stream(
+unsafe fn read_stream(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: size_t,
@@ -4432,7 +4406,7 @@ unsafe extern "C" fn read_stream(
     }
     return get_uncompressed_data(a, buff, size, minimum);
 }
-unsafe extern "C" fn setup_decode_folder(
+unsafe fn setup_decode_folder(
     mut a: *mut archive_read,
     mut folder: *mut _7z_folder,
     mut header: i32,
@@ -4803,7 +4777,7 @@ unsafe extern "C" fn setup_decode_folder(
     return 0 as i32;
 }
 
-unsafe extern "C" fn skip_stream(mut a: *mut archive_read, mut skip_bytes: size_t) -> int64_t {
+unsafe fn skip_stream(mut a: *mut archive_read, mut skip_bytes: size_t) -> int64_t {
     unsafe {
         let mut zip: *mut _7zip = (*(*a).format).data as *mut _7zip;
         let mut p: *const () = 0 as *const ();
@@ -4846,7 +4820,7 @@ unsafe extern "C" fn skip_stream(mut a: *mut archive_read, mut skip_bytes: size_
     }
 }
 
-unsafe extern "C" fn x86_Init(mut zip: *mut _7zip) {
+unsafe fn x86_Init(mut zip: *mut _7zip) {
     let safe_zip = unsafe { &mut *zip };
     safe_zip.bcj_state = 0 as i32 as uint32_t;
     safe_zip.bcj_prevPosT =
@@ -4855,7 +4829,7 @@ unsafe extern "C" fn x86_Init(mut zip: *mut _7zip) {
     safe_zip.bcj_ip = 5 as i32 as uint32_t;
 }
 
-unsafe extern "C" fn x86_Convert(
+unsafe fn x86_Convert(
     mut zip: *mut _7zip,
     mut data: *mut uint8_t,
     mut size: size_t,
@@ -4991,7 +4965,7 @@ unsafe extern "C" fn x86_Convert(
         as uint32_t as uint32_t;
     return bufferPos;
 }
-unsafe extern "C" fn Bcj2_Decode(
+unsafe fn Bcj2_Decode(
     mut zip: *mut _7zip,
     mut outBuf: *mut uint8_t,
     mut outSize: size_t,
@@ -5255,18 +5229,18 @@ unsafe extern "C" fn Bcj2_Decode(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_check_7zip_header_in_sfx(mut p: *const i8) {
+pub unsafe fn archive_test_check_7zip_header_in_sfx(mut p: *const i8) {
     check_7zip_header_in_sfx(p);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_skip_sfx(mut _a: *mut archive, mut bytes_avail: ssize_t) {
+pub unsafe fn archive_test_skip_sfx(mut _a: *mut archive, mut bytes_avail: ssize_t) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     skip_sfx(a, bytes_avail);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_init_decompression(mut _a: *mut archive) {
+pub unsafe fn archive_test_init_decompression(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut _7zip: *mut _7zip = 0 as *mut _7zip;
     _7zip = calloc_safe(
@@ -5312,7 +5286,7 @@ pub unsafe extern "C" fn archive_test_init_decompression(mut _a: *mut archive) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_archive_read_support_format_7zip() {
+pub unsafe fn archive_test_archive_read_support_format_7zip() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
     archive_read = unsafe {
         calloc_safe(
@@ -5326,7 +5300,7 @@ pub unsafe extern "C" fn archive_test_archive_read_support_format_7zip() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_ppmd_read(mut _a: *mut archive) {
+pub unsafe fn archive_test_ppmd_read(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
     zip = calloc_safe(
@@ -5345,7 +5319,7 @@ pub unsafe extern "C" fn archive_test_ppmd_read(mut _a: *mut archive) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_decompress(mut _a: *mut archive) {
+pub unsafe fn archive_test_decompress(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
     zip = calloc_safe(
@@ -5389,7 +5363,7 @@ pub unsafe extern "C" fn archive_test_decompress(mut _a: *mut archive) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_Bcj2_Decode() {
+pub unsafe fn archive_test_Bcj2_Decode() {
     let mut zip: *mut _7zip = 0 as *mut _7zip;
     zip = calloc_safe(
         1 as i32 as u64,
@@ -5405,7 +5379,7 @@ pub unsafe extern "C" fn archive_test_Bcj2_Decode() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_x86_Convert() {
+pub unsafe fn archive_test_x86_Convert() {
     let mut zip: *mut _7zip = 0 as *mut _7zip;
     zip = calloc_safe(
         1 as i32 as u64,
@@ -5441,7 +5415,7 @@ pub unsafe extern "C" fn archive_test_x86_Convert() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_seek_pack(mut _a: *mut archive) {
+pub unsafe fn archive_test_seek_pack(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
     zip = calloc_safe(
@@ -5454,7 +5428,7 @@ pub unsafe extern "C" fn archive_test_seek_pack(mut _a: *mut archive) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_extract_pack_stream(mut _a: *mut archive) {
+pub unsafe fn archive_test_extract_pack_stream(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
     zip = calloc_safe(
@@ -5476,7 +5450,7 @@ pub unsafe extern "C" fn archive_test_extract_pack_stream(mut _a: *mut archive) 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_get_uncompressed_data(mut _a: *mut archive) {
+pub unsafe fn archive_test_get_uncompressed_data(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut buff: *mut () = 0 as *const () as *mut ();
     let mut buff2: *mut *const () = unsafe {
@@ -5502,7 +5476,7 @@ pub unsafe extern "C" fn archive_test_get_uncompressed_data(mut _a: *mut archive
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_decode_encoded_header_info(mut _a: *mut archive) {
+pub unsafe fn archive_test_decode_encoded_header_info(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut _7z_stream_info: *mut _7z_stream_info = 0 as *mut _7z_stream_info;
     _7z_stream_info = calloc_safe(
@@ -5514,13 +5488,13 @@ pub unsafe extern "C" fn archive_test_decode_encoded_header_info(mut _a: *mut ar
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_fileTimeToUtc() {
+pub unsafe fn archive_test_fileTimeToUtc() {
     let mut timepp: [time_t; 2] = [1 as time_t, 2 as time_t];
     let mut timep: *mut time_t = &timepp as *const [time_t; 2] as *mut [time_t; 2] as *mut time_t;
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_archive_read_format_7zip_bid(mut _a: *mut archive) {
+pub unsafe fn archive_test_archive_read_format_7zip_bid(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
     filter = calloc_safe(
@@ -5534,7 +5508,7 @@ pub unsafe extern "C" fn archive_test_archive_read_format_7zip_bid(mut _a: *mut 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_read_stream(mut _a: *mut archive) {
+pub unsafe fn archive_test_read_stream(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut buff: *mut () = 0 as *const () as *mut ();
     let mut buff2: *mut *const () = unsafe {

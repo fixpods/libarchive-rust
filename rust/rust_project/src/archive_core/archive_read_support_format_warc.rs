@@ -67,7 +67,7 @@ pub extern "C" fn archive_read_support_format_warc(_a: *mut archive) -> i32 {
     return 0;
 }
 
-extern "C" fn _warc_cleanup(a: *mut archive_read) -> i32 {
+fn _warc_cleanup(a: *mut archive_read) -> i32 {
     let w: *mut warc_s = unsafe { (*(*a).format).data as *mut warc_s };
     let safe_w = unsafe { &mut *w };
     let safe_a = unsafe { &mut *a };
@@ -79,7 +79,7 @@ extern "C" fn _warc_cleanup(a: *mut archive_read) -> i32 {
     unsafe { (*safe_a.format).data = 0 as *mut() };
     return ARCHIVE_WARC_DEFINED_PARAM.archive_ok;
 }
-extern "C" fn _warc_bid(mut a: *mut archive_read, best_bid: i32) -> i32 {
+fn _warc_bid(mut a: *mut archive_read, best_bid: i32) -> i32 {
     let mut hdr: *const i8;
     let mut nrd: ssize_t = 0;
     let mut ver: u32;
@@ -103,7 +103,7 @@ extern "C" fn _warc_bid(mut a: *mut archive_read, best_bid: i32) -> i32 {
     /* otherwise be confident */
     return 64;
 }
-extern "C" fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
+fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
     let w: *mut warc_s = unsafe { (*(*a).format).data as *mut warc_s };
     let mut ver: u32;
     let mut buf: *const i8;
@@ -277,7 +277,7 @@ extern "C" fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i3
     return ARCHIVE_WARC_DEFINED_PARAM.archive_ok;
 }
 
-extern "C" fn _warc_read(
+fn _warc_read(
     a: *mut archive_read,
     buf: *mut *const (),
     bsz: *mut size_t,
@@ -321,7 +321,7 @@ extern "C" fn _warc_read(
     return ARCHIVE_WARC_DEFINED_PARAM.archive_eof;
 }
 
-extern "C" fn _warc_skip(a: *mut archive_read) -> i32 {
+fn _warc_skip(a: *mut archive_read) -> i32 {
     let w: *mut warc_s = unsafe { (*(*a).format).data as *mut warc_s };
     let safe_w = unsafe { &mut *w };
     __archive_read_consume_safe(a, (safe_w.cntlen + 4) as int64_t);
@@ -331,11 +331,11 @@ extern "C" fn _warc_skip(a: *mut archive_read) -> i32 {
 }
 
 /* private routines */
-extern "C" fn deconst(c: *const ()) -> *mut () {
+fn deconst(c: *const ()) -> *mut () {
     return c as uintptr_t as *mut ();
 }
 
-extern "C" fn xmemmem(
+fn xmemmem(
     mut hay: *const i8,
     haysize: size_t,
     needle: *const i8,
@@ -415,7 +415,7 @@ extern "C" fn xmemmem(
     return 0 as *mut i8;
 }
 
-extern "C" fn strtoi_lim(
+fn strtoi_lim(
     str: *const i8,
     ep: *mut *const i8,
     mut llim: i32,
@@ -448,7 +448,7 @@ extern "C" fn strtoi_lim(
     return res;
 }
 
-extern "C" fn time_from_tm(t: *mut tm) -> time_t {
+fn time_from_tm(t: *mut tm) -> time_t {
     /* Use platform timegm() if available. */
     #[cfg(HAVE_TIMEGM)]
     return timegm_safe(t);
@@ -472,7 +472,7 @@ extern "C" fn time_from_tm(t: *mut tm) -> time_t {
         as time_t;
 }
 
-extern "C" fn xstrpisotime(
+fn xstrpisotime(
     mut s: *const i8,
     endptr: *mut *mut i8,
 ) -> time_t {
@@ -594,7 +594,7 @@ extern "C" fn xstrpisotime(
 }
 
 /* private routines */
-extern "C" fn _warc_rdver(mut buf: *const i8, mut bsz: size_t) -> u32 {
+fn _warc_rdver(mut buf: *const i8, mut bsz: size_t) -> u32 {
     static magic: [i8; 6] =
         unsafe { *transmute::<&[u8; 6], &[i8; 6]>(b"WARC/\x00") };
     let c: *const i8;
@@ -679,7 +679,7 @@ extern "C" fn _warc_rdver(mut buf: *const i8, mut bsz: size_t) -> u32 {
     }
     return ver;
 }
-extern "C" fn _warc_rdtyp(mut buf: *const i8, mut bsz: size_t) -> u32 {
+fn _warc_rdtyp(mut buf: *const i8, mut bsz: size_t) -> u32 {
     static _key: [i8; 13] =
         unsafe { *transmute::<&[u8; 13], &[i8; 13]>(b"\r\nWARC-Type:\x00") };
     let mut val: *const i8;
@@ -734,7 +734,7 @@ extern "C" fn _warc_rdtyp(mut buf: *const i8, mut bsz: size_t) -> u32 {
     }
     return WT_NONE;
 }
-extern "C" fn _warc_rduri(mut buf: *const i8, mut bsz: size_t) -> warc_string_t {
+fn _warc_rduri(mut buf: *const i8, mut bsz: size_t) -> warc_string_t {
     static _key: [i8; 19] = unsafe {
         *transmute::<&[u8; 19], &[i8; 19]>(b"\r\nWARC-Target-URI:\x00")
     };
@@ -838,7 +838,7 @@ extern "C" fn _warc_rduri(mut buf: *const i8, mut bsz: size_t) -> warc_string_t 
     res.len = unsafe { eol.offset_from(uri) as size_t };
     return res;
 }
-extern "C" fn _warc_rdlen(mut buf: *const i8, mut bsz: size_t) -> ssize_t {
+fn _warc_rdlen(mut buf: *const i8, mut bsz: size_t) -> ssize_t {
     static _key: [i8; 18] = unsafe {
         *transmute::<&[u8; 18], &[i8; 18]>(b"\r\nContent-Length:\x00")
     };
@@ -891,7 +891,7 @@ extern "C" fn _warc_rdlen(mut buf: *const i8, mut bsz: size_t) -> ssize_t {
     }
     return len as ssize_t;
 }
-extern "C" fn _warc_rdrtm(mut buf: *const i8, mut bsz: size_t) -> time_t {
+fn _warc_rdrtm(mut buf: *const i8, mut bsz: size_t) -> time_t {
     static _key: [i8; 13] =
         unsafe { *transmute::<&[u8; 13], &[i8; 13]>(b"\r\nWARC-Date:\x00") };
     let mut val: *const i8;
@@ -928,7 +928,7 @@ extern "C" fn _warc_rdrtm(mut buf: *const i8, mut bsz: size_t) -> time_t {
     }
     return res;
 }
-extern "C" fn _warc_rdmtm(mut buf: *const i8, mut bsz: size_t) -> time_t {
+fn _warc_rdmtm(mut buf: *const i8, mut bsz: size_t) -> time_t {
     static _key: [i8; 17] = unsafe {
         *transmute::<&[u8; 17], &[i8; 17]>(b"\r\nLast-Modified:\x00")
     };
@@ -966,7 +966,7 @@ extern "C" fn _warc_rdmtm(mut buf: *const i8, mut bsz: size_t) -> time_t {
     }
     return res;
 }
-extern "C" fn _warc_find_eoh(mut buf: *const i8, mut bsz: size_t) -> *const i8 {
+fn _warc_find_eoh(mut buf: *const i8, mut bsz: size_t) -> *const i8 {
     static _marker: [i8; 5] = 
         unsafe { *transmute::<&[u8; 5], &[i8; 5]>(b"\r\n\r\n\x00") };
     let mut hit: *const i8 = xmemmem(
@@ -984,7 +984,7 @@ extern "C" fn _warc_find_eoh(mut buf: *const i8, mut bsz: size_t) -> *const i8 {
     }
     return hit;
 }
-extern "C" fn _warc_find_eol(mut buf: *const i8, mut bsz: size_t) -> *const i8 {
+fn _warc_find_eol(mut buf: *const i8, mut bsz: size_t) -> *const i8 {
     static _marker: [i8; 3] = 
         unsafe { *transmute::<&[u8; 3], &[i8; 3]>(b"\r\n\x00") };
     let hit: *const i8 = xmemmem(

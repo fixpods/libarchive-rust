@@ -13,7 +13,7 @@ pub struct raw_info {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_raw(mut _a: *mut archive) -> i32 {
+pub unsafe fn archive_read_support_format_raw(mut _a: *mut archive) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut r: i32 = 0;
     let mut magic_test: i32 = __archive_check_magic_safe(
@@ -45,16 +45,16 @@ pub unsafe extern "C" fn archive_read_support_format_raw(mut _a: *mut archive) -
         b"raw\x00" as *const u8 as *const i8,
         Some(
             archive_read_format_raw_bid
-                as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32,
+                as unsafe fn(_: *mut archive_read, _: i32) -> i32,
         ),
         None,
         Some(
             archive_read_format_raw_read_header
-                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
         ),
         Some(
             archive_read_format_raw_read_data
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut *const (),
                     _: *mut size_t,
@@ -63,12 +63,12 @@ pub unsafe extern "C" fn archive_read_support_format_raw(mut _a: *mut archive) -
         ),
         Some(
             archive_read_format_raw_read_data_skip
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         None,
         Some(
             archive_read_format_raw_cleanup
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         None,
         None,
@@ -79,7 +79,7 @@ pub unsafe extern "C" fn archive_read_support_format_raw(mut _a: *mut archive) -
     return r;
 }
 
-unsafe extern "C" fn archive_read_format_raw_bid(
+unsafe fn archive_read_format_raw_bid(
     mut a: *mut archive_read,
     mut best_bid: i32,
 ) -> i32 {
@@ -92,7 +92,7 @@ unsafe extern "C" fn archive_read_format_raw_bid(
     return -(1 as i32);
 }
 
-unsafe extern "C" fn archive_read_format_raw_read_header(
+unsafe fn archive_read_format_raw_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -111,7 +111,7 @@ unsafe extern "C" fn archive_read_format_raw_read_header(
     return __archive_read_header_safe(a, entry);
 }
 
-unsafe extern "C" fn archive_read_format_raw_read_data(
+unsafe fn archive_read_format_raw_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -154,7 +154,7 @@ unsafe extern "C" fn archive_read_format_raw_read_data(
     };
 }
 
-unsafe extern "C" fn archive_read_format_raw_read_data_skip(
+unsafe fn archive_read_format_raw_read_data_skip(
     mut a: *mut archive_read,
 ) -> i32 {
     let info = unsafe { &mut *((*(*a).format).data as *mut raw_info) };
@@ -167,7 +167,7 @@ unsafe extern "C" fn archive_read_format_raw_read_data_skip(
     return ARCHIVE_RAW_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn archive_read_format_raw_cleanup(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_raw_cleanup(mut a: *mut archive_read) -> i32 {
     let safe_a_format = unsafe { &mut *(*a).format };
     let info = unsafe { &mut *((*(*a).format).data as *mut raw_info) };
     free_safe(info as *mut raw_info as *mut ());
@@ -176,7 +176,7 @@ unsafe extern "C" fn archive_read_format_raw_cleanup(mut a: *mut archive_read) -
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_archive_read_format_raw_read_data_skip(mut _a: *mut archive) {
+pub unsafe fn archive_test_archive_read_format_raw_read_data_skip(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut raw_info: *mut raw_info = 0 as *mut raw_info;
     raw_info = unsafe {

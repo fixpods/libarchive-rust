@@ -8,7 +8,7 @@ use rust_ffi::ffi_struct::struct_transfer::*;
 use super::archive_string::archive_string_default_conversion_for_read;
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_gnutar(mut a: *mut archive) -> i32 {
+pub unsafe fn archive_read_support_format_gnutar(mut a: *mut archive) -> i32 {
     let mut magic_test: i32 = __archive_check_magic_safe(
         a,
         ARCHIVE_TAR_DEFINED_PARAM.archive_read_magic,
@@ -21,7 +21,7 @@ pub unsafe extern "C" fn archive_read_support_format_gnutar(mut a: *mut archive)
     return archive_read_support_format_tar(a);
 }
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_tar(mut _a: *mut archive) -> i32 {
+pub unsafe fn archive_read_support_format_tar(mut _a: *mut archive) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut tar: *mut tar = 0 as *mut tar;
     let mut r: i32 = 0;
@@ -64,11 +64,11 @@ pub unsafe extern "C" fn archive_read_support_format_tar(mut _a: *mut archive) -
         b"tar\x00" as *const u8 as *const i8,
         Some(
             archive_read_format_tar_bid
-                as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32,
+                as unsafe fn(_: *mut archive_read, _: i32) -> i32,
         ),
         Some(
             archive_read_format_tar_options
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *const i8,
                     _: *const i8,
@@ -76,11 +76,11 @@ pub unsafe extern "C" fn archive_read_support_format_tar(mut _a: *mut archive) -
         ),
         Some(
             archive_read_format_tar_read_header
-                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
         ),
         Some(
             archive_read_format_tar_read_data
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut *const (),
                     _: *mut size_t,
@@ -89,12 +89,12 @@ pub unsafe extern "C" fn archive_read_support_format_tar(mut _a: *mut archive) -
         ),
         Some(
             archive_read_format_tar_skip
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         None,
         Some(
             archive_read_format_tar_cleanup
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         None,
         None,
@@ -104,7 +104,7 @@ pub unsafe extern "C" fn archive_read_support_format_tar(mut _a: *mut archive) -
     }
     return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn archive_read_format_tar_cleanup(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_tar_cleanup(mut a: *mut archive_read) -> i32 {
     let mut tar: *mut tar = 0 as *mut tar;
     tar = unsafe { (*(*a).format).data as *mut tar };
 
@@ -149,7 +149,7 @@ unsafe extern "C" fn archive_read_format_tar_cleanup(mut a: *mut archive_read) -
  * This should tolerate all variants in use.  It will reject a field
  * where the writer just left garbage after a trailing NUL.
  */
-unsafe extern "C" fn validate_number_field(
+unsafe fn validate_number_field(
     mut p_field: *const i8,
     mut i_size: size_t,
 ) -> i32 {
@@ -188,7 +188,7 @@ unsafe extern "C" fn validate_number_field(
     };
 }
 
-unsafe extern "C" fn archive_read_format_tar_bid(
+unsafe fn archive_read_format_tar_bid(
     mut a: *mut archive_read,
     mut best_bid: i32,
 ) -> i32 {
@@ -298,7 +298,7 @@ unsafe extern "C" fn archive_read_format_tar_bid(
     return bid;
 }
 
-unsafe extern "C" fn archive_read_format_tar_options(
+unsafe fn archive_read_format_tar_options(
     mut a: *mut archive_read,
     mut key: *const i8,
     mut val: *const i8,
@@ -375,7 +375,7 @@ unsafe extern "C" fn archive_read_format_tar_options(
  * how much unconsumed data we have floating around, and to consume
  * anything outstanding since we're going to do read_aheads
  */
-unsafe extern "C" fn tar_flush_unconsumed(mut a: *mut archive_read, mut unconsumed: *mut size_t) {
+unsafe fn tar_flush_unconsumed(mut a: *mut archive_read, mut unconsumed: *mut size_t) {
     let unconsumed_safe = unsafe { &mut *unconsumed };
     if *unconsumed_safe != 0 {
         /*
@@ -396,7 +396,7 @@ unsafe extern "C" fn tar_flush_unconsumed(mut a: *mut archive_read, mut unconsum
  * just sets up a few things and then calls the internal
  * tar_read_header() function below.
  */
-unsafe extern "C" fn archive_read_format_tar_read_header(
+unsafe fn archive_read_format_tar_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -518,7 +518,7 @@ unsafe extern "C" fn archive_read_format_tar_read_header(
     }
     return r;
 }
-unsafe extern "C" fn archive_read_format_tar_read_data(
+unsafe fn archive_read_format_tar_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -593,7 +593,7 @@ unsafe extern "C" fn archive_read_format_tar_read_data(
         }
     }
 }
-unsafe extern "C" fn archive_read_format_tar_skip(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_tar_skip(mut a: *mut archive_read) -> i32 {
     let mut bytes_skipped: int64_t = 0;
     let mut request: int64_t = 0;
     let mut p: *mut sparse_block = 0 as *mut sparse_block;
@@ -636,7 +636,7 @@ unsafe extern "C" fn archive_read_format_tar_skip(mut a: *mut archive_read) -> i
  * This function recursively interprets all of the headers associated
  * with a single entry.
  */
-unsafe extern "C" fn tar_read_header(
+unsafe fn tar_read_header(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -887,7 +887,7 @@ unsafe extern "C" fn tar_read_header(
 /*
  * Return true if block checksum is correct.
  */
-unsafe extern "C" fn checksum(mut a: *mut archive_read, mut h: *const ()) -> i32 {
+unsafe fn checksum(mut a: *mut archive_read, mut h: *const ()) -> i32 {
     let mut bytes: *const u8 = 0 as *const u8;
     let mut header: *const archive_entry_header_ustar = 0 as *const archive_entry_header_ustar;
     let mut check: i32 = 0;
@@ -960,7 +960,7 @@ unsafe extern "C" fn checksum(mut a: *mut archive_read, mut h: *const ()) -> i32
 /*
  * Return true if this block contains only nulls.
  */
-unsafe extern "C" fn archive_block_is_null(mut p: *const i8) -> i32 {
+unsafe fn archive_block_is_null(mut p: *const i8) -> i32 {
     let mut i: u32 = 0;
     i = 0 as i32 as u32;
     while i < 512 as i32 as u32 {
@@ -976,7 +976,7 @@ unsafe extern "C" fn archive_block_is_null(mut p: *const i8) -> i32 {
 /*
  * Interpret 'A' Solaris ACL header
  */
-unsafe extern "C" fn header_Solaris_ACL(
+unsafe fn header_Solaris_ACL(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -1125,7 +1125,7 @@ unsafe extern "C" fn header_Solaris_ACL(
 /*
  * Interpret 'K' long linkname header.
  */
-unsafe extern "C" fn header_longlink(
+unsafe fn header_longlink(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -1147,7 +1147,7 @@ unsafe extern "C" fn header_longlink(
     archive_entry_copy_link_safe(entry, safe_tar.longlink.s);
     return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn set_conversion_failed_error(
+unsafe fn set_conversion_failed_error(
     mut a: *mut archive_read,
     mut sconv: *mut archive_string_conv,
     mut name: *const i8,
@@ -1175,7 +1175,7 @@ unsafe extern "C" fn set_conversion_failed_error(
 /*
  * Interpret 'L' long filename header.
  */
-unsafe extern "C" fn header_longname(
+unsafe fn header_longname(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -1212,7 +1212,7 @@ unsafe extern "C" fn header_longname(
 /*
  * Interpret 'V' GNU tar volume header.
  */
-unsafe extern "C" fn header_volume(
+unsafe fn header_volume(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -1225,7 +1225,7 @@ unsafe extern "C" fn header_volume(
 /*
  * Read body of an archive entry into an archive_string object.
  */
-unsafe extern "C" fn read_body_to_string(
+unsafe fn read_body_to_string(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut as_0: *mut archive_string,
@@ -1291,7 +1291,7 @@ unsafe extern "C" fn read_body_to_string(
  * to handle filenames differently, while still putting most of the
  * common parsing into one place.
  */
-unsafe extern "C" fn header_common(
+unsafe fn header_common(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -1554,7 +1554,7 @@ unsafe extern "C" fn header_common(
 /*
  * Parse out header elements for "old-style" tar archives.
  */
-unsafe extern "C" fn header_old_tar(
+unsafe fn header_old_tar(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -1594,7 +1594,7 @@ unsafe extern "C" fn header_old_tar(
  * Read a Mac AppleDouble-encoded blob of file metadata,
  * if there is one.
  */
-unsafe extern "C" fn read_mac_metadata_blob(
+unsafe fn read_mac_metadata_blob(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -1689,7 +1689,7 @@ unsafe extern "C" fn read_mac_metadata_blob(
 /*
  * Parse a file header for a pax extended archive entry.
  */
-unsafe extern "C" fn header_pax_global(
+unsafe fn header_pax_global(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -1704,7 +1704,7 @@ unsafe extern "C" fn header_pax_global(
     err = tar_read_header(a, tar, entry, unconsumed);
     return err;
 }
-unsafe extern "C" fn header_pax_extensions(
+unsafe fn header_pax_extensions(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -1743,7 +1743,7 @@ unsafe extern "C" fn header_pax_extensions(
  * Parse a file header for a Posix "ustar" archive entry.  This also
  * handles "pax" or "extended ustar" entries.
  */
-unsafe extern "C" fn header_ustar(
+unsafe fn header_ustar(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -1869,7 +1869,7 @@ unsafe extern "C" fn header_ustar(
  *
  * Returns non-zero if there's an error in the data.
  */
-unsafe extern "C" fn pax_header(
+unsafe fn pax_header(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -2124,7 +2124,7 @@ unsafe extern "C" fn pax_header(
     }
     return err;
 }
-unsafe extern "C" fn pax_attribute_xattr(
+unsafe fn pax_attribute_xattr(
     mut entry: *mut archive_entry,
     mut name: *const i8,
     mut value: *const i8,
@@ -2158,7 +2158,7 @@ unsafe extern "C" fn pax_attribute_xattr(
     free_safe(value_decoded);
     return 0 as i32;
 }
-unsafe extern "C" fn pax_attribute_schily_xattr(
+unsafe fn pax_attribute_schily_xattr(
     mut entry: *mut archive_entry,
     mut name: *const i8,
     mut value: *const i8,
@@ -2177,7 +2177,7 @@ unsafe extern "C" fn pax_attribute_schily_xattr(
     archive_entry_xattr_add_entry_safe(entry, name, value as *const (), value_length);
     return 0 as i32;
 }
-unsafe extern "C" fn pax_attribute_rht_security_selinux(
+unsafe fn pax_attribute_rht_security_selinux(
     mut entry: *mut archive_entry,
     mut value: *const i8,
     mut value_length: size_t,
@@ -2190,7 +2190,7 @@ unsafe extern "C" fn pax_attribute_rht_security_selinux(
     );
     return 0 as i32;
 }
-unsafe extern "C" fn pax_attribute_acl(
+unsafe fn pax_attribute_acl(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -2265,7 +2265,7 @@ unsafe extern "C" fn pax_attribute_acl(
  * Investigate other vendor-specific extensions and see if
  * any of them look useful.
  */
-unsafe extern "C" fn pax_attribute(
+unsafe fn pax_attribute(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -2741,7 +2741,7 @@ unsafe extern "C" fn pax_attribute(
 /*
  * parse a decimal time value, which may include a fractional portion
  */
-unsafe extern "C" fn pax_time(
+unsafe fn pax_time(
     mut p: *const i8,
     mut ps: *mut int64_t,
     mut pn: *mut i64,
@@ -2796,7 +2796,7 @@ unsafe extern "C" fn pax_time(
 /*
  * Parse GNU tar header
  */
-unsafe extern "C" fn header_gnutar(
+unsafe fn header_gnutar(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -2929,7 +2929,7 @@ unsafe extern "C" fn header_gnutar(
     }
     return err;
 }
-unsafe extern "C" fn gnu_add_sparse_entry(
+unsafe fn gnu_add_sparse_entry(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut offset: int64_t,
@@ -2971,7 +2971,7 @@ unsafe extern "C" fn gnu_add_sparse_entry(
     unsafe { (*p).remaining = remaining };
     return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn gnu_clear_sparse_list(mut tar: *mut tar) {
+unsafe fn gnu_clear_sparse_list(mut tar: *mut tar) {
     let mut safe_tar = unsafe { &mut *tar };
     let mut p: *mut sparse_block = 0 as *mut sparse_block;
     let mut safe_p = unsafe { &mut *p };
@@ -2994,7 +2994,7 @@ unsafe extern "C" fn gnu_clear_sparse_list(mut tar: *mut tar) {
  * severe POSIX violation; this design has earned GNU tar a
  * lot of criticism.
  */
-unsafe extern "C" fn gnu_sparse_old_read(
+unsafe fn gnu_sparse_old_read(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut header: *const archive_entry_header_gnutar,
@@ -3053,7 +3053,7 @@ unsafe extern "C" fn gnu_sparse_old_read(
     }
     return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn gnu_sparse_old_parse(
+unsafe fn gnu_sparse_old_parse(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut sparse: *const gnu_sparse,
@@ -3106,7 +3106,7 @@ unsafe extern "C" fn gnu_sparse_old_parse(
  * importantly, the sparse data was lost when extracted by archivers
  * that didn't recognize this extension.
  */
-unsafe extern "C" fn gnu_sparse_01_parse(
+unsafe fn gnu_sparse_01_parse(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut p: *const i8,
@@ -3167,7 +3167,7 @@ unsafe extern "C" fn gnu_sparse_01_parse(
  * integer followed by '\n'.  Returns positive integer value or
  * negative on error.
  */
-unsafe extern "C" fn gnu_sparse_10_atol(
+unsafe fn gnu_sparse_10_atol(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut remaining: *mut int64_t,
@@ -3233,7 +3233,7 @@ unsafe extern "C" fn gnu_sparse_10_atol(
  * Returns length (in bytes) of the sparse data description
  * that was read.
  */
-unsafe extern "C" fn gnu_sparse_10_read(
+unsafe fn gnu_sparse_10_read(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut unconsumed: *mut size_t,
@@ -3294,7 +3294,7 @@ unsafe extern "C" fn gnu_sparse_10_read(
  * pax simply indicates where data and sparse are, so the stored contents
  * consist of both data and hole.
  */
-unsafe extern "C" fn solaris_sparse_parse(
+unsafe fn solaris_sparse_parse(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut entry: *mut archive_entry,
@@ -3356,7 +3356,7 @@ unsafe extern "C" fn solaris_sparse_parse(
  *
  * On read, this implementation supports both extensions.
  */
-unsafe extern "C" fn tar_atol(mut p: *const i8, mut char_cnt: size_t) -> int64_t {
+unsafe fn tar_atol(mut p: *const i8, mut char_cnt: size_t) -> int64_t {
     /*
      * Technically, GNU tar considers a field to be in base-256
      * only if the first byte is 0xff or 0x80.
@@ -3371,7 +3371,7 @@ unsafe extern "C" fn tar_atol(mut p: *const i8, mut char_cnt: size_t) -> int64_t
  * locale settings; you cannot simply substitute strtol here, since
  * it does obey locale.
  */
-unsafe extern "C" fn tar_atol_base_n(
+unsafe fn tar_atol_base_n(
     mut p: *const i8,
     mut char_cnt: size_t,
     mut base: i32,
@@ -3425,10 +3425,10 @@ unsafe extern "C" fn tar_atol_base_n(
     }
     return if sign < 0 as i32 { -l } else { l };
 }
-unsafe extern "C" fn tar_atol8(mut p: *const i8, mut char_cnt: size_t) -> int64_t {
+unsafe fn tar_atol8(mut p: *const i8, mut char_cnt: size_t) -> int64_t {
     return tar_atol_base_n(p, char_cnt, 8 as i32);
 }
-unsafe extern "C" fn tar_atol10(mut p: *const i8, mut char_cnt: size_t) -> int64_t {
+unsafe fn tar_atol10(mut p: *const i8, mut char_cnt: size_t) -> int64_t {
     return tar_atol_base_n(p, char_cnt, 10 as i32);
 }
 
@@ -3442,7 +3442,7 @@ unsafe extern "C" fn tar_atol10(mut p: *const i8, mut char_cnt: size_t) -> int64
  * This code unashamedly assumes that the local machine uses 8-bit
  * bytes and twos-complement arithmetic.
  */
-unsafe extern "C" fn tar_atol256(mut _p: *const i8, mut char_cnt: size_t) -> int64_t {
+unsafe fn tar_atol256(mut _p: *const i8, mut char_cnt: size_t) -> int64_t {
     let mut l: uint64_t = 0;
     let mut p: *const u8 = _p as *const u8;
     let mut c: u8 = 0;
@@ -3501,7 +3501,7 @@ unsafe extern "C" fn tar_atol256(mut _p: *const i8, mut char_cnt: size_t) -> int
  * point to first character of line.  This avoids copying
  * when possible.
  */
-unsafe extern "C" fn readline(
+unsafe fn readline(
     mut a: *mut archive_read,
     mut tar: *mut tar,
     mut start: *mut *const i8,
@@ -3604,7 +3604,7 @@ unsafe extern "C" fn readline(
  * (The most economical Base-64 variant does not pad the last group and
  * omits line breaks; RFC1341 used for MIME requires both.)
  */
-unsafe extern "C" fn base64_decode(
+unsafe fn base64_decode(
     mut s: *const i8,
     mut len: size_t,
     mut out_len: *mut size_t,
@@ -3783,7 +3783,7 @@ unsafe extern "C" fn base64_decode(
     unsafe { *out_len = d.offset_from(out) as i64 as size_t };
     return out;
 }
-unsafe extern "C" fn url_decode(mut in_0: *const i8) -> *mut i8 {
+unsafe fn url_decode(mut in_0: *const i8) -> *mut i8 {
     let mut out: *mut i8 = 0 as *mut i8;
     let mut d: *mut i8 = 0 as *mut i8;
     let mut s: *const i8 = 0 as *const i8;
@@ -3825,7 +3825,7 @@ unsafe extern "C" fn url_decode(mut in_0: *const i8) -> *mut i8 {
     unsafe { *d = '\u{0}' as i32 as i8 };
     return out;
 }
-unsafe extern "C" fn tohex(mut c: i32) -> i32 {
+unsafe fn tohex(mut c: i32) -> i32 {
     if c >= '0' as i32 && c <= '9' as i32 {
         return c - '0' as i32;
     } else if c >= 'A' as i32 && c <= 'F' as i32 {
@@ -3838,13 +3838,13 @@ unsafe extern "C" fn tohex(mut c: i32) -> i32 {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_tohex(mut c: i32) {
+pub unsafe fn archive_test_tohex(mut c: i32) {
     tohex(c);
     url_decode(b"11" as *const u8 as *const i8);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_pax_attribute(
+pub unsafe fn archive_test_pax_attribute(
     mut _a: *mut archive,
     mut entry: *mut archive_entry,
     mut key: *const i8,

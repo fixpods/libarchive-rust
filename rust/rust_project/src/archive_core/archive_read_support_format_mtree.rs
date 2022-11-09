@@ -41,7 +41,7 @@ pub struct mtree_option {
     pub value: *mut i8,
 }
 
-unsafe extern "C" fn get_time_t_max() -> int64_t {
+unsafe fn get_time_t_max() -> int64_t {
     /* ISO C allows time_t to be a floating-point type,
     but POSIX requires an integer type.  The following
     should work on any system that follows the POSIX
@@ -66,7 +66,7 @@ unsafe extern "C" fn get_time_t_max() -> int64_t {
         }
     }
 }
-unsafe extern "C" fn get_time_t_min() -> int64_t {
+unsafe fn get_time_t_min() -> int64_t {
     match () {
         #[cfg(HAVE_TIME_T_MIN)]
         _ => {
@@ -90,7 +90,7 @@ unsafe extern "C" fn get_time_t_min() -> int64_t {
     }
 }
 
-unsafe extern "C" fn mtree_strnlen(mut p: *const i8, mut maxlen: size_t) -> size_t {
+unsafe fn mtree_strnlen(mut p: *const i8, mut maxlen: size_t) -> size_t {
     match () {
         #[cfg(HAVE_STRLEN)]
         _ => {
@@ -115,7 +115,7 @@ unsafe extern "C" fn mtree_strnlen(mut p: *const i8, mut maxlen: size_t) -> size
         }
     }
 }
-unsafe extern "C" fn archive_read_format_mtree_options(
+unsafe fn archive_read_format_mtree_options(
     mut a: *mut archive_read,
     mut key: *const i8,
     mut val: *const i8,
@@ -141,7 +141,7 @@ unsafe extern "C" fn archive_read_format_mtree_options(
     return ARCHIVE_MTREE_DEFINED_PARAM.archive_warn;
 }
 
-unsafe extern "C" fn free_options(mut head: *mut mtree_option) {
+unsafe fn free_options(mut head: *mut mtree_option) {
     let mut next: *mut mtree_option = 0 as *mut mtree_option;
     while !head.is_null() {
         let head_safe = unsafe { &mut *head };
@@ -151,7 +151,7 @@ unsafe extern "C" fn free_options(mut head: *mut mtree_option) {
         head = next
     }
 }
-unsafe extern "C" fn mtree_cmp_node(
+unsafe fn mtree_cmp_node(
     mut n1: *const archive_rb_node,
     mut n2: *const archive_rb_node,
 ) -> i32 {
@@ -159,7 +159,7 @@ unsafe extern "C" fn mtree_cmp_node(
     let mut e2: *const mtree_entry = n2 as *const mtree_entry;
     unsafe { return strcmp_safe((*e1).name, (*e2).name) };
 }
-unsafe extern "C" fn mtree_cmp_key(
+unsafe fn mtree_cmp_key(
     mut n: *const archive_rb_node,
     mut key: *const (),
 ) -> i32 {
@@ -168,20 +168,20 @@ unsafe extern "C" fn mtree_cmp_key(
     return strcmp_safe(e_safe.name, key as *const i8);
 }
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_mtree(mut _a: *mut archive) -> i32 {
+pub unsafe fn archive_read_support_format_mtree(mut _a: *mut archive) -> i32 {
     static mut rb_ops: archive_rb_tree_ops = unsafe {
         {
             let mut init = archive_rb_tree_ops {
                 rbto_compare_nodes: Some(
                     mtree_cmp_node
-                        as unsafe extern "C" fn(
+                        as unsafe fn(
                             _: *const archive_rb_node,
                             _: *const archive_rb_node,
                         ) -> i32,
                 ),
                 rbto_compare_key: Some(
                     mtree_cmp_key
-                        as unsafe extern "C" fn(
+                        as unsafe fn(
                             _: *const archive_rb_node,
                             _: *const (),
                         ) -> i32,
@@ -226,11 +226,11 @@ pub unsafe extern "C" fn archive_read_support_format_mtree(mut _a: *mut archive)
         mtree as *mut (),
         b"mtree\x00" as *const u8 as *const i8,
         Some(
-            mtree_bid as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32,
+            mtree_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32,
         ),
         Some(
             archive_read_format_mtree_options
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *const i8,
                     _: *const i8,
@@ -238,20 +238,20 @@ pub unsafe extern "C" fn archive_read_support_format_mtree(mut _a: *mut archive)
         ),
         Some(
             read_header
-                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
         ),
         Some(
             read_data
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut *const (),
                     _: *mut size_t,
                     _: *mut int64_t,
                 ) -> i32,
         ),
-        Some(skip as unsafe extern "C" fn(_: *mut archive_read) -> i32),
+        Some(skip as unsafe fn(_: *mut archive_read) -> i32),
         None,
-        Some(cleanup as unsafe extern "C" fn(_: *mut archive_read) -> i32),
+        Some(cleanup as unsafe fn(_: *mut archive_read) -> i32),
         None,
         None,
     );
@@ -260,7 +260,7 @@ pub unsafe extern "C" fn archive_read_support_format_mtree(mut _a: *mut archive)
     }
     return ARCHIVE_MTREE_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn cleanup(mut a: *mut archive_read) -> i32 {
+unsafe fn cleanup(mut a: *mut archive_read) -> i32 {
     let mut mtree: *mut mtree = 0 as *mut mtree;
     let mut p: *mut mtree_entry = 0 as *mut mtree_entry;
     let mut q: *mut mtree_entry = 0 as *mut mtree_entry;
@@ -291,7 +291,7 @@ unsafe extern "C" fn cleanup(mut a: *mut archive_read) -> i32 {
     a_safe.data = 0 as *mut ();
     return ARCHIVE_MTREE_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn get_line_size(
+unsafe fn get_line_size(
     mut b: *const i8,
     mut avail: ssize_t,
     mut nlsize: *mut ssize_t,
@@ -352,7 +352,7 @@ unsafe extern "C" fn get_line_size(
  *                  b
  *
  */
-unsafe extern "C" fn next_line(
+unsafe fn next_line(
     mut a: *mut archive_read,
     mut b: *mut *const i8,
     mut avail: *mut ssize_t,
@@ -420,7 +420,7 @@ unsafe extern "C" fn next_line(
  * Returns the length of a mtree keyword if matched.
  * Returns 0 if not matched.
  */
-unsafe extern "C" fn bid_keycmp(
+unsafe fn bid_keycmp(
     mut p: *const i8,
     mut key: *const i8,
     mut len: ssize_t,
@@ -471,7 +471,7 @@ unsafe extern "C" fn bid_keycmp(
  * Returns the length of a detected keyword.
  * Returns 0 if any keywords were not found.
  */
-unsafe extern "C" fn bid_keyword(mut p: *const i8, mut len: ssize_t) -> i32 {
+unsafe fn bid_keyword(mut p: *const i8, mut len: ssize_t) -> i32 {
     static mut keys_c: [*const i8; 4] = [
         b"content\x00" as *const u8 as *const i8,
         b"contents\x00" as *const u8 as *const i8,
@@ -573,7 +573,7 @@ unsafe extern "C" fn bid_keyword(mut p: *const i8, mut len: ssize_t) -> i32 {
  * This function expects a set of "<space characters>keyword=value".
  * When "unset" is specified, expects a set of "<space characters>keyword".
  */
-unsafe extern "C" fn bid_keyword_list(
+unsafe fn bid_keyword_list(
     mut p: *const i8,
     mut len: ssize_t,
     mut unset: i32,
@@ -649,7 +649,7 @@ unsafe extern "C" fn bid_keyword_list(
     }
     return keycnt;
 }
-unsafe extern "C" fn bid_entry(
+unsafe fn bid_entry(
     mut p: *const i8,
     mut len: ssize_t,
     mut nl: ssize_t,
@@ -995,7 +995,7 @@ unsafe extern "C" fn bid_entry(
     }
     return bid_keyword_list(pp, ll, 0 as i32, *last_is_path_safe);
 }
-unsafe extern "C" fn mtree_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
+unsafe fn mtree_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
     let mut signature: *const i8 = b"#mtree\x00" as *const u8 as *const i8;
     let mut p: *const i8 = 0 as *const i8;
     /* UNUSED */
@@ -1019,7 +1019,7 @@ unsafe extern "C" fn mtree_bid(mut a: *mut archive_read, mut best_bid: i32) -> i
     return detect_form(a, 0 as *mut i32); /* The archive is generated by `NetBSD mtree -D'
                                                   	* (In this source we call it `form D') . */
 }
-unsafe extern "C" fn detect_form(
+unsafe fn detect_form(
     mut a: *mut archive_read,
     mut is_form_d: *mut i32,
 ) -> i32 {
@@ -1214,7 +1214,7 @@ unsafe extern "C" fn detect_form(
  * Otherwise, the options of the line are merged with the current
  * global options.
  */
-unsafe extern "C" fn add_option(
+unsafe fn add_option(
     mut a: *mut archive_read,
     mut global: *mut *mut mtree_option,
     mut value: *const i8,
@@ -1253,7 +1253,7 @@ unsafe extern "C" fn add_option(
     *global_safe = opt;
     return ARCHIVE_MTREE_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn remove_option(
+unsafe fn remove_option(
     mut global: *mut *mut mtree_option,
     mut value: *const i8,
     mut len: size_t,
@@ -1289,7 +1289,7 @@ unsafe extern "C" fn remove_option(
     free_safe(iter_safe.value as *mut ());
     free_safe(iter as *mut ());
 }
-unsafe extern "C" fn process_global_set(
+unsafe fn process_global_set(
     mut a: *mut archive_read,
     mut global: *mut *mut mtree_option,
     mut line: *const i8,
@@ -1334,7 +1334,7 @@ unsafe extern "C" fn process_global_set(
         line = next
     }
 }
-unsafe extern "C" fn process_global_unset(
+unsafe fn process_global_unset(
     mut a: *mut archive_read,
     mut global: *mut *mut mtree_option,
     mut line: *const i8,
@@ -1382,7 +1382,7 @@ unsafe extern "C" fn process_global_unset(
         line = unsafe { line.offset(len as isize) }
     }
 }
-unsafe extern "C" fn process_add_entry(
+unsafe fn process_add_entry(
     mut a: *mut archive_read,
     mut mtree: *mut mtree,
     mut global: *mut *mut mtree_option,
@@ -1559,7 +1559,7 @@ unsafe extern "C" fn process_add_entry(
         line = next
     }
 }
-unsafe extern "C" fn read_mtree(mut a: *mut archive_read, mut mtree: *mut mtree) -> i32 {
+unsafe fn read_mtree(mut a: *mut archive_read, mut mtree: *mut mtree) -> i32 {
     let mut len: ssize_t = 0;
     let mut counter: uintmax_t = 0;
     let mut p: *mut i8 = 0 as *mut i8;
@@ -1670,7 +1670,7 @@ unsafe extern "C" fn read_mtree(mut a: *mut archive_read, mut mtree: *mut mtree)
  * Read in the entire mtree file into memory on the first request.
  * Then use the next unused file to satisfy each header request.
  */
-unsafe extern "C" fn read_header(
+unsafe fn read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -1751,7 +1751,7 @@ unsafe extern "C" fn read_header(
  * from a backing file on disk as necessary.
  */
 
-unsafe extern "C" fn parse_file(
+unsafe fn parse_file(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut mtree: *mut mtree,
@@ -2133,7 +2133,7 @@ unsafe extern "C" fn parse_file(
 /*
  * Each line contains a sequence of keywords.
  */
-unsafe extern "C" fn parse_line(
+unsafe fn parse_line(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut mtree: *mut mtree,
@@ -2177,7 +2177,7 @@ unsafe extern "C" fn parse_line(
  */
 /* strsep() is not in C90, but strcspn() is. */
 /* Taken from http://unixpapa.com/incnote/string.html */
-unsafe extern "C" fn la_strsep(
+unsafe fn la_strsep(
     mut sp: *mut *mut i8,
     mut sep: *const i8,
 ) -> *mut i8 {
@@ -2199,7 +2199,7 @@ unsafe extern "C" fn la_strsep(
     *sp_safe = p;
     return s;
 }
-unsafe extern "C" fn parse_device(
+unsafe fn parse_device(
     mut pdev: *mut dev_t,
     mut a: *mut archive,
     mut val: *mut i8,
@@ -2296,7 +2296,7 @@ unsafe extern "C" fn parse_device(
     }
     return ARCHIVE_MTREE_DEFINED_PARAM.archive_ok;
 }
-unsafe extern "C" fn parse_hex_nibble(mut c: i8) -> i32 {
+unsafe fn parse_hex_nibble(mut c: i8) -> i32 {
     if c as i32 >= '0' as i32 && c as i32 <= '9' as i32 {
         return c as i32 - '0' as i32;
     }
@@ -2305,7 +2305,7 @@ unsafe extern "C" fn parse_hex_nibble(mut c: i8) -> i32 {
     }
     return -(1 as i32);
 }
-unsafe extern "C" fn parse_digest(
+unsafe fn parse_digest(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut digest: *const i8,
@@ -2379,7 +2379,7 @@ unsafe extern "C" fn parse_digest(
 /*
  * Parse a single keyword and its value.
  */
-unsafe extern "C" fn parse_keyword(
+unsafe fn parse_keyword(
     mut a: *mut archive_read,
     mut mtree: *mut mtree,
     mut entry: *mut archive_entry,
@@ -2930,7 +2930,7 @@ unsafe extern "C" fn parse_keyword(
     return ARCHIVE_MTREE_DEFINED_PARAM.archive_ok;
 }
 
-unsafe extern "C" fn read_data(
+unsafe fn read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -2999,7 +2999,7 @@ unsafe extern "C" fn read_data(
     return ARCHIVE_MTREE_DEFINED_PARAM.archive_ok;
 }
 /* Skip does nothing except possibly close the contents file. */
-unsafe extern "C" fn skip(mut a: *mut archive_read) -> i32 {
+unsafe fn skip(mut a: *mut archive_read) -> i32 {
     let mut mtree: *mut mtree = 0 as *mut mtree;
     let mtree_safe;
     unsafe {
@@ -3016,7 +3016,7 @@ unsafe extern "C" fn skip(mut a: *mut archive_read) -> i32 {
  * Since parsing backslash sequences always makes strings shorter,
  * we can always do this conversion in-place.
  */
-unsafe extern "C" fn parse_escapes(mut src: *mut i8, mut mentry: *mut mtree_entry) {
+unsafe fn parse_escapes(mut src: *mut i8, mut mentry: *mut mtree_entry) {
     let mut dest: *mut i8 = src;
     let mut c: i8 = 0;
     let mentry_safe = unsafe { &mut *mentry };
@@ -3135,7 +3135,7 @@ unsafe extern "C" fn parse_escapes(mut src: *mut i8, mut mentry: *mut mtree_entr
     }
 }
 /* Parse a hex digit. */
-unsafe extern "C" fn parsedigit(mut c: i8) -> i32 {
+unsafe fn parsedigit(mut c: i8) -> i32 {
     if c as i32 >= '0' as i32 && c as i32 <= '9' as i32 {
         return c as i32 - '0' as i32;
     } else if c as i32 >= 'a' as i32 && c as i32 <= 'f' as i32 {
@@ -3151,7 +3151,7 @@ unsafe extern "C" fn parsedigit(mut c: i8) -> i32 {
  * locale settings; you cannot simply substitute strtol here, since
  * it does obey locale.
  */
-unsafe extern "C" fn mtree_atol(mut p: *mut *mut i8, mut base: i32) -> int64_t {
+unsafe fn mtree_atol(mut p: *mut *mut i8, mut base: i32) -> int64_t {
     let mut l: int64_t = 0;
     let mut limit: int64_t = 0;
     let mut digit: i32 = 0;
@@ -3209,7 +3209,7 @@ unsafe extern "C" fn mtree_atol(mut p: *mut *mut i8, mut base: i32) -> int64_t {
  * or negative on error.  'start' argument is updated to
  * point to first character of line.
  */
-unsafe extern "C" fn readline(
+unsafe fn readline(
     mut a: *mut archive_read,
     mut mtree: *mut mtree,
     mut start: *mut *mut i8,
@@ -3311,7 +3311,7 @@ unsafe extern "C" fn readline(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_parse_keyword(
+pub unsafe fn archive_test_parse_keyword(
     mut _a: *mut archive,
     mut entry: *mut archive_entry,
     mut parsed_kws: *mut i32,
@@ -3337,7 +3337,7 @@ pub unsafe extern "C" fn archive_test_parse_keyword(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_process_global_unset(
+pub unsafe fn archive_test_process_global_unset(
     mut _a: *mut archive,
     mut line: *const i8,
 ) {
@@ -3352,7 +3352,7 @@ pub unsafe extern "C" fn archive_test_process_global_unset(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_la_strsep(
+pub unsafe fn archive_test_la_strsep(
     mut sp: *mut *mut i8,
     mut sep: *const i8,
 ) {
@@ -3360,7 +3360,7 @@ pub unsafe extern "C" fn archive_test_la_strsep(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_parse_digest(
+pub unsafe fn archive_test_parse_digest(
     mut _a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut digest: *const i8,
@@ -3371,7 +3371,7 @@ pub unsafe extern "C" fn archive_test_parse_digest(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_archive_read_support_format_mtree() {
+pub unsafe fn archive_test_archive_read_support_format_mtree() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
     archive_read = unsafe {
         calloc_safe(
@@ -3385,7 +3385,7 @@ pub unsafe extern "C" fn archive_test_archive_read_support_format_mtree() {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_read_header(
+pub unsafe fn archive_test_read_header(
     mut _a: *mut archive,
     mut entry: *mut archive_entry,
 ) {
@@ -3403,7 +3403,7 @@ pub unsafe extern "C" fn archive_test_read_header(
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_parse_device(mut a: *mut archive) {
+unsafe fn archive_test_parse_device(mut a: *mut archive) {
     let mut pdevp: [dev_t; 4] = [1 as dev_t, 2 as dev_t, 3 as dev_t, 4 as dev_t];
     let mut pdev: *mut dev_t = &pdevp as *const [dev_t; 4] as *mut [dev_t; 4] as *mut dev_t;
     let mut valp: [i8; 5] = [
@@ -3433,7 +3433,7 @@ unsafe extern "C" fn archive_test_parse_device(mut a: *mut archive) {
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_archive_read_format_mtree_options(mut _a: *mut archive) {
+unsafe fn archive_test_archive_read_format_mtree_options(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut mtree: *mut mtree = 0 as *mut mtree;
     mtree = unsafe {
@@ -3451,17 +3451,17 @@ unsafe extern "C" fn archive_test_archive_read_format_mtree_options(mut _a: *mut
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_bid_keyword() {
+unsafe fn archive_test_bid_keyword() {
     bid_keyword(b"rsd\x00" as *const u8 as *const i8, 3);
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_bid_keyword_list() {
+unsafe fn archive_test_bid_keyword_list() {
     bid_keyword_list(b"12345\x00" as *const u8 as *const i8, 5, 1, 0);
 }
 
 #[no_mangle]
-unsafe extern "C" fn archive_test_mtree_atol() {
+unsafe fn archive_test_mtree_atol() {
     let mut p1: [i8; 3] = [
         '0' as i32 as i8,
         'x' as i32 as i8,

@@ -4,7 +4,7 @@ use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_empty(mut _a: *mut archive) -> i32 {
+pub unsafe fn archive_read_support_format_empty(mut _a: *mut archive) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut r: i32 = 0;
     let mut magic_test: i32 = __archive_check_magic_safe(
@@ -22,16 +22,16 @@ pub unsafe extern "C" fn archive_read_support_format_empty(mut _a: *mut archive)
         b"empty\x00" as *const u8 as *const i8,
         Some(
             archive_read_format_empty_bid
-                as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32,
+                as unsafe fn(_: *mut archive_read, _: i32) -> i32,
         ),
         None,
         Some(
             archive_read_format_empty_read_header
-                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
         ),
         Some(
             archive_read_format_empty_read_data
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut *const (),
                     _: *mut size_t,
@@ -47,7 +47,7 @@ pub unsafe extern "C" fn archive_read_support_format_empty(mut _a: *mut archive)
     return r;
 }
 
-unsafe extern "C" fn archive_read_format_empty_bid(
+unsafe fn archive_read_format_empty_bid(
     mut a: *mut archive_read,
     mut best_bid: i32,
 ) -> i32 {
@@ -60,7 +60,7 @@ unsafe extern "C" fn archive_read_format_empty_bid(
     return -(1 as i32);
 }
 
-unsafe extern "C" fn archive_read_format_empty_read_header(
+unsafe fn archive_read_format_empty_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -71,7 +71,7 @@ unsafe extern "C" fn archive_read_format_empty_read_header(
     return ARCHIVE_EMPTY_DEFINED_PARAM.archive_eof;
 }
 
-unsafe extern "C" fn archive_read_format_empty_read_data(
+unsafe fn archive_read_format_empty_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,

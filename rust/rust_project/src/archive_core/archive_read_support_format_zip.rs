@@ -35,7 +35,7 @@ pub struct zip {
     pub entry_uncompressed_bytes_read: int64_t,
     pub entry_crc32: u64,
     pub crc32func: Option<
-        unsafe extern "C" fn(_: u64, _: *const (), _: size_t) -> u64,
+        unsafe fn(_: u64, _: *const (), _: size_t) -> u64,
     >,
     pub ignore_crc32: i8,
     pub decompress_init: i8,
@@ -104,7 +104,7 @@ pub struct _alone_header {
     pub uncompressed_size: uint64_t,
 }
 
-unsafe extern "C" fn ppmd_read(mut p: *mut ()) -> Byte {
+unsafe fn ppmd_read(mut p: *mut ()) -> Byte {
     /* Get the handle to current decompression context. */
 
     let mut a: *mut archive_read = unsafe { (*(p as *mut IByteIn)).a };
@@ -127,7 +127,7 @@ unsafe extern "C" fn ppmd_read(mut p: *mut ()) -> Byte {
     unsafe { return *data.offset(0 as i32 as isize) };
 }
 
-unsafe extern "C" fn trad_enc_update_keys(mut ctx: *mut trad_enc_ctx, mut c: uint8_t) {
+unsafe fn trad_enc_update_keys(mut ctx: *mut trad_enc_ctx, mut c: uint8_t) {
     let mut t: uint8_t = 0;
     let safe_ctx = unsafe { &mut *ctx };
     safe_ctx.keys[0 as i32 as usize] = (crc32_safe(
@@ -149,7 +149,7 @@ unsafe extern "C" fn trad_enc_update_keys(mut ctx: *mut trad_enc_ctx, mut c: uin
         1 as i32 as uInt,
     ) ^ 0xffffffff as u64) as uint32_t;
 }
-unsafe extern "C" fn trad_enc_decrypt_byte(mut ctx: *mut trad_enc_ctx) -> uint8_t {
+unsafe fn trad_enc_decrypt_byte(mut ctx: *mut trad_enc_ctx) -> uint8_t {
     let safe_ctx = unsafe { &mut *ctx };
     let mut temp: u32 =
         safe_ctx.keys[2 as i32 as usize] | 2 as i32 as u32;
@@ -157,7 +157,7 @@ unsafe extern "C" fn trad_enc_decrypt_byte(mut ctx: *mut trad_enc_ctx) -> uint8_
         as uint8_t as i32
         & 0xff as i32) as uint8_t;
 }
-unsafe extern "C" fn trad_enc_decrypt_update(
+unsafe fn trad_enc_decrypt_update(
     mut ctx: *mut trad_enc_ctx,
     mut in_0: *const uint8_t,
     mut in_len: size_t,
@@ -179,7 +179,7 @@ unsafe extern "C" fn trad_enc_decrypt_update(
         }
     }
 }
-unsafe extern "C" fn trad_enc_init(
+unsafe fn trad_enc_init(
     mut ctx: *mut trad_enc_ctx,
     mut pw: *const i8,
     mut pw_len: size_t,
@@ -223,7 +223,7 @@ unsafe extern "C" fn trad_enc_init(
 * Includes code to read local file headers, decompress data
 * from entry bodies, and common API.
 */
-unsafe extern "C" fn real_crc32(
+unsafe fn real_crc32(
     mut crc: u64,
     mut buff: *const (),
     mut len: size_t,
@@ -231,7 +231,7 @@ unsafe extern "C" fn real_crc32(
     return crc32_safe(crc, buff as *const Bytef, len as u32);
 }
 /* Used by "ignorecrc32" option to speed up tests. */
-unsafe extern "C" fn fake_crc32(
+unsafe fn fake_crc32(
     mut crc: u64,
     mut buff: *const (),
     mut len: size_t,
@@ -418,7 +418,7 @@ static mut compression_methods: [obj2; 25] = [
 ];
 // Initialized in run_static_initializers
 static mut num_compression_methods: i32 = 0;
-unsafe extern "C" fn compression_name(compression: i32) -> *const i8 {
+unsafe fn compression_name(compression: i32) -> *const i8 {
     let mut i: i32 = 0 as i32;
     unsafe {
         while compression >= 0 as i32 && i < num_compression_methods {
@@ -431,7 +431,7 @@ unsafe extern "C" fn compression_name(compression: i32) -> *const i8 {
     return b"??\x00" as *const u8 as *const i8;
 }
 /* Convert an MSDOS-style date/time into Unix-style time. */
-unsafe extern "C" fn zip_time(mut p: *const i8) -> time_t {
+unsafe fn zip_time(mut p: *const i8) -> time_t {
     let mut msTime: i32 = 0; /* Years since 1900. */
     let mut msDate: i32 = 0; /* Month number. */
     let mut ts: tm = tm {
@@ -482,7 +482,7 @@ unsafe extern "C" fn zip_time(mut p: *const i8) -> time_t {
 *	id1+size1+data1 + id2+size2+data2 ...
 *  triplets.  id and size are 2 bytes each.
 */
-unsafe extern "C" fn process_extra(
+unsafe fn process_extra(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut p: *const i8,
@@ -1096,7 +1096,7 @@ unsafe extern "C" fn process_extra(
 /*
 * Assumes file pointer is at beginning of local file header.
 */
-unsafe extern "C" fn zip_read_local_file_header(
+unsafe fn zip_read_local_file_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut zip: *mut zip,
@@ -1722,7 +1722,7 @@ unsafe extern "C" fn zip_read_local_file_header(
     safe_a.archive.archive_format_name = safe_zip.format_name.s;
     return ret;
 }
-unsafe extern "C" fn check_authentication_code(
+unsafe fn check_authentication_code(
     mut a: *mut archive_read,
     mut _p: *const (),
 ) -> i32 {
@@ -1782,7 +1782,7 @@ unsafe extern "C" fn check_authentication_code(
     return 0 as i32;
 }
 
-unsafe extern "C" fn zip_read_data_none(
+unsafe fn zip_read_data_none(
     mut a: *mut archive_read,
     mut _buff: *mut *const (),
     mut size: *mut size_t,
@@ -1982,7 +1982,7 @@ unsafe extern "C" fn zip_read_data_none(
     }
 }
 
-unsafe extern "C" fn consume_optional_marker(
+unsafe fn consume_optional_marker(
     mut a: *mut archive_read,
     mut zip: *mut zip,
 ) -> i32 {
@@ -2067,7 +2067,7 @@ unsafe extern "C" fn consume_optional_marker(
 }
 
 #[cfg(all(HAVE_LZMA_H, HAVE_LIBLZMA))]
-unsafe extern "C" fn zipx_xz_init(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
+unsafe fn zipx_xz_init(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
     let mut r: lzma_ret = LZMA_OK;
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
@@ -2114,7 +2114,7 @@ unsafe extern "C" fn zipx_xz_init(mut a: *mut archive_read, mut zip: *mut zip) -
     safe_zip.decompress_init = 1 as i32 as i8;
     return 0 as i32;
 }
-unsafe extern "C" fn zipx_lzma_alone_init(
+unsafe fn zipx_lzma_alone_init(
     mut a: *mut archive_read,
     mut zip: *mut zip,
 ) -> i32 {
@@ -2238,7 +2238,7 @@ unsafe extern "C" fn zipx_lzma_alone_init(
         return 0 as i32;
     }
 }
-unsafe extern "C" fn zip_read_data_zipx_xz(
+unsafe fn zip_read_data_zipx_xz(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -2342,7 +2342,7 @@ unsafe extern "C" fn zip_read_data_zipx_xz(
 }
 
 #[cfg(all(HAVE_LZMA_H, HAVE_LIBLZMA))]
-unsafe extern "C" fn zip_read_data_zipx_lzma_alone(
+unsafe fn zip_read_data_zipx_lzma_alone(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -2471,7 +2471,7 @@ unsafe extern "C" fn zip_read_data_zipx_lzma_alone(
     return 0 as i32;
 }
 /* HAVE_LZMA_H && HAVE_LIBLZMA */
-unsafe extern "C" fn zipx_ppmd8_init(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
+unsafe fn zipx_ppmd8_init(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
     let mut p: *const () = 0 as *const ();
     let mut val: uint32_t = 0;
     let mut order: uint32_t = 0;
@@ -2502,7 +2502,7 @@ unsafe extern "C" fn zipx_ppmd8_init(mut a: *mut archive_read, mut zip: *mut zip
     safe_zip.ppmd8.Stream.In = &mut safe_zip.zipx_ppmd_stream;
     safe_zip.zipx_ppmd_stream.a = a;
     safe_zip.zipx_ppmd_stream.Read =
-        Some(ppmd_read as unsafe extern "C" fn(_: *mut ()) -> Byte);
+        Some(ppmd_read as unsafe fn(_: *mut ()) -> Byte);
     /* Reset number of read bytes to 0. */
     safe_zip.zipx_ppmd_read_compressed = 0 as i32 as ssize_t;
     /* Read Ppmd8 header (2 bytes). */
@@ -2607,7 +2607,7 @@ unsafe extern "C" fn zipx_ppmd8_init(mut a: *mut archive_read, mut zip: *mut zip
         2 as i32 as i64 + (safe_zip).zipx_ppmd_read_compressed;
     return 0 as i32;
 }
-unsafe extern "C" fn zip_read_data_zipx_ppmd(
+unsafe fn zip_read_data_zipx_ppmd(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -2709,7 +2709,7 @@ unsafe extern "C" fn zip_read_data_zipx_ppmd(
 }
 
 #[cfg(HAVE_BZLIB_H)]
-unsafe extern "C" fn zipx_bzip2_init(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
+unsafe fn zipx_bzip2_init(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
     let mut r: i32 = 0;
     /* Deallocate already existing BZ2 decompression context if it
      * exists. */
@@ -2759,7 +2759,7 @@ unsafe extern "C" fn zipx_bzip2_init(mut a: *mut archive_read, mut zip: *mut zip
     safe_zip.decompress_init = 1 as i32 as i8;
     return 0 as i32;
 }
-unsafe extern "C" fn zip_read_data_zipx_bzip2(
+unsafe fn zip_read_data_zipx_bzip2(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -2882,7 +2882,7 @@ unsafe extern "C" fn zip_read_data_zipx_bzip2(
 }
 
 #[cfg(HAVE_ZLIB_H)]
-unsafe extern "C" fn zip_deflate_init(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
+unsafe fn zip_deflate_init(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
     let mut r: i32 = 0;
     /* If we haven't yet read any data, initialize the decompressor. */
     let safe_zip = unsafe { &mut *zip };
@@ -2917,7 +2917,7 @@ unsafe extern "C" fn zip_deflate_init(mut a: *mut archive_read, mut zip: *mut zi
 }
 
 #[cfg(HAVE_ZLIB_H)]
-unsafe extern "C" fn zip_read_data_deflate(
+unsafe fn zip_read_data_deflate(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -3116,7 +3116,7 @@ unsafe extern "C" fn zip_read_data_deflate(
     }
 }
 
-unsafe extern "C" fn read_decryption_header(mut a: *mut archive_read) -> i32 {
+unsafe fn read_decryption_header(mut a: *mut archive_read) -> i32 {
     let mut current_block: u64;
     let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut p: *const i8 = 0 as *const i8;
@@ -3637,7 +3637,7 @@ unsafe extern "C" fn read_decryption_header(mut a: *mut archive_read) -> i32 {
     };
     return -(30 as i32);
 }
-unsafe extern "C" fn zip_alloc_decryption_buffer(mut a: *mut archive_read) -> i32 {
+unsafe fn zip_alloc_decryption_buffer(mut a: *mut archive_read) -> i32 {
     let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut bs: size_t = (256 as i32 * 1024 as i32) as size_t;
 
@@ -3661,7 +3661,7 @@ unsafe extern "C" fn zip_alloc_decryption_buffer(mut a: *mut archive_read) -> i3
     safe_zip.decrypted_ptr = safe_zip.decrypted_buffer;
     return 0 as i32;
 }
-unsafe extern "C" fn init_traditional_PKWARE_decryption(mut a: *mut archive_read) -> i32 {
+unsafe fn init_traditional_PKWARE_decryption(mut a: *mut archive_read) -> i32 {
     let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut p: *const () = 0 as *const ();
     let mut retry: i32 = 0;
@@ -3767,7 +3767,7 @@ unsafe extern "C" fn init_traditional_PKWARE_decryption(mut a: *mut archive_read
     safe_zip.decrypted_bytes_remaining = 0 as i32 as size_t;
     return zip_alloc_decryption_buffer(a);
 }
-unsafe extern "C" fn init_WinZip_AES_decryption(mut a: *mut archive_read) -> i32 {
+unsafe fn init_WinZip_AES_decryption(mut a: *mut archive_read) -> i32 {
     let mut current_block: u64;
     let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut p: *const () = 0 as *const ();
@@ -3990,7 +3990,7 @@ unsafe extern "C" fn init_WinZip_AES_decryption(mut a: *mut archive_read) -> i32
     };
     return -(30 as i32);
 }
-unsafe extern "C" fn archive_read_format_zip_read_data(
+unsafe fn archive_read_format_zip_read_data(
     mut a: *mut archive_read,
     mut buff: *mut *const (),
     mut size: *mut size_t,
@@ -4156,7 +4156,7 @@ unsafe extern "C" fn archive_read_format_zip_read_data(
     return 0 as i32;
 }
 
-unsafe extern "C" fn archive_read_format_zip_cleanup(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_zip_cleanup(mut a: *mut archive_read) -> i32 {
     unsafe {
         let mut zip: *mut zip = 0 as *mut zip;
         let mut zip_entry: *mut zip_entry = 0 as *mut zip_entry;
@@ -4210,7 +4210,7 @@ unsafe extern "C" fn archive_read_format_zip_cleanup(mut a: *mut archive_read) -
     }
 }
 
-unsafe extern "C" fn archive_read_format_zip_has_encrypted_entries(
+unsafe fn archive_read_format_zip_has_encrypted_entries(
     mut _a: *mut archive_read,
 ) -> i32 {
     let safe__a = unsafe { &mut *_a };
@@ -4225,7 +4225,7 @@ unsafe extern "C" fn archive_read_format_zip_has_encrypted_entries(
     return -(1 as i32);
 }
 
-unsafe extern "C" fn archive_read_format_zip_options(
+unsafe fn archive_read_format_zip_options(
     mut a: *mut archive_read,
     mut key: *const i8,
     mut val: *const i8,
@@ -4290,7 +4290,7 @@ unsafe extern "C" fn archive_read_format_zip_options(
                 } {
                     (safe_zip).crc32func = Some(
                         real_crc32
-                            as unsafe extern "C" fn(
+                            as unsafe fn(
                                 _: u64,
                                 _: *const (),
                                 _: size_t,
@@ -4300,7 +4300,7 @@ unsafe extern "C" fn archive_read_format_zip_options(
                 } else {
                     (safe_zip).crc32func = Some(
                         fake_crc32
-                            as unsafe extern "C" fn(
+                            as unsafe fn(
                                 _: u64,
                                 _: *const (),
                                 _: size_t,
@@ -4342,7 +4342,7 @@ pub fn archive_read_support_format_zip(mut a: *mut archive) -> i32 {
 /*
 * Streaming-mode support
 */
-unsafe extern "C" fn archive_read_support_format_zip_capabilities_streamable(
+unsafe fn archive_read_support_format_zip_capabilities_streamable(
     mut a: *mut archive_read,
 ) -> i32 {
     /* UNUSED */
@@ -4350,7 +4350,7 @@ unsafe extern "C" fn archive_read_support_format_zip_capabilities_streamable(
         return (1 as i32) << 0 as i32 | (1 as i32) << 1 as i32;
     }
 }
-unsafe extern "C" fn archive_read_format_zip_streamable_bid(
+unsafe fn archive_read_format_zip_streamable_bid(
     mut a: *mut archive_read,
     mut best_bid: i32,
 ) -> i32 {
@@ -4397,7 +4397,7 @@ unsafe extern "C" fn archive_read_format_zip_streamable_bid(
     }
 }
 
-unsafe extern "C" fn archive_read_format_zip_streamable_read_header(
+unsafe fn archive_read_format_zip_streamable_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -4524,7 +4524,7 @@ unsafe extern "C" fn archive_read_format_zip_streamable_read_header(
     }
 }
 
-unsafe extern "C" fn archive_read_format_zip_read_data_skip_streamable(
+unsafe fn archive_read_format_zip_read_data_skip_streamable(
     mut a: *mut archive_read,
 ) -> i32 {
     let mut zip: *mut zip = 0 as *mut zip;
@@ -4665,7 +4665,7 @@ unsafe extern "C" fn archive_read_format_zip_read_data_skip_streamable(
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_zip_streamable(
+pub unsafe fn archive_read_support_format_zip_streamable(
     mut _a: *mut archive,
 ) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
@@ -4709,7 +4709,7 @@ pub unsafe extern "C" fn archive_read_support_format_zip_streamable(
     (safe_zip).has_encrypted_entries = -(1 as i32);
     (safe_zip).crc32func = Some(
         real_crc32
-            as unsafe extern "C" fn(
+            as unsafe fn(
                 _: u64,
                 _: *const (),
                 _: size_t,
@@ -4721,11 +4721,11 @@ pub unsafe extern "C" fn archive_read_support_format_zip_streamable(
         b"zip\x00" as *const u8 as *const i8,
         Some(
             archive_read_format_zip_streamable_bid
-                as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32,
+                as unsafe fn(_: *mut archive_read, _: i32) -> i32,
         ),
         Some(
             archive_read_format_zip_options
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *const i8,
                     _: *const i8,
@@ -4733,11 +4733,11 @@ pub unsafe extern "C" fn archive_read_support_format_zip_streamable(
         ),
         Some(
             archive_read_format_zip_streamable_read_header
-                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
         ),
         Some(
             archive_read_format_zip_read_data
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut *const (),
                     _: *mut size_t,
@@ -4746,20 +4746,20 @@ pub unsafe extern "C" fn archive_read_support_format_zip_streamable(
         ),
         Some(
             archive_read_format_zip_read_data_skip_streamable
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         None,
         Some(
             archive_read_format_zip_cleanup
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         Some(
             archive_read_support_format_zip_capabilities_streamable
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         Some(
             archive_read_format_zip_has_encrypted_entries
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
     );
     if r != 0 as i32 {
@@ -4771,7 +4771,7 @@ pub unsafe extern "C" fn archive_read_support_format_zip_streamable(
 /*
 * Seeking-mode support
 */
-unsafe extern "C" fn archive_read_support_format_zip_capabilities_seekable(
+unsafe fn archive_read_support_format_zip_capabilities_seekable(
     mut a: *mut archive_read,
 ) -> i32 {
     /* UNUSED */
@@ -4787,7 +4787,7 @@ unsafe extern "C" fn archive_read_support_format_zip_capabilities_seekable(
 * that later bidders can do nothing if they know they'll never
 * outbid.  But we can certainly do better...
 */
-unsafe extern "C" fn read_eocd(
+unsafe fn read_eocd(
     mut zip: *mut zip,
     mut p: *const i8,
     mut current_offset: int64_t,
@@ -4840,7 +4840,7 @@ unsafe extern "C" fn read_eocd(
 * Examine Zip64 EOCD locator:  If it's valid, store the information
 * from it.
 */
-unsafe extern "C" fn read_zip64_eocd(
+unsafe fn read_zip64_eocd(
     mut a: *mut archive_read,
     mut zip: *mut zip,
     mut p: *const i8,
@@ -4917,7 +4917,7 @@ unsafe extern "C" fn read_zip64_eocd(
     (safe_zip).central_directory_offset_adjusted = (safe_zip).central_directory_offset;
     return 32 as i32;
 }
-unsafe extern "C" fn archive_read_format_zip_seekable_bid(
+unsafe fn archive_read_format_zip_seekable_bid(
     mut a: *mut archive_read,
     mut best_bid: i32,
 ) -> i32 {
@@ -5009,7 +5009,7 @@ unsafe extern "C" fn archive_read_format_zip_seekable_bid(
 }
 /* The red-black trees are only used in seeking mode to manage
 * the in-memory copy of the central directory. */
-unsafe extern "C" fn cmp_node(
+unsafe fn cmp_node(
     mut n1: *const archive_rb_node,
     mut n2: *const archive_rb_node,
 ) -> i32 {
@@ -5025,7 +5025,7 @@ unsafe extern "C" fn cmp_node(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn cmp_key(
+unsafe fn cmp_key(
     mut n: *const archive_rb_node,
     mut key: *const (),
 ) -> i32 {
@@ -5037,14 +5037,14 @@ static mut rb_ops: archive_rb_tree_ops = {
     let mut init = archive_rb_tree_ops {
         rbto_compare_nodes: Some(
             cmp_node
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *const archive_rb_node,
                     _: *const archive_rb_node,
                 ) -> i32,
         ),
         rbto_compare_key: Some(
             cmp_key
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *const archive_rb_node,
                     _: *const (),
                 ) -> i32,
@@ -5052,7 +5052,7 @@ static mut rb_ops: archive_rb_tree_ops = {
     };
     init
 };
-unsafe extern "C" fn rsrc_cmp_node(
+unsafe fn rsrc_cmp_node(
     mut n1: *const archive_rb_node,
     mut n2: *const archive_rb_node,
 ) -> i32 {
@@ -5062,7 +5062,7 @@ unsafe extern "C" fn rsrc_cmp_node(
     let safe_e2 = unsafe { &*e2 };
     return strcmp_safe(safe_e2.rsrcname.s, safe_e1.rsrcname.s);
 }
-unsafe extern "C" fn rsrc_cmp_key(
+unsafe fn rsrc_cmp_key(
     mut n: *const archive_rb_node,
     mut key: *const (),
 ) -> i32 {
@@ -5074,14 +5074,14 @@ static mut rb_rsrc_ops: archive_rb_tree_ops = {
     let mut init = archive_rb_tree_ops {
         rbto_compare_nodes: Some(
             rsrc_cmp_node
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *const archive_rb_node,
                     _: *const archive_rb_node,
                 ) -> i32,
         ),
         rbto_compare_key: Some(
             rsrc_cmp_key
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *const archive_rb_node,
                     _: *const (),
                 ) -> i32,
@@ -5089,7 +5089,7 @@ static mut rb_rsrc_ops: archive_rb_tree_ops = {
     };
     init
 };
-unsafe extern "C" fn rsrc_basename(
+unsafe fn rsrc_basename(
     mut name: *const i8,
     mut name_length: size_t,
 ) -> *const i8 {
@@ -5112,7 +5112,7 @@ unsafe extern "C" fn rsrc_basename(
     }
     return r;
 }
-unsafe extern "C" fn expose_parent_dirs(
+unsafe fn expose_parent_dirs(
     mut zip: *mut zip,
     mut name: *const i8,
     mut name_length: size_t,
@@ -5151,7 +5151,7 @@ unsafe extern "C" fn expose_parent_dirs(
     }
     archive_string_free_safe(&mut str);
 }
-unsafe extern "C" fn slurp_central_directory(
+unsafe fn slurp_central_directory(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut zip: *mut zip,
@@ -5521,7 +5521,7 @@ unsafe extern "C" fn slurp_central_directory(
     return 0 as i32;
 }
 
-unsafe extern "C" fn zip_get_local_file_header_size(
+unsafe fn zip_get_local_file_header_size(
     mut a: *mut archive_read,
     mut extra: size_t,
 ) -> ssize_t {
@@ -5569,7 +5569,7 @@ unsafe extern "C" fn zip_get_local_file_header_size(
     return 30 as i32 as i64 + filename_length + extra_length;
 }
 
-unsafe extern "C" fn zip_read_mac_metadata(
+unsafe fn zip_read_mac_metadata(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut rsrc: *mut zip_entry,
@@ -5794,7 +5794,7 @@ unsafe extern "C" fn zip_read_mac_metadata(
         return ret;
     }
 }
-unsafe extern "C" fn archive_read_format_zip_seekable_read_header(
+unsafe fn archive_read_format_zip_seekable_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
 ) -> i32 {
@@ -5900,7 +5900,7 @@ unsafe extern "C" fn archive_read_format_zip_seekable_read_header(
 * We're going to seek for the next header anyway, so we don't
 * need to bother doing anything here.
 */
-unsafe extern "C" fn archive_read_format_zip_read_data_skip_seekable(
+unsafe fn archive_read_format_zip_read_data_skip_seekable(
     mut a: *mut archive_read,
 ) -> i32 {
     let mut zip: *mut zip = 0 as *mut zip;
@@ -5911,7 +5911,7 @@ unsafe extern "C" fn archive_read_format_zip_read_data_skip_seekable(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_zip_seekable(
+pub unsafe fn archive_read_support_format_zip_seekable(
     mut _a: *mut archive,
 ) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
@@ -5961,7 +5961,7 @@ pub unsafe extern "C" fn archive_read_support_format_zip_seekable(
     (safe_zip).has_encrypted_entries = -(1 as i32);
     (safe_zip).crc32func = Some(
         real_crc32
-            as unsafe extern "C" fn(
+            as unsafe fn(
                 _: u64,
                 _: *const (),
                 _: size_t,
@@ -5973,11 +5973,11 @@ pub unsafe extern "C" fn archive_read_support_format_zip_seekable(
         b"zip\x00" as *const u8 as *const i8,
         Some(
             archive_read_format_zip_seekable_bid
-                as unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32,
+                as unsafe fn(_: *mut archive_read, _: i32) -> i32,
         ),
         Some(
             archive_read_format_zip_options
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *const i8,
                     _: *const i8,
@@ -5985,11 +5985,11 @@ pub unsafe extern "C" fn archive_read_support_format_zip_seekable(
         ),
         Some(
             archive_read_format_zip_seekable_read_header
-                as unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
         ),
         Some(
             archive_read_format_zip_read_data
-                as unsafe extern "C" fn(
+                as unsafe fn(
                     _: *mut archive_read,
                     _: *mut *const (),
                     _: *mut size_t,
@@ -5998,20 +5998,20 @@ pub unsafe extern "C" fn archive_read_support_format_zip_seekable(
         ),
         Some(
             archive_read_format_zip_read_data_skip_seekable
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         None,
         Some(
             archive_read_format_zip_cleanup
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         Some(
             archive_read_support_format_zip_capabilities_seekable
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
         Some(
             archive_read_format_zip_has_encrypted_entries
-                as unsafe extern "C" fn(_: *mut archive_read) -> i32,
+                as unsafe fn(_: *mut archive_read) -> i32,
         ),
     );
     if r != 0 as i32 {
@@ -6019,7 +6019,7 @@ pub unsafe extern "C" fn archive_read_support_format_zip_seekable(
     }
     return 0 as i32;
 }
-unsafe extern "C" fn run_static_initializers() {
+unsafe fn run_static_initializers() {
     unsafe {
         num_compression_methods = (::std::mem::size_of::<[obj2; 25]>() as u64)
             .wrapping_div(::std::mem::size_of::<obj2>() as u64)
@@ -6030,11 +6030,11 @@ unsafe extern "C" fn run_static_initializers() {
 #[cfg_attr(target_os = "linux", link_section = ".init_array")]
 #[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
 #[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
-static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];
+static INIT_ARRAY: [unsafe fn(); 1] = [run_static_initializers];
 /*# vim:set noet:*/
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_trad_enc_init(
+pub unsafe fn archive_test_trad_enc_init(
     mut _a: *mut archive,
     mut key: *const uint8_t,
     mut crcchk: *mut uint8_t,
@@ -6056,7 +6056,7 @@ pub unsafe extern "C" fn archive_test_trad_enc_init(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_zip_read_mac_metadata(
+pub unsafe fn archive_test_zip_read_mac_metadata(
     mut _a: *mut archive,
     mut entry: *mut archive_entry,
 ) {
@@ -6077,7 +6077,7 @@ pub unsafe extern "C" fn archive_test_zip_read_mac_metadata(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_expose_parent_dirs(
+pub unsafe fn archive_test_expose_parent_dirs(
     mut _a: *mut archive,
     mut name: *const i8,
     mut name_length: size_t,
@@ -6089,7 +6089,7 @@ pub unsafe extern "C" fn archive_test_expose_parent_dirs(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_check_authentication_code(
+pub unsafe fn archive_test_check_authentication_code(
     mut _a: *mut archive,
     mut _p: *const (),
 ) {
@@ -6104,7 +6104,7 @@ pub unsafe extern "C" fn archive_test_check_authentication_code(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_archive_read_format_zip_options(
+pub unsafe fn archive_test_archive_read_format_zip_options(
     mut _a: *mut archive,
     mut key: *const i8,
     mut val: *const i8,
@@ -6114,7 +6114,7 @@ pub unsafe extern "C" fn archive_test_archive_read_format_zip_options(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_zipx_ppmd8_init(mut _a: *mut archive) {
+pub unsafe fn archive_test_zipx_ppmd8_init(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut zip = 0 as *mut zip;
     zip = calloc_safe(
@@ -6126,7 +6126,7 @@ pub unsafe extern "C" fn archive_test_zipx_ppmd8_init(mut _a: *mut archive) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_cmp_key(
+pub unsafe fn archive_test_cmp_key(
     mut n: *const archive_rb_node,
     mut key: *const (),
 ) {
@@ -6139,7 +6139,7 @@ pub unsafe extern "C" fn archive_test_cmp_key(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_test_read_format_zip_read_data(mut _a: *mut archive) {
+pub unsafe fn archive_test_read_format_zip_read_data(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut zip = 0 as *mut zip;
     zip = calloc_safe(
