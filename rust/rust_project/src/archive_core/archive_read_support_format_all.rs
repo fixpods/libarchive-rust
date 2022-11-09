@@ -13,15 +13,15 @@ use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_all(mut a: *mut archive) -> libc::c_int {
-    let mut magic_test: libc::c_int = __archive_check_magic_safe(
+pub unsafe extern "C" fn archive_read_support_format_all(mut a: *mut archive) -> i32 {
+    let mut magic_test: i32 = __archive_check_magic_safe(
         a,
-        0xdeb0c5 as libc::c_uint,
-        1 as libc::c_uint,
-        b"archive_read_support_format_all\x00" as *const u8 as *const libc::c_char,
+        0xdeb0c5 as u32,
+        1 as u32,
+        b"archive_read_support_format_all\x00" as *const u8 as *const i8,
     );
-    if magic_test == -(30 as libc::c_int) {
-        return -(30 as libc::c_int);
+    if magic_test == -(30 as i32) {
+        return -(30 as i32);
     }
 
     archive_read_support_format_ar(a);
@@ -39,5 +39,5 @@ pub unsafe extern "C" fn archive_read_support_format_all(mut a: *mut archive) ->
     archive_read_support_format_iso9660(a);
     archive_read_support_format_zip(a);
     archive_clear_error_safe(a);
-    return 0 as libc::c_int;
+    return 0 as i32;
 }

@@ -71,12 +71,13 @@ __FBSDID("$FreeBSD$");
 #include "archive_entry.h"
 #include "archive_private.h"
 #include "archive_read_private.h"
-
+#define HDR_PROBE_LEN		(12U)
 #ifndef COMPILE_WITH_RUST
 struct archive_warc_defined_param
 {
   unsigned int archive_read_magic;
   unsigned int archive_state_new;
+  unsigned int hdr_probe_len;
   int enomem;
   int archive_fatal;
   int archive_ok;
@@ -93,6 +94,7 @@ struct archive_warc_defined_param get_archive_warc_defined_param()
   struct archive_warc_defined_param param;
   param.archive_read_magic = ARCHIVE_READ_MAGIC;
   param.archive_state_new = ARCHIVE_STATE_NEW;
+  param.hdr_probe_len = HDR_PROBE_LEN;
   param.enomem = ENOMEM;
   param.archive_fatal = ARCHIVE_FATAL;
   param.archive_ok = ARCHIVE_OK;
