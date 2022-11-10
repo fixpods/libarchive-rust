@@ -28,16 +28,16 @@ pub extern "C" fn archive_read_support_format_warc(_a: *mut archive) -> i32 {
     let r: i32;
 
     let safe_a = unsafe { &mut *a };
-    let magic_test: i32 = __archive_check_magic_safe(
+    let magic_test: i32 = unsafe { __archive_check_magic_safe(
         _a,
         ARCHIVE_WARC_DEFINED_PARAM.archive_read_magic,
         ARCHIVE_WARC_DEFINED_PARAM.archive_state_new,
         b"archive_read_support_format_warc\x00" as *const u8 as *const i8,
-    );
+    )};
     if magic_test == ARCHIVE_WARC_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_WARC_DEFINED_PARAM.archive_fatal;
     }
-    w = calloc_safe(1, size_of::<warc_s>() as u64) as *mut warc_s;
+    w = unsafe { calloc_safe(1, size_of::<warc_s>() as u64) as *mut warc_s };
     if w.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
@@ -46,7 +46,7 @@ pub extern "C" fn archive_read_support_format_warc(_a: *mut archive) -> i32 {
         );
         return ARCHIVE_WARC_DEFINED_PARAM.archive_fatal;
     }
-    r = __archive_read_register_format_safe(
+    r = unsafe { __archive_read_register_format_safe(
         a,
         w as *mut (),
         b"warc\x00" as *const u8 as *const i8,
@@ -59,9 +59,9 @@ pub extern "C" fn archive_read_support_format_warc(_a: *mut archive) -> i32 {
         Some(_warc_cleanup),
         None,
         None,
-    );
+    )};
     if r != ARCHIVE_WARC_DEFINED_PARAM.archive_ok {
-        free_safe(w as *mut ());
+        unsafe { free_safe(w as *mut ()) };
         return r;
     }
     return 0;
@@ -72,10 +72,10 @@ fn _warc_cleanup(a: *mut archive_read) -> i32 {
     let safe_w = unsafe { &mut *w };
     let safe_a = unsafe { &mut *a };
     if safe_w.pool.len > 0 {
-        free_safe(safe_w.pool.str_0 as *mut ());
+        unsafe { free_safe(safe_w.pool.str_0 as *mut ()) };
     }
-    archive_string_free_safe(&mut safe_w.sver);
-    free_safe(w as *mut ());
+    unsafe { archive_string_free_safe(&mut safe_w.sver) };
+    unsafe { free_safe(w as *mut ()) };
     unsafe { (*safe_a.format).data = 0 as *mut() };
     return ARCHIVE_WARC_DEFINED_PARAM.archive_ok;
 }
@@ -86,14 +86,17 @@ fn _warc_bid(mut a: *mut archive_read, best_bid: i32) -> i32 {
     /* UNUSED */
     /* check first line of file, it should be a record already */
     hdr =
-        __archive_read_ahead_safe(a, 12, &mut nrd) as *const i8;
+        unsafe { __archive_read_ahead_safe(a, 12, &mut nrd) as *const i8 };
     if hdr.is_null() {
         /* no idea what to do */
         return -1;
-    } else if nrd < 12 {
-        /* nah, not for us, our magic cookie is at least 12 bytes */
-        return -1;
+    } else {
+        if nrd < 12 {
+            /* nah, not for us, our magic cookie is at least 12 bytes */
+            return -1;
+        }
     }
+
     /* otherwise snarf the record's version number */
     ver = _warc_rdver(hdr, nrd as size_t);
     if ver < 1200 || ver > 10000 {
@@ -125,8 +128,8 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         /* just use read_ahead() they keep track of unconsumed
          * bits and bobs for us; no need to put an extra shift in
          * and reproduce that functionality here */
-        buf = __archive_read_ahead_safe(a, ARCHIVE_WARC_DEFINED_PARAM.hdr_probe_len as u64, &mut nrd)
-            as *const i8;
+        buf = unsafe { __archive_read_ahead_safe(a, ARCHIVE_WARC_DEFINED_PARAM.hdr_probe_len as u64, &mut nrd)
+            as *const i8 };
         if nrd < 0 {
             /* no good */
             archive_set_error_safe!(
@@ -225,13 +228,13 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
                 * malloc()+free() roundtrip */
                 if fnam.len + 1 > safe_w.pool.len {
                     safe_w.pool.len = ((fnam.len + 64) / 64) * 64;
-                    safe_w.pool.str_0 = realloc_safe(safe_w.pool.str_0 as *mut (), safe_w.pool.len) as *mut i8
+                    safe_w.pool.str_0 = unsafe { realloc_safe(safe_w.pool.str_0 as *mut (), safe_w.pool.len) as *mut i8 }
                 }
-                memcpy_safe(
+                unsafe { memcpy_safe(
                     safe_w.pool.str_0 as *mut (),
                     fnam.str_0 as *const (),
                     fnam.len,
-                );
+                ) };
                 unsafe {
                     *safe_w.pool.str_0.offset(fnam.len as isize) = '\u{0}' as i8
                 };
@@ -253,7 +256,7 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             }
         }
         /* now eat some of those delicious buffer bits */
-        __archive_read_consume_safe(a, unsafe { eoh.offset_from(buf) as i64 });
+        unsafe { __archive_read_consume_safe(a, unsafe { eoh.offset_from(buf) as i64 }) };
         match ftyp {
             WT_RSRC | WT_RSP => {
                 if fnam.len > 0 {
@@ -267,13 +270,15 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         _warc_skip(a);
     }
     /* populate entry object */
-    archive_entry_set_filetype_safe(entry, ARCHIVE_WARC_DEFINED_PARAM.ae_ifreg as mode_t);
-    archive_entry_copy_pathname_safe(entry, fnam.str_0);
-    archive_entry_set_size_safe(entry, cntlen);
-    archive_entry_set_perm_safe(entry, 0o644);
-    /* rtime is the new ctime, mtime stays mtime */
-    archive_entry_set_ctime_safe(entry, rtime, 0);
-    archive_entry_set_mtime_safe(entry, mtime, 0);
+    unsafe {
+        archive_entry_set_filetype_safe(entry, ARCHIVE_WARC_DEFINED_PARAM.ae_ifreg as mode_t);
+        archive_entry_copy_pathname_safe(entry, fnam.str_0);
+        archive_entry_set_size_safe(entry, cntlen);
+        archive_entry_set_perm_safe(entry, 0o644);
+        /* rtime is the new ctime, mtime stays mtime */
+        archive_entry_set_ctime_safe(entry, rtime, 0);
+        archive_entry_set_mtime_safe(entry, mtime, 0);
+    }
     return ARCHIVE_WARC_DEFINED_PARAM.archive_ok;
 }
 
@@ -292,10 +297,10 @@ fn _warc_read(
     let safe_buf = unsafe { &mut *buf };
     if !(safe_w.cntoff >= safe_w.cntlen) {
         if safe_w.unconsumed != 0 {
-            __archive_read_consume_safe(a, safe_w.unconsumed as int64_t);
+            unsafe { __archive_read_consume_safe(a, safe_w.unconsumed as int64_t) };
             safe_w.unconsumed = 0;
         }
-        rab = __archive_read_ahead_safe(a, 1, &mut nrd) as *const i8;
+        rab = unsafe { __archive_read_ahead_safe(a, 1, &mut nrd) as *const i8 };
         if nrd < 0 {
             unsafe { *bsz = 0 };
             /* big catastrophe */
@@ -324,7 +329,7 @@ fn _warc_read(
 fn _warc_skip(a: *mut archive_read) -> i32 {
     let w: *mut warc_s = unsafe { (*(*a).format).data as *mut warc_s };
     let safe_w = unsafe { &mut *w };
-    __archive_read_consume_safe(a, (safe_w.cntlen + 4) as int64_t);
+    unsafe { __archive_read_consume_safe(a, (safe_w.cntlen + 4) as int64_t) };
     safe_w.cntlen = 0;
     safe_w.cntoff = 0;
     return ARCHIVE_WARC_DEFINED_PARAM.archive_ok;
@@ -357,11 +362,11 @@ fn xmemmem(
     if needlesize == 0 {
         return deconst(hay as *const ()) as *mut i8;
     } else {
-        hay = memchr_safe(
+        hay = unsafe { memchr_safe(
             hay as *const (),
             unsafe { *needle as i32 },
             haysize,
-        ) as *const i8;
+        ) as *const i8 };
         if hay.is_null() {
             /* trivial */
             return 0 as *mut i8;
@@ -406,7 +411,7 @@ fn xmemmem(
          * characters for equality,
          * also CAND is by design < HP, so no need for range checks */
         if hsum == nsum
-            && memcmp_safe(cand as *const (), needle as *const (), needlesize - 1) == 0
+            && unsafe { memcmp_safe(cand as *const (), needle as *const (), needlesize - 1) == 0 }
         {
             return deconst(cand as *const ()) as *mut i8;
         }
@@ -456,7 +461,7 @@ fn time_from_tm(t: *mut tm) -> time_t {
     return _mkgmtime_safe(t);
     /* Else use direct calculation using POSIX assumptions. */
     /* First, fix up tm_yday based on the year/month/day. */
-    if mktime_safe(t) == -1 as time_t {
+    if unsafe { mktime_safe(t) == -1 as time_t } {
         return -1 as time_t;
     }
     let safe_t = unsafe { &mut *t };
@@ -492,101 +497,82 @@ fn xstrpisotime(
     };
     let mut res: time_t = -1;
     /* make sure tm is clean */
-    memset_safe(
+    unsafe { memset_safe(
         &mut tm as *mut tm as *mut (),
         0 as i32,
         size_of::<tm>() as u64,
-    );
+    ) };
     /* as a courtesy to our callers, and since this is a non-standard
      * routine, we skip leading whitespace */
     while unsafe { *s as i32 == ' ' as i32 || *s as i32 == '\t' as i32 } {
         unsafe { s = s.offset(1) }
     }
 
-    let mut out: bool = false;
-    loop {
-        /* read year */
-        tm.tm_year = strtoi_lim(s, &mut s, 1583, 4095);
-        if tm.tm_year < 0 || {
-            unsafe {
-                let fresh1 = s;
-                s = s.offset(1);
-                (*fresh1 as i32) != '-' as i32
-            }
-        } {
-            out = true;
-            break;
+    /* read year */
+    tm.tm_year = strtoi_lim(s, &mut s, 1583, 4095);
+    if !(tm.tm_year < 0 || {
+        unsafe {
+            let fresh1 = s;
+            s = s.offset(1);
+            (*fresh1 as i32) != '-' as i32
         }
+    }) {
         /* read month */
         tm.tm_mon = strtoi_lim(s, &mut s, 1, 12);
-        if tm.tm_mon < 0 || {
+        if !(tm.tm_mon < 0 || {
             unsafe {
                 let fresh2 = s;
                 s = s.offset(1);
                 (*fresh2 as i32) != '-' as i32
             }
-        } {
-            out = true;
-            break;
-        }
-        /* read day-of-month */
-        tm.tm_mday = strtoi_lim(s, &mut s, 1 as i32, 31 as i32);
-        if tm.tm_mday < 0 as i32 || {
-            unsafe {
-                let fresh3 = s;
-                s = s.offset(1);
-                (*fresh3 as i32) != 'T' as i32
+        }) {
+            /* read day-of-month */
+            tm.tm_mday = strtoi_lim(s, &mut s, 1 as i32, 31  as i32);
+            if !(tm.tm_mday < 0 as i32 || {
+                unsafe {
+                    let fresh3 = s;
+                    s = s.offset(1);
+                    (*fresh3 as i32) != 'T' as i32
+                }
+            }) {
+                /* read hour */
+                tm.tm_hour = strtoi_lim(s, &mut s, 0 as libc::c_int, 23 as libc::c_int);
+                if !(tm.tm_hour < 0 as libc::c_int || {
+                    unsafe {
+                        let fresh4 = s;
+                        s = s.offset(1);
+                        (*fresh4 as i32) != ':' as i32
+                    }
+                }) {
+                    /* read minute */
+                    tm.tm_min = strtoi_lim(s, &mut s, 0 as i32, 59 as i32);
+                    if !(tm.tm_min < 0 as i32 || {
+                        unsafe {
+                            let fresh5 = s;
+                            s = s.offset(1);
+                            (*fresh5 as i32) != ':' as i32
+                        }
+                    }) {
+                        /* read second */
+                        tm.tm_sec = strtoi_lim(s, &mut s, 0 as i32, 60 as i32);
+                        if !(tm.tm_sec < 0 as i32 || {
+                            unsafe {
+                                let fresh6 = s;
+                                s = s.offset(1);
+                                (*fresh6 as i32) != 'Z' as i32
+                            }
+                        }) {
+                            /* massage TM to fulfill some of POSIX' constraints */
+                            tm.tm_year -= 1900;
+                            tm.tm_mon -= 1;
+                            /* now convert our custom tm struct to a unix stamp using UTC */
+                            res = time_from_tm(&mut tm)
+                        }
+                    }
+                }
             }
-        } {
-            out = true;
-            break;
         }
-        /* read hour */
-        tm.tm_hour = strtoi_lim(s, &mut s, 0 as i32, 23 as i32);
-        if tm.tm_hour < 0 as i32 || {
-            unsafe {
-                let fresh4 = s;
-                s = s.offset(1);
-                (*fresh4 as i32) != ':' as i32
-            }
-        } {
-            out = true;
-            break;
-        }
-        /* read minute */
-        tm.tm_min = strtoi_lim(s, &mut s, 0 as i32, 59 as i32);
-        if tm.tm_min < 0 as i32 || {
-            unsafe {
-                let fresh5 = s;
-                s = s.offset(1);
-                (*fresh5 as i32) != ':' as i32
-            }
-        } {
-            out = true;
-            break;
-        }
-        /* read second */
-        tm.tm_sec = strtoi_lim(s, &mut s, 0 as i32, 60 as i32);
-        if tm.tm_sec < 0 as i32 || {
-            unsafe {
-                let fresh6 = s;
-                s = s.offset(1);
-                (*fresh6 as i32) != 'Z' as i32
-            }
-        } {
-            out = true;
-            break;
-        }
-        break;
     }
-    
-    if out == false {
-        /* massage TM to fulfill some of POSIX' constraints */
-        tm.tm_year -= 1900;
-        tm.tm_mon -= 1;
-        /* now convert our custom tm struct to a unix stamp using UTC */
-        res = time_from_tm(&mut tm);
-    } 
     if !endptr.is_null() {
         unsafe { *endptr = deconst(s as *const ()) as *mut i8 }
     }
@@ -601,11 +587,11 @@ fn _warc_rdver(mut buf: *const i8, mut bsz: size_t) -> u32 {
     let mut ver: u32 = 0;
     let mut end: u32 = 0;
     if bsz < 12 as u64
-        || memcmp_safe(
+        || unsafe { memcmp_safe(
             buf as *const (),
             unsafe { magic.as_ptr() as *const () },
             size_of::<[i8; 6]>() as u64 - 1,
-        ) != 0
+        ) != 0 }
     {
         /* buffer too small or invalid magic */
         return ver;
@@ -665,11 +651,11 @@ fn _warc_rdver(mut buf: *const i8, mut bsz: size_t) -> u32 {
          */
         c = unsafe { buf.offset(3).offset(end as isize) };
         if ver >= 1200 {
-            if memcmp_safe(
+            if unsafe { memcmp_safe(
                 c as *const (),
                 b"\r\n\x00" as *const u8 as *const i8 as *const (),
                 2,
-            ) != 0
+            ) != 0 }
             {
                 ver = 0
             }
@@ -714,19 +700,19 @@ fn _warc_rdtyp(mut buf: *const i8, mut bsz: size_t) -> u32 {
         unsafe { val = val.offset(1) }
     }
     if unsafe { val.offset(8) } == eol {
-        if memcmp_safe(
+        if unsafe { memcmp_safe(
             val as *const (),
             b"resource\x00" as *const u8 as *const i8 as *const (),
             8,
-        ) == 0
+        ) == 0 }
         {
             return WT_RSRC;
         } else {
-            if memcmp_safe(
+            if unsafe { memcmp_safe(
                 val as *const (),
                 b"response\x00" as *const u8 as *const i8 as *const (),
                 8,
-            ) == 0
+            ) == 0 }
             {
                 return WT_RSP;
             }
@@ -804,22 +790,22 @@ fn _warc_rduri(mut buf: *const i8, mut bsz: size_t) -> warc_string_t {
     /* move uri to point to after :// */
     uri = unsafe { uri.offset(3) };
     /* now then, inspect the URI */
-    if !(memcmp_safe(
+    if !(unsafe { memcmp_safe(
         val as *const (),
         b"file\x00" as *const u8 as *const i8 as *const (),
         4,
-    ) == 0)
+    ) == 0 })
     {
-        if memcmp_safe(
+        if unsafe { memcmp_safe(
             val as *const (),
             b"http\x00" as *const u8 as *const i8 as *const (),
             4,
-        ) == 0
-            || memcmp_safe(
+        ) == 0 }
+            || unsafe { memcmp_safe(
                 val as *const (),
                 b"ftp\x00" as *const u8 as *const i8 as *const (),
                 3,
-            ) == 0
+            ) == 0 }
         {
             /* overread domain, and the first / */
             while uri < eol && {
@@ -884,7 +870,7 @@ fn _warc_rdlen(mut buf: *const i8, mut bsz: size_t) -> ssize_t {
         return -1;
     }
     unsafe { *__errno_location_safe() = 0};
-    len = strtol_safe(val, &mut on, 10);
+    len = unsafe { strtol_safe(val, &mut on, 10) };
     if unsafe { *__errno_location_safe() != 0 } || on != eol as *mut i8 {
         /* line must end here */
         return -1;

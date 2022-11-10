@@ -660,11 +660,11 @@ extern "C" {
     pub static __archive_cryptor: archive_cryptor;
 }
 
-pub fn malloc_safe(size: u64) -> *mut () {
+pub unsafe fn malloc_safe(size: u64) -> *mut () {
     return unsafe { malloc(size) };
 }
 
-pub fn memcpy_safe(
+pub unsafe fn memcpy_safe(
     str1: *mut (),
     str2: *const (),
     n: u64,
@@ -672,7 +672,7 @@ pub fn memcpy_safe(
     return unsafe { memcpy(str1, str2, n) };
 }
 
-pub fn memset_safe(
+pub unsafe fn memset_safe(
     str: *mut (),
     c: i32,
     n: u64,
@@ -680,7 +680,7 @@ pub fn memset_safe(
     return unsafe { memset(str, c, n) };
 }
 
-pub fn memcmp_safe(
+pub unsafe fn memcmp_safe(
     str1: *const (),
     str2: *const (),
     n: u64,
@@ -688,19 +688,19 @@ pub fn memcmp_safe(
     return unsafe { memcmp(str1, str2, n) };
 }
 
-pub fn calloc_safe(nitems: u64, size: u64) -> *mut () {
+pub unsafe fn calloc_safe(nitems: u64, size: u64) -> *mut () {
     return unsafe { calloc(nitems, size) };
 }
 
-pub fn free_safe(ptr: *mut ()) {
+pub unsafe fn free_safe(ptr: *mut ()) {
     unsafe { free(ptr) };
 }
 
-pub fn strcmp_safe(str1: *const i8, str2: *const i8) -> i32 {
+pub unsafe fn strcmp_safe(str1: *const i8, str2: *const i8) -> i32 {
     return unsafe { strcmp(str1, str2) };
 }
 
-pub fn strlen_safe(str: *const i8) -> u64 {
+pub unsafe fn strlen_safe(str: *const i8) -> u64 {
     return unsafe { strlen(str) };
 }
 
@@ -712,15 +712,15 @@ macro_rules! sprintf_safe {
     }};
 }
 
-pub fn mktime_safe(timeptr: *mut tm) -> time_t {
+pub unsafe fn mktime_safe(timeptr: *mut tm) -> time_t {
     return unsafe { mktime(timeptr) };
 }
 
-pub fn wcschr_safe(str: *const wchar_t, c: wchar_t) -> *mut wchar_t {
+pub unsafe fn wcschr_safe(str: *const wchar_t, c: wchar_t) -> *mut wchar_t {
     return unsafe { wcschr(str, c) };
 }
 
-pub fn wcslen_safe(str: *const wchar_t) -> u64 {
+pub unsafe fn wcslen_safe(str: *const wchar_t) -> u64 {
     return unsafe { wcslen(str) };
 }
 
@@ -732,39 +732,39 @@ macro_rules! archive_set_error_safe {
     }};
 }
 
-pub fn archive_entry_filetype_safe(entry: *mut archive_entry) -> mode_t {
+pub unsafe fn archive_entry_filetype_safe(entry: *mut archive_entry) -> mode_t {
     return unsafe { archive_entry_filetype(entry) };
 }
 
-pub fn archive_entry_pathname_safe(entry: *mut archive_entry) -> *const i8 {
+pub unsafe fn archive_entry_pathname_safe(entry: *mut archive_entry) -> *const i8 {
     return unsafe { archive_entry_pathname(entry) };
 }
 
-pub fn archive_entry_pathname_w_safe(entry: *mut archive_entry) -> *const wchar_t {
+pub unsafe fn archive_entry_pathname_w_safe(entry: *mut archive_entry) -> *const wchar_t {
     return unsafe { archive_entry_pathname_w(entry) };
 }
 
-pub fn archive_entry_symlink_safe(entry: *mut archive_entry) -> *const i8 {
+pub unsafe fn archive_entry_symlink_safe(entry: *mut archive_entry) -> *const i8 {
     return unsafe { archive_entry_symlink(entry) };
 }
 
-pub fn archive_entry_symlink_w_safe(entry: *mut archive_entry) -> *const wchar_t {
+pub unsafe fn archive_entry_symlink_w_safe(entry: *mut archive_entry) -> *const wchar_t {
     return unsafe { archive_entry_symlink_w(entry) };
 }
 
-pub fn archive_entry_set_atime_safe(entry: *mut archive_entry, t: time_t, ns: i64) {
+pub unsafe fn archive_entry_set_atime_safe(entry: *mut archive_entry, t: time_t, ns: i64) {
     unsafe {
         archive_entry_set_atime(entry, t, ns);
     }
 }
 
-pub fn archive_entry_unset_atime_safe(entry: *mut archive_entry) {
+pub unsafe fn archive_entry_unset_atime_safe(entry: *mut archive_entry) {
     unsafe {
         archive_entry_unset_atime(entry);
     }
 }
 
-pub fn archive_entry_set_birthtime_safe(
+pub unsafe fn archive_entry_set_birthtime_safe(
     entry: *mut archive_entry,
     t: time_t,
     ns: i64,
@@ -774,67 +774,67 @@ pub fn archive_entry_set_birthtime_safe(
     }
 }
 
-pub fn archive_entry_unset_birthtime_safe(entry: *mut archive_entry) {
+pub unsafe fn archive_entry_unset_birthtime_safe(entry: *mut archive_entry) {
     unsafe {
         archive_entry_unset_birthtime(entry);
     }
 }
 
-pub fn archive_entry_set_ctime_safe(entry: *mut archive_entry, t: time_t, ns: i64) {
+pub unsafe fn archive_entry_set_ctime_safe(entry: *mut archive_entry, t: time_t, ns: i64) {
     unsafe {
         archive_entry_set_ctime(entry, t, ns);
     }
 }
 
-pub fn archive_entry_unset_ctime_safe(entry: *mut archive_entry) {
+pub unsafe fn archive_entry_unset_ctime_safe(entry: *mut archive_entry) {
     unsafe {
         archive_entry_unset_ctime(entry);
     }
 }
 
-pub fn archive_entry_set_gid_safe(entry: *mut archive_entry, g: la_int64_t) {
+pub unsafe fn archive_entry_set_gid_safe(entry: *mut archive_entry, g: la_int64_t) {
     unsafe {
         archive_entry_set_gid(entry, g);
     }
 }
 
-pub fn archive_entry_set_gname_safe(entry: *mut archive_entry, g: *const i8) {
+pub unsafe fn archive_entry_set_gname_safe(entry: *mut archive_entry, g: *const i8) {
     unsafe {
         archive_entry_set_gname(entry, g);
     }
 }
 
-pub fn archive_entry_set_mode_safe(entry: *mut archive_entry, m: mode_t) {
+pub unsafe fn archive_entry_set_mode_safe(entry: *mut archive_entry, m: mode_t) {
     unsafe {
         archive_entry_set_mode(entry, m);
     }
 }
 
-pub fn archive_entry_set_mtime_safe(entry: *mut archive_entry, t: time_t, ns: i64) {
+pub unsafe fn archive_entry_set_mtime_safe(entry: *mut archive_entry, t: time_t, ns: i64) {
     unsafe {
         archive_entry_set_mtime(entry, t, ns);
     }
 }
 
-pub fn archive_entry_copy_pathname_w_safe(entry: *mut archive_entry, name: *const wchar_t) {
+pub unsafe fn archive_entry_copy_pathname_w_safe(entry: *mut archive_entry, name: *const wchar_t) {
     unsafe {
         archive_entry_copy_pathname_w(entry, name);
     }
 }
 
-pub fn archive_entry_set_size_safe(entry: *mut archive_entry, s: la_int64_t) {
+pub unsafe fn archive_entry_set_size_safe(entry: *mut archive_entry, s: la_int64_t) {
     unsafe {
         archive_entry_set_size(entry, s);
     }
 }
 
-pub fn archive_entry_unset_size_safe(entry: *mut archive_entry) {
+pub unsafe fn archive_entry_unset_size_safe(entry: *mut archive_entry) {
     unsafe {
         archive_entry_unset_size(entry);
     }
 }
 
-pub fn archive_entry_set_symlink_safe(
+pub unsafe fn archive_entry_set_symlink_safe(
     entry: *mut archive_entry,
     linkname: *const i8,
 ) {
@@ -843,7 +843,7 @@ pub fn archive_entry_set_symlink_safe(
     }
 }
 
-pub fn archive_entry_copy_symlink_w_safe(
+pub unsafe fn archive_entry_copy_symlink_w_safe(
     entry: *mut archive_entry,
     linkname: *const wchar_t,
 ) {
@@ -852,25 +852,25 @@ pub fn archive_entry_copy_symlink_w_safe(
     }
 }
 
-pub fn archive_entry_set_uid_safe(entry: *mut archive_entry, u: la_int64_t) {
+pub unsafe fn archive_entry_set_uid_safe(entry: *mut archive_entry, u: la_int64_t) {
     unsafe {
         archive_entry_set_uid(entry, u);
     }
 }
 
-pub fn archive_entry_set_uname_safe(entry: *mut archive_entry, name: *const i8) {
+pub unsafe fn archive_entry_set_uname_safe(entry: *mut archive_entry, name: *const i8) {
     unsafe {
         archive_entry_set_uname(entry, name);
     }
 }
 
-pub fn archive_entry_set_filetype_safe(entry: *mut archive_entry, _type: u32) {
+pub unsafe fn archive_entry_set_filetype_safe(entry: *mut archive_entry, _type: u32) {
     unsafe {
         archive_entry_set_filetype(entry, _type);
     }
 }
 
-pub fn archive_entry_set_pathname_safe(
+pub unsafe fn archive_entry_set_pathname_safe(
     entry: *mut archive_entry,
     name: *const i8,
 ) {
@@ -879,13 +879,13 @@ pub fn archive_entry_set_pathname_safe(
     }
 }
 
-pub fn archive_entry_set_perm_safe(entry: *mut archive_entry, p: mode_t) {
+pub unsafe fn archive_entry_set_perm_safe(entry: *mut archive_entry, p: mode_t) {
     unsafe {
         archive_entry_set_perm(entry, p);
     }
 }
 
-pub fn archive_entry_set_hardlink_safe(
+pub unsafe fn archive_entry_set_hardlink_safe(
     entry: *mut archive_entry,
     target: *const i8,
 ) {
@@ -894,26 +894,26 @@ pub fn archive_entry_set_hardlink_safe(
     }
 }
 
-pub fn archive_entry_set_nlink_safe(entry: *mut archive_entry, nlink: u32) {
+pub unsafe fn archive_entry_set_nlink_safe(entry: *mut archive_entry, nlink: u32) {
     unsafe {
         archive_entry_set_nlink(entry, nlink);
     }
 }
 
-pub fn archive_entry_set_rdev_safe(entry: *mut archive_entry, m: dev_t) {
+pub unsafe fn archive_entry_set_rdev_safe(entry: *mut archive_entry, m: dev_t) {
     unsafe {
         archive_entry_set_rdev(entry, m);
     }
 }
 
-pub fn archive_entry_copy_symlink_safe(
+pub unsafe fn archive_entry_copy_symlink_safe(
     entry: *mut archive_entry,
     linkname: *const i8,
 ) {
     unsafe { archive_entry_copy_symlink(entry, linkname) }
 }
 
-pub fn _archive_entry_copy_hardlink_l_safe(
+pub unsafe fn _archive_entry_copy_hardlink_l_safe(
     entry: *mut archive_entry,
     target: *const i8,
     len: size_t,
@@ -922,15 +922,15 @@ pub fn _archive_entry_copy_hardlink_l_safe(
     return unsafe { _archive_entry_copy_hardlink_l(entry, target, len, sc) };
 }
 
-pub fn archive_wstring_free_safe(_as: *mut archive_wstring) {
+pub unsafe fn archive_wstring_free_safe(_as: *mut archive_wstring) {
     unsafe { archive_wstring_free(_as) };
 }
 
-pub fn archive_string_free_safe(_as: *mut archive_string) {
+pub unsafe fn archive_string_free_safe(_as: *mut archive_string) {
     unsafe { archive_string_free(_as) };
 }
 
-pub fn archive_wstrncat_safe(
+pub unsafe fn archive_wstrncat_safe(
     _as: *mut archive_wstring,
     p: *const wchar_t,
     n: size_t,
@@ -938,17 +938,17 @@ pub fn archive_wstrncat_safe(
     return unsafe { archive_wstrncat(_as, p, n) };
 }
 
-pub fn archive_wstring_concat_safe(dest: *mut archive_wstring, src: *mut archive_wstring) {
+pub unsafe fn archive_wstring_concat_safe(dest: *mut archive_wstring, src: *mut archive_wstring) {
     unsafe { archive_wstring_concat(dest, src) };
 }
 
-pub fn archive_string_conversion_charset_name_safe(
+pub unsafe fn archive_string_conversion_charset_name_safe(
     sc: *mut archive_string_conv,
 ) -> *const i8 {
     return unsafe { archive_string_conversion_charset_name(sc) };
 }
 
-pub fn archive_array_append_safe(
+pub unsafe fn archive_array_append_safe(
     _as: *mut archive_string,
     p: *const i8,
     s: size_t,
@@ -956,14 +956,14 @@ pub fn archive_array_append_safe(
     return unsafe { archive_array_append(_as, p, s) };
 }
 
-pub fn archive_strcat_safe(
+pub unsafe fn archive_strcat_safe(
     _as: *mut archive_string,
     p: *const (),
 ) -> *mut archive_string {
     return unsafe { archive_strcat(_as, p) };
 }
 
-pub fn archive_string_concat_safe(dest: *mut archive_string, src: *mut archive_string) {
+pub unsafe fn archive_string_concat_safe(dest: *mut archive_string, src: *mut archive_string) {
     unsafe { archive_string_concat(dest, src) };
 }
 
@@ -975,7 +975,7 @@ macro_rules! archive_string_sprintf_safe {
     }};
 }
 
-pub fn archive_string_conversion_from_charset_safe(
+pub unsafe fn archive_string_conversion_from_charset_safe(
     a: *mut archive,
     charset: *const i8,
     best_effort: i32,
@@ -983,7 +983,7 @@ pub fn archive_string_conversion_from_charset_safe(
     return unsafe { archive_string_conversion_from_charset(a, charset, best_effort) };
 }
 
-pub fn archive_strncat_safe(
+pub unsafe fn archive_strncat_safe(
     _as: *mut archive_string,
     _p: *const (),
     n: size_t,
@@ -991,13 +991,13 @@ pub fn archive_strncat_safe(
     return unsafe { archive_strncat(_as, _p, n) };
 }
 
-pub fn archive_mstring_clean_safe(aes: *mut archive_mstring) {
+pub unsafe fn archive_mstring_clean_safe(aes: *mut archive_mstring) {
     unsafe {
         archive_mstring_clean(aes);
     }
 }
 
-pub fn archive_mstring_get_wcs_safe(
+pub unsafe fn archive_mstring_get_wcs_safe(
     a: *mut archive,
     aes: *mut archive_mstring,
     wp: *mut *const wchar_t,
@@ -1005,7 +1005,7 @@ pub fn archive_mstring_get_wcs_safe(
     return unsafe { archive_mstring_get_wcs(a, aes, wp) };
 }
 
-pub fn archive_mstring_copy_mbs_len_l_safe(
+pub unsafe fn archive_mstring_copy_mbs_len_l_safe(
     aes: *mut archive_mstring,
     mbs: *const i8,
     len: size_t,
@@ -1014,7 +1014,7 @@ pub fn archive_mstring_copy_mbs_len_l_safe(
     return unsafe { archive_mstring_copy_mbs_len_l(aes, mbs, len, sc) };
 }
 
-pub fn __archive_check_magic_safe(
+pub unsafe fn __archive_check_magic_safe(
     a: *mut archive,
     magic: u32,
     state: u32,
@@ -1023,7 +1023,7 @@ pub fn __archive_check_magic_safe(
     return unsafe { __archive_check_magic(a, magic, state, function) };
 }
 
-pub fn __archive_read_register_format_safe(
+pub unsafe fn __archive_read_register_format_safe(
     a: *mut archive_read,
     format_data: *mut (),
     name: *const i8,
@@ -1072,7 +1072,7 @@ pub fn __archive_read_register_format_safe(
     };
 }
 
-pub fn __archive_read_ahead_safe(
+pub unsafe fn __archive_read_ahead_safe(
     a: *mut archive_read,
     min: size_t,
     avail: *mut ssize_t,
@@ -1080,18 +1080,18 @@ pub fn __archive_read_ahead_safe(
     return unsafe { __archive_read_ahead(a, min, avail) };
 }
 
-pub fn __archive_read_header_safe(
+pub unsafe fn __archive_read_header_safe(
     a: *mut archive_read,
     entry: *mut archive_entry,
 ) -> i32 {
     return unsafe { __archive_read_header(a, entry) };
 }
 
-pub fn __archive_read_consume_safe(a: *mut archive_read, request: int64_t) -> int64_t {
+pub unsafe fn __archive_read_consume_safe(a: *mut archive_read, request: int64_t) -> int64_t {
     return unsafe { __archive_read_consume(a, request) };
 }
 
-pub fn __archive_read_seek_safe(
+pub unsafe fn __archive_read_seek_safe(
     a: *mut archive_read,
     offset: int64_t,
     whence: i32,
@@ -1099,11 +1099,11 @@ pub fn __archive_read_seek_safe(
     return unsafe { __archive_read_seek(a, offset, whence) };
 }
 
-pub fn __errno_location_safe() -> *mut i32 {
+pub unsafe fn __errno_location_safe() -> *mut i32 {
     return unsafe { __errno_location() };
 }
 
-pub fn _archive_entry_copy_pathname_l_safe(
+pub unsafe fn _archive_entry_copy_pathname_l_safe(
     param1: *mut archive_entry,
     param2: *const i8,
     param3: size_t,
@@ -1112,11 +1112,11 @@ pub fn _archive_entry_copy_pathname_l_safe(
     return unsafe { _archive_entry_copy_pathname_l(param1, param2, param3, param4) };
 }
 
-pub fn crc32_safe(crc: uLong, buf: *const Bytef, len: uInt) -> uLong {
+pub unsafe fn crc32_safe(crc: uLong, buf: *const Bytef, len: uInt) -> uLong {
     return unsafe { crc32(crc, buf, len) };
 }
 
-pub fn inflateInit2__safe(
+pub unsafe fn inflateInit2__safe(
     strm: z_streamp,
     windowBits: i32,
     version: *const i8,
@@ -1125,7 +1125,7 @@ pub fn inflateInit2__safe(
     return unsafe { inflateInit2_(strm, windowBits, version, stream_size) };
 }
 
-pub fn BZ2_bzDecompressInit_safe(
+pub unsafe fn BZ2_bzDecompressInit_safe(
     strm: *mut bz_stream,
     verbosity: i32,
     small: i32,
@@ -1133,15 +1133,15 @@ pub fn BZ2_bzDecompressInit_safe(
     return unsafe { BZ2_bzDecompressInit(strm, verbosity, small) };
 }
 
-pub fn BZ2_bzDecompress_safe(strm: *mut bz_stream) -> i32 {
+pub unsafe fn BZ2_bzDecompress_safe(strm: *mut bz_stream) -> i32 {
     return unsafe { BZ2_bzDecompress(strm) };
 }
 
-pub fn BZ2_bzDecompressEnd_safe(strm: *mut bz_stream) -> i32 {
+pub unsafe fn BZ2_bzDecompressEnd_safe(strm: *mut bz_stream) -> i32 {
     return unsafe { BZ2_bzDecompressEnd(strm) };
 }
 
-pub fn lzma_stream_decoder_safe(
+pub unsafe fn lzma_stream_decoder_safe(
     strm: *mut lzma_stream,
     memlimit: uint64_t,
     flags: uint32_t,
@@ -1149,25 +1149,25 @@ pub fn lzma_stream_decoder_safe(
     return unsafe { lzma_stream_decoder(strm, memlimit, flags) };
 }
 
-pub fn lzma_alone_decoder_safe(strm: *mut lzma_stream, memlimit: uint64_t) -> lzma_ret {
+pub unsafe fn lzma_alone_decoder_safe(strm: *mut lzma_stream, memlimit: uint64_t) -> lzma_ret {
     return unsafe { lzma_alone_decoder(strm, memlimit) };
 }
 
-pub fn lzma_code_safe(strm: *mut lzma_stream, action: lzma_action) -> lzma_ret {
+pub unsafe fn lzma_code_safe(strm: *mut lzma_stream, action: lzma_action) -> lzma_ret {
     return unsafe { lzma_code(strm, action) };
 }
 
-pub fn lzma_end_safe(strm: *mut lzma_stream) {
+pub unsafe fn lzma_end_safe(strm: *mut lzma_stream) {
     unsafe {
         lzma_end(strm);
     }
 }
 
-pub fn archive_filter_bytes_safe(param1: *mut archive, param2: i32) -> la_int64_t {
+pub unsafe fn archive_filter_bytes_safe(param1: *mut archive, param2: i32) -> la_int64_t {
     return unsafe { archive_filter_bytes(param1, param2) };
 }
 
-pub fn archive_entry_copy_mac_metadata_safe(
+pub unsafe fn archive_entry_copy_mac_metadata_safe(
     param1: *mut archive_entry,
     param2: *const (),
     param3: size_t,
@@ -1177,7 +1177,7 @@ pub fn archive_entry_copy_mac_metadata_safe(
     }
 }
 
-pub fn _archive_entry_copy_symlink_l_safe(
+pub unsafe fn _archive_entry_copy_symlink_l_safe(
     param1: *mut archive_entry,
     param2: *const i8,
     param3: size_t,
@@ -1186,7 +1186,7 @@ pub fn _archive_entry_copy_symlink_l_safe(
     return unsafe { _archive_entry_copy_symlink_l(param1, param2, param3, param4) };
 }
 
-pub fn memchr_safe(
+pub unsafe fn memchr_safe(
     param1: *const (),
     param2: i32,
     param3: u64,
@@ -1194,7 +1194,7 @@ pub fn memchr_safe(
     return unsafe { memchr(param1, param2, param3) };
 }
 
-pub fn strncmp_safe(
+pub unsafe fn strncmp_safe(
     param1: *const i8,
     param2: *const i8,
     param3: u64,
@@ -1202,32 +1202,32 @@ pub fn strncmp_safe(
     return unsafe { strncmp(param1, param2, param3) };
 }
 
-pub fn strrchr_safe(param1: *const i8, param2: i32) -> *mut i8 {
+pub unsafe fn strrchr_safe(param1: *const i8, param2: i32) -> *mut i8 {
     return unsafe { strrchr(param1, param2) };
 }
 
-pub fn archive_wstrcat_safe(
+pub unsafe fn archive_wstrcat_safe(
     param1: *mut archive_wstring,
     param2: *const wchar_t,
 ) -> *mut archive_wstring {
     return unsafe { archive_wstrcat(param1, param2) };
 }
 
-pub fn archive_strappend_char_safe(
+pub unsafe fn archive_strappend_char_safe(
     param1: *mut archive_string,
     param2: i8,
 ) -> *mut archive_string {
     return unsafe { archive_strappend_char(param1, param2) };
 }
 
-pub fn archive_wstrappend_wchar_safe(
+pub unsafe fn archive_wstrappend_wchar_safe(
     param1: *mut archive_wstring,
     param2: wchar_t,
 ) -> *mut archive_wstring {
     return unsafe { archive_wstrappend_wchar(param1, param2) };
 }
 
-pub fn __archive_rb_tree_init_safe(
+pub unsafe fn __archive_rb_tree_init_safe(
     param1: *mut archive_rb_tree,
     param2: *const archive_rb_tree_ops,
 ) {
@@ -1236,21 +1236,21 @@ pub fn __archive_rb_tree_init_safe(
     }
 }
 
-pub fn __archive_rb_tree_insert_node_safe(
+pub unsafe fn __archive_rb_tree_insert_node_safe(
     param1: *mut archive_rb_tree,
     param2: *mut archive_rb_node,
 ) -> i32 {
     return unsafe { __archive_rb_tree_insert_node(param1, param2) };
 }
 
-pub fn __archive_rb_tree_find_node_safe(
+pub unsafe fn __archive_rb_tree_find_node_safe(
     param1: *mut archive_rb_tree,
     param2: *const (),
 ) -> *mut archive_rb_node {
     return unsafe { __archive_rb_tree_find_node(param1, param2) };
 }
 
-pub fn __archive_rb_tree_remove_node_safe(
+pub unsafe fn __archive_rb_tree_remove_node_safe(
     param1: *mut archive_rb_tree,
     param2: *mut archive_rb_node,
 ) {
@@ -1259,7 +1259,7 @@ pub fn __archive_rb_tree_remove_node_safe(
     }
 }
 
-pub fn __archive_rb_tree_iterate_safe(
+pub unsafe fn __archive_rb_tree_iterate_safe(
     param1: *mut archive_rb_tree,
     param2: *mut archive_rb_node,
     param3: u32,
@@ -1267,99 +1267,99 @@ pub fn __archive_rb_tree_iterate_safe(
     return unsafe { __archive_rb_tree_iterate(param1, param2, param3) };
 }
 
-pub fn __archive_read_reset_passphrase_safe(a: *mut archive_read) {
+pub unsafe fn __archive_read_reset_passphrase_safe(a: *mut archive_read) {
     unsafe {
         __archive_read_reset_passphrase(a);
     }
 }
 
-pub fn __archive_read_next_passphrase_safe(a: *mut archive_read) -> *const i8 {
+pub unsafe fn __archive_read_next_passphrase_safe(a: *mut archive_read) -> *const i8 {
     return unsafe { __archive_read_next_passphrase(a) };
 }
 
-pub fn archive_entry_set_is_metadata_encrypted_safe(
+pub unsafe fn archive_entry_set_is_metadata_encrypted_safe(
     _a: *mut archive_entry,
     is_encrypted: i8,
 ) {
     return unsafe { archive_entry_set_is_metadata_encrypted(_a, is_encrypted) };
 }
 
-pub fn archive_entry_set_is_data_encrypted_safe(
+pub unsafe fn archive_entry_set_is_data_encrypted_safe(
     _a: *mut archive_entry,
     is_encrypted: i8,
 ) {
     return unsafe { archive_entry_set_is_data_encrypted(_a, is_encrypted) };
 }
 
-pub fn __archive_reset_read_data_safe(_a: *mut archive) {
+pub unsafe fn __archive_reset_read_data_safe(_a: *mut archive) {
     return unsafe { __archive_reset_read_data(_a) };
 }
 
-pub fn realloc_safe(_a: *mut (), _b: u64) -> *mut () {
+pub unsafe fn realloc_safe(_a: *mut (), _b: u64) -> *mut () {
     return unsafe { realloc(_a, _b) };
 }
 
-pub fn strchr_safe(_a: *const i8, _b: i32) -> *mut i8 {
+pub unsafe fn strchr_safe(_a: *const i8, _b: i32) -> *mut i8 {
     return unsafe { strchr(_a, _b) };
 }
 
-pub fn localtime_r_safe(__timer: *const time_t, __tp: *mut tm) -> *mut tm {
+pub unsafe fn localtime_r_safe(__timer: *const time_t, __tp: *mut tm) -> *mut tm {
     return unsafe { localtime_r(__timer, __tp) };
 }
 
-pub fn blake2sp_init_safe(S: *mut blake2sp_state, outlen: size_t) -> i32 {
+pub unsafe fn blake2sp_init_safe(S: *mut blake2sp_state, outlen: size_t) -> i32 {
     return unsafe { blake2sp_init(S, outlen) };
 }
 
-pub fn archive_entry_pathname_utf8_safe(_a: *mut archive_entry) -> *const i8 {
+pub unsafe fn archive_entry_pathname_utf8_safe(_a: *mut archive_entry) -> *const i8 {
     return unsafe { archive_entry_pathname_utf8(_a) };
 }
 
-pub fn archive_entry_update_pathname_utf8_safe(
+pub unsafe fn archive_entry_update_pathname_utf8_safe(
     _a: *mut archive_entry,
     _b: *const i8,
 ) -> i32 {
     return unsafe { archive_entry_update_pathname_utf8(_a, _b) };
 }
 
-pub fn archive_entry_update_symlink_utf8_safe(
+pub unsafe fn archive_entry_update_symlink_utf8_safe(
     _a: *mut archive_entry,
     _b: *const i8,
 ) -> i32 {
     return unsafe { archive_entry_update_symlink_utf8(_a, _b) };
 }
 
-pub fn archive_entry_set_symlink_type_safe(_a: *mut archive_entry, _b: i32) {
+pub unsafe fn archive_entry_set_symlink_type_safe(_a: *mut archive_entry, _b: i32) {
     return unsafe { archive_entry_set_symlink_type(_a, _b) };
 }
 
-pub fn archive_entry_update_hardlink_utf8_safe(
+pub unsafe fn archive_entry_update_hardlink_utf8_safe(
     _a: *mut archive_entry,
     _b: *const i8,
 ) -> i32 {
     return unsafe { archive_entry_update_hardlink_utf8(_a, _b) };
 }
 
-pub fn archive_entry_clear_safe(_a: *mut archive_entry) -> *mut archive_entry {
+pub unsafe fn archive_entry_clear_safe(_a: *mut archive_entry) -> *mut archive_entry {
     return unsafe { archive_entry_clear(_a) };
 }
 
-pub fn archive_entry_copy_fflags_text_safe(
+pub unsafe fn archive_entry_copy_fflags_text_safe(
     _a: *mut archive_entry,
     _b: *const i8,
 ) -> *const i8 {
     return unsafe { archive_entry_copy_fflags_text(_a, _b) };
 }
 
-pub fn archive_entry_new_safe() -> *mut archive_entry {
+pub unsafe fn archive_entry_new_safe() -> *mut archive_entry {
     return unsafe { archive_entry_new() };
 }
 
-pub fn archive_entry_free_safe(_a: *mut archive_entry) {
+pub unsafe fn archive_entry_free_safe(_a: *mut archive_entry) {
     return unsafe { archive_entry_free(_a) };
 }
 
-pub fn blake2sp_update_safe(
+pub unsafe fn blake2sp_update_safe(
     S: *mut blake2sp_state,
     in_0: *const uint8_t,
     inlen: size_t,
@@ -1367,18 +1367,18 @@ pub fn blake2sp_update_safe(
     return unsafe { blake2sp_update(S, in_0, inlen) };
 }
 
-pub fn blake2sp_final_safe(
+pub unsafe fn blake2sp_final_safe(
     S: *mut blake2sp_state,
     out: *mut uint8_t,
     outlen: size_t,
 ) -> i32 {
     return unsafe { blake2sp_final(S, out, outlen) };
 }
-pub fn wcscpy_safe(__dest: *mut wchar_t, __src: *const wchar_t) -> *mut wchar_t {
+pub unsafe fn wcscpy_safe(__dest: *mut wchar_t, __src: *const wchar_t) -> *mut wchar_t {
     return unsafe { wcscpy(__dest, __src) };
 }
 
-pub fn wmemcmp_safe(
+pub unsafe fn wmemcmp_safe(
     _const1: *const wchar_t,
     _const2: *const wchar_t,
     _const3: u64,
@@ -1386,14 +1386,14 @@ pub fn wmemcmp_safe(
     return unsafe { wmemcmp(_const1, _const2, _const3) };
 }
 
-pub fn strcpy_safe(
+pub unsafe fn strcpy_safe(
     _var1: *mut i8,
     _var2: *const i8,
 ) -> *mut i8 {
     return unsafe { strcpy(_var1, _var2) };
 }
 
-pub fn archive_mstring_copy_wcs_len_safe(
+pub unsafe fn archive_mstring_copy_wcs_len_safe(
     _var1: *mut archive_mstring,
     wcs: *const wchar_t,
     _var2: size_t,
@@ -1401,14 +1401,14 @@ pub fn archive_mstring_copy_wcs_len_safe(
     return unsafe { archive_mstring_copy_wcs_len(_var1, wcs, _var2) };
 }
 
-pub fn archive_mstring_copy_mbs_safe(
+pub unsafe fn archive_mstring_copy_mbs_safe(
     _var1: *mut archive_mstring,
     mbs: *const i8,
 ) -> i32 {
     return unsafe { archive_mstring_copy_mbs(_var1, mbs) };
 }
 
-pub fn archive_mstring_get_mbs_l_safe(
+pub unsafe fn archive_mstring_get_mbs_l_safe(
     _var1: *mut archive,
     _var2: *mut archive_mstring,
     _var3: *mut *const i8,
@@ -1418,7 +1418,7 @@ pub fn archive_mstring_get_mbs_l_safe(
     return unsafe { archive_mstring_get_mbs_l(_var1, _var2, _var3, _var4, _var5) };
 }
 
-pub fn archive_mstring_get_mbs_safe(
+pub unsafe fn archive_mstring_get_mbs_safe(
     _var1: *mut archive,
     _var2: *mut archive_mstring,
     _var3: *mut *const i8,
@@ -1426,22 +1426,22 @@ pub fn archive_mstring_get_mbs_safe(
     return unsafe { archive_mstring_get_mbs(_var1, _var2, _var3) };
 }
 
-pub fn archive_mstring_copy_safe(dest: *mut archive_mstring, src: *mut archive_mstring) {
+pub unsafe fn archive_mstring_copy_safe(dest: *mut archive_mstring, src: *mut archive_mstring) {
     return unsafe { archive_mstring_copy(dest, src) };
 }
 
-pub fn __archive_errx_safe(retvalue: i32, msg: *const i8) -> ! {
+pub unsafe fn __archive_errx_safe(retvalue: i32, msg: *const i8) -> ! {
     return unsafe { __archive_errx(retvalue, msg) };
 }
 
-pub fn iconv_open_safe(
+pub unsafe fn iconv_open_safe(
     __tocode: *const i8,
     __fromcode: *const i8,
 ) -> iconv_t {
     return unsafe { iconv_open(__tocode, __fromcode) };
 }
 
-pub fn iconv_safe(
+pub unsafe fn iconv_safe(
     __cd: iconv_t,
     __inbuf: *mut *mut i8,
     __inbytesleft: *mut size_t,
@@ -1451,19 +1451,19 @@ pub fn iconv_safe(
     return unsafe { iconv(__cd, __inbuf, __inbytesleft, __outbuf, __outbytesleft) };
 }
 
-pub fn iconv_close_safe(__cd: iconv_t) -> i32 {
+pub unsafe fn iconv_close_safe(__cd: iconv_t) -> i32 {
     return unsafe { iconv_close(__cd) };
 }
 
-pub fn nl_langinfo_safe(__item: nl_item) -> *mut i8 {
+pub unsafe fn nl_langinfo_safe(__item: nl_item) -> *mut i8 {
     return unsafe { nl_langinfo(__item) };
 }
 
-pub fn __ctype_get_mb_cur_max_safe() -> size_t {
+pub unsafe fn __ctype_get_mb_cur_max_safe() -> size_t {
     return unsafe { __ctype_get_mb_cur_max() };
 }
 
-pub fn memmove_safe(
+pub unsafe fn memmove_safe(
     _var1: *mut (),
     _var2: *const (),
     _var3: u64,
@@ -1471,7 +1471,7 @@ pub fn memmove_safe(
     return unsafe { memmove(_var1, _var2, _var3) };
 }
 
-pub fn strncpy_safe(
+pub unsafe fn strncpy_safe(
     _a: *mut i8,
     _b: *const i8,
     _c: u64,
@@ -1479,11 +1479,11 @@ pub fn strncpy_safe(
     return unsafe { strncpy(_a, _b, _c) };
 }
 
-pub fn archive_entry_copy_pathname_safe(_a: *mut archive_entry, _pn: *const i8) {
+pub unsafe fn archive_entry_copy_pathname_safe(_a: *mut archive_entry, _pn: *const i8) {
     return unsafe { archive_entry_copy_pathname(_a, _pn) };
 }
 
-pub fn _archive_entry_copy_uname_l_safe(
+pub unsafe fn _archive_entry_copy_uname_l_safe(
     _a: *mut archive_entry,
     _b: *const i8,
     _c: size_t,
@@ -1492,7 +1492,7 @@ pub fn _archive_entry_copy_uname_l_safe(
     return unsafe { _archive_entry_copy_uname_l(_a, _b, _c, _d) };
 }
 
-pub fn _archive_entry_copy_gname_l_safe(
+pub unsafe fn _archive_entry_copy_gname_l_safe(
     _a: *mut archive_entry,
     _b: *const i8,
     _c: size_t,
@@ -1500,7 +1500,7 @@ pub fn _archive_entry_copy_gname_l_safe(
 ) -> i32 {
     return unsafe { _archive_entry_copy_gname_l(_a, _b, _c, _d) };
 }
-pub fn archive_entry_xattr_add_entry_safe(
+pub unsafe fn archive_entry_xattr_add_entry_safe(
     _a: *mut archive_entry,
     _b: *const i8,
     _c: *const (),
@@ -1509,11 +1509,11 @@ pub fn archive_entry_xattr_add_entry_safe(
     return unsafe { archive_entry_xattr_add_entry(_a, _b, _c, _d) };
 }
 
-pub fn archive_entry_set_dev_safe(_a: *mut archive_entry, _b: dev_t) {
+pub unsafe fn archive_entry_set_dev_safe(_a: *mut archive_entry, _b: dev_t) {
     return unsafe { archive_entry_set_dev(_a, _b) };
 }
 
-pub fn strtol_safe(
+pub unsafe fn strtol_safe(
     _a: *const i8,
     _b: *mut *mut i8,
     _c: i32,
@@ -1521,19 +1521,19 @@ pub fn strtol_safe(
     return unsafe { strtol(_a, _b, _c) };
 }
 
-pub fn __ctype_b_loc_safe() -> *mut *const u16 {
+pub unsafe fn __ctype_b_loc_safe() -> *mut *const u16 {
     return unsafe { __ctype_b_loc() };
 }
 
-pub fn archive_string_sprintf_safe(_a: *mut archive_string, _b: *const i8) {
+pub unsafe fn archive_string_sprintf_safe(_a: *mut archive_string, _b: *const i8) {
     return unsafe { archive_string_sprintf(_a, _b) };
 }
 
-pub fn xmlCleanupParser_safe() {
+pub unsafe fn xmlCleanupParser_safe() {
     return unsafe { xmlCleanupParser() };
 }
 
-pub fn xmlTextReaderSetErrorHandler_safe(
+pub unsafe fn xmlTextReaderSetErrorHandler_safe(
     reader: xmlTextReaderPtr,
     f: xmlTextReaderErrorFunc,
     arg: *mut (),
@@ -1541,7 +1541,7 @@ pub fn xmlTextReaderSetErrorHandler_safe(
     return unsafe { xmlTextReaderSetErrorHandler(reader, f, arg) };
 }
 
-pub fn xmlReaderForIO_safe(
+pub unsafe fn xmlReaderForIO_safe(
     ioread: xmlInputReadCallback,
     ioclose: xmlInputCloseCallback,
     ioctx: *mut (),
@@ -1552,39 +1552,39 @@ pub fn xmlReaderForIO_safe(
     return unsafe { xmlReaderForIO(ioread, ioclose, ioctx, URL, encoding, options) };
 }
 
-pub fn xmlFreeTextReader_safe(reader: xmlTextReaderPtr) {
+pub unsafe fn xmlFreeTextReader_safe(reader: xmlTextReaderPtr) {
     return unsafe { xmlFreeTextReader(reader) };
 }
 
-pub fn xmlTextReaderRead_safe(reader: xmlTextReaderPtr) -> i32 {
+pub unsafe fn xmlTextReaderRead_safe(reader: xmlTextReaderPtr) -> i32 {
     return unsafe { xmlTextReaderRead(reader) };
 }
 
-pub fn xmlTextReaderIsEmptyElement_safe(reader: xmlTextReaderPtr) -> i32 {
+pub unsafe fn xmlTextReaderIsEmptyElement_safe(reader: xmlTextReaderPtr) -> i32 {
     return unsafe { xmlTextReaderIsEmptyElement(reader) };
 }
 
-pub fn xmlTextReaderNodeType_safe(reader: xmlTextReaderPtr) -> i32 {
+pub unsafe fn xmlTextReaderNodeType_safe(reader: xmlTextReaderPtr) -> i32 {
     return unsafe { xmlTextReaderNodeType(reader) };
 }
 
-pub fn xmlTextReaderConstLocalName_safe(reader: xmlTextReaderPtr) -> *const xmlChar {
+pub unsafe fn xmlTextReaderConstLocalName_safe(reader: xmlTextReaderPtr) -> *const xmlChar {
     return unsafe { xmlTextReaderConstLocalName(reader) };
 }
 
-pub fn xmlTextReaderConstValue_safe(reader: xmlTextReaderPtr) -> *const xmlChar {
+pub unsafe fn xmlTextReaderConstValue_safe(reader: xmlTextReaderPtr) -> *const xmlChar {
     return unsafe { xmlTextReaderConstValue(reader) };
 }
 
-pub fn xmlTextReaderMoveToFirstAttribute_safe(reader: xmlTextReaderPtr) -> i32 {
+pub unsafe fn xmlTextReaderMoveToFirstAttribute_safe(reader: xmlTextReaderPtr) -> i32 {
     return unsafe { xmlTextReaderMoveToFirstAttribute(reader) };
 }
 
-pub fn xmlTextReaderMoveToNextAttribute_safe(reader: xmlTextReaderPtr) -> i32 {
+pub unsafe fn xmlTextReaderMoveToNextAttribute_safe(reader: xmlTextReaderPtr) -> i32 {
     return unsafe { xmlTextReaderMoveToNextAttribute(reader) };
 }
 
-pub fn inflateInit__safe(
+pub unsafe fn inflateInit__safe(
     strm: z_streamp,
     version: *const i8,
     stream_size: i32,
@@ -1592,37 +1592,37 @@ pub fn inflateInit__safe(
     return unsafe { inflateInit_(strm, version, stream_size) };
 }
 
-pub fn archive_entry_set_devmajor_safe(_a: *mut archive_entry, _b: dev_t) {
+pub unsafe fn archive_entry_set_devmajor_safe(_a: *mut archive_entry, _b: dev_t) {
     return unsafe { archive_entry_set_devmajor(_a, _b) };
 }
 
-pub fn archive_entry_set_devminor_safe(_a: *mut archive_entry, _b: dev_t) {
+pub unsafe fn archive_entry_set_devminor_safe(_a: *mut archive_entry, _b: dev_t) {
     return unsafe { archive_entry_set_devminor(_a, _b) };
 }
 
-pub fn archive_entry_set_ino64_safe(_a: *mut archive_entry, _b: la_int64_t) {
+pub unsafe fn archive_entry_set_ino64_safe(_a: *mut archive_entry, _b: la_int64_t) {
     return unsafe { archive_entry_set_ino64(_a, _b) };
 }
 
-pub fn archive_clear_error_safe(_a: *mut archive) {
+pub unsafe fn archive_clear_error_safe(_a: *mut archive) {
     return unsafe { archive_clear_error(_a) };
 }
 
-pub fn archive_string_ensure_safe(
+pub unsafe fn archive_string_ensure_safe(
     _a: *mut archive_string,
     _s: size_t,
 ) -> *mut archive_string {
     return unsafe { archive_string_ensure(_a, _s) };
 }
 
-pub fn archive_string_conversion_set_opt_safe(
+pub unsafe fn archive_string_conversion_set_opt_safe(
     _a: *mut archive_string_conv,
     _opt: i32,
 ) {
     return unsafe { archive_string_conversion_set_opt(_a, _opt) };
 }
 
-pub fn archive_acl_from_text_l_safe(
+pub unsafe fn archive_acl_from_text_l_safe(
     _a: *mut archive_acl,
     _b: *const i8,
     _c: i32,
@@ -1631,39 +1631,39 @@ pub fn archive_acl_from_text_l_safe(
     return unsafe { archive_acl_from_text_l(_a, _b, _c, _d) };
 }
 
-pub fn archive_entry_size_safe(_a: *mut archive_entry) -> la_int64_t {
+pub unsafe fn archive_entry_size_safe(_a: *mut archive_entry) -> la_int64_t {
     return unsafe { archive_entry_size(_a) };
 }
 
-pub fn archive_entry_copy_gname_safe(_a: *mut archive_entry, _b: *const i8) {
+pub unsafe fn archive_entry_copy_gname_safe(_a: *mut archive_entry, _b: *const i8) {
     return unsafe { archive_entry_copy_gname(_a, _b) };
 }
 
-pub fn archive_entry_set_ino_safe(_a: *mut archive_entry, _b: la_int64_t) {
+pub unsafe fn archive_entry_set_ino_safe(_a: *mut archive_entry, _b: la_int64_t) {
     return unsafe { archive_entry_set_ino(_a, _b) };
 }
 
-pub fn archive_entry_copy_link_safe(_a: *mut archive_entry, _b: *const i8) {
+pub unsafe fn archive_entry_copy_link_safe(_a: *mut archive_entry, _b: *const i8) {
     return unsafe { archive_entry_copy_link(_a, _b) };
 }
 
-pub fn archive_entry_set_rdevmajor_safe(_a: *mut archive_entry, _b: dev_t) {
+pub unsafe fn archive_entry_set_rdevmajor_safe(_a: *mut archive_entry, _b: dev_t) {
     return unsafe { archive_entry_set_rdevmajor(_a, _b) };
 }
 
-pub fn archive_entry_set_rdevminor_safe(_a: *mut archive_entry, _b: dev_t) {
+pub unsafe fn archive_entry_set_rdevminor_safe(_a: *mut archive_entry, _b: dev_t) {
     return unsafe { archive_entry_set_rdevminor(_a, _b) };
 }
 
-pub fn archive_entry_copy_uname_safe(_a: *mut archive_entry, _b: *const i8) {
+pub unsafe fn archive_entry_copy_uname_safe(_a: *mut archive_entry, _b: *const i8) {
     return unsafe { archive_entry_copy_uname(_a, _b) };
 }
 
-pub fn archive_entry_acl_safe(_a: *mut archive_entry) -> *mut archive_acl {
+pub unsafe fn archive_entry_acl_safe(_a: *mut archive_entry) -> *mut archive_acl {
     return unsafe { archive_entry_acl(_a) };
 }
 
-pub fn archive_entry_sparse_add_entry_safe(
+pub unsafe fn archive_entry_sparse_add_entry_safe(
     _a: *mut archive_entry,
     _b: la_int64_t,
     _c: la_int64_t,
@@ -1671,7 +1671,7 @@ pub fn archive_entry_sparse_add_entry_safe(
     return unsafe { archive_entry_sparse_add_entry(_a, _b, _c) };
 }
 
-pub fn _archive_entry_copy_link_l_safe(
+pub unsafe fn _archive_entry_copy_link_l_safe(
     _a: *mut archive_entry,
     _b: *const i8,
     _c: size_t,
@@ -1680,15 +1680,15 @@ pub fn _archive_entry_copy_link_l_safe(
     return unsafe { _archive_entry_copy_link_l(_a, _b, _c, _d) };
 }
 
-pub fn strdup_safe(_var1: *const i8) -> *mut i8 {
+pub unsafe fn strdup_safe(_var1: *const i8) -> *mut i8 {
     return unsafe { strdup(_var1) };
 }
 
-pub fn wmemmove_safe(__s1: *mut wchar_t, __s2: *const wchar_t, __n: size_t) -> *mut wchar_t {
+pub unsafe fn wmemmove_safe(__s1: *mut wchar_t, __s2: *const wchar_t, __n: size_t) -> *mut wchar_t {
     return unsafe { wmemmove(__s1, __s2, __n) };
 }
 
-pub fn inflateSetDictionary_safe(
+pub unsafe fn inflateSetDictionary_safe(
     strm: z_streamp,
     dictionary: *const Bytef,
     dictLength: uInt,
@@ -1696,57 +1696,57 @@ pub fn inflateSetDictionary_safe(
     return unsafe { inflateSetDictionary(strm, dictionary, dictLength) };
 }
 
-pub fn archive_wstring_ensure_safe(
+pub unsafe fn archive_wstring_ensure_safe(
     _a1: *mut archive_wstring,
     _a2: size_t,
 ) -> *mut archive_wstring {
     return unsafe { archive_wstring_ensure(_a1, _a2) };
 }
 
-pub fn fstat_safe(__fd: i32, __buf: *mut stat) -> i32 {
+pub unsafe fn fstat_safe(__fd: i32, __buf: *mut stat) -> i32 {
     return unsafe { fstat(__fd, __buf) };
 }
 
-pub fn lstat_safe(__file: *const i8, __buf: *mut stat) -> i32 {
+pub unsafe fn lstat_safe(__file: *const i8, __buf: *mut stat) -> i32 {
     return unsafe { lstat(__file, __buf) };
 }
 
-pub fn open_safe(__file: *const i8, __oflag: i32) -> i32 {
+pub unsafe fn open_safe(__file: *const i8, __oflag: i32) -> i32 {
     return unsafe { open(__file, __oflag) };
 }
 
-pub fn strcspn_safe(_a1: *const i8, _a2: *const i8) -> u64 {
+pub unsafe fn strcspn_safe(_a1: *const i8, _a2: *const i8) -> u64 {
     return unsafe { strcspn(_a1, _a2) };
 }
 
-pub fn strnlen_safe(__string: *const i8, __maxlen: size_t) -> size_t {
+pub unsafe fn strnlen_safe(__string: *const i8, __maxlen: size_t) -> size_t {
     return unsafe { strnlen(__string, __maxlen) };
 }
 
-pub fn close_safe(__fd: i32) -> i32 {
+pub unsafe fn close_safe(__fd: i32) -> i32 {
     return unsafe { close(__fd) };
 }
 
-pub fn read_safe(__fd: i32, __buf: *mut (), __nbytes: size_t) -> ssize_t {
+pub unsafe fn read_safe(__fd: i32, __buf: *mut (), __nbytes: size_t) -> ssize_t {
     return unsafe { read(__fd, __buf, __nbytes) };
 }
 
-pub fn archive_entry_linkresolver_new_safe() -> *mut archive_entry_linkresolver {
+pub unsafe fn archive_entry_linkresolver_new_safe() -> *mut archive_entry_linkresolver {
     return unsafe { archive_entry_linkresolver_new() };
 }
 
-pub fn archive_entry_linkresolver_set_strategy_safe(
+pub unsafe fn archive_entry_linkresolver_set_strategy_safe(
     _a1: *mut archive_entry_linkresolver,
     _a2: i32,
 ) {
     return unsafe { archive_entry_linkresolver_set_strategy(_a1, _a2) };
 }
 
-pub fn archive_entry_linkresolver_free_safe(_a: *mut archive_entry_linkresolver) {
+pub unsafe fn archive_entry_linkresolver_free_safe(_a: *mut archive_entry_linkresolver) {
     return unsafe { archive_entry_linkresolver_free(_a) };
 }
 
-pub fn archive_entry_linkify_safe(
+pub unsafe fn archive_entry_linkify_safe(
     _a1: *mut archive_entry_linkresolver,
     _a2: *mut *mut archive_entry,
     _a3: *mut *mut archive_entry,
@@ -1754,7 +1754,7 @@ pub fn archive_entry_linkify_safe(
     return unsafe { archive_entry_linkify(_a1, _a2, _a3) };
 }
 
-pub fn archive_entry_set_digest_safe(
+pub unsafe fn archive_entry_set_digest_safe(
     entry: *mut archive_entry,
     type_0: i32,
     digest: *const u8,
@@ -1762,31 +1762,31 @@ pub fn archive_entry_set_digest_safe(
     return unsafe { archive_entry_set_digest(entry, type_0, digest) };
 }
 
-pub fn __archive_ensure_cloexec_flag_safe(fd: i32) {
+pub unsafe fn __archive_ensure_cloexec_flag_safe(fd: i32) {
     return unsafe { __archive_ensure_cloexec_flag(fd) };
 }
 
-pub fn pack_find_safe(_a1: *const i8) -> Option<pack_t> {
+pub unsafe fn pack_find_safe(_a1: *const i8) -> Option<pack_t> {
     return unsafe { pack_find(_a1) };
 }
 
-pub fn archive_entry_dev_safe(an: *mut archive_entry) -> dev_t {
+pub unsafe fn archive_entry_dev_safe(an: *mut archive_entry) -> dev_t {
     return unsafe { archive_entry_dev(an) };
 }
 
-pub fn archive_entry_ino64_safe(an: *mut archive_entry) -> la_int64_t {
+pub unsafe fn archive_entry_ino64_safe(an: *mut archive_entry) -> la_int64_t {
     return unsafe { archive_entry_ino64(an) };
 }
 
-pub fn archive_entry_nlink_safe(an: *mut archive_entry) -> u32 {
+pub unsafe fn archive_entry_nlink_safe(an: *mut archive_entry) -> u32 {
     return unsafe { archive_entry_nlink(an) };
 }
 
-pub fn archive_entry_copy_hardlink_safe(an: *mut archive_entry, a2: *const i8) {
+pub unsafe fn archive_entry_copy_hardlink_safe(an: *mut archive_entry, a2: *const i8) {
     return unsafe { archive_entry_copy_hardlink(an, a2) };
 }
 
-pub fn lzma_properties_decode_safe(
+pub unsafe fn lzma_properties_decode_safe(
     filter: *mut lzma_filter,
     allocator: *const lzma_allocator,
     props: *const uint8_t,
@@ -1795,21 +1795,21 @@ pub fn lzma_properties_decode_safe(
     return unsafe { lzma_properties_decode(filter, allocator, props, props_size) };
 }
 
-pub fn lzma_raw_decoder_safe(
+pub unsafe fn lzma_raw_decoder_safe(
     strm: *mut lzma_stream,
     filters: *const lzma_filter,
 ) -> lzma_ret {
     return unsafe { lzma_raw_decoder(strm, filters) };
 }
 
-pub fn inflateReset_safe(strm: z_streamp) -> i32 {
+pub unsafe fn inflateReset_safe(strm: z_streamp) -> i32 {
     return unsafe { inflateReset(strm) };
 }
 
-pub fn inflate_safe(strm: z_streamp, flush: i32) -> i32 {
+pub unsafe fn inflate_safe(strm: z_streamp, flush: i32) -> i32 {
     return unsafe { inflate(strm, flush) };
 }
 
-pub fn inflateEnd_safe(strm: z_streamp) -> i32 {
+pub unsafe fn inflateEnd_safe(strm: z_streamp) -> i32 {
     return unsafe { inflateEnd(strm) };
 }
