@@ -80,11 +80,8 @@ lazy_static! {
 
 /* Replacement character. */
 /* Set U+FFFD(Replacement character) in UTF-8. */
-static mut utf8_replacement_char: [i8; 3] = [
-    0xef as i32 as i8,
-    0xbf as i32 as i8,
-    0xbd as i32 as i8,
-];
+static mut utf8_replacement_char: [i8; 3] =
+    [0xef as i32 as i8, 0xbf as i32 as i8, 0xbd as i32 as i8];
 unsafe extern "C" fn archive_string_append(
     mut as_0: *mut archive_string,
     mut p: *const i8,
@@ -92,10 +89,7 @@ unsafe extern "C" fn archive_string_append(
 ) -> *mut archive_string {
     if archive_string_ensure(
         as_0,
-        (*as_0)
-            .length
-            .wrapping_add(s)
-            .wrapping_add(1 as i32 as u64),
+        (*as_0).length.wrapping_add(s).wrapping_add(1 as i32 as u64),
     )
     .is_null()
     {
@@ -119,10 +113,7 @@ unsafe extern "C" fn archive_wstring_append(
 ) -> *mut archive_wstring {
     if archive_wstring_ensure(
         as_0,
-        (*as_0)
-            .length
-            .wrapping_add(s)
-            .wrapping_add(1 as i32 as u64),
+        (*as_0).length.wrapping_add(s).wrapping_add(1 as i32 as u64),
     )
     .is_null()
     {
@@ -153,12 +144,7 @@ pub unsafe extern "C" fn archive_string_concat(
     let safe_dest = unsafe { &mut *dest };
     let safe_src = unsafe { &mut *src };
     if unsafe { archive_string_append(safe_dest, safe_src.s, safe_src.length).is_null() } {
-        unsafe {
-            __archive_errx(
-                1 as i32,
-                b"Out of memory\x00" as *const u8 as *const i8,
-            )
-        };
+        unsafe { __archive_errx(1 as i32, b"Out of memory\x00" as *const u8 as *const i8) };
     };
 }
 
@@ -170,12 +156,7 @@ pub unsafe extern "C" fn archive_wstring_concat(
     let safe_dest = unsafe { &mut *dest };
     let safe_src = unsafe { &mut *src };
     if unsafe { archive_wstring_append(safe_dest, safe_src.s, safe_src.length).is_null() } {
-        unsafe {
-            __archive_errx(
-                1 as i32,
-                b"Out of memory\x00" as *const u8 as *const i8,
-            )
-        };
+        unsafe { __archive_errx(1 as i32, b"Out of memory\x00" as *const u8 as *const i8) };
     };
 }
 
@@ -236,11 +217,9 @@ pub unsafe extern "C" fn archive_string_ensure(
         new_length = (*as_0).buffer_length.wrapping_add((*as_0).buffer_length)
     } else {
         /* Buffers 8k and over grow by at least 25% each time. */
-        new_length = (*as_0).buffer_length.wrapping_add(
-            (*as_0)
-                .buffer_length
-                .wrapping_div(4 as i32 as u64),
-        );
+        new_length = (*as_0)
+            .buffer_length
+            .wrapping_add((*as_0).buffer_length.wrapping_div(4 as i32 as u64));
         /* Be safe: If size wraps, fail. */
         if new_length < (*as_0).buffer_length {
             /* On failure, wipe the string and return NULL. */
@@ -296,10 +275,7 @@ pub unsafe extern "C" fn archive_strncat(
     }
     as_0 = archive_string_append(as_0, p, s);
     if as_0.is_null() {
-        __archive_errx(
-            1 as i32,
-            b"Out of memory\x00" as *const u8 as *const i8,
-        );
+        __archive_errx(1 as i32, b"Out of memory\x00" as *const u8 as *const i8);
     }
     return as_0;
 }
@@ -321,10 +297,7 @@ pub unsafe extern "C" fn archive_wstrncat(
     }
     as_0 = archive_wstring_append(as_0, p, s);
     if as_0.is_null() {
-        __archive_errx(
-            1 as i32,
-            b"Out of memory\x00" as *const u8 as *const i8,
-        );
+        __archive_errx(1 as i32, b"Out of memory\x00" as *const u8 as *const i8);
     }
     return as_0;
 }
@@ -359,10 +332,7 @@ pub unsafe extern "C" fn archive_strappend_char(
 ) -> *mut archive_string {
     as_0 = archive_string_append(as_0, &mut c, 1 as i32 as size_t);
     if as_0.is_null() {
-        __archive_errx(
-            1 as i32,
-            b"Out of memory\x00" as *const u8 as *const i8,
-        );
+        __archive_errx(1 as i32, b"Out of memory\x00" as *const u8 as *const i8);
     }
     return as_0;
 }
@@ -374,10 +344,7 @@ pub unsafe extern "C" fn archive_wstrappend_wchar(
 ) -> *mut archive_wstring {
     as_0 = archive_wstring_append(as_0, &mut c, 1 as i32 as size_t);
     if as_0.is_null() {
-        __archive_errx(
-            1 as i32,
-            b"Out of memory\x00" as *const u8 as *const i8,
-        );
+        __archive_errx(1 as i32, b"Out of memory\x00" as *const u8 as *const i8);
     }
     return as_0;
 }
@@ -394,12 +361,8 @@ pub unsafe extern "C" fn archive_wstrappend_wchar(
 * which some platform nl_langinfo(CODESET) returns, so we should
 * use locale_charset() instead of nl_langinfo(CODESET) for GNU libiconv.
 */
-unsafe extern "C" fn default_iconv_charset(
-    mut charset: *const i8,
-) -> *const i8 {
-    if !charset.is_null()
-        && *charset.offset(0 as i32 as isize) as i32 != '\u{0}' as i32
-    {
+unsafe extern "C" fn default_iconv_charset(mut charset: *const i8) -> *const i8 {
+    if !charset.is_null() && *charset.offset(0 as i32 as isize) as i32 != '\u{0}' as i32 {
         return charset;
     }
     return nl_langinfo_safe(CODESET as i32);
@@ -553,9 +516,7 @@ pub unsafe extern "C" fn archive_string_append_from_wcs(
                 (*as_0)
                     .length
                     .wrapping_add(
-                        (if len.wrapping_mul(2 as i32 as u64)
-                            > __ctype_get_mb_cur_max_safe()
-                        {
+                        (if len.wrapping_mul(2 as i32 as u64) > __ctype_get_mb_cur_max_safe() {
                             len.wrapping_mul(2 as i32 as u64)
                         } else {
                             __ctype_get_mb_cur_max_safe()
@@ -615,9 +576,7 @@ unsafe extern "C" fn find_sconv_object(
     }
     sc = (*a).sconv;
     while !sc.is_null() {
-        if strcmp((*sc).from_charset, fc) == 0 as i32
-            && strcmp((*sc).to_charset, tc) == 0 as i32
-        {
+        if strcmp((*sc).from_charset, fc) == 0 as i32 && strcmp((*sc).to_charset, tc) == 0 as i32 {
             break;
         }
         sc = (*sc).next
@@ -648,10 +607,7 @@ unsafe extern "C" fn add_converter(
     >,
 ) {
     if sc.is_null() || (*sc).nconverter >= 2 as i32 {
-        __archive_errx(
-            1 as i32,
-            b"Programming error\x00" as *const u8 as *const i8,
-        );
+        __archive_errx(1 as i32, b"Programming error\x00" as *const u8 as *const i8);
     }
     let fresh2 = (*sc).nconverter;
     (*sc).nconverter = (*sc).nconverter + 1;
@@ -682,10 +638,7 @@ unsafe extern "C" fn setup_converter(mut sc: *mut archive_string_conv) {
     /*
      * Convert a string to UTF-16BE/LE.
      */
-    if (*sc).flag
-        & ((1 as i32) << 10 as i32 | (1 as i32) << 12 as i32)
-        != 0
-    {
+    if (*sc).flag & ((1 as i32) << 10 as i32 | (1 as i32) << 12 as i32) != 0 {
         /*
          * If the current locale is UTF-8, we can translate
          * a UTF-8 string into a UTF-16BE string.
@@ -757,10 +710,7 @@ unsafe extern "C" fn setup_converter(mut sc: *mut archive_string_conv) {
     /*
      * Convert a string from UTF-16BE/LE.
      */
-    if (*sc).flag
-        & ((1 as i32) << 11 as i32 | (1 as i32) << 13 as i32)
-        != 0
-    {
+    if (*sc).flag & ((1 as i32) << 11 as i32 | (1 as i32) << 13 as i32) != 0 {
         /*
          * At least we should normalize a UTF-16BE string.
          */
@@ -796,10 +746,7 @@ unsafe extern "C" fn setup_converter(mut sc: *mut archive_string_conv) {
              * If the current locale is UTF-8, we can translate
              * a UTF-16BE/LE string into a UTF-8 string directly.
              */
-            if (*sc).flag
-                & ((1 as i32) << 7 as i32 | (1 as i32) << 6 as i32)
-                == 0
-            {
+            if (*sc).flag & ((1 as i32) << 7 as i32 | (1 as i32) << 6 as i32) == 0 {
                 add_converter(
                     sc,
                     Some(
@@ -830,8 +777,7 @@ unsafe extern "C" fn setup_converter(mut sc: *mut archive_string_conv) {
             );
             return;
         }
-        if (*sc).flag
-            & ((1 as i32) << 2 as i32 | (1 as i32) << 11 as i32)
+        if (*sc).flag & ((1 as i32) << 2 as i32 | (1 as i32) << 11 as i32)
             == (1 as i32) << 2 as i32 | (1 as i32) << 11 as i32
         {
             add_converter(
@@ -846,8 +792,7 @@ unsafe extern "C" fn setup_converter(mut sc: *mut archive_string_conv) {
                         ) -> i32,
                 ),
             );
-        } else if (*sc).flag
-            & ((1 as i32) << 2 as i32 | (1 as i32) << 13 as i32)
+        } else if (*sc).flag & ((1 as i32) << 2 as i32 | (1 as i32) << 13 as i32)
             == (1 as i32) << 2 as i32 | (1 as i32) << 13 as i32
         {
             add_converter(
@@ -910,10 +855,7 @@ unsafe extern "C" fn setup_converter(mut sc: *mut archive_string_conv) {
              * If the current locale is UTF-8, we can translate
              * a UTF-16BE string into a UTF-8 string directly.
              */
-            if (*sc).flag
-                & ((1 as i32) << 7 as i32 | (1 as i32) << 6 as i32)
-                == 0
-            {
+            if (*sc).flag & ((1 as i32) << 7 as i32 | (1 as i32) << 6 as i32) == 0 {
                 add_converter(
                     sc,
                     Some(
@@ -948,9 +890,7 @@ unsafe extern "C" fn setup_converter(mut sc: *mut archive_string_conv) {
          * we have to the output of iconv from NFC to NFD if
          * need.
          */
-        if (*sc).flag & (1 as i32) << 1 as i32 != 0
-            && (*sc).flag & (1 as i32) << 8 as i32 != 0
-        {
+        if (*sc).flag & (1 as i32) << 1 as i32 != 0 && (*sc).flag & (1 as i32) << 8 as i32 != 0 {
             if (*sc).flag & (1 as i32) << 7 as i32 != 0 {
                 add_converter(
                     sc,
@@ -993,9 +933,7 @@ unsafe extern "C" fn setup_converter(mut sc: *mut archive_string_conv) {
 * Return canonicalized charset-name but this supports just UTF-8, UTF-16BE
 * and CP932 which are referenced in create_sconv_object().
 */
-unsafe extern "C" fn canonical_charset_name(
-    mut charset: *const i8,
-) -> *const i8 {
+unsafe extern "C" fn canonical_charset_name(mut charset: *const i8) -> *const i8 {
     let mut cs: [i8; 16] = [0; 16];
     let mut p: *mut i8 = 0 as *mut i8;
     let mut s: *const i8 = 0 as *const i8;
@@ -1022,44 +960,22 @@ unsafe extern "C" fn canonical_charset_name(
     let fresh5 = p;
     p = p.offset(1);
     *fresh5 = '\u{0}' as i32 as i8;
-    if strcmp(
-        cs.as_mut_ptr(),
-        b"UTF-8\x00" as *const u8 as *const i8,
-    ) == 0 as i32
-        || strcmp(
-            cs.as_mut_ptr(),
-            b"UTF8\x00" as *const u8 as *const i8,
-        ) == 0 as i32
+    if strcmp(cs.as_mut_ptr(), b"UTF-8\x00" as *const u8 as *const i8) == 0 as i32
+        || strcmp(cs.as_mut_ptr(), b"UTF8\x00" as *const u8 as *const i8) == 0 as i32
     {
         return b"UTF-8\x00" as *const u8 as *const i8;
     }
-    if strcmp(
-        cs.as_mut_ptr(),
-        b"UTF-16BE\x00" as *const u8 as *const i8,
-    ) == 0 as i32
-        || strcmp(
-            cs.as_mut_ptr(),
-            b"UTF16BE\x00" as *const u8 as *const i8,
-        ) == 0 as i32
+    if strcmp(cs.as_mut_ptr(), b"UTF-16BE\x00" as *const u8 as *const i8) == 0 as i32
+        || strcmp(cs.as_mut_ptr(), b"UTF16BE\x00" as *const u8 as *const i8) == 0 as i32
     {
         return b"UTF-16BE\x00" as *const u8 as *const i8;
     }
-    if strcmp(
-        cs.as_mut_ptr(),
-        b"UTF-16LE\x00" as *const u8 as *const i8,
-    ) == 0 as i32
-        || strcmp(
-            cs.as_mut_ptr(),
-            b"UTF16LE\x00" as *const u8 as *const i8,
-        ) == 0 as i32
+    if strcmp(cs.as_mut_ptr(), b"UTF-16LE\x00" as *const u8 as *const i8) == 0 as i32
+        || strcmp(cs.as_mut_ptr(), b"UTF16LE\x00" as *const u8 as *const i8) == 0 as i32
     {
         return b"UTF-16LE\x00" as *const u8 as *const i8;
     }
-    if strcmp(
-        cs.as_mut_ptr(),
-        b"CP932\x00" as *const u8 as *const i8,
-    ) == 0 as i32
-    {
+    if strcmp(cs.as_mut_ptr(), b"CP932\x00" as *const u8 as *const i8) == 0 as i32 {
         return b"CP932\x00" as *const u8 as *const i8;
     }
     return charset;
@@ -1150,11 +1066,7 @@ unsafe extern "C" fn create_sconv_object(
      * that to be NFD ourselves.
      */
     if flag & (1 as i32) << 1 as i32 != 0
-        && flag
-            & ((1 as i32) << 11 as i32
-                | (1 as i32) << 13 as i32
-                | (1 as i32) << 9 as i32)
-            != 0
+        && flag & ((1 as i32) << 11 as i32 | (1 as i32) << 13 as i32 | (1 as i32) << 9 as i32) != 0
     {
         flag |= (1 as i32) << 6 as i32
     }
@@ -1162,14 +1074,8 @@ unsafe extern "C" fn create_sconv_object(
     /*
      * Create an iconv object.
      */
-    if flag
-        & ((1 as i32) << 8 as i32
-            | ((1 as i32) << 10 as i32 | (1 as i32) << 12 as i32))
-        != 0
-        && flag
-            & ((1 as i32) << 9 as i32
-                | ((1 as i32) << 11 as i32
-                    | (1 as i32) << 13 as i32))
+    if flag & ((1 as i32) << 8 as i32 | ((1 as i32) << 10 as i32 | (1 as i32) << 12 as i32)) != 0
+        && flag & ((1 as i32) << 9 as i32 | ((1 as i32) << 11 as i32 | (1 as i32) << 13 as i32))
             != 0
         || flag & (1 as i32) << 3 as i32 != 0
     {
@@ -1177,9 +1083,7 @@ unsafe extern "C" fn create_sconv_object(
         (*sc).cd = -(1 as i32) as iconv_t
     } else {
         (*sc).cd = iconv_open_safe(tc, fc);
-        if (*sc).cd == -(1 as i32) as iconv_t
-            && (*sc).flag & (1 as i32) << 2 as i32 != 0
-        {
+        if (*sc).cd == -(1 as i32) as iconv_t && (*sc).flag & (1 as i32) << 2 as i32 != 0 {
             /* _WIN32 && !__CYGWIN__ */
             /*
              * Unfortunately, all of iconv implements do support
@@ -1188,9 +1092,7 @@ unsafe extern "C" fn create_sconv_object(
              */
             if strcmp(tc, b"CP932\x00" as *const u8 as *const i8) == 0 as i32 {
                 (*sc).cd = iconv_open_safe(b"SJIS\x00" as *const u8 as *const i8, fc)
-            } else if strcmp(fc, b"CP932\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            } else if strcmp(fc, b"CP932\x00" as *const u8 as *const i8) == 0 as i32 {
                 (*sc).cd = iconv_open_safe(tc, b"SJIS\x00" as *const u8 as *const i8)
             }
         }
@@ -1282,8 +1184,7 @@ unsafe extern "C" fn get_sconv_object(
             archive_set_error(
                 a,
                 -(1 as i32),
-                b"iconv_open_safe failed : Cannot handle ``%s\'\'\x00" as *const u8
-                    as *const i8,
+                b"iconv_open_safe failed : Cannot handle ``%s\'\'\x00" as *const u8 as *const i8,
                 if flag & 1 as i32 != 0 { tc } else { fc },
             );
         }
@@ -1429,14 +1330,10 @@ pub unsafe extern "C" fn archive_string_conversion_set_opt(
              */
             if !((*sc).flag & (1 as i32) << 3 as i32 == 0
                 && (*sc).flag
-                    & ((1 as i32) << 11 as i32
-                        | (1 as i32) << 13 as i32
-                        | (1 as i32) << 9 as i32)
+                    & ((1 as i32) << 11 as i32 | (1 as i32) << 13 as i32 | (1 as i32) << 9 as i32)
                     != 0
                 && (*sc).flag
-                    & ((1 as i32) << 10 as i32
-                        | (1 as i32) << 12 as i32
-                        | (1 as i32) << 8 as i32)
+                    & ((1 as i32) << 10 as i32 | (1 as i32) << 12 as i32 | (1 as i32) << 8 as i32)
                     == 0)
             {
                 if (*sc).flag & (1 as i32) << 7 as i32 == 0 as i32 {
@@ -1488,8 +1385,7 @@ unsafe extern "C" fn utf16nbytes(mut _p: *const (), mut n: size_t) -> size_t {
     pp = p;
     n >>= 1 as i32;
     while s < n
-        && (*pp.offset(0 as i32 as isize) as i32 != 0
-            || *pp.offset(1 as i32 as isize) as i32 != 0)
+        && (*pp.offset(0 as i32 as isize) as i32 != 0 || *pp.offset(1 as i32 as isize) as i32 != 0)
     {
         pp = pp.offset(2 as i32 as isize);
         s = s.wrapping_add(1)
@@ -1521,12 +1417,7 @@ pub unsafe extern "C" fn archive_strncat_l(
     let mut r: i32 = 0 as i32;
     let mut r2: i32 = 0;
     if _p != 0 as *mut () && n > 0 as i32 as u64 {
-        if !sc.is_null()
-            && (*sc).flag
-                & ((1 as i32) << 11 as i32
-                    | (1 as i32) << 13 as i32)
-                != 0
-        {
+        if !sc.is_null() && (*sc).flag & ((1 as i32) << 11 as i32 | (1 as i32) << 13 as i32) != 0 {
             length = utf16nbytes(_p, n)
         } else {
             length = mbsnbytes(_p, n)
@@ -1536,12 +1427,7 @@ pub unsafe extern "C" fn archive_strncat_l(
      * or copy. This simulates archive_string_append behavior. */
     if length == 0 as i32 as u64 {
         let mut tn: i32 = 1 as i32;
-        if !sc.is_null()
-            && (*sc).flag
-                & ((1 as i32) << 10 as i32
-                    | (1 as i32) << 12 as i32)
-                != 0
-        {
+        if !sc.is_null() && (*sc).flag & ((1 as i32) << 10 as i32 | (1 as i32) << 12 as i32) != 0 {
             tn = 2 as i32
         }
         if archive_string_ensure(as_0, (*as_0).length.wrapping_add(tn as u64)).is_null() {
@@ -1549,11 +1435,9 @@ pub unsafe extern "C" fn archive_strncat_l(
         }
         *(*as_0).s.offset((*as_0).length as isize) = 0 as i32 as i8;
         if tn == 2 as i32 {
-            *(*as_0).s.offset(
-                (*as_0)
-                    .length
-                    .wrapping_add(1 as i32 as u64) as isize,
-            ) = 0 as i32 as i8
+            *(*as_0)
+                .s
+                .offset((*as_0).length.wrapping_add(1 as i32 as u64) as isize) = 0 as i32 as i8
         }
         return 0 as i32;
     }
@@ -1610,18 +1494,12 @@ unsafe extern "C" fn iconv_strncat_in_locale(
     let mut return_value: i32 = 0 as i32;
     let mut to_size: i32 = 0;
     let mut from_size: i32 = 0;
-    if (*sc).flag
-        & ((1 as i32) << 10 as i32 | (1 as i32) << 12 as i32)
-        != 0
-    {
+    if (*sc).flag & ((1 as i32) << 10 as i32 | (1 as i32) << 12 as i32) != 0 {
         to_size = 2 as i32
     } else {
         to_size = 1 as i32
     }
-    if (*sc).flag
-        & ((1 as i32) << 11 as i32 | (1 as i32) << 13 as i32)
-        != 0
-    {
+    if (*sc).flag & ((1 as i32) << 11 as i32 | (1 as i32) << 13 as i32) != 0 {
         from_size = 2 as i32
     } else {
         from_size = 1 as i32
@@ -1650,18 +1528,14 @@ unsafe extern "C" fn iconv_strncat_in_locale(
         if result != -(1 as i32) as size_t {
             break;
         }
-        if *__errno_location_safe() == 84 as i32
-            || *__errno_location_safe() == 22 as i32
-        {
+        if *__errno_location_safe() == 84 as i32 || *__errno_location_safe() == 22 as i32 {
             /*
              * If an output charset is UTF-8 or UTF-16BE/LE,
              * unknown character should be U+FFFD
              * (replacement character).
              */
             if (*sc).flag
-                & ((1 as i32) << 8 as i32
-                    | ((1 as i32) << 10 as i32
-                        | (1 as i32) << 12 as i32))
+                & ((1 as i32) << 8 as i32 | ((1 as i32) << 10 as i32 | (1 as i32) << 12 as i32))
                 != 0
             {
                 let mut rbytes: size_t = 0;
@@ -1706,8 +1580,7 @@ unsafe extern "C" fn iconv_strncat_in_locale(
                 avail = avail.wrapping_sub(1)
             }
             itp = itp.offset(from_size as isize);
-            remaining = (remaining as u64).wrapping_sub(from_size as u64)
-                as size_t as size_t;
+            remaining = (remaining as u64).wrapping_sub(from_size as u64) as size_t as size_t;
             return_value = -(1 as i32)
             /* failure */
         } else {
@@ -1730,11 +1603,9 @@ unsafe extern "C" fn iconv_strncat_in_locale(
     (*as_0).length = outp.offset_from((*as_0).s) as i64 as size_t;
     *(*as_0).s.offset((*as_0).length as isize) = 0 as i32 as i8;
     if to_size == 2 as i32 {
-        *(*as_0).s.offset(
-            (*as_0)
-                .length
-                .wrapping_add(1 as i32 as u64) as isize,
-        ) = 0 as i32 as i8
+        *(*as_0)
+            .s
+            .offset((*as_0).length.wrapping_add(1 as i32 as u64) as isize) = 0 as i32 as i8
     }
     return return_value;
 }
@@ -1820,10 +1691,7 @@ unsafe extern "C" fn best_effort_strncat_in_locale(
                 )
                 .is_null()
                 {
-                    __archive_errx(
-                        1 as i32,
-                        b"Out of memory\x00" as *const u8 as *const i8,
-                    );
+                    __archive_errx(1 as i32, b"Out of memory\x00" as *const u8 as *const i8);
                 }
             } else {
                 archive_strappend_char(as_0, '?' as i32 as i8);
@@ -2154,9 +2022,7 @@ unsafe extern "C" fn _utf8_to_unicode(
             }
             2 => {
                 /* 2 bytes sequence. */
-                if *s.offset(1 as i32 as isize) as i32 & 0xc0 as i32
-                    != 0x80 as i32
-                {
+                if *s.offset(1 as i32 as isize) as i32 & 0xc0 as i32 != 0x80 as i32 {
                     cnt = 1 as i32
                 } else {
                     *pwc = ((ch & 0x1f as i32) << 6 as i32
@@ -2168,21 +2034,15 @@ unsafe extern "C" fn _utf8_to_unicode(
             }
             3 => {
                 /* 3 bytes sequence. */
-                if *s.offset(1 as i32 as isize) as i32 & 0xc0 as i32
-                    != 0x80 as i32
-                {
+                if *s.offset(1 as i32 as isize) as i32 & 0xc0 as i32 != 0x80 as i32 {
                     cnt = 1 as i32; /* Overlong sequence. */
                     current_block = 10888481095818132869;
-                } else if *s.offset(2 as i32 as isize) as i32 & 0xc0 as i32
-                    != 0x80 as i32
-                {
+                } else if *s.offset(2 as i32 as isize) as i32 & 0xc0 as i32 != 0x80 as i32 {
                     cnt = 2 as i32;
                     current_block = 10888481095818132869;
                 } else {
                     wc = ((ch & 0xf as i32) << 12 as i32
-                        | (*s.offset(1 as i32 as isize) as i32
-                            & 0x3f as i32)
-                            << 6 as i32
+                        | (*s.offset(1 as i32 as isize) as i32 & 0x3f as i32) << 6 as i32
                         | *s.offset(2 as i32 as isize) as i32 & 0x3f as i32)
                         as uint32_t;
                     if wc < 0x800 as i32 as u32 {
@@ -2194,29 +2054,19 @@ unsafe extern "C" fn _utf8_to_unicode(
             }
             4 => {
                 /* 4 bytes sequence. */
-                if *s.offset(1 as i32 as isize) as i32 & 0xc0 as i32
-                    != 0x80 as i32
-                {
+                if *s.offset(1 as i32 as isize) as i32 & 0xc0 as i32 != 0x80 as i32 {
                     cnt = 1 as i32; /* Overlong sequence. */
                     current_block = 10888481095818132869;
-                } else if *s.offset(2 as i32 as isize) as i32 & 0xc0 as i32
-                    != 0x80 as i32
-                {
+                } else if *s.offset(2 as i32 as isize) as i32 & 0xc0 as i32 != 0x80 as i32 {
                     cnt = 2 as i32;
                     current_block = 10888481095818132869;
-                } else if *s.offset(3 as i32 as isize) as i32 & 0xc0 as i32
-                    != 0x80 as i32
-                {
+                } else if *s.offset(3 as i32 as isize) as i32 & 0xc0 as i32 != 0x80 as i32 {
                     cnt = 3 as i32;
                     current_block = 10888481095818132869;
                 } else {
                     wc = ((ch & 0x7 as i32) << 18 as i32
-                        | (*s.offset(1 as i32 as isize) as i32
-                            & 0x3f as i32)
-                            << 12 as i32
-                        | (*s.offset(2 as i32 as isize) as i32
-                            & 0x3f as i32)
-                            << 6 as i32
+                        | (*s.offset(1 as i32 as isize) as i32 & 0x3f as i32) << 12 as i32
+                        | (*s.offset(2 as i32 as isize) as i32 & 0x3f as i32) << 6 as i32
                         | *s.offset(3 as i32 as isize) as i32 & 0x3f as i32)
                         as uint32_t;
                     if wc < 0x10000 as i32 as u32 {
@@ -2244,9 +2094,7 @@ unsafe extern "C" fn _utf8_to_unicode(
                 }
                 i = 1 as i32;
                 while i < cnt {
-                    if *s.offset(i as isize) as i32 & 0xc0 as i32
-                        != 0x80 as i32
-                    {
+                    if *s.offset(i as isize) as i32 & 0xc0 as i32 != 0x80 as i32 {
                         cnt = i;
                         break;
                     } else {
@@ -2281,24 +2129,17 @@ unsafe extern "C" fn utf8_to_unicode(
     let mut cnt: i32 = 0;
     cnt = _utf8_to_unicode(pwc, s, n);
     /* Any of Surrogate pair is not legal Unicode values. */
-    if cnt == 3 as i32
-        && (*pwc >= 0xd800 as i32 as u32
-            && *pwc <= 0xdfff as i32 as u32)
-    {
+    if cnt == 3 as i32 && (*pwc >= 0xd800 as i32 as u32 && *pwc <= 0xdfff as i32 as u32) {
         return -(3 as i32);
     }
     return cnt;
 }
 #[inline]
 unsafe extern "C" fn combine_surrogate_pair(mut uc: uint32_t, mut uc2: uint32_t) -> uint32_t {
-    uc = (uc as u32).wrapping_sub(0xd800 as i32 as u32) as uint32_t
-        as uint32_t;
-    uc = (uc as u32).wrapping_mul(0x400 as i32 as u32) as uint32_t
-        as uint32_t;
-    uc = (uc as u32).wrapping_add(uc2.wrapping_sub(0xdc00 as i32 as u32))
-        as uint32_t as uint32_t;
-    uc = (uc as u32).wrapping_add(0x10000 as i32 as u32) as uint32_t
-        as uint32_t;
+    uc = (uc as u32).wrapping_sub(0xd800 as i32 as u32) as uint32_t as uint32_t;
+    uc = (uc as u32).wrapping_mul(0x400 as i32 as u32) as uint32_t as uint32_t;
+    uc = (uc as u32).wrapping_add(uc2.wrapping_sub(0xdc00 as i32 as u32)) as uint32_t as uint32_t;
+    uc = (uc as u32).wrapping_add(0x10000 as i32 as u32) as uint32_t as uint32_t;
     return uc;
 }
 /*
@@ -2319,10 +2160,7 @@ unsafe extern "C" fn cesu8_to_unicode(
     let mut wc: uint32_t = 0 as i32 as uint32_t;
     let mut cnt: i32 = 0;
     cnt = _utf8_to_unicode(&mut wc, s, n);
-    if cnt == 3 as i32
-        && (wc >= 0xd800 as i32 as u32
-            && wc <= 0xdbff as i32 as u32)
-    {
+    if cnt == 3 as i32 && (wc >= 0xd800 as i32 as u32 && wc <= 0xdbff as i32 as u32) {
         let mut wc2: uint32_t = 0 as i32 as uint32_t;
         if n.wrapping_sub(3 as i32 as u64) < 3 as i32 as u64 {
             /* Invalid byte sequence. */
@@ -2333,10 +2171,7 @@ unsafe extern "C" fn cesu8_to_unicode(
                 s.offset(3 as i32 as isize),
                 n.wrapping_sub(3 as i32 as u64),
             );
-            if cnt != 3 as i32
-                || !(wc2 >= 0xdc00 as i32 as u32
-                    && wc2 <= 0xdfff as i32 as u32)
-            {
+            if cnt != 3 as i32 || !(wc2 >= 0xdc00 as i32 as u32 && wc2 <= 0xdfff as i32 as u32) {
                 /* Invalid byte sequence. */
                 current_block = 2846206098543151513;
             } else {
@@ -2345,10 +2180,7 @@ unsafe extern "C" fn cesu8_to_unicode(
                 current_block = 12209867499936983673;
             }
         }
-    } else if cnt == 3 as i32
-        && (wc >= 0xdc00 as i32 as u32
-            && wc <= 0xdfff as i32 as u32)
-    {
+    } else if cnt == 3 as i32 && (wc >= 0xdc00 as i32 as u32 && wc <= 0xdfff as i32 as u32) {
         /* Invalid byte sequence. */
         current_block = 2846206098543151513; /* set the Replacement Character instead. */
     } else {
@@ -2398,54 +2230,39 @@ unsafe extern "C" fn unicode_to_utf8(
         }
         let fresh8 = p;
         p = p.offset(1);
-        *fresh8 = (0xc0 as i32 as u32
-            | uc >> 6 as i32 & 0x1f as i32 as u32)
-            as i8;
+        *fresh8 = (0xc0 as i32 as u32 | uc >> 6 as i32 & 0x1f as i32 as u32) as i8;
         let fresh9 = p;
         p = p.offset(1);
-        *fresh9 = (0x80 as i32 as u32 | uc & 0x3f as i32 as u32)
-            as i8
+        *fresh9 = (0x80 as i32 as u32 | uc & 0x3f as i32 as u32) as i8
     } else if uc <= 0xffff as i32 as u32 {
         if remaining < 3 as i32 as u64 {
             return 0 as i32 as size_t;
         }
         let fresh10 = p;
         p = p.offset(1);
-        *fresh10 = (0xe0 as i32 as u32
-            | uc >> 12 as i32 & 0xf as i32 as u32)
-            as i8;
+        *fresh10 = (0xe0 as i32 as u32 | uc >> 12 as i32 & 0xf as i32 as u32) as i8;
         let fresh11 = p;
         p = p.offset(1);
-        *fresh11 = (0x80 as i32 as u32
-            | uc >> 6 as i32 & 0x3f as i32 as u32)
-            as i8;
+        *fresh11 = (0x80 as i32 as u32 | uc >> 6 as i32 & 0x3f as i32 as u32) as i8;
         let fresh12 = p;
         p = p.offset(1);
-        *fresh12 = (0x80 as i32 as u32 | uc & 0x3f as i32 as u32)
-            as i8
+        *fresh12 = (0x80 as i32 as u32 | uc & 0x3f as i32 as u32) as i8
     } else {
         if remaining < 4 as i32 as u64 {
             return 0 as i32 as size_t;
         }
         let fresh13 = p;
         p = p.offset(1);
-        *fresh13 = (0xf0 as i32 as u32
-            | uc >> 18 as i32 & 0x7 as i32 as u32)
-            as i8;
+        *fresh13 = (0xf0 as i32 as u32 | uc >> 18 as i32 & 0x7 as i32 as u32) as i8;
         let fresh14 = p;
         p = p.offset(1);
-        *fresh14 = (0x80 as i32 as u32
-            | uc >> 12 as i32 & 0x3f as i32 as u32)
-            as i8;
+        *fresh14 = (0x80 as i32 as u32 | uc >> 12 as i32 & 0x3f as i32 as u32) as i8;
         let fresh15 = p;
         p = p.offset(1);
-        *fresh15 = (0x80 as i32 as u32
-            | uc >> 6 as i32 & 0x3f as i32 as u32)
-            as i8;
+        *fresh15 = (0x80 as i32 as u32 | uc >> 6 as i32 & 0x3f as i32 as u32) as i8;
         let fresh16 = p;
         p = p.offset(1);
-        *fresh16 = (0x80 as i32 as u32 | uc & 0x3f as i32 as u32)
-            as i8
+        *fresh16 = (0x80 as i32 as u32 | uc & 0x3f as i32 as u32) as i8
     }
     return p.offset_from(_p) as i64 as size_t;
 }
@@ -2497,9 +2314,7 @@ unsafe extern "C" fn utf16_to_unicode(
         } else {
             uc2 = 0 as i32 as u32
         }
-        if uc2 >= 0xdc00 as i32 as u32
-            && uc2 <= 0xdfff as i32 as u32
-        {
+        if uc2 >= 0xdc00 as i32 as u32 && uc2 <= 0xdfff as i32 as u32 {
             uc = combine_surrogate_pair(uc, uc2);
             utf16 = utf16.offset(2 as i32 as isize)
         } else {
@@ -2516,9 +2331,7 @@ unsafe extern "C" fn utf16_to_unicode(
      * larger than 0x10ffff. Thus, those are not legal Unicode
      * values.
      */
-    if uc >= 0xd800 as i32 as u32 && uc <= 0xdfff as i32 as u32
-        || uc > 0x10ffff as i32 as u32
-    {
+    if uc >= 0xd800 as i32 as u32 && uc <= 0xdfff as i32 as u32 || uc > 0x10ffff as i32 as u32 {
         /* Undescribed code point should be U+FFFD
          * (replacement character). */
         *pwc = 0xfffd as i32 as uint32_t;
@@ -2539,17 +2352,14 @@ unsafe extern "C" fn unicode_to_utf16be(
         if remaining < 4 as i32 as u64 {
             return 0 as i32 as size_t;
         }
-        uc = (uc as u32).wrapping_sub(0x10000 as i32 as u32) as uint32_t
-            as uint32_t;
+        uc = (uc as u32).wrapping_sub(0x10000 as i32 as u32) as uint32_t as uint32_t;
         archive_be16enc(
             utf16 as *mut (),
-            (uc >> 10 as i32 & 0x3ff as i32 as u32)
-                .wrapping_add(0xd800 as i32 as u32) as uint16_t,
+            (uc >> 10 as i32 & 0x3ff as i32 as u32).wrapping_add(0xd800 as i32 as u32) as uint16_t,
         );
         archive_be16enc(
             utf16.offset(2 as i32 as isize) as *mut (),
-            (uc & 0x3ff as i32 as u32)
-                .wrapping_add(0xdc00 as i32 as u32) as uint16_t,
+            (uc & 0x3ff as i32 as u32).wrapping_add(0xdc00 as i32 as u32) as uint16_t,
         );
         return 4 as i32 as size_t;
     } else {
@@ -2572,17 +2382,14 @@ unsafe extern "C" fn unicode_to_utf16le(
         if remaining < 4 as i32 as u64 {
             return 0 as i32 as size_t;
         }
-        uc = (uc as u32).wrapping_sub(0x10000 as i32 as u32) as uint32_t
-            as uint32_t;
+        uc = (uc as u32).wrapping_sub(0x10000 as i32 as u32) as uint32_t as uint32_t;
         archive_le16enc(
             utf16 as *mut (),
-            (uc >> 10 as i32 & 0x3ff as i32 as u32)
-                .wrapping_add(0xd800 as i32 as u32) as uint16_t,
+            (uc >> 10 as i32 & 0x3ff as i32 as u32).wrapping_add(0xd800 as i32 as u32) as uint16_t,
         );
         archive_le16enc(
             utf16.offset(2 as i32 as isize) as *mut (),
-            (uc & 0x3ff as i32 as u32)
-                .wrapping_add(0xdc00 as i32 as u32) as uint16_t,
+            (uc & 0x3ff as i32 as u32).wrapping_add(0xdc00 as i32 as u32) as uint16_t,
         );
         return 4 as i32 as size_t;
     } else {
@@ -2673,10 +2480,7 @@ unsafe extern "C" fn strncat_from_utf8_to_utf8(
          * If n is negative, current byte sequence needs a replacement.
          */
         if n < 0 as i32 {
-            if n == -(3 as i32)
-                && (uc >= 0xd800 as i32 as u32
-                    && uc <= 0xdfff as i32 as u32)
-            {
+            if n == -(3 as i32) && (uc >= 0xd800 as i32 as u32 && uc <= 0xdfff as i32 as u32) {
                 /* Current byte sequence may be CESU-8. */
                 n = cesu8_to_unicode(&mut uc, s, len)
             }
@@ -2737,12 +2541,10 @@ unsafe extern "C" fn archive_string_append_unicode(
     let mut ret: i32 = 0 as i32;
     let mut ts: i32 = 0;
     let mut tm: i32 = 0;
-    let mut parse: Option<
-        unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
-    > = None;
-    let mut unparse: Option<
-        unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
-    > = None;
+    let mut parse: Option<unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32> =
+        None;
+    let mut unparse: Option<unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t> =
+        None;
     if (*sc).flag & (1 as i32) << 10 as i32 != 0 {
         unparse = Some(
             unicode_to_utf16be
@@ -2757,8 +2559,7 @@ unsafe extern "C" fn archive_string_append_unicode(
         ts = 2 as i32
     } else if (*sc).flag & (1 as i32) << 8 as i32 != 0 {
         unparse = Some(
-            unicode_to_utf8
-                as unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
+            unicode_to_utf8 as unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
         );
         ts = 1 as i32
     } else if (*sc).flag & (1 as i32) << 11 as i32 != 0 {
@@ -2775,39 +2576,26 @@ unsafe extern "C" fn archive_string_append_unicode(
         ts = 2 as i32
     } else {
         unparse = Some(
-            unicode_to_utf8
-                as unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
+            unicode_to_utf8 as unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
         );
         ts = 1 as i32
     }
     if (*sc).flag & (1 as i32) << 11 as i32 != 0 {
         parse = Some(
             utf16be_to_unicode
-                as unsafe extern "C" fn(
-                    _: *mut uint32_t,
-                    _: *const i8,
-                    _: size_t,
-                ) -> i32,
+                as unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
         );
         tm = 1 as i32
     } else if (*sc).flag & (1 as i32) << 13 as i32 != 0 {
         parse = Some(
             utf16le_to_unicode
-                as unsafe extern "C" fn(
-                    _: *mut uint32_t,
-                    _: *const i8,
-                    _: size_t,
-                ) -> i32,
+                as unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
         );
         tm = 1 as i32
     } else {
         parse = Some(
             cesu8_to_unicode
-                as unsafe extern "C" fn(
-                    _: *mut uint32_t,
-                    _: *const i8,
-                    _: size_t,
-                ) -> i32,
+                as unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
         );
         tm = ts
     }
@@ -2878,11 +2666,9 @@ unsafe extern "C" fn archive_string_append_unicode(
     (*as_0).length = p.offset_from((*as_0).s) as i64 as size_t;
     *(*as_0).s.offset((*as_0).length as isize) = '\u{0}' as i32 as i8;
     if ts == 2 as i32 {
-        *(*as_0).s.offset(
-            (*as_0)
-                .length
-                .wrapping_add(1 as i32 as u64) as isize,
-        ) = '\u{0}' as i32 as i8
+        *(*as_0)
+            .s
+            .offset((*as_0).length.wrapping_add(1 as i32 as u64) as isize) = '\u{0}' as i32 as i8
     }
     return ret;
 }
@@ -2954,12 +2740,10 @@ unsafe extern "C" fn archive_string_normalize_C(
     let mut spair: i32 = 0;
     let mut ts: i32 = 0;
     let mut tm: i32 = 0;
-    let mut parse: Option<
-        unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
-    > = None;
-    let mut unparse: Option<
-        unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
-    > = None;
+    let mut parse: Option<unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32> =
+        None;
+    let mut unparse: Option<unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t> =
+        None;
     always_replace = 1 as i32;
     ts = 1 as i32;
     if (*sc).flag & (1 as i32) << 10 as i32 != 0 {
@@ -2982,8 +2766,7 @@ unsafe extern "C" fn archive_string_normalize_C(
         }
     } else if (*sc).flag & (1 as i32) << 8 as i32 != 0 {
         unparse = Some(
-            unicode_to_utf8
-                as unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
+            unicode_to_utf8 as unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
         );
         if (*sc).flag & (1 as i32) << 9 as i32 != 0 {
             always_replace = 0 as i32
@@ -2995,10 +2778,7 @@ unsafe extern "C" fn archive_string_normalize_C(
          */
         always_replace = 0 as i32;
         if (*sc).flag & (1 as i32) << 11 as i32 != 0 {
-            unparse = Some(
-                unicode_to_utf16be
-                    as unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
-            );
+            unparse = Some(unicode_to_utf16be);
             ts = 2 as i32
         } else if (*sc).flag & (1 as i32) << 13 as i32 != 0 {
             unparse = Some(
@@ -3016,11 +2796,7 @@ unsafe extern "C" fn archive_string_normalize_C(
     if (*sc).flag & (1 as i32) << 11 as i32 != 0 {
         parse = Some(
             utf16be_to_unicode
-                as unsafe extern "C" fn(
-                    _: *mut uint32_t,
-                    _: *const i8,
-                    _: size_t,
-                ) -> i32,
+                as unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
         );
         tm = 1 as i32;
         spair = 4 as i32
@@ -3028,11 +2804,7 @@ unsafe extern "C" fn archive_string_normalize_C(
     } else if (*sc).flag & (1 as i32) << 13 as i32 != 0 {
         parse = Some(
             utf16le_to_unicode
-                as unsafe extern "C" fn(
-                    _: *mut uint32_t,
-                    _: *const i8,
-                    _: size_t,
-                ) -> i32,
+                as unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
         );
         tm = 1 as i32;
         spair = 4 as i32
@@ -3040,11 +2812,7 @@ unsafe extern "C" fn archive_string_normalize_C(
     } else {
         parse = Some(
             cesu8_to_unicode
-                as unsafe extern "C" fn(
-                    _: *mut uint32_t,
-                    _: *const i8,
-                    _: size_t,
-                ) -> i32,
+                as unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
         );
         tm = ts;
         spair = 6 as i32
@@ -3104,8 +2872,7 @@ unsafe extern "C" fn archive_string_normalize_C(
             }
             p = p.offset(w as isize);
             s = s.offset((n * -(1 as i32)) as isize);
-            len = (len as u64).wrapping_sub((n * -(1 as i32)) as u64)
-                as size_t as size_t;
+            len = (len as u64).wrapping_sub((n * -(1 as i32)) as u64) as size_t as size_t;
             ret = -(1 as i32)
         } else {
             if n == spair || always_replace != 0 {
@@ -3148,8 +2915,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                  * code points, finding compositions is unneeded.
                  */
                 if !(uc2 >> 8 as i32 <= 0x1d2 as i32 as u32
-                    && u_decomposable_blocks[(uc2 >> 8 as i32) as usize] as i32
-                        != 0)
+                    && u_decomposable_blocks[(uc2 >> 8 as i32) as usize] as i32 != 0)
                 {
                     if !ucptr.is_null() {
                         if p.offset(n as isize) > endp {
@@ -3272,19 +3038,16 @@ unsafe extern "C" fn archive_string_normalize_C(
                          * Hangul Composition.
                          * 1. Two current code points are L and V.
                          */
-                        let mut VIndex: i32 =
-                            uc2.wrapping_sub(0x1161 as i32 as u32) as i32;
+                        let mut VIndex: i32 = uc2.wrapping_sub(0x1161 as i32 as u32) as i32;
                         if 0 as i32 <= VIndex && VIndex < 21 as i32 {
                             /* Make syllable of form LV. */
-                            uc = (0xac00 as i32
-                                + (LIndex * 21 as i32 + VIndex) * 28 as i32)
+                            uc = (0xac00 as i32 + (LIndex * 21 as i32 + VIndex) * 28 as i32)
                                 as uint32_t;
                             ucptr = 0 as *const i8
                         } else {
                             if !ucptr.is_null() {
                                 if p.offset(n as isize) > endp {
-                                    (*as_0).length =
-                                        p.offset_from((*as_0).s) as i64 as size_t;
+                                    (*as_0).length = p.offset_from((*as_0).s) as i64 as size_t;
                                     if archive_string_ensure(
                                         as_0,
                                         (*as_0)
@@ -3366,8 +3129,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                                     if !(w == 0 as i32 as u64) {
                                         break;
                                     }
-                                    (*as_0).length =
-                                        p.offset_from((*as_0).s) as i64 as size_t;
+                                    (*as_0).length = p.offset_from((*as_0).s) as i64 as size_t;
                                     if archive_string_ensure(
                                         as_0,
                                         (*as_0)
@@ -3392,8 +3154,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                             n = n2
                         }
                     } else {
-                        SIndex =
-                            uc.wrapping_sub(0xac00 as i32 as u32) as i32;
+                        SIndex = uc.wrapping_sub(0xac00 as i32 as u32) as i32;
                         if 0 as i32 <= SIndex
                             && SIndex < 19 as i32 * (21 as i32 * 28 as i32)
                             && SIndex % 28 as i32 == 0 as i32
@@ -3402,9 +3163,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                              * Hangul Composition.
                              * 2. Two current code points are LV and T.
                              */
-                            let mut TIndex: i32 = uc2
-                                .wrapping_sub(0x11a7 as i32 as u32)
-                                as i32;
+                            let mut TIndex: i32 = uc2.wrapping_sub(0x11a7 as i32 as u32) as i32;
                             if (0 as i32) < TIndex && TIndex < 28 as i32 {
                                 /* Make syllable of form LVT. */
                                 uc = uc.wrapping_add(TIndex as u32);
@@ -3412,8 +3171,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                             } else {
                                 if !ucptr.is_null() {
                                     if p.offset(n as isize) > endp {
-                                        (*as_0).length =
-                                            p.offset_from((*as_0).s) as i64 as size_t;
+                                        (*as_0).length = p.offset_from((*as_0).s) as i64 as size_t;
                                         if archive_string_ensure(
                                             as_0,
                                             (*as_0)
@@ -3495,8 +3253,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                                         if !(w == 0 as i32 as u64) {
                                             break;
                                         }
-                                        (*as_0).length =
-                                            p.offset_from((*as_0).s) as i64 as size_t;
+                                        (*as_0).length = p.offset_from((*as_0).s) as i64 as size_t;
                                         if archive_string_ensure(
                                             as_0,
                                             (*as_0)
@@ -3531,13 +3288,10 @@ unsafe extern "C" fn archive_string_normalize_C(
                                 cl = (if uc2 > 0x1d244 as i32 as u32 {
                                     0 as i32
                                 } else {
-                                    ccc_val[(ccc_val_index[(ccc_index
-                                        [(uc2 >> 8 as i32) as usize]
+                                    ccc_val[(ccc_val_index[(ccc_index[(uc2 >> 8 as i32) as usize]
                                         as usize)
                                         * (16 as usize)
-                                        + ((uc2 >> 4 as i32
-                                            & 0xf as i32 as u32)
-                                            as usize)]
+                                        + ((uc2 >> 4 as i32 & 0xf as i32 as u32) as usize)]
                                         as usize)
                                         * (16 as usize)
                                         + ((uc2 & 0xf as i32 as u32) as usize)]
@@ -3554,9 +3308,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                                                 as_0,
                                                 (*as_0)
                                                     .buffer_length
-                                                    .wrapping_add(
-                                                        len.wrapping_mul(tm as u64),
-                                                    )
+                                                    .wrapping_add(len.wrapping_mul(tm as u64))
                                                     .wrapping_add(ts as u64),
                                             )
                                             .is_null()
@@ -3639,9 +3391,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                                                 as_0,
                                                 (*as_0)
                                                     .buffer_length
-                                                    .wrapping_add(
-                                                        len.wrapping_mul(tm as u64),
-                                                    )
+                                                    .wrapping_add(len.wrapping_mul(tm as u64))
                                                     .wrapping_add(ts as u64),
                                             )
                                             .is_null()
@@ -3677,9 +3427,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                                         if nx <= 0 as i32 {
                                             break;
                                         }
-                                        cx = if ucx[_i as usize]
-                                            > 0x1d244 as i32 as u32
-                                        {
+                                        cx = if ucx[_i as usize] > 0x1d244 as i32 as u32 {
                                             0 as i32
                                         } else {
                                             ccc_val[(ccc_val_index[(ccc_index
@@ -3691,21 +3439,14 @@ unsafe extern "C" fn archive_string_normalize_C(
                                                     as usize)]
                                                 as usize)
                                                 * (16 as usize)
-                                                + ((ucx[_i as usize]
-                                                    & 0xf as i32 as u32)
-                                                    as usize)]
+                                                + ((ucx[_i as usize] & 0xf as i32 as u32) as usize)]
                                                 as i32
                                         };
-                                        if cl >= cx
-                                            && cl != 228 as i32
-                                            && cx != 228 as i32
-                                        {
+                                        if cl >= cx && cl != 228 as i32 && cx != 228 as i32 {
                                             break;
                                         }
                                         s = s.offset(nx as isize);
-                                        len = (len as u64)
-                                            .wrapping_sub(nx as u64)
-                                            as size_t
+                                        len = (len as u64).wrapping_sub(nx as u64) as size_t
                                             as size_t;
                                         cl = cx;
                                         ccx[_i as usize] = cx;
@@ -3738,10 +3479,8 @@ unsafe extern "C" fn archive_string_normalize_C(
                                              */
                                             j = i;
                                             while (j + 1 as i32) < ucx_size {
-                                                ucx[j as usize] =
-                                                    ucx[(j + 1 as i32) as usize];
-                                                ccx[j as usize] =
-                                                    ccx[(j + 1 as i32) as usize];
+                                                ucx[j as usize] = ucx[(j + 1 as i32) as usize];
+                                                ccx[j as usize] = ccx[(j + 1 as i32) as usize];
                                                 j += 1
                                             }
                                             ucx_size -= 1;
@@ -3779,16 +3518,13 @@ unsafe extern "C" fn archive_string_normalize_C(
                                                             as usize]
                                                             as usize)
                                                             * (16 as usize)
-                                                            + ((ucx[_i_0 as usize]
-                                                                >> 4 as i32
-                                                                & 0xf as i32
-                                                                    as u32)
+                                                            + ((ucx[_i_0 as usize] >> 4 as i32
+                                                                & 0xf as i32 as u32)
                                                                 as usize)]
                                                             as usize)
                                                             * (16 as usize)
                                                             + ((ucx[_i_0 as usize]
-                                                                & 0xf as i32
-                                                                    as u32)
+                                                                & 0xf as i32 as u32)
                                                                 as usize)]
                                                             as i32
                                                     };
@@ -3799,8 +3535,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                                                         break;
                                                     }
                                                     s = s.offset(nx as isize);
-                                                    len = (len as u64)
-                                                        .wrapping_sub(nx as u64)
+                                                    len = (len as u64).wrapping_sub(nx as u64)
                                                         as size_t
                                                         as size_t;
                                                     cl = cx;
@@ -3834,9 +3569,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                                                 as_0,
                                                 (*as_0)
                                                     .buffer_length
-                                                    .wrapping_add(
-                                                        len.wrapping_mul(tm as u64),
-                                                    )
+                                                    .wrapping_add(len.wrapping_mul(tm as u64))
                                                     .wrapping_add(ts as u64),
                                             )
                                             .is_null()
@@ -3919,9 +3652,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                                                 as_0,
                                                 (*as_0)
                                                     .buffer_length
-                                                    .wrapping_add(
-                                                        len.wrapping_mul(tm as u64),
-                                                    )
+                                                    .wrapping_add(len.wrapping_mul(tm as u64))
                                                     .wrapping_add(ts as u64),
                                             )
                                             .is_null()
@@ -3953,9 +3684,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                                                 as_0,
                                                 (*as_0)
                                                     .buffer_length
-                                                    .wrapping_add(
-                                                        len.wrapping_mul(tm as u64),
-                                                    )
+                                                    .wrapping_add(len.wrapping_mul(tm as u64))
                                                     .wrapping_add(ts as u64),
                                             )
                                             .is_null()
@@ -3974,40 +3703,29 @@ unsafe extern "C" fn archive_string_normalize_C(
                                     /*
                                      * Flush out remaining canonical combining characters.
                                      */
-                                    if nx > 0 as i32
-                                        && cx == cl
-                                        && len > 0 as i32 as u64
-                                    {
+                                    if nx > 0 as i32 && cx == cl && len > 0 as i32 as u64 {
                                         loop {
                                             nx = parse.expect("non-null function pointer")(
-                                                &mut *ucx
-                                                    .as_mut_ptr()
-                                                    .offset(0 as i32 as isize),
+                                                &mut *ucx.as_mut_ptr().offset(0 as i32 as isize),
                                                 s,
                                                 len,
                                             );
                                             if !(nx > 0 as i32) {
                                                 break;
                                             }
-                                            cx = if ucx[0 as i32 as usize]
-                                                > 0x1d244 as i32 as u32
-                                            {
+                                            cx = if ucx[0 as i32 as usize] > 0x1d244 as i32 as u32 {
                                                 0 as i32
                                             } else {
-                                                ccc_val[(ccc_val_index[(ccc_index[(ucx
-                                                    [0 as i32 as usize]
-                                                    >> 8 as i32)
-                                                    as usize]
+                                                ccc_val[(ccc_val_index[(ccc_index
+                                                    [(ucx[0 as i32 as usize] >> 8 as i32) as usize]
                                                     as usize)
                                                     * (16 as usize)
-                                                    + ((ucx[0 as i32 as usize]
-                                                        >> 4 as i32
+                                                    + ((ucx[0 as i32 as usize] >> 4 as i32
                                                         & 0xf as i32 as u32)
                                                         as usize)]
                                                     as usize)
                                                     * (16 as usize)
-                                                    + ((ucx[0 as i32 as usize]
-                                                        & 0xf as i32 as u32)
+                                                    + ((ucx[0 as i32 as usize] & 0xf as i32 as u32)
                                                         as usize)]
                                                     as i32
                                             };
@@ -4015,9 +3733,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                                                 break;
                                             }
                                             s = s.offset(nx as isize);
-                                            len = (len as u64)
-                                                .wrapping_sub(nx as u64)
-                                                as size_t
+                                            len = (len as u64).wrapping_sub(nx as u64) as size_t
                                                 as size_t;
                                             cl = cx;
                                             loop {
@@ -4029,16 +3745,13 @@ unsafe extern "C" fn archive_string_normalize_C(
                                                 if !(w == 0 as i32 as u64) {
                                                     break;
                                                 }
-                                                (*as_0).length = p.offset_from((*as_0).s)
-                                                    as i64
-                                                    as size_t;
+                                                (*as_0).length =
+                                                    p.offset_from((*as_0).s) as i64 as size_t;
                                                 if archive_string_ensure(
                                                     as_0,
                                                     (*as_0)
                                                         .buffer_length
-                                                        .wrapping_add(
-                                                            len.wrapping_mul(tm as u64),
-                                                        )
+                                                        .wrapping_add(len.wrapping_mul(tm as u64))
                                                         .wrapping_add(ts as u64),
                                                 )
                                                 .is_null()
@@ -4196,9 +3909,7 @@ unsafe extern "C" fn archive_string_normalize_C(
                 }
                 p = p.offset(w as isize);
                 s = s.offset((n2 * -(1 as i32)) as isize);
-                len = (len as u64)
-                    .wrapping_sub((n2 * -(1 as i32)) as u64)
-                    as size_t as size_t;
+                len = (len as u64).wrapping_sub((n2 * -(1 as i32)) as u64) as size_t as size_t;
                 ret = -(1 as i32)
             } else {
                 if !(n2 == 0 as i32) {
@@ -4315,11 +4026,9 @@ unsafe extern "C" fn archive_string_normalize_C(
     (*as_0).length = p.offset_from((*as_0).s) as i64 as size_t;
     *(*as_0).s.offset((*as_0).length as isize) = '\u{0}' as i32 as i8;
     if ts == 2 as i32 {
-        *(*as_0).s.offset(
-            (*as_0)
-                .length
-                .wrapping_add(1 as i32 as u64) as isize,
-        ) = '\u{0}' as i32 as i8
+        *(*as_0)
+            .s
+            .offset((*as_0).length.wrapping_add(1 as i32 as u64) as isize) = '\u{0}' as i32 as i8
     }
     return ret;
 }
@@ -4334,10 +4043,8 @@ unsafe extern "C" fn get_nfd(
      * These are not converted to NFD on Mac OS.
      */
     if uc >= 0x2000 as i32 as u32 && uc <= 0x2fff as i32 as u32
-        || uc >= 0xf900 as i32 as u32
-            && uc <= 0xfaff as i32 as u32
-        || uc >= 0x2f800 as i32 as u32
-            && uc <= 0x2faff as i32 as u32
+        || uc >= 0xf900 as i32 as u32 && uc <= 0xfaff as i32 as u32
+        || uc >= 0x2f800 as i32 as u32 && uc <= 0x2faff as i32 as u32
     {
         return 0 as i32;
     }
@@ -4349,10 +4056,7 @@ unsafe extern "C" fn get_nfd(
      *   1109C  ==> 1109B 110BA
      *   110AB  ==> 110A5 110BA
      */
-    if uc == 0x1109a as i32 as u32
-        || uc == 0x1109c as i32 as u32
-        || uc == 0x110ab as i32 as u32
-    {
+    if uc == 0x1109a as i32 as u32 || uc == 0x1109c as i32 as u32 || uc == 0x110ab as i32 as u32 {
         return 0 as i32;
     }
     t = 0 as i32;
@@ -4395,12 +4099,10 @@ unsafe extern "C" fn archive_string_normalize_D(
     let mut spair: i32 = 0;
     let mut ts: i32 = 0;
     let mut tm: i32 = 0;
-    let mut parse: Option<
-        unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
-    > = None;
-    let mut unparse: Option<
-        unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
-    > = None;
+    let mut parse: Option<unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32> =
+        None;
+    let mut unparse: Option<unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t> =
+        None;
     always_replace = 1 as i32;
     ts = 1 as i32;
     if (*sc).flag & (1 as i32) << 10 as i32 != 0 {
@@ -4423,8 +4125,7 @@ unsafe extern "C" fn archive_string_normalize_D(
         }
     } else if (*sc).flag & (1 as i32) << 8 as i32 != 0 {
         unparse = Some(
-            unicode_to_utf8
-                as unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
+            unicode_to_utf8 as unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
         );
         if (*sc).flag & (1 as i32) << 9 as i32 != 0 {
             always_replace = 0 as i32
@@ -4436,10 +4137,7 @@ unsafe extern "C" fn archive_string_normalize_D(
          */
         always_replace = 0 as i32;
         if (*sc).flag & (1 as i32) << 11 as i32 != 0 {
-            unparse = Some(
-                unicode_to_utf16be
-                    as unsafe extern "C" fn(_: *mut i8, _: size_t, _: uint32_t) -> size_t,
-            );
+            unparse = Some(unicode_to_utf16be);
             ts = 2 as i32
         } else if (*sc).flag & (1 as i32) << 13 as i32 != 0 {
             unparse = Some(
@@ -4457,11 +4155,7 @@ unsafe extern "C" fn archive_string_normalize_D(
     if (*sc).flag & (1 as i32) << 11 as i32 != 0 {
         parse = Some(
             utf16be_to_unicode
-                as unsafe extern "C" fn(
-                    _: *mut uint32_t,
-                    _: *const i8,
-                    _: size_t,
-                ) -> i32,
+                as unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
         );
         tm = 1 as i32;
         spair = 4 as i32
@@ -4469,11 +4163,7 @@ unsafe extern "C" fn archive_string_normalize_D(
     } else if (*sc).flag & (1 as i32) << 13 as i32 != 0 {
         parse = Some(
             utf16le_to_unicode
-                as unsafe extern "C" fn(
-                    _: *mut uint32_t,
-                    _: *const i8,
-                    _: size_t,
-                ) -> i32,
+                as unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
         );
         tm = 1 as i32;
         spair = 4 as i32
@@ -4481,11 +4171,7 @@ unsafe extern "C" fn archive_string_normalize_D(
     } else {
         parse = Some(
             cesu8_to_unicode
-                as unsafe extern "C" fn(
-                    _: *mut uint32_t,
-                    _: *const i8,
-                    _: size_t,
-                ) -> i32,
+                as unsafe extern "C" fn(_: *mut uint32_t, _: *const i8, _: size_t) -> i32,
         );
         tm = ts;
         spair = 6 as i32
@@ -4552,9 +4238,7 @@ unsafe extern "C" fn archive_string_normalize_D(
                 }
                 p = p.offset(w as isize);
                 s = s.offset((n * -(1 as i32)) as isize);
-                len = (len as u64)
-                    .wrapping_sub((n * -(1 as i32)) as u64)
-                    as size_t as size_t;
+                len = (len as u64).wrapping_sub((n * -(1 as i32)) as u64) as size_t as size_t;
                 ret = -(1 as i32);
                 break;
             } else {
@@ -4569,13 +4253,9 @@ unsafe extern "C" fn archive_string_normalize_D(
                 len = (len as u64).wrapping_sub(n as u64) as size_t as size_t;
                 /* Hangul Decomposition. */
                 SIndex = uc.wrapping_sub(0xac00 as i32 as u32) as i32;
-                if SIndex >= 0 as i32
-                    && SIndex < 19 as i32 * (21 as i32 * 28 as i32)
-                {
-                    let mut L: i32 =
-                        0x1100 as i32 + SIndex / (21 as i32 * 28 as i32);
-                    let mut V: i32 = 0x1161 as i32
-                        + SIndex % (21 as i32 * 28 as i32) / 28 as i32;
+                if SIndex >= 0 as i32 && SIndex < 19 as i32 * (21 as i32 * 28 as i32) {
+                    let mut L: i32 = 0x1100 as i32 + SIndex / (21 as i32 * 28 as i32);
+                    let mut V: i32 = 0x1161 as i32 + SIndex % (21 as i32 * 28 as i32) / 28 as i32;
                     let mut T: i32 = 0x11a7 as i32 + SIndex % 28 as i32;
                     uc = L as uint32_t;
                     ucptr = 0 as *const i8;
@@ -4903,14 +4583,12 @@ unsafe extern "C" fn archive_string_normalize_D(
                     && (if uc > 0x1d244 as i32 as u32 {
                         0 as i32
                     } else {
-                        ccc_val[(ccc_val_index[(ccc_index[(uc >> 8 as i32) as usize]
+                        ccc_val[(ccc_val_index[(ccc_index[(uc >> 8 as i32) as usize] as usize)
+                            * (16 as usize)
+                            + ((uc >> 4 as i32 & 0xf as i32 as u32) as usize)]
                             as usize)
                             * (16 as usize)
-                            + ((uc >> 4 as i32 & 0xf as i32 as u32)
-                                as usize)] as usize)
-                            * (16 as usize)
-                            + ((uc & 0xf as i32 as u32) as usize)]
-                            as i32
+                            + ((uc & 0xf as i32 as u32) as usize)] as i32
                     }) != 0 as i32
                 {
                     if !ucptr.is_null() {
@@ -5027,16 +4705,13 @@ unsafe extern "C" fn archive_string_normalize_D(
                             fdc[k as usize] = fdc[(k - 1 as i32) as usize];
                             k -= 1
                         }
-                        fdc[0 as i32 as usize].ccc = if cp2
-                            > 0x1d244 as i32 as u32
-                        {
+                        fdc[0 as i32 as usize].ccc = if cp2 > 0x1d244 as i32 as u32 {
                             0 as i32
                         } else {
-                            ccc_val[(ccc_val_index[(ccc_index[(cp2 >> 8 as i32) as usize]
-                                as usize)
+                            ccc_val[(ccc_val_index[(ccc_index[(cp2 >> 8 as i32) as usize] as usize)
                                 * (16 as usize)
-                                + ((cp2 >> 4 as i32 & 0xf as i32 as u32)
-                                    as usize)] as usize)
+                                + ((cp2 >> 4 as i32 & 0xf as i32 as u32) as usize)]
+                                as usize)
                                 * (16 as usize)
                                 + ((cp2 & 0xf as i32 as u32) as usize)]
                                 as i32
@@ -5055,13 +4730,10 @@ unsafe extern "C" fn archive_string_normalize_D(
                                 ccc = (if uc2 > 0x1d244 as i32 as u32 {
                                     0 as i32
                                 } else {
-                                    ccc_val[(ccc_val_index[(ccc_index
-                                        [(uc2 >> 8 as i32) as usize]
+                                    ccc_val[(ccc_val_index[(ccc_index[(uc2 >> 8 as i32) as usize]
                                         as usize)
                                         * (16 as usize)
-                                        + ((uc2 >> 4 as i32
-                                            & 0xf as i32 as u32)
-                                            as usize)]
+                                        + ((uc2 >> 4 as i32 & 0xf as i32 as u32) as usize)]
                                         as usize)
                                         * (16 as usize)
                                         + ((uc2 & 0xf as i32 as u32) as usize)]
@@ -5076,8 +4748,7 @@ unsafe extern "C" fn archive_string_normalize_D(
                         let mut j: i32 = 0;
                         let mut k_0: i32 = 0;
                         s = s.offset(n2 as isize);
-                        len = (len as u64).wrapping_sub(n2 as u64) as size_t
-                            as size_t;
+                        len = (len as u64).wrapping_sub(n2 as u64) as size_t as size_t;
                         j = 0 as i32;
                         while j < fdi {
                             if fdc[j as usize].ccc > ccc {
@@ -5326,11 +4997,9 @@ unsafe extern "C" fn archive_string_normalize_D(
     (*as_0).length = p.offset_from((*as_0).s) as i64 as size_t;
     *(*as_0).s.offset((*as_0).length as isize) = '\u{0}' as i32 as i8;
     if ts == 2 as i32 {
-        *(*as_0).s.offset(
-            (*as_0)
-                .length
-                .wrapping_add(1 as i32 as u64) as isize,
-        ) = '\u{0}' as i32 as i8
+        *(*as_0)
+            .s
+            .offset((*as_0).length.wrapping_add(1 as i32 as u64) as isize) = '\u{0}' as i32 as i8
     }
     return ret;
 }
@@ -5406,9 +5075,7 @@ unsafe extern "C" fn strncat_from_utf8_libarchive2(
                 (*as_0)
                     .length
                     .wrapping_add(
-                        (if len.wrapping_mul(2 as i32 as u64)
-                            > __ctype_get_mb_cur_max_safe()
-                        {
+                        (if len.wrapping_mul(2 as i32 as u64) > __ctype_get_mb_cur_max_safe() {
                             len.wrapping_mul(2 as i32 as u64)
                         } else {
                             __ctype_get_mb_cur_max_safe()
@@ -5601,11 +5268,9 @@ unsafe extern "C" fn best_effort_strncat_to_utf16(
     }
     (*as16).length = utf16.offset_from((*as16).s) as i64 as size_t;
     *(*as16).s.offset((*as16).length as isize) = 0 as i32 as i8;
-    *(*as16).s.offset(
-        (*as16)
-            .length
-            .wrapping_add(1 as i32 as u64) as isize,
-    ) = 0 as i32 as i8;
+    *(*as16)
+        .s
+        .offset((*as16).length.wrapping_add(1 as i32 as u64) as isize) = 0 as i32 as i8;
     return ret;
 }
 unsafe extern "C" fn best_effort_strncat_to_utf16be(
@@ -5912,11 +5577,7 @@ pub unsafe extern "C" fn archive_mstring_copy_utf8(
     (*aes).aes_mbs.length = 0 as i32 as size_t;
     (*aes).aes_wcs.length = 0 as i32 as size_t;
     (*aes).aes_utf8.length = 0 as i32 as size_t;
-    archive_strncat(
-        &mut (*aes).aes_utf8,
-        utf8 as *const (),
-        strlen(utf8),
-    );
+    archive_strncat(&mut (*aes).aes_utf8, utf8 as *const (), strlen(utf8));
     return strlen(utf8) as i32;
 }
 
@@ -6002,11 +5663,8 @@ pub unsafe extern "C" fn archive_mstring_update_utf8(
     (*aes).aes_wcs.length = 0 as i32 as size_t;
     (*aes).aes_set = 2 as i32;
     /* Try converting UTF-8 to MBS, return false on failure. */
-    sc = archive_string_conversion_from_charset(
-        a,
-        b"UTF-8\x00" as *const u8 as *const i8,
-        1 as i32,
-    ); /* Couldn't allocate memory for sc. */
+    sc =
+        archive_string_conversion_from_charset(a, b"UTF-8\x00" as *const u8 as *const i8, 1 as i32); /* Couldn't allocate memory for sc. */
     if sc.is_null() {
         return -(1 as i32);
     } /* Both UTF8 and MBS set. */

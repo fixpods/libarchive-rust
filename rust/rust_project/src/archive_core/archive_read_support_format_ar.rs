@@ -18,12 +18,7 @@ pub unsafe extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) ->
     if magic_test == ARCHIVE_AR_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
     }
-    ar = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<ar>() as u64,
-        )
-    } as *mut ar;
+    ar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<ar>() as u64) } as *mut ar;
     if ar.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
@@ -67,10 +62,7 @@ unsafe fn archive_read_format_ar_cleanup(mut a: *mut archive_read) -> i32 {
     return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
 }
 
-unsafe fn archive_read_format_ar_bid(
-    mut a: *mut archive_read,
-    mut best_bid: i32,
-) -> i32 {
+unsafe fn archive_read_format_ar_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
     let mut h: *const () = 0 as *const ();
     /* UNUSED */
     /*
@@ -176,8 +168,7 @@ unsafe fn _ar_read_header(
     }
     /* Update format name from the code. */
     if safe_a.archive.archive_format == ARCHIVE_AR_DEFINED_PARAM.archive_format_ar_gnu {
-        safe_a.archive.archive_format_name =
-            b"ar (GNU/SVR4)\x00" as *const u8 as *const i8
+        safe_a.archive.archive_format_name = b"ar (GNU/SVR4)\x00" as *const u8 as *const i8
     } else if safe_a.archive.archive_format == ARCHIVE_AR_DEFINED_PARAM.archive_format_ar_bsd {
         safe_a.archive.archive_format_name = b"ar (BSD)\x00" as *const u8 as *const i8
     } else {
@@ -225,13 +216,7 @@ unsafe fn _ar_read_header(
      * '//' is the GNU filename table.
      * Later entries can refer to names in this table.
      */
-    if unsafe {
-        strcmp(
-            filename.as_mut_ptr(),
-            b"//\x00" as *const u8 as *const i8,
-        )
-    } == 0 as i32
-    {
+    if unsafe { strcmp(filename.as_mut_ptr(), b"//\x00" as *const u8 as *const i8) } == 0 as i32 {
         /* This must come before any call to _read_ahead. */
         ar_parse_common_header(ar, entry, h);
         unsafe {
@@ -244,10 +229,7 @@ unsafe fn _ar_read_header(
             unsafe { h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_size_offset as isize) },
             ARCHIVE_AR_DEFINED_PARAM.ar_size_size as u32,
         );
-        if number > SIZE_MAX as u64
-            || number
-                > (1024 as i32 * 1024 as i32 * 1024 as i32) as u64
-        {
+        if number > SIZE_MAX as u64 || number > (1024 as i32 * 1024 as i32 * 1024 as i32) as u64 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_AR_DEFINED_PARAM.archive_errno_misc,
@@ -404,8 +386,7 @@ unsafe fn _ar_read_header(
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
         }
         /* Store it in the entry. */
-        p = unsafe { malloc(bsd_name_length.wrapping_add(1 as i32 as u64)) }
-            as *mut i8;
+        p = unsafe { malloc(bsd_name_length.wrapping_add(1 as i32 as u64)) } as *mut i8;
         if p.is_null() {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
@@ -427,12 +408,7 @@ unsafe fn _ar_read_header(
      * "/" is the SVR4/GNU archive symbol table.
      * "/SYM64/" is the SVR4/GNU 64-bit variant archive symbol table.
      */
-    if unsafe {
-        strcmp(
-            filename.as_mut_ptr(),
-            b"/\x00" as *const u8 as *const i8,
-        )
-    } == 0 as i32
+    if unsafe { strcmp(filename.as_mut_ptr(), b"/\x00" as *const u8 as *const i8) } == 0 as i32
         || unsafe {
             strcmp(
                 filename.as_mut_ptr(),
@@ -492,22 +468,13 @@ unsafe fn archive_read_format_ar_read_header(
         safe_a.archive.archive_format = ARCHIVE_AR_DEFINED_PARAM.archive_format_ar
     }
     /* Read the header for the next file entry. */
-    header_data =
-        unsafe { __archive_read_ahead(a, 60 as i32 as size_t, 0 as *mut ssize_t) };
+    header_data = unsafe { __archive_read_ahead(a, 60 as i32 as size_t, 0 as *mut ssize_t) };
     if header_data == 0 as *mut () {
         /* Broken header. */
         return ARCHIVE_AR_DEFINED_PARAM.archive_eof;
     }
     unconsumed = 60 as i32 as size_t;
-    ret = unsafe {
-        _ar_read_header(
-            a,
-            entry,
-            ar,
-            header_data as *const i8,
-            &mut unconsumed,
-        )
-    };
+    ret = unsafe { _ar_read_header(a, entry, ar, header_data as *const i8, &mut unconsumed) };
     if unconsumed != 0 {
         unsafe { __archive_read_consume(a, unconsumed as int64_t) };
     }
@@ -613,8 +580,7 @@ unsafe fn archive_read_format_ar_read_data(
                 archive_set_error_safe!(
                     &mut safe_a.archive as *mut archive,
                     ARCHIVE_AR_DEFINED_PARAM.archive_errno_misc,
-                    b"Truncated ar archive- failed consuming padding\x00" as *const u8
-                        as *const i8
+                    b"Truncated ar archive- failed consuming padding\x00" as *const u8 as *const i8
                 );
             }
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
@@ -692,8 +658,7 @@ unsafe fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> i32 {
                 unsafe {
                     *(ar_safe)
                         .strtab
-                        .offset(size.wrapping_sub(1 as i32 as u64) as isize) =
-                        '\u{0}' as i32 as i8
+                        .offset(size.wrapping_sub(1 as i32 as u64) as isize) = '\u{0}' as i32 as i8
                 }; /* Truncate on overflow. */
                 return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
             }
@@ -719,14 +684,11 @@ unsafe fn ar_atol8(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
     limit = (SIZE_MAX).wrapping_div(base as u64);
     last_digit_limit = (SIZE_MAX).wrapping_rem(base as u64);
 
-    while (unsafe { *p as i32 == ' ' as i32 }
-        || unsafe { *p as i32 == '\t' as i32 })
-        && {
-            let fresh3 = char_cnt;
-            char_cnt = char_cnt.wrapping_sub(1);
-            (fresh3) > 0 as i32 as u32
-        }
-    {
+    while (unsafe { *p as i32 == ' ' as i32 } || unsafe { *p as i32 == '\t' as i32 }) && {
+        let fresh3 = char_cnt;
+        char_cnt = char_cnt.wrapping_sub(1);
+        (fresh3) > 0 as i32 as u32
+    } {
         unsafe { p = p.offset(1) }
     }
     l = 0 as i32 as uint64_t;
@@ -740,9 +702,7 @@ unsafe fn ar_atol8(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
             l = SIZE_MAX;
             break;
         } else {
-            l = l
-                .wrapping_mul(base as u64)
-                .wrapping_add(digit as u64);
+            l = l.wrapping_mul(base as u64).wrapping_add(digit as u64);
             unsafe { p = p.offset(1) };
             digit = (unsafe { *p as i32 } - '0' as i32) as u32
         }
@@ -760,14 +720,11 @@ unsafe fn ar_atol10(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
     limit = (SIZE_MAX).wrapping_div(base as u64);
     last_digit_limit = (SIZE_MAX).wrapping_rem(base as u64);
 
-    while (unsafe { *p as i32 == ' ' as i32 }
-        || unsafe { *p as i32 == '\t' as i32 })
-        && {
-            let fresh3 = char_cnt;
-            char_cnt = char_cnt.wrapping_sub(1);
-            (fresh3) > 0 as i32 as u32
-        }
-    {
+    while (unsafe { *p as i32 == ' ' as i32 } || unsafe { *p as i32 == '\t' as i32 }) && {
+        let fresh3 = char_cnt;
+        char_cnt = char_cnt.wrapping_sub(1);
+        (fresh3) > 0 as i32 as u32
+    } {
         unsafe { p = p.offset(1) }
     }
     l = 0 as i32 as uint64_t;
@@ -781,9 +738,7 @@ unsafe fn ar_atol10(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
             l = SIZE_MAX;
             break;
         } else {
-            l = l
-                .wrapping_mul(base as u64)
-                .wrapping_add(digit as u64);
+            l = l.wrapping_mul(base as u64).wrapping_add(digit as u64);
             unsafe { p = p.offset(1) };
             digit = (unsafe { *p as i32 } - '0' as i32) as u32
         }
@@ -800,12 +755,7 @@ pub unsafe fn archive_test_archive_read_format_ar_read_data(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut ar: *mut ar = 0 as *mut ar;
-    ar = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<ar>() as u64,
-        )
-    } as *mut ar;
+    ar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<ar>() as u64) } as *mut ar;
     (*ar).entry_bytes_remaining = 0 as int64_t;
     (*ar).entry_padding = 2147483647 as int64_t;
     (*(*a).format).data = ar as *mut ();
@@ -847,11 +797,6 @@ pub unsafe fn archive_test__ar_read_header(
     let mut a: *mut archive_read = _a as *mut archive_read;
     (*a).archive.archive_format = ARCHIVE_AR_DEFINED_PARAM.archive_format_ar;
     let mut ar: *mut ar = 0 as *mut ar;
-    ar = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<ar>() as u64,
-        )
-    } as *mut ar;
+    ar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<ar>() as u64) } as *mut ar;
     _ar_read_header(a, entry, ar, h, unconsumed);
 }

@@ -54,10 +54,7 @@ pub unsafe fn archive_read_support_format_cpio(mut _a: *mut archive) -> i32 {
     if magic_test == ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
-    cpio = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<cpio>() as u64,
-    ) as *mut cpio;
+    cpio = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cpio>() as u64) as *mut cpio;
     if cpio.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -73,17 +70,10 @@ pub unsafe fn archive_read_support_format_cpio(mut _a: *mut archive) -> i32 {
         a,
         cpio as *mut (),
         b"cpio\x00" as *const u8 as *const i8,
-        Some(
-            archive_read_format_cpio_bid
-                as unsafe fn(_: *mut archive_read, _: i32) -> i32,
-        ),
+        Some(archive_read_format_cpio_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
         Some(
             archive_read_format_cpio_options
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *const i8,
-                    _: *const i8,
-                ) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *const i8, _: *const i8) -> i32,
         ),
         Some(
             archive_read_format_cpio_read_header
@@ -98,15 +88,9 @@ pub unsafe fn archive_read_support_format_cpio(mut _a: *mut archive) -> i32 {
                     _: *mut int64_t,
                 ) -> i32,
         ),
-        Some(
-            archive_read_format_cpio_skip
-                as unsafe fn(_: *mut archive_read) -> i32,
-        ),
+        Some(archive_read_format_cpio_skip as unsafe fn(_: *mut archive_read) -> i32),
         None,
-        Some(
-            archive_read_format_cpio_cleanup
-                as unsafe fn(_: *mut archive_read) -> i32,
-        ),
+        Some(archive_read_format_cpio_cleanup as unsafe fn(_: *mut archive_read) -> i32),
         None,
         None,
     );
@@ -116,17 +100,13 @@ pub unsafe fn archive_read_support_format_cpio(mut _a: *mut archive) -> i32 {
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
 }
 
-unsafe fn archive_read_format_cpio_bid(
-    mut a: *mut archive_read,
-    mut best_bid: i32,
-) -> i32 {
+unsafe fn archive_read_format_cpio_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     let mut cpio: *mut cpio = 0 as *mut cpio;
     let mut bid: i32 = 0;
     /* UNUSED */
     cpio = unsafe { (*(*a).format).data as *mut cpio };
-    p = __archive_read_ahead_safe(a, 6 as i32 as size_t, 0 as *mut ssize_t)
-        as *const u8;
+    p = __archive_read_ahead_safe(a, 6 as i32 as size_t, 0 as *mut ssize_t) as *const u8;
     if p.is_null() {
         return -(1 as i32);
     }
@@ -222,8 +202,7 @@ unsafe fn archive_read_format_cpio_bid(
          * digits appear in appropriate header locations. XXX
          */
     } else if unsafe {
-        *p.offset(0 as i32 as isize) as i32 * 256 as i32
-            + *p.offset(1 as i32 as isize) as i32
+        *p.offset(0 as i32 as isize) as i32 * 256 as i32 + *p.offset(1 as i32 as isize) as i32
             == 0o70707 as i32
     } {
         /* big-endian binary cpio archives */
@@ -240,8 +219,7 @@ unsafe fn archive_read_format_cpio_bid(
         bid += 16 as i32
         /* Is more verification possible here? */
     } else if unsafe {
-        *p.offset(0 as i32 as isize) as i32
-            + *p.offset(1 as i32 as isize) as i32 * 256 as i32
+        *p.offset(0 as i32 as isize) as i32 + *p.offset(1 as i32 as isize) as i32 * 256 as i32
             == 0o70707 as i32
     } {
         /* little-endian binary cpio archives */
@@ -279,20 +257,11 @@ unsafe fn archive_read_format_cpio_options(
     }
     if strcmp_safe(key, b"compat-2x\x00" as *const u8 as *const i8) == 0 as i32 {
         /* Handle filenames as libarchive 2.x */
-        cpio_safe.init_default_conversion = if !val.is_null() {
-            1 as i32
-        } else {
-            0 as i32
-        };
+        cpio_safe.init_default_conversion = if !val.is_null() { 1 as i32 } else { 0 as i32 };
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
     } else {
-        if strcmp_safe(key, b"hdrcharset\x00" as *const u8 as *const i8)
-            == 0 as i32
-        {
-            if unsafe {
-                val.is_null()
-                    || *val.offset(0 as i32 as isize) as i32 == 0 as i32
-            } {
+        if strcmp_safe(key, b"hdrcharset\x00" as *const u8 as *const i8) == 0 as i32 {
+            if unsafe { val.is_null() || *val.offset(0 as i32 as isize) as i32 == 0 as i32 } {
                 archive_set_error_safe!(
                     &mut a_safe.archive as *mut archive,
                     ARCHIVE_CPIO_DEFINED_PARAM.archive_errno_misc,
@@ -300,11 +269,8 @@ unsafe fn archive_read_format_cpio_options(
                         as *const i8
                 );
             } else {
-                cpio_safe.opt_sconv = archive_string_conversion_from_charset_safe(
-                    &mut a_safe.archive,
-                    val,
-                    0 as i32,
-                );
+                cpio_safe.opt_sconv =
+                    archive_string_conversion_from_charset_safe(&mut a_safe.archive, val, 0 as i32);
                 if !cpio_safe.opt_sconv.is_null() {
                     ret = ARCHIVE_CPIO_DEFINED_PARAM.archive_ok
                 } else {
@@ -313,12 +279,8 @@ unsafe fn archive_read_format_cpio_options(
             }
             return ret;
         } else {
-            if strcmp_safe(key, b"pwb\x00" as *const u8 as *const i8) == 0 as i32
-            {
-                if unsafe {
-                    !val.is_null()
-                        && *val.offset(0 as i32 as isize) as i32 != 0 as i32
-                } {
+            if strcmp_safe(key, b"pwb\x00" as *const u8 as *const i8) == 0 as i32 {
+                if unsafe { !val.is_null() && *val.offset(0 as i32 as isize) as i32 != 0 as i32 } {
                     cpio_safe.option_pwb = 1 as i32
                 }
                 return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
@@ -378,9 +340,7 @@ unsafe fn archive_read_format_cpio_read_header(
     if h == 0 as *mut () {
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
-    if _archive_entry_copy_pathname_l_safe(entry, h as *const i8, namelength, sconv)
-        != 0 as i32
-    {
+    if _archive_entry_copy_pathname_l_safe(entry, h as *const i8, namelength, sconv) != 0 as i32 {
         if err_loc_safe == ARCHIVE_CPIO_DEFINED_PARAM.enomem {
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
@@ -402,9 +362,7 @@ unsafe fn archive_read_format_cpio_read_header(
     __archive_read_consume_safe(a, namelength.wrapping_add(name_pad) as int64_t);
     /* If this is a symlink, read the link contents. */
     if archive_entry_filetype_safe(entry) == ARCHIVE_CPIO_DEFINED_PARAM.ae_iflnk {
-        if cpio_safe.entry_bytes_remaining
-            > (1024 as i32 * 1024 as i32) as i64
-        {
+        if cpio_safe.entry_bytes_remaining > (1024 as i32 * 1024 as i32) as i64 {
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CPIO_DEFINED_PARAM.enomem,
@@ -601,11 +559,9 @@ unsafe fn find_newc_header(mut a: *mut archive_read) -> i32 {
                         ) == 0 as i32
                             && is_hex(p, ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE) != 0
                         {
-                            skip =
-                                p.offset_from(h as *const i8) as i64 as size_t;
+                            skip = p.offset_from(h as *const i8) as i64 as size_t;
                             __archive_read_consume_safe(a, skip as int64_t);
-                            skipped =
-                                (skipped as u64).wrapping_add(skip) as size_t as size_t;
+                            skipped = (skipped as u64).wrapping_add(skip) as size_t as size_t;
                             if skipped > 0 as i32 as u64 {
                                 archive_set_error_safe!(
                                     &mut (*a).archive as *mut archive,
@@ -659,8 +615,7 @@ unsafe fn header_newc(
     let a_safe = unsafe { &mut *a };
     if memcmp_safe(
         unsafe {
-            header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_MAGIC_OFFSET as isize)
-                as *const ()
+            header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_MAGIC_OFFSET as isize) as *const ()
         },
         b"070701\x00" as *const u8 as *const i8 as *const (),
         6 as i32 as u64,
@@ -671,8 +626,7 @@ unsafe fn header_newc(
             b"ASCII cpio (SVR4 with no CRC)\x00" as *const u8 as *const i8
     } else if memcmp_safe(
         unsafe {
-            header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_MAGIC_OFFSET as isize)
-                as *const ()
+            header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_MAGIC_OFFSET as isize) as *const ()
         },
         b"070702\x00" as *const u8 as *const i8 as *const (),
         6 as i32 as u64,
@@ -759,8 +713,7 @@ unsafe fn header_newc(
             ARCHIVE_CPIO_DEFINED_PARAM.NEWC_NAMESIZE_SIZE as u32,
         ) as size_t;
         /* Pad name to 2 more than a multiple of 4. */
-        *name_pad = (2 as i32 as u64).wrapping_sub(*namelength)
-            & 3 as i32 as u64;
+        *name_pad = (2 as i32 as u64).wrapping_sub(*namelength) & 3 as i32 as u64;
         /* Make sure that the padded name length fits into size_t. */
         if *name_pad > (18446744073709551615 as u64).wrapping_sub(*namelength) {
             archive_set_error_safe!(
@@ -813,8 +766,7 @@ unsafe fn is_afio_large(mut h: *const i8, mut len: size_t) -> i32 {
         return 0 as i32;
     }
     unsafe {
-        if *h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_INO_M_OFFSET as isize) as i32
-            != 'm' as i32
+        if *h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_INO_M_OFFSET as isize) as i32 != 'm' as i32
             || *h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_MTIME_N_OFFSET as isize) as i32
                 != 'n' as i32
             || *h.offset(ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_XSIZE_S_OFFSET as isize) as i32
@@ -905,26 +857,22 @@ unsafe fn find_odc_header(mut a: *mut archive_read) -> i32 {
                 match *p.offset(5 as i32 as isize) as i32 {
                     55 => {
                         if memcmp_safe(
-                            b"070707\x00" as *const u8 as *const i8
-                                as *const (),
+                            b"070707\x00" as *const u8 as *const i8 as *const (),
                             p as *const (),
                             6 as i32 as u64,
                         ) == 0 as i32
                             && is_octal(p, ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as size_t)
                                 != 0
                             || memcmp_safe(
-                                b"070727\x00" as *const u8 as *const i8
-                                    as *const (),
+                                b"070727\x00" as *const u8 as *const i8 as *const (),
                                 p as *const (),
                                 6 as i32 as u64,
                             ) == 0 as i32
                                 && is_afio_large(p, q.offset_from(p) as i64 as size_t) != 0
                         {
-                            skip =
-                                p.offset_from(h as *const i8) as i64 as size_t;
+                            skip = p.offset_from(h as *const i8) as i64 as size_t;
                             __archive_read_consume_safe(a, skip as int64_t);
-                            skipped =
-                                (skipped as u64).wrapping_add(skip) as size_t as size_t;
+                            skipped = (skipped as u64).wrapping_add(skip) as size_t as size_t;
                             if *p.offset(4 as i32 as isize) as i32 == '2' as i32 {
                                 (*a).archive.archive_format =
                                     ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_afio_large
@@ -965,8 +913,7 @@ unsafe fn header_odc(
     let mut header: *const i8 = 0 as *const i8;
     let a_safe = unsafe { &mut *a };
     a_safe.archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_posix;
-    a_safe.archive.archive_format_name =
-        b"POSIX octet-oriented cpio\x00" as *const u8 as *const i8;
+    a_safe.archive.archive_format_name = b"POSIX octet-oriented cpio\x00" as *const u8 as *const i8;
     /* Find the start of the next header. */
     r = find_odc_header(a);
     if r < ARCHIVE_CPIO_DEFINED_PARAM.archive_warn {
@@ -1088,8 +1035,7 @@ unsafe fn header_afiol(
     let mut header: *const i8 = 0 as *const i8;
     let a_safe = unsafe { &mut *a };
     a_safe.archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_afio_large;
-    a_safe.archive.archive_format_name =
-        b"afio large ASCII\x00" as *const u8 as *const i8;
+    a_safe.archive.archive_format_name = b"afio large ASCII\x00" as *const u8 as *const i8;
     /* Read fixed-size portion of header. */
     h = __archive_read_ahead_safe(
         a,
@@ -1208,33 +1154,27 @@ unsafe fn header_bin_le(
         archive_entry_set_dev(
             entry,
             (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET as isize) as i32
-                + *header
-                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET + 1 as i32) as isize)
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET + 1 as i32) as isize)
                     as i32
                     * 256 as i32) as dev_t,
         );
         archive_entry_set_ino(
             entry,
             (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET as isize) as i32
-                + *header
-                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET + 1 as i32) as isize)
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET + 1 as i32) as isize)
                     as i32
                     * 256 as i32) as la_int64_t,
         );
         archive_entry_set_mode(
             entry,
             (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET as isize) as i32
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET + 1 as i32) as isize,
-                ) as i32
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET + 1 as i32) as isize)
+                    as i32
                     * 256 as i32) as mode_t,
         );
         if (*cpio).option_pwb != 0 {
             /* turn off random bits left over from V6 inode */
-            archive_entry_set_mode(
-                entry,
-                archive_entry_mode(entry) & 0o67777 as i32 as u32,
-            ); /* Pad to even. */
+            archive_entry_set_mode(entry, archive_entry_mode(entry) & 0o67777 as i32 as u32); /* Pad to even. */
             if archive_entry_mode(entry) & ARCHIVE_CPIO_DEFINED_PARAM.ae_ifmt as mode_t
                 == 0 as i32 as u32
             {
@@ -1247,33 +1187,29 @@ unsafe fn header_bin_le(
         archive_entry_set_uid(
             entry,
             (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET as isize) as i32
-                + *header
-                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET + 1 as i32) as isize)
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET + 1 as i32) as isize)
                     as i32
                     * 256 as i32) as la_int64_t,
         );
         archive_entry_set_gid(
             entry,
             (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET as isize) as i32
-                + *header
-                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET + 1 as i32) as isize)
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET + 1 as i32) as isize)
                     as i32
                     * 256 as i32) as la_int64_t,
         );
         archive_entry_set_nlink(
             entry,
             (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET as isize) as i32
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET + 1 as i32) as isize,
-                ) as i32
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET + 1 as i32) as isize)
+                    as i32
                     * 256 as i32) as u32,
         );
         archive_entry_set_rdev(
             entry,
             (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET as isize) as i32
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET + 1 as i32) as isize,
-                ) as i32
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET + 1 as i32) as isize)
+                    as i32
                     * 256 as i32) as dev_t,
         );
         archive_entry_set_mtime(
@@ -1283,9 +1219,8 @@ unsafe fn header_bin_le(
         );
         *namelength = (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET as isize)
             as i32
-            + *header.offset(
-                (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET + 1 as i32) as isize,
-            ) as i32
+            + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET + 1 as i32) as isize)
+                as i32
                 * 256 as i32) as size_t;
         *name_pad = *namelength & 1 as i32 as u64;
         (*cpio).entry_bytes_remaining =
@@ -1308,8 +1243,7 @@ unsafe fn header_bin_be(
     let mut header: *const u8 = 0 as *const u8;
     let a_safe = unsafe { &mut *a };
     a_safe.archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_bin_be;
-    a_safe.archive.archive_format_name =
-        b"cpio (big-endian binary)\x00" as *const u8 as *const i8;
+    a_safe.archive.archive_format_name = b"cpio (big-endian binary)\x00" as *const u8 as *const i8;
     /* Read fixed-size portion of header. */
     h = __archive_read_ahead_safe(
         a,
@@ -1329,34 +1263,26 @@ unsafe fn header_bin_be(
     unsafe {
         archive_entry_set_dev(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET as isize) as i32
-                * 256 as i32
-                + *header
-                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET + 1 as i32) as isize)
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET as isize) as i32 * 256 as i32
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_DEV_OFFSET + 1 as i32) as isize)
                     as i32) as dev_t,
         );
         archive_entry_set_ino(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET as isize) as i32
-                * 256 as i32
-                + *header
-                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET + 1 as i32) as isize)
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET as isize) as i32 * 256 as i32
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_INO_OFFSET + 1 as i32) as isize)
                     as i32) as la_int64_t,
         );
         archive_entry_set_mode(
             entry,
             (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET as isize) as i32
                 * 256 as i32
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET + 1 as i32) as isize,
-                ) as i32) as mode_t,
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_MODE_OFFSET + 1 as i32) as isize)
+                    as i32) as mode_t,
         );
         if (*cpio).option_pwb != 0 {
             /* turn off random bits left over from V6 inode */
-            archive_entry_set_mode(
-                entry,
-                archive_entry_mode(entry) & 0o67777 as i32 as u32,
-            ); /* Pad to even. */
+            archive_entry_set_mode(entry, archive_entry_mode(entry) & 0o67777 as i32 as u32); /* Pad to even. */
             if archive_entry_mode(entry) & ARCHIVE_CPIO_DEFINED_PARAM.ae_ifmt as mode_t
                 == 0 as i32 as u32
             {
@@ -1368,35 +1294,29 @@ unsafe fn header_bin_be(
         }
         archive_entry_set_uid(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET as isize) as i32
-                * 256 as i32
-                + *header
-                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET + 1 as i32) as isize)
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET as isize) as i32 * 256 as i32
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_UID_OFFSET + 1 as i32) as isize)
                     as i32) as la_int64_t,
         );
         archive_entry_set_gid(
             entry,
-            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET as isize) as i32
-                * 256 as i32
-                + *header
-                    .offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET + 1 as i32) as isize)
+            (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET as isize) as i32 * 256 as i32
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_GID_OFFSET + 1 as i32) as isize)
                     as i32) as la_int64_t,
         );
         archive_entry_set_nlink(
             entry,
             (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET as isize) as i32
                 * 256 as i32
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET + 1 as i32) as isize,
-                ) as i32) as u32,
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_NLINK_OFFSET + 1 as i32) as isize)
+                    as i32) as u32,
         );
         archive_entry_set_rdev(
             entry,
             (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET as isize) as i32
                 * 256 as i32
-                + *header.offset(
-                    (ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET + 1 as i32) as isize,
-                ) as i32) as dev_t,
+                + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_RDEV_OFFSET + 1 as i32) as isize)
+                    as i32) as dev_t,
         );
         archive_entry_set_mtime(
             entry,
@@ -1406,9 +1326,8 @@ unsafe fn header_bin_be(
         *namelength = (*header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET as isize)
             as i32
             * 256 as i32
-            + *header.offset(
-                (ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET + 1 as i32) as isize,
-            ) as i32) as size_t;
+            + *header.offset((ARCHIVE_CPIO_DEFINED_PARAM.BIN_NAMESIZE_OFFSET + 1 as i32) as isize)
+                as i32) as size_t;
         *name_pad = *namelength & 1 as i32 as u64;
         (*cpio).entry_bytes_remaining =
             be4(header.offset(ARCHIVE_CPIO_DEFINED_PARAM.BIN_FILESIZE_OFFSET as isize));
@@ -1445,20 +1364,15 @@ unsafe fn archive_read_format_cpio_cleanup(mut a: *mut archive_read) -> i32 {
     return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
 }
 unsafe fn le4(mut p: *const u8) -> int64_t {
-    return ((*p.offset(0 as i32 as isize) as i32) << 16 as i32)
-        as i64
+    return ((*p.offset(0 as i32 as isize) as i32) << 16 as i32) as i64
         + ((*p.offset(1 as i32 as isize) as int64_t) << 24 as i32)
-        + ((*p.offset(2 as i32 as isize) as i32) << 0 as i32)
-            as i64
-        + ((*p.offset(3 as i32 as isize) as i32) << 8 as i32)
-            as i64;
+        + ((*p.offset(2 as i32 as isize) as i32) << 0 as i32) as i64
+        + ((*p.offset(3 as i32 as isize) as i32) << 8 as i32) as i64;
 }
 unsafe fn be4(mut p: *const u8) -> int64_t {
     return ((*p.offset(0 as i32 as isize) as int64_t) << 24 as i32)
-        + ((*p.offset(1 as i32 as isize) as i32) << 16 as i32)
-            as i64
-        + ((*p.offset(2 as i32 as isize) as i32) << 8 as i32)
-            as i64
+        + ((*p.offset(1 as i32 as isize) as i32) << 16 as i32) as i64
+        + ((*p.offset(2 as i32 as isize) as i32) << 8 as i32) as i64
         + *p.offset(3 as i32 as isize) as i64;
 }
 /*

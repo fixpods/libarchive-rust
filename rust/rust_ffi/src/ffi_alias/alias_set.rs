@@ -186,9 +186,7 @@ pub type warc_type_t = u32;
 
 pub type xmlChar = u8;
 pub type xmlInputCloseCallback = Option<unsafe fn(_: *mut ()) -> i32>;
-pub type xmlInputReadCallback = Option<
-    unsafe fn(_: *mut (), _: *mut i8, _: i32) -> i32,
->;
+pub type xmlInputReadCallback = Option<unsafe fn(_: *mut (), _: *mut i8, _: i32) -> i32>;
 pub type xmlParserSeverities = u32;
 pub const HEADER_MAGIC: i32 = 0x78617221;
 pub const HEADER_SIZE: i32 = 28;

@@ -290,10 +290,7 @@ pub unsafe fn archive_acl_add_entry_len_l(
         /* XXX Error XXX */
         return ARCHIVE_ACL_DEFINED_PARAM.archvie_failed;
     }
-    if !name.is_null()
-        && *name as i32 != '\u{0}' as i32
-        && len > 0 as i32 as u64
-    {
+    if !name.is_null() && *name as i32 != '\u{0}' as i32 && len > 0 as i32 as u64 {
         r = archive_mstring_copy_mbs_len_l_safe(&mut (*ap).name, name, len, sc)
     } else {
         r = 0 as i32;
@@ -311,12 +308,7 @@ pub unsafe fn archive_acl_add_entry_len_l(
  * If this ACL entry is part of the standard POSIX permissions set,
  * store the permissions in the stat structure and return zero.
  */
-fn acl_special(
-    mut acl: *mut archive_acl,
-    mut type_0: i32,
-    mut permset: i32,
-    mut tag: i32,
-) -> i32 {
+fn acl_special(mut acl: *mut archive_acl, mut type_0: i32, mut permset: i32, mut tag: i32) -> i32 {
     let safe_acl = unsafe { &mut *acl };
     if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access
         && permset & !(0o7 as i32) == 0 as i32
@@ -324,14 +316,12 @@ fn acl_special(
         match tag {
             10002 => {
                 (safe_acl).mode &= !(0o700 as i32) as u32;
-                (safe_acl).mode |=
-                    ((permset & 7 as i32) << 6 as i32) as u32;
+                (safe_acl).mode |= ((permset & 7 as i32) << 6 as i32) as u32;
                 return 0 as i32;
             }
             10004 => {
                 (safe_acl).mode &= !(0o70 as i32) as u32;
-                (safe_acl).mode |=
-                    ((permset & 7 as i32) << 3 as i32) as u32;
+                (safe_acl).mode |= ((permset & 7 as i32) << 3 as i32) as u32;
                 return 0 as i32;
             }
             10006 => {
@@ -455,10 +445,7 @@ unsafe fn acl_new_entry(
  */
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_acl_count(
-    mut acl: *mut archive_acl,
-    mut want_type: i32,
-) -> i32 {
+pub unsafe extern "C" fn archive_acl_count(mut acl: *mut archive_acl, mut want_type: i32) -> i32 {
     let mut count: i32 = 0;
     let mut ap: *mut archive_acl_entry = 0 as *mut archive_acl_entry;
     count = 0 as i32;
@@ -491,10 +478,7 @@ pub unsafe extern "C" fn archive_acl_types(mut acl: *mut archive_acl) -> i32 {
  */
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_acl_reset(
-    mut acl: *mut archive_acl,
-    mut want_type: i32,
-) -> i32 {
+pub unsafe extern "C" fn archive_acl_reset(mut acl: *mut archive_acl, mut want_type: i32) -> i32 {
     let safe_acl = unsafe { &mut *acl };
     let mut count: i32 = 0;
     let mut cutoff: i32 = 0;
@@ -547,16 +531,14 @@ pub unsafe extern "C" fn archive_acl_next(
     if want_type & 0x100 as i32 != 0 as i32 {
         match (*acl).acl_state {
             10002 => {
-                *permset = ((*acl).mode >> 6 as i32 & 7 as i32 as u32)
-                    as i32;
+                *permset = ((*acl).mode >> 6 as i32 & 7 as i32 as u32) as i32;
                 *type_0 = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access;
                 *tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user_obj;
                 (*acl).acl_state = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group_obj;
                 return 0 as i32;
             }
             10004 => {
-                *permset = ((*acl).mode >> 3 as i32 & 7 as i32 as u32)
-                    as i32;
+                *permset = ((*acl).mode >> 3 as i32 & 7 as i32 as u32) as i32;
                 *type_0 = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access;
                 *tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group_obj;
                 (*acl).acl_state = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other;
@@ -606,9 +588,7 @@ fn archive_acl_text_want_type(mut acl: *mut archive_acl, mut flags: i32) -> i32 
     let safe_acl = unsafe { &mut *acl };
     let mut want_type: i32 = 0;
     /* Check if ACL is NFSv4 */
-    if (safe_acl).acl_types & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_nfs4
-        != 0 as i32
-    {
+    if (safe_acl).acl_types & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_nfs4 != 0 as i32 {
         /* NFSv4 should never mix with POSIX.1e */
         if (safe_acl).acl_types & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_posix1e
             != 0 as i32
@@ -667,8 +647,7 @@ unsafe fn archive_acl_text_len(
                     || (*ap).tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other))
             {
                 count += 1; /* "default:" */
-                if want_type & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_default
-                    != 0 as i32
+                if want_type & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_default != 0 as i32
                     && (*ap).type_0 & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_default
                         != 0 as i32
                 {
@@ -727,8 +706,8 @@ unsafe fn archive_acl_text_len(
                     if wide != 0 {
                         r = archive_mstring_get_wcs_safe(a, &mut (*ap).name, &mut wname); /* 2nd colon empty user,group or other */
                         if r == 0 as i32 && !wname.is_null() {
-                            length = (length as u64).wrapping_add(wcslen(wname))
-                                as ssize_t as ssize_t
+                            length =
+                                (length as u64).wrapping_add(wcslen(wname)) as ssize_t as ssize_t
                         } else if r < 0 as i32
                             && *__errno_location_safe() == ARCHIVE_ACL_DEFINED_PARAM.enomem
                         {
@@ -752,8 +731,7 @@ unsafe fn archive_acl_text_len(
                             return 0 as i32 as ssize_t;
                         }
                         if len > 0 as i32 as u64 && !name.is_null() {
-                            length =
-                                (length as u64).wrapping_add(len) as ssize_t as ssize_t
+                            length = (length as u64).wrapping_add(len) as ssize_t as ssize_t
                         } else {
                             length = (length as u64).wrapping_add(
                                 (::std::mem::size_of::<uid_t>() as u64)
@@ -767,8 +745,7 @@ unsafe fn archive_acl_text_len(
                 } else if want_type != ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_nfs4 {
                     length += 1 as i32 as i64
                 }
-                if flags & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_style_solaris
-                    != 0 as i32
+                if flags & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_style_solaris != 0 as i32
                     && want_type & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_posix1e
                         != 0 as i32
                     && ((*ap).tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other
@@ -873,16 +850,12 @@ pub unsafe extern "C" fn archive_acl_to_text_w(
         separator = '\n' as wchar_t
     }
     /* Now, allocate the string and actually populate it. */
-    ws = malloc_safe(
-        (length as u64).wrapping_mul(::std::mem::size_of::<wchar_t>() as u64),
-    ) as *mut wchar_t;
+    ws = malloc_safe((length as u64).wrapping_mul(::std::mem::size_of::<wchar_t>() as u64))
+        as *mut wchar_t;
     wp = ws;
     if wp.is_null() {
         if *__errno_location_safe() == ARCHIVE_ACL_DEFINED_PARAM.enomem {
-            __archive_errx_safe(
-                1 as i32,
-                b"No memory\x00" as *const u8 as *const i8,
-            );
+            __archive_errx_safe(1 as i32, b"No memory\x00" as *const u8 as *const i8);
         }
         return 0 as *mut wchar_t;
     }
@@ -985,10 +958,7 @@ pub unsafe extern "C" fn archive_acl_to_text_w(
     *fresh3 = '\u{0}' as wchar_t;
     len = wcslen(ws);
     if len as ssize_t > length - 1 as i32 as i64 {
-        __archive_errx_safe(
-            1 as i32,
-            b"Buffer overrun\x00" as *const u8 as *const i8,
-        );
+        __archive_errx_safe(1 as i32, b"Buffer overrun\x00" as *const u8 as *const i8);
     }
     if !text_len.is_null() {
         *text_len = len as ssize_t
@@ -1144,8 +1114,7 @@ pub unsafe fn append_entry_w(
                 let fresh10 = *wp;
                 *wp = (*wp).offset(1);
                 *fresh10 = nfsv4_acl_perm_map[i as usize].wc
-            } else if flags & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_style_compact
-                == 0 as i32
+            } else if flags & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_style_compact == 0 as i32
             {
                 let fresh11 = *wp;
                 *wp = (*wp).offset(1);
@@ -1162,8 +1131,7 @@ pub unsafe fn append_entry_w(
                 let fresh13 = *wp;
                 *wp = (*wp).offset(1);
                 *fresh13 = nfsv4_acl_flag_map[i as usize].wc
-            } else if flags & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_style_compact
-                == 0 as i32
+            } else if flags & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_style_compact == 0 as i32
             {
                 let fresh14 = *wp;
                 *wp = (*wp).offset(1);
@@ -1230,14 +1198,7 @@ pub unsafe extern "C" fn archive_acl_to_text_l(
     if want_type == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_posix1e {
         flags |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_style_mark_default
     }
-    length = archive_acl_text_len(
-        acl,
-        want_type,
-        flags,
-        0 as i32,
-        0 as *mut archive,
-        sc,
-    );
+    length = archive_acl_text_len(acl, want_type, flags, 0 as i32, 0 as *mut archive, sc);
     if length == 0 as i32 as i64 {
         return 0 as *mut i8;
     }
@@ -1247,17 +1208,11 @@ pub unsafe extern "C" fn archive_acl_to_text_l(
         separator = '\n' as i32 as i8
     }
     /* Now, allocate the string and actually populate it. */
-    s = malloc_safe(
-        (length as u64)
-            .wrapping_mul(::std::mem::size_of::<i8>() as u64),
-    ) as *mut i8;
+    s = malloc_safe((length as u64).wrapping_mul(::std::mem::size_of::<i8>() as u64)) as *mut i8;
     p = s;
     if p.is_null() {
         if *__errno_location_safe() == ARCHIVE_ACL_DEFINED_PARAM.enomem {
-            __archive_errx_safe(
-                1 as i32,
-                b"No memory\x00" as *const u8 as *const i8,
-            );
+            __archive_errx_safe(1 as i32, b"No memory\x00" as *const u8 as *const i8);
         }
         return 0 as *mut i8;
     }
@@ -1365,10 +1320,7 @@ pub unsafe extern "C" fn archive_acl_to_text_l(
     *fresh20 = '\u{0}' as i32 as i8;
     len = strlen_safe(s);
     if len as ssize_t > length - 1 as i32 as i64 {
-        __archive_errx_safe(
-            1 as i32,
-            b"Buffer overrun\x00" as *const u8 as *const i8,
-        );
+        __archive_errx_safe(1 as i32, b"Buffer overrun\x00" as *const u8 as *const i8);
     }
     if !text_len.is_null() {
         *text_len = len as ssize_t
@@ -1407,13 +1359,7 @@ unsafe fn append_entry(
         10002 => {
             name = 0 as *const i8;
             id = -(1 as i32);
-            if type_0
-                & (0x400 as i32
-                    | 0x800 as i32
-                    | 0x1000 as i32
-                    | 0x2000 as i32)
-                != 0 as i32
-            {
+            if type_0 & (0x400 as i32 | 0x800 as i32 | 0x1000 as i32 | 0x2000 as i32) != 0 as i32 {
                 strcpy_safe(*p, b"owner@\x00" as *const u8 as *const i8);
                 current_block_20 = 14818589718467733107;
             } else {
@@ -1426,13 +1372,7 @@ unsafe fn append_entry(
         10004 => {
             name = 0 as *const i8;
             id = -(1 as i32);
-            if type_0
-                & (0x400 as i32
-                    | 0x800 as i32
-                    | 0x1000 as i32
-                    | 0x2000 as i32)
-                != 0 as i32
-            {
+            if type_0 & (0x400 as i32 | 0x800 as i32 | 0x1000 as i32 | 0x2000 as i32) != 0 as i32 {
                 strcpy_safe(*p, b"group@\x00" as *const u8 as *const i8);
                 current_block_20 = 14818589718467733107;
             } else {
@@ -1490,20 +1430,12 @@ unsafe fn append_entry(
             *p = (*p).offset(strlen_safe(*p) as isize)
         } else if tag == 10001 as i32 || tag == 10003 as i32 {
             append_id(p, id);
-            if type_0
-                & (0x400 as i32
-                    | 0x800 as i32
-                    | 0x1000 as i32
-                    | 0x2000 as i32)
-                == 0 as i32
-            {
+            if type_0 & (0x400 as i32 | 0x800 as i32 | 0x1000 as i32 | 0x2000 as i32) == 0 as i32 {
                 id = -(1 as i32)
             }
         }
         /* Solaris style has no second colon after other and mask */
-        if flags & 0x4 as i32 == 0 as i32
-            || tag != 10006 as i32 && tag != 10005 as i32
-        {
+        if flags & 0x4 as i32 == 0 as i32 || tag != 10006 as i32 && tag != 10005 as i32 {
             let fresh23 = *p;
             *p = (*p).offset(1);
             *fresh23 = ':' as i32 as i8
@@ -1702,8 +1634,7 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
             s = field[0 as i32 as usize].start;
             len = field[0 as i32 as usize]
                 .end
-                .offset_from(field[0 as i32 as usize].start)
-                as i64 as size_t;
+                .offset_from(field[0 as i32 as usize].start) as i64 as size_t;
             if *s == 'd' as wchar_t
                 && (len == 1 as i32 as u64
                     || len >= 7 as i32 as u64
@@ -1715,9 +1646,8 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
             {
                 type_0 = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_default;
                 if len > 7 as i32 as u64 {
-                    field[0 as i32 as usize].start = field[0 as i32 as usize]
-                        .start
-                        .offset(7 as i32 as isize)
+                    field[0 as i32 as usize].start =
+                        field[0 as i32 as usize].start.offset(7 as i32 as isize)
                 } else {
                     n = 1 as i32
                 }
@@ -1741,17 +1671,13 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
             tag = 0 as i32;
             s = field[n as usize].start;
             st = field[n as usize].start.offset(1 as i32 as isize);
-            len = field[n as usize].end.offset_from(field[n as usize].start) as i64
-                as size_t;
+            len = field[n as usize].end.offset_from(field[n as usize].start) as i64 as size_t;
             match *s {
                 117 => {
                     if len == 1 as i32 as u64
                         || len == 4 as i32 as u64
-                            && wmemcmp_safe(
-                                st,
-                                wchar::wchz!("ser").as_ptr(),
-                                3 as i32 as u64,
-                            ) == 0 as i32
+                            && wmemcmp_safe(st, wchar::wchz!("ser").as_ptr(), 3 as i32 as u64)
+                                == 0 as i32
                     {
                         tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user_obj
                     }
@@ -1759,11 +1685,8 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
                 103 => {
                     if len == 1 as i32 as u64
                         || len == 5 as i32 as u64
-                            && wmemcmp_safe(
-                                st,
-                                wchar::wchz!("roup").as_ptr(),
-                                4 as i32 as u64,
-                            ) == 0 as i32
+                            && wmemcmp_safe(st, wchar::wchz!("roup").as_ptr(), 4 as i32 as u64)
+                                == 0 as i32
                     {
                         tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group_obj
                     }
@@ -1771,11 +1694,8 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
                 111 => {
                     if len == 1 as i32 as u64
                         || len == 5 as i32 as u64
-                            && wmemcmp_safe(
-                                st,
-                                wchar::wchz!("ther").as_ptr(),
-                                4 as i32 as u64,
-                            ) == 0 as i32
+                            && wmemcmp_safe(st, wchar::wchz!("ther").as_ptr(), 4 as i32 as u64)
+                                == 0 as i32
                     {
                         tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other
                     }
@@ -1783,11 +1703,8 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
                 109 => {
                     if len == 1 as i32 as u64
                         || len == 4 as i32 as u64
-                            && wmemcmp_safe(
-                                st,
-                                wchar::wchz!("ask").as_ptr(),
-                                3 as i32 as u64,
-                            ) == 0 as i32
+                            && wmemcmp_safe(st, wchar::wchz!("ask").as_ptr(), 3 as i32 as u64)
+                                == 0 as i32
                     {
                         tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_mask
                     }
@@ -1797,8 +1714,7 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
             match tag {
                 10006 | 10005 => {
                     if fields == n + 2 as i32
-                        && field[(n + 1 as i32) as usize].start
-                            < field[(n + 1 as i32) as usize].end
+                        && field[(n + 1 as i32) as usize].start < field[(n + 1 as i32) as usize].end
                         && ismode_w(
                             field[(n + 1 as i32) as usize].start,
                             field[(n + 1 as i32) as usize].end,
@@ -1808,8 +1724,7 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
                         /* This is Solaris-style "other:rwx" */
                         sol = 1 as i32
                     } else if fields == n + 3 as i32
-                        && field[(n + 1 as i32) as usize].start
-                            < field[(n + 1 as i32) as usize].end
+                        && field[(n + 1 as i32) as usize].start < field[(n + 1 as i32) as usize].end
                     {
                         /* Invalid mask or other field */
                         ret = -(20 as i32);
@@ -1818,8 +1733,7 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
                 }
                 10002 | 10004 => {
                     if id != -(1 as i32)
-                        || field[(n + 1 as i32) as usize].start
-                            < field[(n + 1 as i32) as usize].end
+                        || field[(n + 1 as i32) as usize].start < field[(n + 1 as i32) as usize].end
                     {
                         name = field[(n + 1 as i32) as usize];
                         if tag == 10002 as i32 {
@@ -1855,50 +1769,31 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
             s = field[0 as i32 as usize].start;
             len = field[0 as i32 as usize]
                 .end
-                .offset_from(field[0 as i32 as usize].start)
-                as i64 as size_t;
+                .offset_from(field[0 as i32 as usize].start) as i64 as size_t;
             tag = 0 as i32;
             match len {
                 4 => {
-                    if wmemcmp_safe(
-                        s,
-                        wchar::wchz!("user").as_ptr(),
-                        4 as i32 as u64,
-                    ) == 0 as i32
-                    {
+                    if wmemcmp_safe(s, wchar::wchz!("user").as_ptr(), 4 as i32 as u64) == 0 as i32 {
                         tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user
                     }
                 }
                 5 => {
-                    if wmemcmp_safe(
-                        s,
-                        wchar::wchz!("group").as_ptr(),
-                        5 as i32 as u64,
-                    ) == 0 as i32
+                    if wmemcmp_safe(s, wchar::wchz!("group").as_ptr(), 5 as i32 as u64) == 0 as i32
                     {
                         tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group
                     }
                 }
                 6 => {
-                    if wmemcmp_safe(
-                        s,
-                        wchar::wchz!("owner@").as_ptr(),
-                        6 as i32 as u64,
-                    ) == 0 as i32
+                    if wmemcmp_safe(s, wchar::wchz!("owner@").as_ptr(), 6 as i32 as u64) == 0 as i32
                     {
                         tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user_obj
-                    } else if wmemcmp_safe(s, wchar::wchz!("group@").as_ptr(), len)
-                        == 0 as i32
-                    {
+                    } else if wmemcmp_safe(s, wchar::wchz!("group@").as_ptr(), len) == 0 as i32 {
                         tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group_obj
                     }
                 }
                 9 => {
-                    if wmemcmp_safe(
-                        s,
-                        wchar::wchz!("everyone@").as_ptr(),
-                        9 as i32 as u64,
-                    ) == 0 as i32
+                    if wmemcmp_safe(s, wchar::wchz!("everyone@").as_ptr(), 9 as i32 as u64)
+                        == 0 as i32
                     {
                         tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_everyone
                     }
@@ -1941,34 +1836,22 @@ pub unsafe extern "C" fn archive_acl_from_text_w(
                         as i64 as size_t;
                     type_0 = 0 as i32;
                     if len == 4 as i32 as u64 {
-                        if wmemcmp_safe(
-                            s,
-                            wchar::wchz!("deny").as_ptr(),
-                            4 as i32 as u64,
-                        ) == 0 as i32
+                        if wmemcmp_safe(s, wchar::wchz!("deny").as_ptr(), 4 as i32 as u64)
+                            == 0 as i32
                         {
                             type_0 = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_deny
                         }
                     } else if len == 5 as i32 as u64 {
-                        if wmemcmp_safe(
-                            s,
-                            wchar::wchz!("allow").as_ptr(),
-                            5 as i32 as u64,
-                        ) == 0 as i32
+                        if wmemcmp_safe(s, wchar::wchz!("allow").as_ptr(), 5 as i32 as u64)
+                            == 0 as i32
                         {
                             type_0 = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_allow
-                        } else if wmemcmp_safe(
-                            s,
-                            wchar::wchz!("audit").as_ptr(),
-                            5 as i32 as u64,
-                        ) == 0 as i32
+                        } else if wmemcmp_safe(s, wchar::wchz!("audit").as_ptr(), 5 as i32 as u64)
+                            == 0 as i32
                         {
                             type_0 = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_audit
-                        } else if wmemcmp_safe(
-                            s,
-                            wchar::wchz!("alarm").as_ptr(),
-                            5 as i32 as u64,
-                        ) == 0 as i32
+                        } else if wmemcmp_safe(s, wchar::wchz!("alarm").as_ptr(), 5 as i32 as u64)
+                            == 0 as i32
                         {
                             type_0 = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_alram
                         }
@@ -2323,12 +2206,7 @@ pub unsafe extern "C" fn archive_acl_from_text_l(
         permset = 0 as i32;
         name.end = 0 as *const i8;
         name.start = name.end;
-        if want_type
-            != 0x400 as i32
-                | 0x800 as i32
-                | 0x1000 as i32
-                | 0x2000 as i32
-        {
+        if want_type != 0x400 as i32 | 0x800 as i32 | 0x1000 as i32 | 0x2000 as i32 {
             /* POSIX.1e ACLs */
             /*
              * Default keyword "default:user::rwx"
@@ -2341,23 +2219,20 @@ pub unsafe extern "C" fn archive_acl_from_text_l(
             s = field[0 as i32 as usize].start;
             len = field[0 as i32 as usize]
                 .end
-                .offset_from(field[0 as i32 as usize].start)
-                as i64 as size_t;
+                .offset_from(field[0 as i32 as usize].start) as i64 as size_t;
             if *s as i32 == 'd' as i32
                 && (len == 1 as i32 as u64
                     || len >= 7 as i32 as u64
                         && memcmp_safe(
                             s.offset(1 as i32 as isize) as *const (),
-                            b"efault\x00" as *const u8 as *const i8
-                                as *const (),
+                            b"efault\x00" as *const u8 as *const i8 as *const (),
                             6 as i32 as u64,
                         ) == 0 as i32)
             {
                 type_0 = 0x200 as i32;
                 if len > 7 as i32 as u64 {
-                    field[0 as i32 as usize].start = field[0 as i32 as usize]
-                        .start
-                        .offset(7 as i32 as isize)
+                    field[0 as i32 as usize].start =
+                        field[0 as i32 as usize].start.offset(7 as i32 as isize)
                 } else {
                     n = 1 as i32
                 }
@@ -2381,8 +2256,7 @@ pub unsafe extern "C" fn archive_acl_from_text_l(
             tag = 0 as i32;
             s = field[n as usize].start;
             st = field[n as usize].start.offset(1 as i32 as isize);
-            len = field[n as usize].end.offset_from(field[n as usize].start) as i64
-                as size_t;
+            len = field[n as usize].end.offset_from(field[n as usize].start) as i64 as size_t;
             if len == 0 as i32 as u64 {
                 ret = -(20 as i32);
                 continue;
@@ -2393,8 +2267,7 @@ pub unsafe extern "C" fn archive_acl_from_text_l(
                             || len == 4 as i32 as u64
                                 && memcmp_safe(
                                     st as *const (),
-                                    b"ser\x00" as *const u8 as *const i8
-                                        as *const (),
+                                    b"ser\x00" as *const u8 as *const i8 as *const (),
                                     3 as i32 as u64,
                                 ) == 0 as i32
                         {
@@ -2406,8 +2279,7 @@ pub unsafe extern "C" fn archive_acl_from_text_l(
                             || len == 5 as i32 as u64
                                 && memcmp_safe(
                                     st as *const (),
-                                    b"roup\x00" as *const u8 as *const i8
-                                        as *const (),
+                                    b"roup\x00" as *const u8 as *const i8 as *const (),
                                     4 as i32 as u64,
                                 ) == 0 as i32
                         {
@@ -2419,8 +2291,7 @@ pub unsafe extern "C" fn archive_acl_from_text_l(
                             || len == 5 as i32 as u64
                                 && memcmp_safe(
                                     st as *const (),
-                                    b"ther\x00" as *const u8 as *const i8
-                                        as *const (),
+                                    b"ther\x00" as *const u8 as *const i8 as *const (),
                                     4 as i32 as u64,
                                 ) == 0 as i32
                         {
@@ -2432,8 +2303,7 @@ pub unsafe extern "C" fn archive_acl_from_text_l(
                             || len == 4 as i32 as u64
                                 && memcmp_safe(
                                     st as *const (),
-                                    b"ask\x00" as *const u8 as *const i8
-                                        as *const (),
+                                    b"ask\x00" as *const u8 as *const i8 as *const (),
                                     3 as i32 as u64,
                                 ) == 0 as i32
                         {
@@ -2504,8 +2374,7 @@ pub unsafe extern "C" fn archive_acl_from_text_l(
             s = field[0 as i32 as usize].start;
             len = field[0 as i32 as usize]
                 .end
-                .offset_from(field[0 as i32 as usize].start)
-                as i64 as size_t;
+                .offset_from(field[0 as i32 as usize].start) as i64 as size_t;
             tag = 0 as i32;
             match len {
                 4 => {
@@ -2665,11 +2534,7 @@ pub unsafe extern "C" fn archive_acl_from_text_l(
  * the string is non-empty and consists only of decimal digits,
  * false otherwise.
  */
-unsafe extern "C" fn isint(
-    mut start: *const i8,
-    mut end: *const i8,
-    mut result: *mut i32,
-) -> i32 {
+unsafe extern "C" fn isint(mut start: *const i8, mut end: *const i8, mut result: *mut i32) -> i32 {
     let mut n: i32 = 0 as i32;
     if start >= end {
         return 0 as i32;
@@ -2680,8 +2545,7 @@ unsafe extern "C" fn isint(
         }
         if n > 2147483647 as i32 / 10 as i32
             || n == 2147483647 as i32 / 10 as i32
-                && *start as i32 - '0' as i32
-                    > 2147483647 as i32 % 10 as i32
+                && *start as i32 - '0' as i32 > 2147483647 as i32 % 10 as i32
         {
             n = 2147483647 as i32
         } else {
@@ -2802,10 +2666,7 @@ unsafe extern "C" fn next_field(
     mut sep: *mut i8,
 ) {
     /* Skip leading whitespace to find start of field. */
-    while **p as i32 == ' ' as i32
-        || **p as i32 == '\t' as i32
-        || **p as i32 == '\n' as i32
-    {
+    while **p as i32 == ' ' as i32 || **p as i32 == '\t' as i32 || **p as i32 == '\n' as i32 {
         *p = (*p).offset(1)
     }
     *start = *p;
@@ -2834,9 +2695,7 @@ unsafe extern "C" fn next_field(
     }
     /* Handle in-field comments */
     if *sep as i32 == '#' as i32 {
-        while **p as i32 != '\u{0}' as i32
-            && **p as i32 != ',' as i32
-            && **p as i32 != '\n' as i32
+        while **p as i32 != '\u{0}' as i32 && **p as i32 != ',' as i32 && **p as i32 != '\n' as i32
         {
             *p = (*p).offset(1)
         }
@@ -2848,12 +2707,10 @@ unsafe extern "C" fn next_field(
     };
 }
 unsafe extern "C" fn run_static_initializers() {
-    nfsv4_acl_perm_map_size = (::std::mem::size_of::<[nfsv4_acl_perm_map_struct; 14]>()
-        as u64)
+    nfsv4_acl_perm_map_size = (::std::mem::size_of::<[nfsv4_acl_perm_map_struct; 14]>() as u64)
         .wrapping_div(::std::mem::size_of::<nfsv4_acl_perm_map_struct>() as u64)
         as i32;
-    nfsv4_acl_flag_map_size = (::std::mem::size_of::<[nfsv4_acl_perm_map_struct; 7]>()
-        as u64)
+    nfsv4_acl_flag_map_size = (::std::mem::size_of::<[nfsv4_acl_perm_map_struct; 7]>() as u64)
         .wrapping_div(::std::mem::size_of::<nfsv4_acl_perm_map_struct>() as u64)
         as i32
 }

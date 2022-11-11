@@ -20,10 +20,7 @@ pub unsafe fn archive_read_support_format_empty(mut _a: *mut archive) -> i32 {
         a,
         0 as *mut (),
         b"empty\x00" as *const u8 as *const i8,
-        Some(
-            archive_read_format_empty_bid
-                as unsafe fn(_: *mut archive_read, _: i32) -> i32,
-        ),
+        Some(archive_read_format_empty_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
         None,
         Some(
             archive_read_format_empty_read_header
@@ -47,13 +44,9 @@ pub unsafe fn archive_read_support_format_empty(mut _a: *mut archive) -> i32 {
     return r;
 }
 
-unsafe fn archive_read_format_empty_bid(
-    mut a: *mut archive_read,
-    mut best_bid: i32,
-) -> i32 {
+unsafe fn archive_read_format_empty_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
     if best_bid < 1 as i32
-        && __archive_read_ahead_safe(a, 1 as i32 as size_t, 0 as *mut ssize_t)
-            == 0 as *mut ()
+        && __archive_read_ahead_safe(a, 1 as i32 as size_t, 0 as *mut ssize_t) == 0 as *mut ()
     {
         return 1 as i32;
     }

@@ -101,9 +101,7 @@ unsafe fn mtree_strnlen(mut p: *const i8, mut maxlen: size_t) -> size_t {
             let mut i: size_t = 0;
             i = 0 as i32 as size_t;
             while i <= maxlen {
-                if unsafe {
-                    *p.offset(i as isize) as i32 as size_t == 0 as i32 as size_t
-                } {
+                if unsafe { *p.offset(i as isize) as i32 as size_t == 0 as i32 as size_t } {
                     break;
                 }
                 i += 1
@@ -126,9 +124,7 @@ unsafe fn archive_read_format_mtree_options(
     if strcmp_safe(key, b"checkfs\x00" as *const u8 as *const i8) == 0 as i32 {
         /* Time_t is signed. */
         /* Allows to read information missing from the mtree from the file system */
-        if val.is_null()
-            || unsafe { *val.offset(0 as i32 as isize) as i32 == 0 as i32 }
-        {
+        if val.is_null() || unsafe { *val.offset(0 as i32 as isize) as i32 == 0 as i32 } {
             mtree_safe.checkfs = 0 as i32 as i8
         } else {
             mtree_safe.checkfs = 1 as i32 as i8
@@ -151,18 +147,12 @@ unsafe fn free_options(mut head: *mut mtree_option) {
         head = next
     }
 }
-unsafe fn mtree_cmp_node(
-    mut n1: *const archive_rb_node,
-    mut n2: *const archive_rb_node,
-) -> i32 {
+unsafe fn mtree_cmp_node(mut n1: *const archive_rb_node, mut n2: *const archive_rb_node) -> i32 {
     let mut e1: *const mtree_entry = n1 as *const mtree_entry;
     let mut e2: *const mtree_entry = n2 as *const mtree_entry;
     unsafe { return strcmp_safe((*e1).name, (*e2).name) };
 }
-unsafe fn mtree_cmp_key(
-    mut n: *const archive_rb_node,
-    mut key: *const (),
-) -> i32 {
+unsafe fn mtree_cmp_key(mut n: *const archive_rb_node, mut key: *const ()) -> i32 {
     let mut e: *const mtree_entry = n as *const mtree_entry;
     let e_safe = unsafe { &*e };
     return strcmp_safe(e_safe.name, key as *const i8);
@@ -174,17 +164,10 @@ pub unsafe fn archive_read_support_format_mtree(mut _a: *mut archive) -> i32 {
             let mut init = archive_rb_tree_ops {
                 rbto_compare_nodes: Some(
                     mtree_cmp_node
-                        as unsafe fn(
-                            _: *const archive_rb_node,
-                            _: *const archive_rb_node,
-                        ) -> i32,
+                        as unsafe fn(_: *const archive_rb_node, _: *const archive_rb_node) -> i32,
                 ),
                 rbto_compare_key: Some(
-                    mtree_cmp_key
-                        as unsafe fn(
-                            _: *const archive_rb_node,
-                            _: *const (),
-                        ) -> i32,
+                    mtree_cmp_key as unsafe fn(_: *const archive_rb_node, _: *const ()) -> i32,
                 ),
             };
             init
@@ -202,10 +185,7 @@ pub unsafe fn archive_read_support_format_mtree(mut _a: *mut archive) -> i32 {
     if magic_test == ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
-    mtree = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<mtree>() as u64,
-    ) as *mut mtree;
+    mtree = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<mtree>() as u64) as *mut mtree;
     let a_safe = unsafe { &mut *a };
     if mtree.is_null() {
         archive_set_error_safe!(
@@ -225,21 +205,12 @@ pub unsafe fn archive_read_support_format_mtree(mut _a: *mut archive) -> i32 {
         a,
         mtree as *mut (),
         b"mtree\x00" as *const u8 as *const i8,
-        Some(
-            mtree_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32,
-        ),
+        Some(mtree_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
         Some(
             archive_read_format_mtree_options
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *const i8,
-                    _: *const i8,
-                ) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *const i8, _: *const i8) -> i32,
         ),
-        Some(
-            read_header
-                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
-        ),
+        Some(read_header as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32),
         Some(
             read_data
                 as unsafe fn(
@@ -291,11 +262,7 @@ unsafe fn cleanup(mut a: *mut archive_read) -> i32 {
     a_safe.data = 0 as *mut ();
     return ARCHIVE_MTREE_DEFINED_PARAM.archive_ok;
 }
-unsafe fn get_line_size(
-    mut b: *const i8,
-    mut avail: ssize_t,
-    mut nlsize: *mut ssize_t,
-) -> ssize_t {
+unsafe fn get_line_size(mut b: *const i8, mut avail: ssize_t, mut nlsize: *mut ssize_t) -> ssize_t {
     let mut len: ssize_t = 0;
     len = 0 as i32 as ssize_t;
     while len < avail {
@@ -377,9 +344,8 @@ unsafe fn next_line(
     while *nl_safe == 0 as i32 as i64 && len == *avail_safe && quit == 0 {
         let ravail_safe = unsafe { &mut *ravail };
         let mut diff: ssize_t = *ravail_safe - *avail_safe;
-        let mut nbytes_req: size_t = (*ravail_safe + 1023 as i32 as i64
-            & !(1023 as u32) as i64)
-            as size_t;
+        let mut nbytes_req: size_t =
+            (*ravail_safe + 1023 as i32 as i64 & !(1023 as u32) as i64) as size_t;
         let mut tested: ssize_t = 0;
         /*
          * Place an arbitrary limit on the line length.
@@ -400,8 +366,7 @@ unsafe fn next_line(
                 return 0 as i32 as ssize_t;
             }
             /* Reading bytes reaches the end of file. */
-            *b_safe =
-                __archive_read_ahead_safe(a, *avail_safe as size_t, avail) as *const i8; /* Skip some bytes we already determined. */
+            *b_safe = __archive_read_ahead_safe(a, *avail_safe as size_t, avail) as *const i8; /* Skip some bytes we already determined. */
             quit = 1 as i32
         }
         *ravail_safe = *avail_safe;
@@ -420,17 +385,11 @@ unsafe fn next_line(
  * Returns the length of a mtree keyword if matched.
  * Returns 0 if not matched.
  */
-unsafe fn bid_keycmp(
-    mut p: *const i8,
-    mut key: *const i8,
-    mut len: ssize_t,
-) -> i32 {
+unsafe fn bid_keycmp(mut p: *const i8, mut key: *const i8, mut len: ssize_t) -> i32 {
     let mut match_len: i32 = 0 as i32;
     let mut key_safe;
     let mut p_safe;
-    while unsafe {
-        len > 0 as i32 as i64 && *p as i32 != 0 && *key as i32 != 0
-    } {
+    while unsafe { len > 0 as i32 as i64 && *p as i32 != 0 && *key as i32 != 0 } {
         unsafe {
             p_safe = &*p;
             key_safe = &*key;
@@ -632,9 +591,7 @@ unsafe fn bid_keyword_list(
             p = unsafe { p.offset(1) };
             len -= 1;
             while unsafe {
-                len > 0 as i32 as i64
-                    && *p as i32 != ' ' as i32
-                    && *p as i32 != '\t' as i32
+                len > 0 as i32 as i64 && *p as i32 != ' ' as i32 && *p as i32 != '\t' as i32
             } {
                 p = unsafe { p.offset(1) };
                 len -= 1;
@@ -965,10 +922,7 @@ unsafe fn bid_entry(
         loop {
             pb = unsafe { pb.offset(-1) };
             let mut pb_safe = unsafe { &*pb };
-            if !(p <= pb
-                && *pb_safe as i32 != ' ' as i32
-                && *pb_safe as i32 != '\t' as i32)
-            {
+            if !(p <= pb && *pb_safe as i32 != ' ' as i32 && *pb_safe as i32 != '\t' as i32) {
                 break;
             }
             if unsafe { safe_char[*(pb as *const u8) as usize] == 0 } {
@@ -1000,8 +954,7 @@ unsafe fn mtree_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
     let mut p: *const i8 = 0 as *const i8;
     /* UNUSED */
     /* Now let's look at the actual header and see if it matches. */
-    p = __archive_read_ahead_safe(a, strlen_safe(signature), 0 as *mut ssize_t)
-        as *const i8;
+    p = __archive_read_ahead_safe(a, strlen_safe(signature), 0 as *mut ssize_t) as *const i8;
     if p.is_null() {
         return -(1 as i32);
     }
@@ -1017,12 +970,9 @@ unsafe fn mtree_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
      * There is not a mtree signature. Let's try to detect mtree format.
      */
     return detect_form(a, 0 as *mut i32); /* The archive is generated by `NetBSD mtree -D'
-                                                  	* (In this source we call it `form D') . */
+                                          	* (In this source we call it `form D') . */
 }
-unsafe fn detect_form(
-    mut a: *mut archive_read,
-    mut is_form_d: *mut i32,
-) -> i32 {
+unsafe fn detect_form(mut a: *mut archive_read, mut is_form_d: *mut i32) -> i32 {
     let mut p: *const i8 = 0 as *const i8;
     let mut avail: ssize_t = 0;
     let mut ravail: ssize_t = 0;
@@ -1093,8 +1043,7 @@ unsafe fn detect_form(
                     }
                     if unsafe {
                         last_is_path == 0
-                            && *p.offset((len - nl - 1 as i32 as i64) as isize)
-                                as i32
+                            && *p.offset((len - nl - 1 as i32 as i64) as isize) as i32
                                 == '\\' as i32
                     } {
                         /* This line continues. */
@@ -1109,11 +1058,8 @@ unsafe fn detect_form(
                         }
                     }
                 } else if len > 4 as i32 as i64
-                    && strncmp_safe(
-                        p,
-                        b"/set\x00" as *const u8 as *const i8,
-                        4 as i32 as u64,
-                    ) == 0 as i32
+                    && strncmp_safe(p, b"/set\x00" as *const u8 as *const i8, 4 as i32 as u64)
+                        == 0 as i32
                 {
                     if unsafe {
                         bid_keyword_list(
@@ -1127,9 +1073,7 @@ unsafe fn detect_form(
                     }
                     /* This line continues. */
                     if unsafe {
-                        *p.offset((len - nl - 1 as i32 as i64) as isize)
-                            as i32
-                            == '\\' as i32
+                        *p.offset((len - nl - 1 as i32 as i64) as isize) as i32 == '\\' as i32
                     } {
                         multiline = 2 as i32
                     }
@@ -1154,10 +1098,7 @@ unsafe fn detect_form(
                             break;
                         }
                         /* This line continues. */
-                        if *p.offset((len - nl - 1 as i32 as i64) as isize)
-                            as i32
-                            == '\\' as i32
-                        {
+                        if *p.offset((len - nl - 1 as i32 as i64) as isize) as i32 == '\\' as i32 {
                             multiline = 2 as i32
                         }
                     }
@@ -1175,10 +1116,7 @@ unsafe fn detect_form(
             if multiline == 1 as i32 {
                 detected_bytes += len
             }
-            if unsafe {
-                *p.offset((len - nl - 1 as i32 as i64) as isize) as i32
-                    != '\\' as i32
-            } {
+            if unsafe { *p.offset((len - nl - 1 as i32 as i64) as isize) as i32 != '\\' as i32 } {
                 if multiline == 1 as i32 && {
                     entry_cnt += 1;
                     (entry_cnt) >= ARCHIVE_MTREE_DEFINED_PARAM.max_bid_entry
@@ -1231,8 +1169,7 @@ unsafe fn add_option(
         return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
     let opt_safe = unsafe { &mut *opt };
-    opt_safe.value =
-        malloc_safe(len.wrapping_add(1 as i32 as u64)) as *mut i8;
+    opt_safe.value = malloc_safe(len.wrapping_add(1 as i32 as u64)) as *mut i8;
     if opt_safe.value.is_null() {
         free_safe(opt as *mut ());
         archive_set_error_safe!(
@@ -1242,22 +1179,14 @@ unsafe fn add_option(
         );
         return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
-    memcpy_safe(
-        opt_safe.value as *mut (),
-        value as *const (),
-        len,
-    );
+    memcpy_safe(opt_safe.value as *mut (), value as *const (), len);
     unsafe { *(*opt).value.offset(len as isize) = '\u{0}' as i32 as i8 };
     let global_safe = unsafe { &mut *global };
     opt_safe.next = *global_safe;
     *global_safe = opt;
     return ARCHIVE_MTREE_DEFINED_PARAM.archive_ok;
 }
-unsafe fn remove_option(
-    mut global: *mut *mut mtree_option,
-    mut value: *const i8,
-    mut len: size_t,
-) {
+unsafe fn remove_option(mut global: *mut *mut mtree_option, mut value: *const i8, mut len: size_t) {
     let mut iter: *mut mtree_option = 0 as *mut mtree_option;
     let mut last: *mut mtree_option = 0 as *mut mtree_option;
     last = 0 as *mut mtree_option;
@@ -1300,9 +1229,8 @@ unsafe fn process_global_set(
     let mut r: i32 = 0;
     line = unsafe { line.offset(4 as i32 as isize) };
     loop {
-        next = unsafe {
-            line.offset(strspn(line, b" \t\r\n\x00" as *const u8 as *const i8) as isize)
-        };
+        next =
+            unsafe { line.offset(strspn(line, b" \t\r\n\x00" as *const u8 as *const i8) as isize) };
         let next_safe = unsafe { &*next };
         if *next_safe as i32 == '\u{0}' as i32 {
             return ARCHIVE_MTREE_DEFINED_PARAM.archive_ok;
@@ -1321,12 +1249,7 @@ unsafe fn process_global_set(
         }
         remove_option(global, line, len);
         unsafe {
-            r = add_option(
-                a,
-                global,
-                line,
-                next.offset_from(line) as i64 as size_t,
-            );
+            r = add_option(a, global, line, next.offset_from(line) as i64 as size_t);
         }
         if r != ARCHIVE_MTREE_DEFINED_PARAM.archive_ok {
             return r;
@@ -1357,8 +1280,7 @@ unsafe fn process_global_unset(
     loop {
         let mut next_safe;
         unsafe {
-            next = line
-                .offset(strspn(line, b" \t\r\n\x00" as *const u8 as *const i8) as isize);
+            next = line.offset(strspn(line, b" \t\r\n\x00" as *const u8 as *const i8) as isize);
             next_safe = &*next;
         }
         if *next_safe as i32 == '\u{0}' as i32 {
@@ -1368,11 +1290,7 @@ unsafe fn process_global_unset(
         len = strcspn_safe(line, b" \t\r\n\x00" as *const u8 as *const i8);
         let global_safe = unsafe { &mut *global };
         if len == 3 as i32 as u64
-            && strncmp_safe(
-                line,
-                b"all\x00" as *const u8 as *const i8,
-                3 as i32 as u64,
-            ) == 0 as i32
+            && strncmp_safe(line, b"all\x00" as *const u8 as *const i8, 3 as i32 as u64) == 0 as i32
         {
             free_options(*global_safe);
             *global_safe = 0 as *mut mtree_option
@@ -1455,8 +1373,7 @@ unsafe fn process_add_entry(
             }
             i += 1
         }
-        name_len =
-            unsafe { line.offset(line_len as isize).offset_from(name) as i64 as size_t };
+        name_len = unsafe { line.offset(line_len as isize).offset_from(name) as i64 as size_t };
         end = name
     } else {
         /* Filename is first item on line */
@@ -1469,8 +1386,7 @@ unsafe fn process_add_entry(
     }
     /* name/name_len is the name within the line. */
     /* line..end brackets the entire line except the name */
-    entry_safe.name =
-        malloc_safe(name_len.wrapping_add(1 as i32 as u64)) as *mut i8;
+    entry_safe.name = malloc_safe(name_len.wrapping_add(1 as i32 as u64)) as *mut i8;
     if entry_safe.name.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -1479,11 +1395,7 @@ unsafe fn process_add_entry(
         );
         return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
-    memcpy_safe(
-        entry_safe.name as *mut (),
-        name as *const (),
-        name_len,
-    );
+    memcpy_safe(entry_safe.name as *mut (), name as *const (), name_len);
     unsafe {
         *(*entry).name.offset(name_len as isize) = '\u{0}' as i32 as i8;
     }
@@ -1522,8 +1434,7 @@ unsafe fn process_add_entry(
     loop {
         let next_safe;
         unsafe {
-            next = line
-                .offset(strspn(line, b" \t\r\n\x00" as *const u8 as *const i8) as isize);
+            next = line.offset(strspn(line, b" \t\r\n\x00" as *const u8 as *const i8) as isize);
             next_safe = &*next;
         }
         if *next_safe as i32 == '\u{0}' as i32 {
@@ -1618,11 +1529,8 @@ unsafe fn read_mtree(mut a: *mut archive_read, mut mtree: *mut mtree) -> i32 {
                 if *p_safe as i32 != '/' as i32 {
                     r = process_add_entry(a, mtree, &mut global, p, len, &mut last_entry, is_form_d)
                 } else if len > 4 as i32 as i64
-                    && strncmp_safe(
-                        p,
-                        b"/set\x00" as *const u8 as *const i8,
-                        4 as i32 as u64,
-                    ) == 0 as i32
+                    && strncmp_safe(p, b"/set\x00" as *const u8 as *const i8, 4 as i32 as u64)
+                        == 0 as i32
                 {
                     if unsafe {
                         *p.offset(4 as i32 as isize) as i32 != ' ' as i32
@@ -1670,10 +1578,7 @@ unsafe fn read_mtree(mut a: *mut archive_read, mut mtree: *mut mtree) -> i32 {
  * Read in the entire mtree file into memory on the first request.
  * Then use the next unused file to satisfy each header request.
  */
-unsafe fn read_header(
-    mut a: *mut archive_read,
-    mut entry: *mut archive_entry,
-) -> i32 {
+unsafe fn read_header(mut a: *mut archive_read, mut entry: *mut archive_entry) -> i32 {
     let mut mtree: *mut mtree = 0 as *mut mtree;
     let mut p: *mut i8 = 0 as *mut i8;
     let mut r: i32 = 0;
@@ -1729,8 +1634,7 @@ unsafe fn read_header(
                         p = p.offset(-1)
                     }
                     (*mtree).current_dir.length =
-                        (p.offset_from((*mtree).current_dir.s) as i64
-                            + 1 as i32 as i64) as size_t
+                        (p.offset_from((*mtree).current_dir.s) as i64 + 1 as i32 as i64) as size_t
                 }
             }
         }
@@ -1788,10 +1692,8 @@ unsafe fn parse_file(
          * with pathname canonicalization, which is a very
          * tricky subject.)
          */
-        mp = __archive_rb_tree_find_node_safe(
-            &mut mtree_safe.rbtree,
-            mentry_safe.name as *const (),
-        ) as *mut mtree_entry;
+        mp = __archive_rb_tree_find_node_safe(&mut mtree_safe.rbtree, mentry_safe.name as *const ())
+            as *mut mtree_entry;
         let mut mp_safe;
         while !mp.is_null() {
             mp_safe = unsafe { &mut *mp };
@@ -1818,10 +1720,7 @@ unsafe fn parse_file(
                 b"/\x00" as *const u8 as *const i8 as *const (),
             );
         }
-        archive_strcat_safe(
-            &mut mtree_safe.current_dir,
-            mentry_safe.name as *const (),
-        );
+        archive_strcat_safe(&mut mtree_safe.current_dir, mentry_safe.name as *const ());
         archive_entry_copy_pathname_safe(entry, mtree_safe.current_dir.s);
         if archive_entry_filetype_safe(entry) != ARCHIVE_MTREE_DEFINED_PARAM.ae_ifdir as mode_t {
             mtree_safe.current_dir.length = n
@@ -1894,8 +1793,7 @@ unsafe fn parse_file(
          */
         let st_safe = unsafe { &mut *st };
         if !st.is_null() {
-            let mut conditions: bool = st_safe.st_mode
-                & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as u32
+            let mut conditions: bool = st_safe.st_mode & ARCHIVE_MTREE_DEFINED_PARAM.s_ifmt as u32
                 == ARCHIVE_MTREE_DEFINED_PARAM.s_ifreg as u32
                 && archive_entry_filetype_safe(entry)
                     == ARCHIVE_MTREE_DEFINED_PARAM.ae_ifreg as mode_t;
@@ -2177,10 +2075,7 @@ unsafe fn parse_line(
  */
 /* strsep() is not in C90, but strcspn() is. */
 /* Taken from http://unixpapa.com/incnote/string.html */
-unsafe fn la_strsep(
-    mut sp: *mut *mut i8,
-    mut sep: *const i8,
-) -> *mut i8 {
+unsafe fn la_strsep(mut sp: *mut *mut i8, mut sep: *const i8) -> *mut i8 {
     let mut p: *mut i8 = 0 as *mut i8;
     let mut s: *mut i8 = 0 as *mut i8;
     if unsafe { sp.is_null() || (*sp).is_null() || **sp as i32 == '\u{0}' as i32 } {
@@ -2199,11 +2094,7 @@ unsafe fn la_strsep(
     *sp_safe = p;
     return s;
 }
-unsafe fn parse_device(
-    mut pdev: *mut dev_t,
-    mut a: *mut archive,
-    mut val: *mut i8,
-) -> i32 {
+unsafe fn parse_device(mut pdev: *mut dev_t, mut a: *mut archive, mut val: *mut i8) -> i32 {
     let mut numbers: [u64; 3] = [0; 3];
     let mut p: *mut i8 = 0 as *mut i8;
     let mut dev: *mut i8 = 0 as *mut i8;
@@ -2342,8 +2233,7 @@ unsafe fn parse_digest(
         );
         return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
-    len =
-        (len as u64).wrapping_mul(2 as i32 as u64) as size_t as size_t;
+    len = (len as u64).wrapping_mul(2 as i32 as u64) as size_t as size_t;
     if mtree_strnlen(digest, len.wrapping_add(1 as i32 as u64)) != len {
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
@@ -2357,9 +2247,7 @@ unsafe fn parse_digest(
     while i < len {
         unsafe {
             high = parse_hex_nibble(*digest.offset(i as isize));
-            low = parse_hex_nibble(
-                *digest.offset(i.wrapping_add(1 as i32 as u64) as isize),
-            );
+            low = parse_hex_nibble(*digest.offset(i.wrapping_add(1 as i32 as u64) as isize));
         }
         if high == -(1 as i32) || low == -(1 as i32) {
             archive_set_error_safe!(
@@ -2370,8 +2258,7 @@ unsafe fn parse_digest(
             return ARCHIVE_MTREE_DEFINED_PARAM.archive_warn;
         }
         digest_buf[j as usize] = (high << 4 as i32 | low) as u8;
-        i = (i as u64).wrapping_add(2 as i32 as u64) as size_t
-            as size_t;
+        i = (i as u64).wrapping_add(2 as i32 as u64) as size_t as size_t;
         j = j.wrapping_add(1)
     }
     return archive_entry_set_digest_safe(entry, type_0, digest_buf.as_mut_ptr());
@@ -2432,10 +2319,8 @@ unsafe fn parse_keyword(
     let mut current_block_120: u64;
     match unsafe { *key.offset(0 as i32 as isize) as i32 } {
         99 => {
-            if strcmp_safe(key, b"content\x00" as *const u8 as *const i8)
-                == 0 as i32
-                || strcmp_safe(key, b"contents\x00" as *const u8 as *const i8)
-                    == 0 as i32
+            if strcmp_safe(key, b"content\x00" as *const u8 as *const i8) == 0 as i32
+                || strcmp_safe(key, b"contents\x00" as *const u8 as *const i8) == 0 as i32
             {
                 parse_escapes(val, 0 as *mut mtree_entry);
                 mtree_safe.contents_name.length = 0 as i32 as size_t;
@@ -2449,9 +2334,7 @@ unsafe fn parse_keyword(
                     }),
                 );
                 current_block_120 = 14133002253412689704;
-            } else if strcmp_safe(key, b"cksum\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            } else if strcmp_safe(key, b"cksum\x00" as *const u8 as *const i8) == 0 as i32 {
                 current_block_120 = 14133002253412689704;
             } else {
                 current_block_120 = 15612923873456120061;
@@ -2497,9 +2380,7 @@ unsafe fn parse_keyword(
     let a_safe = unsafe { &mut *a };
     match current_block_120 {
         15612923873456120061 => {
-            if strcmp_safe(key, b"device\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            if strcmp_safe(key, b"device\x00" as *const u8 as *const i8) == 0 as i32 {
                 /* stat(2) st_rdev field, e.g. the major/minor IDs
                  * of a char/block special file */
                 let mut r: i32 = 0;
@@ -2517,9 +2398,7 @@ unsafe fn parse_keyword(
     }
     match current_block_120 {
         2516300604401959109 => {
-            if strcmp_safe(key, b"flags\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            if strcmp_safe(key, b"flags\x00" as *const u8 as *const i8) == 0 as i32 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_fflags;
                 archive_entry_copy_fflags_text_safe(entry, val);
                 current_block_120 = 14133002253412689704;
@@ -2531,14 +2410,11 @@ unsafe fn parse_keyword(
     }
     match current_block_120 {
         6285744289709947169 => {
-            if strcmp_safe(key, b"gid\x00" as *const u8 as *const i8) == 0 as i32
-            {
+            if strcmp_safe(key, b"gid\x00" as *const u8 as *const i8) == 0 as i32 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_gid;
                 archive_entry_set_gid_safe(entry, mtree_atol(&mut val, 10 as i32));
                 current_block_120 = 14133002253412689704;
-            } else if strcmp_safe(key, b"gname\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            } else if strcmp_safe(key, b"gname\x00" as *const u8 as *const i8) == 0 as i32 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_gname;
                 archive_entry_copy_gname_safe(entry, val);
                 current_block_120 = 14133002253412689704;
@@ -2550,9 +2426,7 @@ unsafe fn parse_keyword(
     }
     match current_block_120 {
         8078319602943683960 => {
-            if strcmp_safe(key, b"inode\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            if strcmp_safe(key, b"inode\x00" as *const u8 as *const i8) == 0 as i32 {
                 archive_entry_set_ino_safe(entry, mtree_atol(&mut val, 10 as i32));
                 current_block_120 = 14133002253412689704;
             } else {
@@ -2563,8 +2437,7 @@ unsafe fn parse_keyword(
     }
     match current_block_120 {
         14398214535289615461 => {
-            if strcmp_safe(key, b"link\x00" as *const u8 as *const i8) == 0 as i32
-            {
+            if strcmp_safe(key, b"link\x00" as *const u8 as *const i8) == 0 as i32 {
                 archive_entry_copy_symlink_safe(entry, val);
                 current_block_120 = 14133002253412689704;
             } else {
@@ -2576,8 +2449,7 @@ unsafe fn parse_keyword(
     match current_block_120 {
         2086966976840294615 => {
             if strcmp_safe(key, b"md5\x00" as *const u8 as *const i8) == 0 as i32
-                || strcmp_safe(key, b"md5digest\x00" as *const u8 as *const i8)
-                    == 0 as i32
+                || strcmp_safe(key, b"md5digest\x00" as *const u8 as *const i8) == 0 as i32
             {
                 return parse_digest(
                     a,
@@ -2586,17 +2458,13 @@ unsafe fn parse_keyword(
                     ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_md5,
                 );
             }
-            if strcmp_safe(key, b"mode\x00" as *const u8 as *const i8) == 0 as i32
-            {
+            if strcmp_safe(key, b"mode\x00" as *const u8 as *const i8) == 0 as i32 {
                 if unsafe {
                     *val.offset(0 as i32 as isize) as i32 >= '0' as i32
                         && *val.offset(0 as i32 as isize) as i32 <= '7' as i32
                 } {
                     *parsed_kws_safe |= 0x40 as i32;
-                    archive_entry_set_perm_safe(
-                        entry,
-                        mtree_atol(&mut val, 8 as i32) as mode_t,
-                    );
+                    archive_entry_set_perm_safe(entry, mtree_atol(&mut val, 8 as i32) as mode_t);
                 } else {
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
@@ -2616,14 +2484,9 @@ unsafe fn parse_keyword(
     }
     match current_block_120 {
         2945138788423298433 => {
-            if strcmp_safe(key, b"nlink\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            if strcmp_safe(key, b"nlink\x00" as *const u8 as *const i8) == 0 as i32 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nlink;
-                archive_entry_set_nlink_safe(
-                    entry,
-                    mtree_atol(&mut val, 10 as i32) as u32,
-                );
+                archive_entry_set_nlink_safe(entry, mtree_atol(&mut val, 10 as i32) as u32);
                 current_block_120 = 14133002253412689704;
             } else {
                 current_block_120 = 3583232612309986830;
@@ -2633,9 +2496,7 @@ unsafe fn parse_keyword(
     }
     match current_block_120 {
         3583232612309986830 => {
-            if strcmp_safe(key, b"resdevice\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            if strcmp_safe(key, b"resdevice\x00" as *const u8 as *const i8) == 0 as i32 {
                 /* stat(2) st_dev field, e.g. the device ID where the
                  * inode resides */
                 let mut r_0: i32 = 0;
@@ -2646,10 +2507,8 @@ unsafe fn parse_keyword(
                 }
                 return r_0;
             }
-            if strcmp_safe(key, b"rmd160\x00" as *const u8 as *const i8)
-                == 0 as i32
-                || strcmp_safe(key, b"rmd160digest\x00" as *const u8 as *const i8)
-                    == 0 as i32
+            if strcmp_safe(key, b"rmd160\x00" as *const u8 as *const i8) == 0 as i32
+                || strcmp_safe(key, b"rmd160digest\x00" as *const u8 as *const i8) == 0 as i32
             {
                 return parse_digest(
                     a,
@@ -2665,8 +2524,7 @@ unsafe fn parse_keyword(
     match current_block_120 {
         6521175633009022335 => {
             if strcmp_safe(key, b"sha1\x00" as *const u8 as *const i8) == 0 as i32
-                || strcmp_safe(key, b"sha1digest\x00" as *const u8 as *const i8)
-                    == 0 as i32
+                || strcmp_safe(key, b"sha1digest\x00" as *const u8 as *const i8) == 0 as i32
             {
                 return parse_digest(
                     a,
@@ -2675,10 +2533,8 @@ unsafe fn parse_keyword(
                     ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha1,
                 );
             }
-            if strcmp_safe(key, b"sha256\x00" as *const u8 as *const i8)
-                == 0 as i32
-                || strcmp_safe(key, b"sha256digest\x00" as *const u8 as *const i8)
-                    == 0 as i32
+            if strcmp_safe(key, b"sha256\x00" as *const u8 as *const i8) == 0 as i32
+                || strcmp_safe(key, b"sha256digest\x00" as *const u8 as *const i8) == 0 as i32
             {
                 return parse_digest(
                     a,
@@ -2687,10 +2543,8 @@ unsafe fn parse_keyword(
                     ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha256,
                 );
             }
-            if strcmp_safe(key, b"sha384\x00" as *const u8 as *const i8)
-                == 0 as i32
-                || strcmp_safe(key, b"sha384digest\x00" as *const u8 as *const i8)
-                    == 0 as i32
+            if strcmp_safe(key, b"sha384\x00" as *const u8 as *const i8) == 0 as i32
+                || strcmp_safe(key, b"sha384digest\x00" as *const u8 as *const i8) == 0 as i32
             {
                 return parse_digest(
                     a,
@@ -2699,10 +2553,8 @@ unsafe fn parse_keyword(
                     ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha384,
                 );
             }
-            if strcmp_safe(key, b"sha512\x00" as *const u8 as *const i8)
-                == 0 as i32
-                || strcmp_safe(key, b"sha512digest\x00" as *const u8 as *const i8)
-                    == 0 as i32
+            if strcmp_safe(key, b"sha512\x00" as *const u8 as *const i8) == 0 as i32
+                || strcmp_safe(key, b"sha512digest\x00" as *const u8 as *const i8) == 0 as i32
             {
                 return parse_digest(
                     a,
@@ -2711,8 +2563,7 @@ unsafe fn parse_keyword(
                     ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha512,
                 );
             }
-            if strcmp_safe(key, b"size\x00" as *const u8 as *const i8) == 0 as i32
-            {
+            if strcmp_safe(key, b"size\x00" as *const u8 as *const i8) == 0 as i32 {
                 archive_entry_set_size_safe(entry, mtree_atol(&mut val, 10 as i32));
                 current_block_120 = 14133002253412689704;
             } else {
@@ -2723,12 +2574,9 @@ unsafe fn parse_keyword(
     }
     match current_block_120 {
         13294178446195614068 => {
-            if strcmp_safe(key, b"tags\x00" as *const u8 as *const i8) == 0 as i32
-            {
+            if strcmp_safe(key, b"tags\x00" as *const u8 as *const i8) == 0 as i32 {
                 current_block_120 = 14133002253412689704;
-            } else if strcmp_safe(key, b"time\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            } else if strcmp_safe(key, b"time\x00" as *const u8 as *const i8) == 0 as i32 {
                 let mut m: int64_t = 0;
                 let mut my_time_t_max: int64_t = get_time_t_max();
                 let mut my_time_t_min: int64_t = get_time_t_min();
@@ -2758,15 +2606,11 @@ unsafe fn parse_keyword(
                 }
                 archive_entry_set_mtime_safe(entry, m, ns);
                 current_block_120 = 14133002253412689704;
-            } else if strcmp_safe(key, b"type\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            } else if strcmp_safe(key, b"type\x00" as *const u8 as *const i8) == 0 as i32 {
                 let mut current_block_110: u64;
                 match unsafe { *val.offset(0 as i32 as isize) as i32 } {
                     98 => {
-                        if strcmp_safe(val, b"block\x00" as *const u8 as *const i8)
-                            == 0 as i32
-                        {
+                        if strcmp_safe(val, b"block\x00" as *const u8 as *const i8) == 0 as i32 {
                             archive_entry_set_filetype_safe(
                                 entry,
                                 ARCHIVE_MTREE_DEFINED_PARAM.ae_ifblk as mode_t,
@@ -2794,9 +2638,7 @@ unsafe fn parse_keyword(
                 }
                 match current_block_110 {
                     9913677422114762036 => {
-                        if strcmp_safe(val, b"char\x00" as *const u8 as *const i8)
-                            == 0 as i32
-                        {
+                        if strcmp_safe(val, b"char\x00" as *const u8 as *const i8) == 0 as i32 {
                             archive_entry_set_filetype_safe(
                                 entry,
                                 ARCHIVE_MTREE_DEFINED_PARAM.ae_ifchr as mode_t,
@@ -2810,9 +2652,7 @@ unsafe fn parse_keyword(
                 }
                 match current_block_110 {
                     16822926593281005087 => {
-                        if strcmp_safe(val, b"dir\x00" as *const u8 as *const i8)
-                            == 0 as i32
-                        {
+                        if strcmp_safe(val, b"dir\x00" as *const u8 as *const i8) == 0 as i32 {
                             archive_entry_set_filetype_safe(
                                 entry,
                                 ARCHIVE_MTREE_DEFINED_PARAM.ae_ifdir as mode_t,
@@ -2826,9 +2666,7 @@ unsafe fn parse_keyword(
                 }
                 match current_block_110 {
                     1613355923386801241 => {
-                        if strcmp_safe(val, b"fifo\x00" as *const u8 as *const i8)
-                            == 0 as i32
-                        {
+                        if strcmp_safe(val, b"fifo\x00" as *const u8 as *const i8) == 0 as i32 {
                             archive_entry_set_filetype_safe(
                                 entry,
                                 ARCHIVE_MTREE_DEFINED_PARAM.ae_ififo as mode_t,
@@ -2850,9 +2688,7 @@ unsafe fn parse_keyword(
                 }
                 match current_block_110 {
                     1673727746689388553 => {
-                        if strcmp_safe(val, b"link\x00" as *const u8 as *const i8)
-                            == 0 as i32
-                        {
+                        if strcmp_safe(val, b"link\x00" as *const u8 as *const i8) == 0 as i32 {
                             archive_entry_set_filetype_safe(
                                 entry,
                                 ARCHIVE_MTREE_DEFINED_PARAM.ae_iflnk as mode_t,
@@ -2891,14 +2727,11 @@ unsafe fn parse_keyword(
     }
     match current_block_120 {
         534366734980114256 => {
-            if strcmp_safe(key, b"uid\x00" as *const u8 as *const i8) == 0 as i32
-            {
+            if strcmp_safe(key, b"uid\x00" as *const u8 as *const i8) == 0 as i32 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_uid;
                 archive_entry_set_uid_safe(entry, mtree_atol(&mut val, 10 as i32));
                 current_block_120 = 14133002253412689704;
-            } else if strcmp_safe(key, b"uname\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            } else if strcmp_safe(key, b"uname\x00" as *const u8 as *const i8) == 0 as i32 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_uname;
                 archive_entry_copy_uname_safe(entry, val);
                 current_block_120 = 14133002253412689704;
@@ -2977,11 +2810,7 @@ unsafe fn read_data(
     } else {
         bytes_to_read = mtree_safe.buffsize
     }
-    bytes_read = read_safe(
-        mtree_safe.fd,
-        mtree_safe.buff as *mut (),
-        bytes_to_read,
-    );
+    bytes_read = read_safe(mtree_safe.fd, mtree_safe.buff as *mut (), bytes_to_read);
     if bytes_read < 0 as i32 as i64 {
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
@@ -3020,9 +2849,7 @@ unsafe fn parse_escapes(mut src: *mut i8, mut mentry: *mut mtree_entry) {
     let mut dest: *mut i8 = src;
     let mut c: i8 = 0;
     let mentry_safe = unsafe { &mut *mentry };
-    if !mentry.is_null()
-        && strcmp_safe(src, b".\x00" as *const u8 as *const i8) == 0 as i32
-    {
+    if !mentry.is_null() && strcmp_safe(src, b".\x00" as *const u8 as *const i8) == 0 as i32 {
         mentry_safe.full = 1 as i32 as i8
     }
     while unsafe { *src as i32 != '\u{0}' as i32 } {
@@ -3110,14 +2937,12 @@ unsafe fn parse_escapes(mut src: *mut i8, mut mentry: *mut mtree_entry) {
                         && *src.offset(2 as i32 as isize) as i32 >= '0' as i32
                         && *src.offset(2 as i32 as isize) as i32 <= '7' as i32
                     {
-                        c = ((*src.offset(0 as i32 as isize) as i32 - '0' as i32)
-                            << 6 as i32) as i8;
-                        c = (c as i32
-                            | (*src.offset(1 as i32 as isize) as i32 - '0' as i32)
-                                << 3 as i32) as i8;
-                        c = (c as i32
-                            | *src.offset(2 as i32 as isize) as i32 - '0' as i32)
+                        c = ((*src.offset(0 as i32 as isize) as i32 - '0' as i32) << 6 as i32)
                             as i8;
+                        c = (c as i32
+                            | (*src.offset(1 as i32 as isize) as i32 - '0' as i32) << 3 as i32)
+                            as i8;
+                        c = (c as i32 | *src.offset(2 as i32 as isize) as i32 - '0' as i32) as i8;
                         src = src.offset(3 as i32 as isize)
                     }
                 },
@@ -3173,8 +2998,7 @@ unsafe fn mtree_atol(mut p: *mut *mut i8, mut base: i32) -> int64_t {
     }
     if unsafe { **p as i32 == '-' as i32 } {
         limit = ARCHIVE_MTREE_DEFINED_PARAM.int64_min / base as i64;
-        last_digit_limit =
-            -(ARCHIVE_MTREE_DEFINED_PARAM.int64_min % base as i64) as i32;
+        last_digit_limit = -(ARCHIVE_MTREE_DEFINED_PARAM.int64_min % base as i64) as i32;
         *p_safe = unsafe { (*p).offset(1) };
         l = 0 as i32 as int64_t;
         digit = unsafe { parsedigit(**p) };
@@ -3189,8 +3013,7 @@ unsafe fn mtree_atol(mut p: *mut *mut i8, mut base: i32) -> int64_t {
         return l;
     } else {
         limit = ARCHIVE_MTREE_DEFINED_PARAM.int64_max / base as i64;
-        last_digit_limit =
-            (ARCHIVE_MTREE_DEFINED_PARAM.int64_max % base as i64) as i32;
+        last_digit_limit = (ARCHIVE_MTREE_DEFINED_PARAM.int64_max % base as i64) as i32;
         l = 0 as i32 as int64_t;
         digit = unsafe { parsedigit(**p) };
         while digit >= 0 as i32 && digit < base {
@@ -3236,9 +3059,7 @@ unsafe fn readline(
         /* If we found '\n', trim the read to end exactly there. */
         if !nl.is_null() {
             unsafe {
-                bytes_read = (nl as *const i8).offset_from(t as *const i8)
-                    as i64
-                    + 1 as i32 as i64
+                bytes_read = (nl as *const i8).offset_from(t as *const i8) as i64 + 1 as i32 as i64
             }
         }
         let a_safe = unsafe { &mut *a };
@@ -3292,12 +3113,9 @@ unsafe fn readline(
                         if *u.offset(1 as i32 as isize) as i32 == '\n' as i32 {
                             /* Trim escaped newline. */
                             total_size -= 2 as i32 as i64;
-                            *(*mtree).line.s.offset(total_size as isize) =
-                                '\u{0}' as i32 as i8;
+                            *(*mtree).line.s.offset(total_size as isize) = '\u{0}' as i32 as i8;
                             break;
-                        } else if *u.offset(1 as i32 as isize) as i32
-                            != '\u{0}' as i32
-                        {
+                        } else if *u.offset(1 as i32 as isize) as i32 != '\u{0}' as i32 {
                             /* Skip the two-char escape sequence */
                             u = u.offset(1)
                         }
@@ -3318,29 +3136,21 @@ pub unsafe fn archive_test_parse_keyword(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut mtree: *mut mtree = 0 as *mut mtree;
-    mtree = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<mtree>() as u64,
-    ) as *mut mtree;
+    mtree = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<mtree>() as u64) as *mut mtree;
     let mut mtree_option: *mut mtree_option = 0 as *mut mtree_option;
     mtree_option = calloc_safe(
         1 as i32 as u64,
         ::std::mem::size_of::<mtree_option>() as u64,
     ) as *mut mtree_option;
     let mut mtree_entry: *mut mtree_entry = 0 as *mut mtree_entry;
-    mtree_entry = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<mtree_entry>() as u64,
-    ) as *mut mtree_entry;
+    mtree_entry = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<mtree_entry>() as u64)
+        as *mut mtree_entry;
     (*(mtree_option)).value = b"optional" as *const u8 as *mut i8;
     parse_keyword(a, mtree, entry, mtree_option, parsed_kws);
 }
 
 #[no_mangle]
-pub unsafe fn archive_test_process_global_unset(
-    mut _a: *mut archive,
-    mut line: *const i8,
-) {
+pub unsafe fn archive_test_process_global_unset(mut _a: *mut archive, mut line: *const i8) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut mtree_option: *mut mtree_option = 0 as *mut mtree_option;
     mtree_option = calloc_safe(
@@ -3352,10 +3162,7 @@ pub unsafe fn archive_test_process_global_unset(
 }
 
 #[no_mangle]
-pub unsafe fn archive_test_la_strsep(
-    mut sp: *mut *mut i8,
-    mut sep: *const i8,
-) {
+pub unsafe fn archive_test_la_strsep(mut sp: *mut *mut i8, mut sep: *const i8) {
     la_strsep(sp, sep);
 }
 
@@ -3385,18 +3192,11 @@ pub unsafe fn archive_test_archive_read_support_format_mtree() {
 }
 
 #[no_mangle]
-pub unsafe fn archive_test_read_header(
-    mut _a: *mut archive,
-    mut entry: *mut archive_entry,
-) {
+pub unsafe fn archive_test_read_header(mut _a: *mut archive, mut entry: *mut archive_entry) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut mtree: *mut mtree = 0 as *mut mtree;
-    mtree = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<mtree>() as u64,
-        )
-    } as *mut mtree;
+    mtree = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<mtree>() as u64) }
+        as *mut mtree;
     (*mtree).fd = 1;
     (*(*a).format).data = mtree as *mut ();
     read_header(a, entry);
@@ -3413,8 +3213,7 @@ unsafe fn archive_test_parse_device(mut a: *mut archive) {
         '3' as i32 as i8,
         '4' as i32 as i8,
     ];
-    let mut val: *mut i8 =
-        &valp as *const [i8; 5] as *mut [i8; 5] as *mut i8;
+    let mut val: *mut i8 = &valp as *const [i8; 5] as *mut [i8; 5] as *mut i8;
     parse_device(pdev, a, val);
     let mut valp2: [i8; 9] = [
         '1' as i32 as i8,
@@ -3427,8 +3226,7 @@ unsafe fn archive_test_parse_device(mut a: *mut archive) {
         's' as i32 as i8,
         'd' as i32 as i8,
     ];
-    let mut val2: *mut i8 =
-        &valp2 as *const [i8; 9] as *mut [i8; 9] as *mut i8;
+    let mut val2: *mut i8 = &valp2 as *const [i8; 9] as *mut [i8; 9] as *mut i8;
     parse_device(pdev, a, val2);
 }
 
@@ -3436,12 +3234,8 @@ unsafe fn archive_test_parse_device(mut a: *mut archive) {
 unsafe fn archive_test_archive_read_format_mtree_options(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut mtree: *mut mtree = 0 as *mut mtree;
-    mtree = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<mtree>() as u64,
-        )
-    } as *mut mtree;
+    mtree = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<mtree>() as u64) }
+        as *mut mtree;
     (*(*a).format).data = mtree as *mut ();
     archive_read_format_mtree_options(
         a,
@@ -3462,14 +3256,8 @@ unsafe fn archive_test_bid_keyword_list() {
 
 #[no_mangle]
 unsafe fn archive_test_mtree_atol() {
-    let mut p1: [i8; 3] = [
-        '0' as i32 as i8,
-        'x' as i32 as i8,
-        'x' as i32 as i8,
-    ];
-    let mut p2: *mut i8 =
-        &p1 as *const [i8; 3] as *mut [i8; 3] as *mut i8;
-    let mut p: *mut *mut i8 =
-        unsafe { &p2 as *const *mut i8 as *mut *mut i8 };
+    let mut p1: [i8; 3] = ['0' as i32 as i8, 'x' as i32 as i8, 'x' as i32 as i8];
+    let mut p2: *mut i8 = &p1 as *const [i8; 3] as *mut [i8; 3] as *mut i8;
+    let mut p: *mut *mut i8 = unsafe { &p2 as *const *mut i8 as *mut *mut i8 };
     mtree_atol(p, 0);
 }

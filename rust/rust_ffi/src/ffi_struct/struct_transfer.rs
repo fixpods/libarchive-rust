@@ -1,44 +1,27 @@
 use c2rust_bitfields::*;
 use ffi_alias::alias_set::*;
 
-pub type archive_read_callback = unsafe extern "C" fn(
-    _: *mut archive,
-    _: *mut (),
-    _: *mut *const (),
-) -> la_ssize_t;
+pub type archive_read_callback =
+    unsafe extern "C" fn(_: *mut archive, _: *mut (), _: *mut *const ()) -> la_ssize_t;
 
 pub type archive_skip_callback =
     unsafe extern "C" fn(_: *mut archive, _: *mut (), _: la_int64_t) -> la_int64_t;
 
-pub type archive_seek_callback = unsafe extern "C" fn(
-    _: *mut archive,
-    _: *mut (),
-    _: la_int64_t,
-    _: i32,
-) -> la_int64_t;
-pub type archive_open_callback =
-    unsafe extern "C" fn(_: *mut archive, _: *mut ()) -> i32;
-pub type archive_close_callback =
-    unsafe extern "C" fn(_: *mut archive, _: *mut ()) -> i32;
+pub type archive_seek_callback =
+    unsafe extern "C" fn(_: *mut archive, _: *mut (), _: la_int64_t, _: i32) -> la_int64_t;
+pub type archive_open_callback = unsafe extern "C" fn(_: *mut archive, _: *mut ()) -> i32;
+pub type archive_close_callback = unsafe extern "C" fn(_: *mut archive, _: *mut ()) -> i32;
 
-pub type archive_switch_callback = unsafe extern "C" fn(
-    _: *mut archive,
-    _: *mut (),
-    _: *mut (),
-) -> i32;
+pub type archive_switch_callback =
+    unsafe extern "C" fn(_: *mut archive, _: *mut (), _: *mut ()) -> i32;
 
 pub type archive_passphrase_callback =
     unsafe extern "C" fn(_: *mut archive, _: *mut ()) -> *const i8;
 
-pub type archive_write_callback = unsafe extern "C" fn(
-    _: *mut archive,
-    _: *mut (),
-    _: *const (),
-    _: size_t,
-) -> la_ssize_t;
+pub type archive_write_callback =
+    unsafe extern "C" fn(_: *mut archive, _: *mut (), _: *const (), _: size_t) -> la_ssize_t;
 
-pub type archive_free_callback =
-    unsafe extern "C" fn(_: *mut archive, _: *mut ()) -> i32;
+pub type archive_free_callback = unsafe extern "C" fn(_: *mut archive, _: *mut ()) -> i32;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive {
@@ -84,12 +67,7 @@ pub struct archive_vtable {
     pub archive_write_data:
         Option<unsafe extern "C" fn(_: *mut archive, _: *const (), _: size_t) -> ssize_t>,
     pub archive_write_data_block: Option<
-        unsafe extern "C" fn(
-            _: *mut archive,
-            _: *const (),
-            _: size_t,
-            _: int64_t,
-        ) -> ssize_t,
+        unsafe extern "C" fn(_: *mut archive, _: *const (), _: size_t, _: int64_t) -> ssize_t,
     >,
     pub archive_read_next_header:
         Option<unsafe extern "C" fn(_: *mut archive, _: *mut *mut archive_entry) -> i32>,
@@ -104,12 +82,9 @@ pub struct archive_vtable {
         ) -> i32,
     >,
     pub archive_filter_count: Option<unsafe extern "C" fn(_: *mut archive) -> i32>,
-    pub archive_filter_bytes:
-        Option<unsafe extern "C" fn(_: *mut archive, _: i32) -> int64_t>,
-    pub archive_filter_code:
-        Option<unsafe extern "C" fn(_: *mut archive, _: i32) -> i32>,
-    pub archive_filter_name:
-        Option<unsafe extern "C" fn(_: *mut archive, _: i32) -> *const i8>,
+    pub archive_filter_bytes: Option<unsafe extern "C" fn(_: *mut archive, _: i32) -> int64_t>,
+    pub archive_filter_code: Option<unsafe extern "C" fn(_: *mut archive, _: i32) -> i32>,
+    pub archive_filter_name: Option<unsafe extern "C" fn(_: *mut archive, _: i32) -> *const i8>,
 }
 
 #[derive(Copy, Clone)]
@@ -165,13 +140,8 @@ pub struct archive_format_descriptor {
     pub data: *mut (),
     pub name: *const i8,
     pub bid: Option<unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32>,
-    pub options: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_read,
-            _: *const i8,
-            _: *const i8,
-        ) -> i32,
-    >,
+    pub options:
+        Option<unsafe extern "C" fn(_: *mut archive_read, _: *const i8, _: *const i8) -> i32>,
     pub read_header:
         Option<unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32>,
     pub read_data: Option<
@@ -198,19 +168,15 @@ pub struct archive_read_filter {
     pub upstream: *mut archive_read_filter,
     pub archive: *mut archive_read,
     pub open: Option<unsafe extern "C" fn(_: *mut archive_read_filter) -> i32>,
-    pub read: Option<
-        unsafe extern "C" fn(_: *mut archive_read_filter, _: *mut *const ()) -> ssize_t,
-    >,
+    pub read:
+        Option<unsafe extern "C" fn(_: *mut archive_read_filter, _: *mut *const ()) -> ssize_t>,
     pub skip: Option<unsafe extern "C" fn(_: *mut archive_read_filter, _: int64_t) -> int64_t>,
-    pub seek: Option<
-        unsafe extern "C" fn(_: *mut archive_read_filter, _: int64_t, _: i32) -> int64_t,
-    >,
+    pub seek:
+        Option<unsafe extern "C" fn(_: *mut archive_read_filter, _: int64_t, _: i32) -> int64_t>,
     pub close: Option<unsafe extern "C" fn(_: *mut archive_read_filter) -> i32>,
-    pub sswitch:
-        Option<unsafe extern "C" fn(_: *mut archive_read_filter, _: u32) -> i32>,
-    pub read_header: Option<
-        unsafe extern "C" fn(_: *mut archive_read_filter, _: *mut archive_entry) -> i32,
-    >,
+    pub sswitch: Option<unsafe extern "C" fn(_: *mut archive_read_filter, _: u32) -> i32>,
+    pub read_header:
+        Option<unsafe extern "C" fn(_: *mut archive_read_filter, _: *mut archive_entry) -> i32>,
     pub data: *mut (),
     pub name: *const i8,
     pub code: i32,
@@ -240,11 +206,7 @@ pub struct archive_read_filter_bidder {
     >,
     pub init: Option<unsafe extern "C" fn(_: *mut archive_read_filter) -> i32>,
     pub options: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_read_filter_bidder,
-            _: *const i8,
-            _: *const i8,
-        ) -> i32,
+        unsafe extern "C" fn(_: *mut archive_read_filter_bidder, _: *const i8, _: *const i8) -> i32,
     >,
     pub free: Option<unsafe extern "C" fn(_: *mut archive_read_filter_bidder) -> i32>,
 }
@@ -673,9 +635,8 @@ pub struct IPpmd7 {
         Option<unsafe extern "C" fn(_: *mut CPpmd7, _: *mut IPpmd7_RangeDec) -> i32>,
     pub Ppmd7z_RangeEnc_Init: Option<unsafe extern "C" fn(_: *mut CPpmd7z_RangeEnc) -> ()>,
     pub Ppmd7z_RangeEnc_FlushData: Option<unsafe extern "C" fn(_: *mut CPpmd7z_RangeEnc) -> ()>,
-    pub Ppmd7_EncodeSymbol: Option<
-        unsafe extern "C" fn(_: *mut CPpmd7, _: *mut CPpmd7z_RangeEnc, _: i32) -> (),
-    >,
+    pub Ppmd7_EncodeSymbol:
+        Option<unsafe extern "C" fn(_: *mut CPpmd7, _: *mut CPpmd7z_RangeEnc, _: i32) -> ()>,
 }
 
 #[derive(Copy, Clone)]
@@ -740,19 +701,13 @@ pub struct archive_write {
     pub format_data: *mut (),
     pub format_name: *const i8,
     pub format_init: Option<unsafe extern "C" fn(_: *mut archive_write) -> i32>,
-    pub format_options: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_write,
-            _: *const i8,
-            _: *const i8,
-        ) -> i32,
-    >,
+    pub format_options:
+        Option<unsafe extern "C" fn(_: *mut archive_write, _: *const i8, _: *const i8) -> i32>,
     pub format_finish_entry: Option<unsafe extern "C" fn(_: *mut archive_write) -> i32>,
     pub format_write_header:
         Option<unsafe extern "C" fn(_: *mut archive_write, _: *mut archive_entry) -> i32>,
-    pub format_write_data: Option<
-        unsafe extern "C" fn(_: *mut archive_write, _: *const (), _: size_t) -> ssize_t,
-    >,
+    pub format_write_data:
+        Option<unsafe extern "C" fn(_: *mut archive_write, _: *const (), _: size_t) -> ssize_t>,
     pub format_close: Option<unsafe extern "C" fn(_: *mut archive_write) -> i32>,
     pub format_free: Option<unsafe extern "C" fn(_: *mut archive_write) -> i32>,
     pub passphrase: *mut i8,
@@ -765,20 +720,11 @@ pub struct archive_write_filter {
     pub archive: *mut archive,
     pub next_filter: *mut archive_write_filter,
     pub options: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_write_filter,
-            _: *const i8,
-            _: *const i8,
-        ) -> i32,
+        unsafe extern "C" fn(_: *mut archive_write_filter, _: *const i8, _: *const i8) -> i32,
     >,
     pub open: Option<unsafe extern "C" fn(_: *mut archive_write_filter) -> i32>,
-    pub write: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_write_filter,
-            _: *const (),
-            _: size_t,
-        ) -> i32,
-    >,
+    pub write:
+        Option<unsafe extern "C" fn(_: *mut archive_write_filter, _: *const (), _: size_t) -> i32>,
     pub close: Option<unsafe extern "C" fn(_: *mut archive_write_filter) -> i32>,
     pub free: Option<unsafe extern "C" fn(_: *mut archive_write_filter) -> i32>,
     pub data: *mut (),
@@ -1093,9 +1039,7 @@ pub type lzma_internal = lzma_internal_s;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct lzma_allocator {
-    pub alloc: Option<
-        unsafe extern "C" fn(_: *mut (), _: size_t, _: size_t) -> *mut (),
-    >,
+    pub alloc: Option<unsafe extern "C" fn(_: *mut (), _: size_t, _: size_t) -> *mut ()>,
     pub free: Option<unsafe extern "C" fn(_: *mut (), _: *mut ()) -> ()>,
     pub opaque: *mut (),
 }
@@ -1221,69 +1165,29 @@ pub struct unknown_tag {
 #[repr(C)]
 pub struct archive_digest {
     pub md5init: Option<unsafe extern "C" fn(_: *mut archive_md5_ctx) -> i32>,
-    pub md5update: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_md5_ctx,
-            _: *const (),
-            _: size_t,
-        ) -> i32,
-    >,
-    pub md5final:
-        Option<unsafe extern "C" fn(_: *mut archive_md5_ctx, _: *mut ()) -> i32>,
+    pub md5update:
+        Option<unsafe extern "C" fn(_: *mut archive_md5_ctx, _: *const (), _: size_t) -> i32>,
+    pub md5final: Option<unsafe extern "C" fn(_: *mut archive_md5_ctx, _: *mut ()) -> i32>,
     pub rmd160init: Option<unsafe extern "C" fn(_: *mut archive_rmd160_ctx) -> i32>,
-    pub rmd160update: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_rmd160_ctx,
-            _: *const (),
-            _: size_t,
-        ) -> i32,
-    >,
-    pub rmd160final: Option<
-        unsafe extern "C" fn(_: *mut archive_rmd160_ctx, _: *mut ()) -> i32,
-    >,
+    pub rmd160update:
+        Option<unsafe extern "C" fn(_: *mut archive_rmd160_ctx, _: *const (), _: size_t) -> i32>,
+    pub rmd160final: Option<unsafe extern "C" fn(_: *mut archive_rmd160_ctx, _: *mut ()) -> i32>,
     pub sha1init: Option<unsafe extern "C" fn(_: *mut archive_sha1_ctx) -> i32>,
-    pub sha1update: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_sha1_ctx,
-            _: *const (),
-            _: size_t,
-        ) -> i32,
-    >,
-    pub sha1final:
-        Option<unsafe extern "C" fn(_: *mut archive_sha1_ctx, _: *mut ()) -> i32>,
+    pub sha1update:
+        Option<unsafe extern "C" fn(_: *mut archive_sha1_ctx, _: *const (), _: size_t) -> i32>,
+    pub sha1final: Option<unsafe extern "C" fn(_: *mut archive_sha1_ctx, _: *mut ()) -> i32>,
     pub sha256init: Option<unsafe extern "C" fn(_: *mut archive_sha256_ctx) -> i32>,
-    pub sha256update: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_sha256_ctx,
-            _: *const (),
-            _: size_t,
-        ) -> i32,
-    >,
-    pub sha256final: Option<
-        unsafe extern "C" fn(_: *mut archive_sha256_ctx, _: *mut ()) -> i32,
-    >,
+    pub sha256update:
+        Option<unsafe extern "C" fn(_: *mut archive_sha256_ctx, _: *const (), _: size_t) -> i32>,
+    pub sha256final: Option<unsafe extern "C" fn(_: *mut archive_sha256_ctx, _: *mut ()) -> i32>,
     pub sha384init: Option<unsafe extern "C" fn(_: *mut archive_sha384_ctx) -> i32>,
-    pub sha384update: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_sha384_ctx,
-            _: *const (),
-            _: size_t,
-        ) -> i32,
-    >,
-    pub sha384final: Option<
-        unsafe extern "C" fn(_: *mut archive_sha384_ctx, _: *mut ()) -> i32,
-    >,
+    pub sha384update:
+        Option<unsafe extern "C" fn(_: *mut archive_sha384_ctx, _: *const (), _: size_t) -> i32>,
+    pub sha384final: Option<unsafe extern "C" fn(_: *mut archive_sha384_ctx, _: *mut ()) -> i32>,
     pub sha512init: Option<unsafe extern "C" fn(_: *mut archive_sha512_ctx) -> i32>,
-    pub sha512update: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_sha512_ctx,
-            _: *const (),
-            _: size_t,
-        ) -> i32,
-    >,
-    pub sha512final: Option<
-        unsafe extern "C" fn(_: *mut archive_sha512_ctx, _: *mut ()) -> i32,
-    >,
+    pub sha512update:
+        Option<unsafe extern "C" fn(_: *mut archive_sha512_ctx, _: *const (), _: size_t) -> i32>,
+    pub sha512final: Option<unsafe extern "C" fn(_: *mut archive_sha512_ctx, _: *mut ()) -> i32>,
 }
 pub type archive_sha512_ctx = *mut EVP_MD_CTX;
 pub type archive_sha384_ctx = *mut EVP_MD_CTX;
@@ -1307,12 +1211,7 @@ pub type xmlTextReaderPtr = *mut xmlTextReader;
 pub type xmlTextReaderLocatorPtr = *mut ();
 
 pub type xmlTextReaderErrorFunc = Option<
-    unsafe fn(
-        _: *mut (),
-        _: *const i8,
-        _: xmlParserSeverities,
-        _: xmlTextReaderLocatorPtr,
-    ) -> (),
+    unsafe fn(_: *mut (), _: *const i8, _: xmlParserSeverities, _: xmlTextReaderLocatorPtr) -> (),
 >;
 
 #[derive(Copy, Clone)]
@@ -1448,9 +1347,8 @@ pub struct archive_rb_node {
 pub type archive_rbto_compare_key_fn =
     Option<unsafe fn(_: *const archive_rb_node, _: *const ()) -> i32>;
 
-pub type archive_rbto_compare_nodes_fn = Option<
-    unsafe fn(_: *const archive_rb_node, _: *const archive_rb_node) -> i32,
->;
+pub type archive_rbto_compare_nodes_fn =
+    Option<unsafe fn(_: *const archive_rb_node, _: *const archive_rb_node) -> i32>;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive_rb_tree_ops {
@@ -1464,11 +1362,7 @@ pub struct archive_rb_tree {
     pub rbt_ops: *const archive_rb_tree_ops,
 }
 
-pub type pack_t = unsafe extern "C" fn(
-    _: i32,
-    _: *mut u64,
-    _: *mut *const i8,
-) -> dev_t;
+pub type pack_t = unsafe extern "C" fn(_: i32, _: *mut u64, _: *mut *const i8) -> dev_t;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -1482,13 +1376,7 @@ pub struct bz_stream {
     pub total_out_lo32: u32,
     pub total_out_hi32: u32,
     pub state: *mut (),
-    pub bzalloc: Option<
-        unsafe extern "C" fn(
-            _: *mut (),
-            _: i32,
-            _: i32,
-        ) -> *mut (),
-    >,
+    pub bzalloc: Option<unsafe extern "C" fn(_: *mut (), _: i32, _: i32) -> *mut ()>,
     pub bzfree: Option<unsafe extern "C" fn(_: *mut (), _: *mut ()) -> ()>,
     pub opaque: *mut (),
 }
@@ -1542,8 +1430,7 @@ pub struct IPpmd8 {
     pub Ppmd8_Construct: Option<unsafe extern "C" fn(_: *mut CPpmd8) -> ()>,
     pub Ppmd8_Alloc: Option<unsafe extern "C" fn(_: *mut CPpmd8, _: UInt32) -> Bool>,
     pub Ppmd8_Free: Option<unsafe extern "C" fn(_: *mut CPpmd8) -> ()>,
-    pub Ppmd8_Init:
-        Option<unsafe extern "C" fn(_: *mut CPpmd8, _: u32, _: u32) -> ()>,
+    pub Ppmd8_Init: Option<unsafe extern "C" fn(_: *mut CPpmd8, _: u32, _: u32) -> ()>,
     pub Ppmd8_RangeDec_Init: Option<unsafe extern "C" fn(_: *mut CPpmd8) -> i32>,
     pub Ppmd8_DecodeSymbol: Option<unsafe extern "C" fn(_: *mut CPpmd8) -> i32>,
 }
@@ -1563,11 +1450,7 @@ pub struct archive_cryptor {
         ) -> i32,
     >,
     pub decrypto_aes_ctr_init: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_crypto_ctx,
-            _: *const uint8_t,
-            _: size_t,
-        ) -> i32,
+        unsafe extern "C" fn(_: *mut archive_crypto_ctx, _: *const uint8_t, _: size_t) -> i32,
     >,
     pub decrypto_aes_ctr_update: Option<
         unsafe extern "C" fn(
@@ -1578,14 +1461,9 @@ pub struct archive_cryptor {
             _: *mut size_t,
         ) -> i32,
     >,
-    pub decrypto_aes_ctr_release:
-        Option<unsafe extern "C" fn(_: *mut archive_crypto_ctx) -> i32>,
+    pub decrypto_aes_ctr_release: Option<unsafe extern "C" fn(_: *mut archive_crypto_ctx) -> i32>,
     pub encrypto_aes_ctr_init: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_crypto_ctx,
-            _: *const uint8_t,
-            _: size_t,
-        ) -> i32,
+        unsafe extern "C" fn(_: *mut archive_crypto_ctx, _: *const uint8_t, _: size_t) -> i32,
     >,
     pub encrypto_aes_ctr_update: Option<
         unsafe extern "C" fn(
@@ -1596,19 +1474,14 @@ pub struct archive_cryptor {
             _: *mut size_t,
         ) -> i32,
     >,
-    pub encrypto_aes_ctr_release:
-        Option<unsafe extern "C" fn(_: *mut archive_crypto_ctx) -> i32>,
+    pub encrypto_aes_ctr_release: Option<unsafe extern "C" fn(_: *mut archive_crypto_ctx) -> i32>,
 }
 
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive_hmac {
     pub __hmac_sha1_init: Option<
-        unsafe extern "C" fn(
-            _: *mut archive_hmac_sha1_ctx,
-            _: *const uint8_t,
-            _: size_t,
-        ) -> i32,
+        unsafe extern "C" fn(_: *mut archive_hmac_sha1_ctx, _: *const uint8_t, _: size_t) -> i32,
     >,
     pub __hmac_sha1_update: Option<
         unsafe extern "C" fn(_: *mut archive_hmac_sha1_ctx, _: *const uint8_t, _: size_t) -> (),
@@ -1687,20 +1560,10 @@ pub struct evp_cipher_st {
     pub iv_len: i32,
     pub flags: u64,
     pub init: Option<
-        unsafe extern "C" fn(
-            _: *mut EVP_CIPHER_CTX,
-            _: *const u8,
-            _: *const u8,
-            _: i32,
-        ) -> i32,
+        unsafe extern "C" fn(_: *mut EVP_CIPHER_CTX, _: *const u8, _: *const u8, _: i32) -> i32,
     >,
     pub do_cipher: Option<
-        unsafe extern "C" fn(
-            _: *mut EVP_CIPHER_CTX,
-            _: *mut u8,
-            _: *const u8,
-            _: size_t,
-        ) -> i32,
+        unsafe extern "C" fn(_: *mut EVP_CIPHER_CTX, _: *mut u8, _: *const u8, _: size_t) -> i32,
     >,
     pub cleanup: Option<unsafe extern "C" fn(_: *mut EVP_CIPHER_CTX) -> i32>,
     pub ctx_size: i32,
@@ -1708,14 +1571,8 @@ pub struct evp_cipher_st {
         Option<unsafe extern "C" fn(_: *mut EVP_CIPHER_CTX, _: *mut ASN1_TYPE) -> i32>,
     pub get_asn1_parameters:
         Option<unsafe extern "C" fn(_: *mut EVP_CIPHER_CTX, _: *mut ASN1_TYPE) -> i32>,
-    pub ctrl: Option<
-        unsafe extern "C" fn(
-            _: *mut EVP_CIPHER_CTX,
-            _: i32,
-            _: i32,
-            _: *mut (),
-        ) -> i32,
-    >,
+    pub ctrl:
+        Option<unsafe extern "C" fn(_: *mut EVP_CIPHER_CTX, _: i32, _: i32, _: *mut ()) -> i32>,
     pub app_data: *mut (),
 }
 
@@ -1770,9 +1627,7 @@ pub struct env_md_ctx_st {
     pub flags: u64,
     pub md_data: *mut (),
     pub pctx: *mut EVP_PKEY_CTX,
-    pub update: Option<
-        unsafe extern "C" fn(_: *mut EVP_MD_CTX, _: *const (), _: size_t) -> i32,
-    >,
+    pub update: Option<unsafe extern "C" fn(_: *mut EVP_MD_CTX, _: *const (), _: size_t) -> i32>,
 }
 
 #[derive(Copy, Clone)]
@@ -1783,11 +1638,8 @@ pub struct env_md_st {
     pub md_size: i32,
     pub flags: u64,
     pub init: Option<unsafe extern "C" fn(_: *mut EVP_MD_CTX) -> i32>,
-    pub update: Option<
-        unsafe extern "C" fn(_: *mut EVP_MD_CTX, _: *const (), _: size_t) -> i32,
-    >,
-    pub final_0:
-        Option<unsafe extern "C" fn(_: *mut EVP_MD_CTX, _: *mut u8) -> i32>,
+    pub update: Option<unsafe extern "C" fn(_: *mut EVP_MD_CTX, _: *const (), _: size_t) -> i32>,
+    pub final_0: Option<unsafe extern "C" fn(_: *mut EVP_MD_CTX, _: *mut u8) -> i32>,
     pub copy: Option<unsafe extern "C" fn(_: *mut EVP_MD_CTX, _: *const EVP_MD_CTX) -> i32>,
     pub cleanup: Option<unsafe extern "C" fn(_: *mut EVP_MD_CTX) -> i32>,
     pub sign: Option<
@@ -1801,26 +1653,13 @@ pub struct env_md_st {
         ) -> i32,
     >,
     pub verify: Option<
-        unsafe extern "C" fn(
-            _: i32,
-            _: *const u8,
-            _: u32,
-            _: *const u8,
-            _: u32,
-            _: *mut (),
-        ) -> i32,
+        unsafe extern "C" fn(_: i32, _: *const u8, _: u32, _: *const u8, _: u32, _: *mut ()) -> i32,
     >,
     pub required_pkey_type: [i32; 5],
     pub block_size: i32,
     pub ctx_size: i32,
-    pub md_ctrl: Option<
-        unsafe extern "C" fn(
-            _: *mut EVP_MD_CTX,
-            _: i32,
-            _: i32,
-            _: *mut (),
-        ) -> i32,
-    >,
+    pub md_ctrl:
+        Option<unsafe extern "C" fn(_: *mut EVP_MD_CTX, _: i32, _: i32, _: *mut ()) -> i32>,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]

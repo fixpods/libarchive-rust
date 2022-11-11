@@ -26,10 +26,8 @@ pub unsafe fn archive_read_support_format_raw(mut _a: *mut archive) -> i32 {
         return -(30 as i32);
     }
     let info = unsafe {
-        &mut *(calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<raw_info>() as u64,
-        ) as *mut raw_info)
+        &mut *(calloc_safe(1 as i32 as u64, ::std::mem::size_of::<raw_info>() as u64)
+            as *mut raw_info)
     };
     if (info as *mut raw_info).is_null() {
         archive_set_error_safe!(
@@ -43,10 +41,7 @@ pub unsafe fn archive_read_support_format_raw(mut _a: *mut archive) -> i32 {
         a,
         info as *mut raw_info as *mut (),
         b"raw\x00" as *const u8 as *const i8,
-        Some(
-            archive_read_format_raw_bid
-                as unsafe fn(_: *mut archive_read, _: i32) -> i32,
-        ),
+        Some(archive_read_format_raw_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
         None,
         Some(
             archive_read_format_raw_read_header
@@ -61,15 +56,9 @@ pub unsafe fn archive_read_support_format_raw(mut _a: *mut archive) -> i32 {
                     _: *mut int64_t,
                 ) -> i32,
         ),
-        Some(
-            archive_read_format_raw_read_data_skip
-                as unsafe fn(_: *mut archive_read) -> i32,
-        ),
+        Some(archive_read_format_raw_read_data_skip as unsafe fn(_: *mut archive_read) -> i32),
         None,
-        Some(
-            archive_read_format_raw_cleanup
-                as unsafe fn(_: *mut archive_read) -> i32,
-        ),
+        Some(archive_read_format_raw_cleanup as unsafe fn(_: *mut archive_read) -> i32),
         None,
         None,
     );
@@ -79,13 +68,9 @@ pub unsafe fn archive_read_support_format_raw(mut _a: *mut archive) -> i32 {
     return r;
 }
 
-unsafe fn archive_read_format_raw_bid(
-    mut a: *mut archive_read,
-    mut best_bid: i32,
-) -> i32 {
+unsafe fn archive_read_format_raw_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
     if best_bid < 1 as i32
-        && __archive_read_ahead_safe(a, 1 as i32 as size_t, 0 as *mut ssize_t)
-            != 0 as *mut ()
+        && __archive_read_ahead_safe(a, 1 as i32 as size_t, 0 as *mut ssize_t) != 0 as *mut ()
     {
         return 1 as i32;
     }
@@ -154,9 +139,7 @@ unsafe fn archive_read_format_raw_read_data(
     };
 }
 
-unsafe fn archive_read_format_raw_read_data_skip(
-    mut a: *mut archive_read,
-) -> i32 {
+unsafe fn archive_read_format_raw_read_data_skip(mut a: *mut archive_read) -> i32 {
     let info = unsafe { &mut *((*(*a).format).data as *mut raw_info) };
     /* Consume the bytes we read last time. */
     if info.unconsumed != 0 {
@@ -179,12 +162,8 @@ unsafe fn archive_read_format_raw_cleanup(mut a: *mut archive_read) -> i32 {
 pub unsafe fn archive_test_archive_read_format_raw_read_data_skip(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut raw_info: *mut raw_info = 0 as *mut raw_info;
-    raw_info = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<raw_info>() as u64,
-        )
-    } as *mut raw_info;
+    raw_info = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<raw_info>() as u64) }
+        as *mut raw_info;
     (*(*a).format).data = raw_info as *mut ();
     (*raw_info).unconsumed = 1;
     archive_read_format_raw_read_data_skip(a);

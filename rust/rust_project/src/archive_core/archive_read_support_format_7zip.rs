@@ -220,10 +220,7 @@ pub unsafe fn archive_read_support_format_7zip(mut _a: *mut archive) -> i32 {
     if magic_test == -(30 as i32) {
         return -(30 as i32);
     }
-    zip = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip>() as u64,
-    ) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
     let safe_zip = unsafe { &mut *zip };
     let safe_a = unsafe { &mut *a };
 
@@ -261,18 +258,14 @@ pub unsafe fn archive_read_support_format_7zip(mut _a: *mut archive) -> i32 {
     }
     return 0 as i32;
 }
-unsafe fn archive_read_support_format_7zip_capabilities(
-    mut a: *mut archive_read,
-) -> i32 {
+unsafe fn archive_read_support_format_7zip_capabilities(mut a: *mut archive_read) -> i32 {
     /* UNUSED */
     return (1 as i32) << 0 as i32 | (1 as i32) << 1 as i32;
 }
 /* Maximum entry size. This limitation prevents reading intentional
 * corrupted 7-zip files on assuming there are not so many entries in
 * the files. */
-unsafe fn archive_read_format_7zip_has_encrypted_entries(
-    mut _a: *mut archive_read,
-) -> i32 {
+unsafe fn archive_read_format_7zip_has_encrypted_entries(mut _a: *mut archive_read) -> i32 {
     let safe__a = unsafe { &mut *_a };
     if !_a.is_null() && !safe__a.format.is_null() {
         let mut zip: *mut _7zip = unsafe { (*safe__a.format).data as *mut _7zip };
@@ -283,18 +276,14 @@ unsafe fn archive_read_format_7zip_has_encrypted_entries(
     }
     return -(1 as i32);
 }
-unsafe fn archive_read_format_7zip_bid(
-    mut a: *mut archive_read,
-    mut best_bid: i32,
-) -> i32 {
+unsafe fn archive_read_format_7zip_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
     let mut p: *const i8 = 0 as *const i8;
     /* If someone has already bid more than 32, then avoid
     trashing the look-ahead buffers with a seek. */
     if best_bid > 32 as i32 {
         return -(1 as i32);
     }
-    p = __archive_read_ahead_safe(a, 6 as i32 as size_t, 0 as *mut ssize_t)
-        as *const i8;
+    p = __archive_read_ahead_safe(a, 6 as i32 as size_t, 0 as *mut ssize_t) as *const i8;
     if p.is_null() {
         return 0 as i32;
     }
@@ -376,8 +365,7 @@ unsafe fn check_7zip_header_in_sfx(mut p: *const i8) -> i32 {
                     0 as i32 as uLong,
                     (p as *const u8).offset(12 as i32 as isize),
                     20 as i32 as uInt,
-                ) != archive_le32dec(p.offset(8 as i32 as isize) as *const ())
-                    as u64
+                ) != archive_le32dec(p.offset(8 as i32 as isize) as *const ()) as u64
             } {
                 return 6 as i32;
             }
@@ -408,16 +396,12 @@ unsafe fn skip_sfx(mut a: *mut archive_read, mut bytes_avail: ssize_t) -> i32 {
      */
     if bytes_avail > 0x27000 as i32 as i64 {
         __archive_read_consume_safe(a, 0x27000 as i32 as int64_t);
-    } else if __archive_read_seek_safe(a, 0x27000 as i32 as int64_t, 0 as i32)
-        < 0 as i32 as i64
-    {
+    } else if __archive_read_seek_safe(a, 0x27000 as i32 as int64_t, 0 as i32) < 0 as i32 as i64 {
         return -(30 as i32);
     }
     offset = 0 as i32 as size_t;
     window = 1 as i32 as ssize_t;
-    while offset.wrapping_add(window as u64)
-        <= (0x60000 as i32 - 0x27000 as i32) as u64
-    {
+    while offset.wrapping_add(window as u64) <= (0x60000 as i32 - 0x27000 as i32) as u64 {
         h = __archive_read_ahead_safe(a, window as size_t, &mut bytes);
         if h == 0 as *mut () {
             /* Remaining bytes are less than window. */
@@ -518,11 +502,7 @@ unsafe fn archive_read_format_7zip_read_header(
     (safe_zip).entries_remaining = (safe_zip).entries_remaining.wrapping_sub(1);
     (safe_zip).entry_offset = 0 as i32 as int64_t;
     (safe_zip).end_of_entry = 0 as i32 as i8;
-    (safe_zip).entry_crc32 = crc32_safe(
-        0 as i32 as uLong,
-        0 as *const Bytef,
-        0 as i32 as uInt,
-    );
+    (safe_zip).entry_crc32 = crc32_safe(0 as i32 as uLong, 0 as *const Bytef, 0 as i32 as uInt);
     /* Setup a string conversion for a filename. */
     if (safe_zip).sconv.is_null() {
         (safe_zip).sconv = archive_string_conversion_from_charset_safe(
@@ -535,9 +515,7 @@ unsafe fn archive_read_format_7zip_read_header(
         }
     }
 
-    if !zip_entry.is_null()
-        && ((safe_zip_entry).folderIndex as u64) < (safe_zip).si.ci.numFolders
-    {
+    if !zip_entry.is_null() && ((safe_zip_entry).folderIndex as u64) < (safe_zip).si.ci.numFolders {
         folder = unsafe {
             &mut *(safe_zip)
                 .si
@@ -550,10 +528,7 @@ unsafe fn archive_read_format_7zip_read_header(
             while !folder.is_null() && fidx < (*folder).numCoders {
                 match (*(*folder).coders.offset(fidx as isize)).codec {
                     116457729 | 116458243 | 116459265 => {
-                        archive_entry_set_is_data_encrypted(
-                            entry,
-                            1 as i32 as i8,
-                        );
+                        archive_entry_set_is_data_encrypted(entry, 1 as i32 as i8);
                         (safe_zip).has_encrypted_entries = 1 as i32
                     }
                     _ => {}
@@ -622,9 +597,7 @@ unsafe fn archive_read_format_7zip_read_header(
     if (safe_zip).entry_bytes_remaining < 1 as i32 as u64 {
         (safe_zip).end_of_entry = 1 as i32 as i8
     }
-    if (safe_zip_entry).mode & 0o170000 as i32 as mode_t
-        == 0o120000 as i32 as mode_t
-    {
+    if (safe_zip_entry).mode & 0o170000 as i32 as mode_t == 0o120000 as i32 as mode_t {
         let mut symname: *mut u8 = 0 as *mut u8;
         let mut symsize: size_t = 0 as i32 as size_t;
 
@@ -640,9 +613,7 @@ unsafe fn archive_read_format_7zip_read_header(
             }
             mem = realloc_safe(
                 symname as *mut (),
-                symsize
-                    .wrapping_add(size)
-                    .wrapping_add(1 as i32 as u64),
+                symsize.wrapping_add(size).wrapping_add(1 as i32 as u64),
             ) as *mut u8;
             if mem.is_null() {
                 free_safe(symname as *mut ());
@@ -650,8 +621,7 @@ unsafe fn archive_read_format_7zip_read_header(
                     archive_set_error(
                         &mut (*a).archive as *mut archive,
                         12 as i32,
-                        b"Can\'t allocate memory for Symname\x00" as *const u8
-                            as *const i8,
+                        b"Can\'t allocate memory for Symname\x00" as *const u8 as *const i8,
                     )
                 };
                 return -(30 as i32);
@@ -715,8 +685,7 @@ unsafe fn archive_read_format_7zip_read_data(
     if safe_zip.end_of_entry != 0 {
         return 1 as i32;
     } // Don't try to read more than 16 MB at a time
-    let max_read_size: uint64_t =
-        (16 as i32 * 1024 as i32 * 1024 as i32) as uint64_t;
+    let max_read_size: uint64_t = (16 as i32 * 1024 as i32 * 1024 as i32) as uint64_t;
     let mut bytes_to_read: size_t = max_read_size;
     if bytes_to_read > safe_zip.entry_bytes_remaining {
         bytes_to_read = safe_zip.entry_bytes_remaining
@@ -735,17 +704,13 @@ unsafe fn archive_read_format_7zip_read_data(
         };
         return -(30 as i32);
     }
-    (safe_zip).entry_bytes_remaining = (safe_zip.entry_bytes_remaining as u64)
-        .wrapping_sub(bytes as u64) as uint64_t
-        as uint64_t;
+    (safe_zip).entry_bytes_remaining =
+        (safe_zip.entry_bytes_remaining as u64).wrapping_sub(bytes as u64) as uint64_t as uint64_t;
     if safe_zip.entry_bytes_remaining == 0 as i32 as u64 {
         safe_zip.end_of_entry = 1 as i32 as i8
     }
     /* Update checksum */
-    if unsafe {
-        (*safe_zip.entry).flg & ((1 as i32) << 3 as i32) as u32 != 0
-            && bytes != 0
-    } {
+    if unsafe { (*safe_zip.entry).flg & ((1 as i32) << 3 as i32) as u32 != 0 && bytes != 0 } {
         safe_zip.entry_crc32 = crc32_safe(
             safe_zip.entry_crc32,
             unsafe { *buff as *const Bytef },
@@ -774,8 +739,7 @@ unsafe fn archive_read_format_7zip_read_data(
                         .si
                         .ss
                         .digests
-                        .offset((*safe_zip.entry).ssIndex as isize)
-                        as u64,
+                        .offset((*safe_zip.entry).ssIndex as isize) as u64,
                 )
             };
             ret = -(20 as i32)
@@ -788,9 +752,7 @@ unsafe fn archive_read_format_7zip_read_data(
     (safe_zip).entry_offset += bytes;
     return ret;
 }
-unsafe fn archive_read_format_7zip_read_data_skip(
-    mut a: *mut archive_read,
-) -> i32 {
+unsafe fn archive_read_format_7zip_read_data_skip(mut a: *mut archive_read) -> i32 {
     let mut zip: *mut _7zip = 0 as *mut _7zip;
     let mut bytes_skipped: int64_t = 0;
     zip = unsafe { (*(*a).format).data as *mut _7zip };
@@ -858,8 +820,7 @@ unsafe fn set_error(mut a: *mut archive_read, mut ret: i32) {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     12 as i32,
-                    b"Lzma library error: Cannot allocate memory\x00" as *const u8
-                        as *const i8,
+                    b"Lzma library error: Cannot allocate memory\x00" as *const u8 as *const i8,
                 );
             }
             6 => {
@@ -873,8 +834,7 @@ unsafe fn set_error(mut a: *mut archive_read, mut ret: i32) {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     -(1 as i32),
-                    b"Lzma library error: format not recognized\x00" as *const u8
-                        as *const i8,
+                    b"Lzma library error: format not recognized\x00" as *const u8 as *const i8,
                 );
             }
             8 => {
@@ -888,16 +848,14 @@ unsafe fn set_error(mut a: *mut archive_read, mut ret: i32) {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     -(1 as i32),
-                    b"Lzma library error: Corrupted input data\x00" as *const u8
-                        as *const i8,
+                    b"Lzma library error: Corrupted input data\x00" as *const u8 as *const i8,
                 );
             }
             10 => {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     -(1 as i32),
-                    b"Lzma library error:  No progress is possible\x00" as *const u8
-                        as *const i8,
+                    b"Lzma library error:  No progress is possible\x00" as *const u8 as *const i8,
                 );
             }
             _ => {
@@ -905,17 +863,13 @@ unsafe fn set_error(mut a: *mut archive_read, mut ret: i32) {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     -(1 as i32),
-                    b"Lzma decompression failed:  Unknown error\x00" as *const u8
-                        as *const i8,
+                    b"Lzma decompression failed:  Unknown error\x00" as *const u8 as *const i8,
                 );
             }
         };
     }
 }
-unsafe fn decode_codec_id(
-    mut codecId: *const u8,
-    mut id_size: size_t,
-) -> u64 {
+unsafe fn decode_codec_id(mut codecId: *const u8, mut id_size: size_t) -> u64 {
     let mut i: u32 = 0;
     let mut id: u64 = 0 as i32 as u64;
     i = 0 as i32 as u32;
@@ -973,8 +927,7 @@ unsafe fn init_decompression(
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
                             -(1 as i32),
-                            b"Unsupported filter %lx for %lx\x00" as *const u8
-                                as *const i8,
+                            b"Unsupported filter %lx for %lx\x00" as *const u8 as *const i8,
                             safe_coder2.codec,
                             safe_coder1.codec,
                         )
@@ -1038,9 +991,7 @@ unsafe fn init_decompression(
                                     (safe_zip).bcj_state = 0 as i32 as uint32_t
                                 }
                                 3 => {
-                                    if (safe_coder2).propertiesSize
-                                        != 1 as i32 as u64
-                                    {
+                                    if (safe_coder2).propertiesSize != 1 as i32 as u64 {
                                         unsafe {
                                             archive_set_error(
                                                 &mut (safe_a).archive as *mut archive,
@@ -1053,11 +1004,9 @@ unsafe fn init_decompression(
                                     }
                                     filters[fi as usize].id = 0x3 as u64;
                                     memset_safe(
-                                        &mut delta_opt as *mut lzma_options_delta
-                                            as *mut (),
+                                        &mut delta_opt as *mut lzma_options_delta as *mut (),
                                         0 as i32,
-                                        ::std::mem::size_of::<lzma_options_delta>()
-                                            as u64,
+                                        ::std::mem::size_of::<lzma_options_delta>() as u64,
                                     );
                                     delta_opt.type_0 = LZMA_DELTA_TYPE_BYTE;
                                     delta_opt.dist = unsafe {
@@ -1065,9 +1014,8 @@ unsafe fn init_decompression(
                                             as uint32_t)
                                             .wrapping_add(1 as i32 as u32)
                                     };
-                                    filters[fi as usize].options = &mut delta_opt
-                                        as *mut lzma_options_delta
-                                        as *mut ();
+                                    filters[fi as usize].options =
+                                        &mut delta_opt as *mut lzma_options_delta as *mut ();
                                     fi += 1
                                 }
                                 50528773 => {
@@ -1161,33 +1109,20 @@ unsafe fn init_decompression(
                     BZ2_bzDecompressEnd_safe(&mut (safe_zip).bzstream);
                     (safe_zip).bzstream_valid = 0 as i32
                 }
-                r = BZ2_bzDecompressInit_safe(
-                    &mut (safe_zip).bzstream,
-                    0 as i32,
-                    0 as i32,
-                );
+                r = BZ2_bzDecompressInit_safe(&mut (safe_zip).bzstream, 0 as i32, 0 as i32);
                 if r == -(3 as i32) {
-                    r = BZ2_bzDecompressInit_safe(
-                        &mut (safe_zip).bzstream,
-                        0 as i32,
-                        1 as i32,
-                    )
+                    r = BZ2_bzDecompressInit_safe(&mut (safe_zip).bzstream, 0 as i32, 1 as i32)
                 }
                 if r != 0 as i32 {
                     let mut err: i32 = -(1 as i32);
                     let mut detail: *const i8 = 0 as *const i8;
                     match r {
-                        -2 => {
-                            detail =
-                                b"invalid setup parameter\x00" as *const u8 as *const i8
-                        }
+                        -2 => detail = b"invalid setup parameter\x00" as *const u8 as *const i8,
                         -3 => {
                             err = 12 as i32;
                             detail = b"out of memory\x00" as *const u8 as *const i8
                         }
-                        -9 => {
-                            detail = b"mis-compiled library\x00" as *const u8 as *const i8
-                        }
+                        -9 => detail = b"mis-compiled library\x00" as *const u8 as *const i8,
                         _ => {}
                     }
                     unsafe {
@@ -1296,19 +1231,14 @@ unsafe fn init_decompression(
                 };
                 return -(25 as i32);
             }
-            order = unsafe {
-                *(safe_coder1).properties.offset(0 as i32 as isize) as u32
-            };
+            order = unsafe { *(safe_coder1).properties.offset(0 as i32 as isize) as u32 };
             msize = archive_le32dec(unsafe {
-                &mut *(safe_coder1).properties.offset(1 as i32 as isize)
-                    as *mut u8 as *const ()
+                &mut *(safe_coder1).properties.offset(1 as i32 as isize) as *mut u8 as *const ()
             });
             if order < 2 as i32 as u32
                 || order > 64 as i32 as u32
                 || msize < ((1 as i32) << 11 as i32) as u32
-                || msize
-                    > (0xffffffff as u32)
-                        .wrapping_sub((12 as i32 * 3 as i32) as u32)
+                || msize > (0xffffffff as u32).wrapping_sub((12 as i32 * 3 as i32) as u32)
             {
                 unsafe {
                     archive_set_error(
@@ -1336,8 +1266,7 @@ unsafe fn init_decompression(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         12 as i32,
-                        b"Coludn\'t allocate memory for PPMd\x00" as *const u8
-                            as *const i8,
+                        b"Coludn\'t allocate memory for PPMd\x00" as *const u8 as *const i8,
                     )
                 };
                 return -(30 as i32);
@@ -1373,22 +1302,15 @@ unsafe fn init_decompression(
         }
         116457729 | 116458243 | 116459265 => {
             if !(safe_a).entry.is_null() {
-                archive_entry_set_is_metadata_encrypted_safe(
-                    (safe_a).entry,
-                    1 as i32 as i8,
-                );
-                archive_entry_set_is_data_encrypted_safe(
-                    (safe_a).entry,
-                    1 as i32 as i8,
-                );
+                archive_entry_set_is_metadata_encrypted_safe((safe_a).entry, 1 as i32 as i8);
+                archive_entry_set_is_data_encrypted_safe((safe_a).entry, 1 as i32 as i8);
                 (safe_zip).has_encrypted_entries = 1 as i32
             }
             unsafe {
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Crypto codec not supported yet (ID: 0x%lX)\x00" as *const u8
-                        as *const i8,
+                    b"Crypto codec not supported yet (ID: 0x%lX)\x00" as *const u8 as *const i8,
                     (safe_zip).codec,
                 )
             };
@@ -1434,9 +1356,7 @@ unsafe fn decompress(
     t_avail_out = o_avail_out;
     t_next_in = b as *const uint8_t;
     t_next_out = buff as *mut uint8_t;
-    if (safe_zip).codec != 0x21 as i32 as u64
-        && (safe_zip).codec2 == 0x3030103 as i32 as u64
-    {
+    if (safe_zip).codec != 0x21 as i32 as u64 && (safe_zip).codec2 == 0x3030103 as i32 as u64 {
         let mut i: i32 = 0;
         /* Do not copy out the BCJ remaining bytes when the output
          * buffer size is less than five bytes. */
@@ -1459,9 +1379,7 @@ unsafe fn decompress(
             (safe_zip).odd_bcj_size = (safe_zip).odd_bcj_size.wrapping_sub(1);
             i += 1
         }
-        if o_avail_in == 0 as i32 as u64
-            || t_avail_out == 0 as i32 as u64
-        {
+        if o_avail_in == 0 as i32 as u64 || t_avail_out == 0 as i32 as u64 {
             unsafe {
                 *used = o_avail_in.wrapping_sub(t_avail_in);
                 *outbytes = o_avail_out.wrapping_sub(t_avail_out);
@@ -1492,22 +1410,16 @@ unsafe fn decompress(
                 };
                 return -(25 as i32);
             }
-            (safe_zip).main_stream_bytes_remaining = ((safe_zip).main_stream_bytes_remaining
-                as u64)
+            (safe_zip).main_stream_bytes_remaining = ((safe_zip).main_stream_bytes_remaining as u64)
                 .wrapping_sub(remaining.wrapping_sub((safe_zip).tmp_stream_bytes_remaining))
                 as size_t as size_t;
-            t_avail_out = (t_avail_out as u64).wrapping_sub(bytes as u64)
-                as size_t as size_t;
-            if o_avail_in == 0 as i32 as u64
-                || t_avail_out == 0 as i32 as u64
-            {
+            t_avail_out = (t_avail_out as u64).wrapping_sub(bytes as u64) as size_t as size_t;
+            if o_avail_in == 0 as i32 as u64 || t_avail_out == 0 as i32 as u64 {
                 unsafe {
                     *used = 0 as i32 as size_t;
                     *outbytes = o_avail_out.wrapping_sub(t_avail_out);
                 }
-                if o_avail_in == 0 as i32 as u64
-                    && (safe_zip).tmp_stream_bytes_remaining != 0
-                {
+                if o_avail_in == 0 as i32 as u64 && (safe_zip).tmp_stream_bytes_remaining != 0 {
                     ret = 1 as i32
                 }
                 return ret;
@@ -1526,11 +1438,7 @@ unsafe fn decompress(
             } else {
                 t_avail_in
             };
-            memcpy_safe(
-                t_next_out as *mut (),
-                t_next_in as *const (),
-                bytes_0,
-            );
+            memcpy_safe(t_next_out as *mut (), t_next_in as *const (), bytes_0);
             t_avail_in = (t_avail_in as u64).wrapping_sub(bytes_0) as size_t as size_t;
             t_avail_out = (t_avail_out as u64).wrapping_sub(bytes_0) as size_t as size_t;
             if o_avail_in == 0 as i32 as u64 {
@@ -1630,8 +1538,7 @@ unsafe fn decompress(
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
                             -(1 as i32),
-                            b"File decompression failed (%d)\x00" as *const u8
-                                as *const i8,
+                            b"File decompression failed (%d)\x00" as *const u8 as *const i8,
                             r,
                         )
                     };
@@ -1662,8 +1569,7 @@ unsafe fn decompress(
             (safe_zip).ppstream.avail_out = t_avail_out as int64_t;
             if (safe_zip).ppmd7_stat == 0 as i32 {
                 (safe_zip).bytein.a = a;
-                (safe_zip).bytein.Read =
-                    Some(ppmd_read as unsafe fn(_: *mut ()) -> Byte);
+                (safe_zip).bytein.Read = Some(ppmd_read as unsafe fn(_: *mut ()) -> Byte);
                 (safe_zip).range_dec.Stream = &mut (safe_zip).bytein;
                 r = unsafe {
                     __archive_ppmd7_functions
@@ -1759,9 +1665,7 @@ unsafe fn decompress(
     /*
      * Decord BCJ.
      */
-    if (safe_zip).codec != 0x21 as i32 as u64
-        && (safe_zip).codec2 == 0x3030103 as i32 as u64
-    {
+    if (safe_zip).codec != 0x21 as i32 as u64 && (safe_zip).codec2 == 0x3030103 as i32 as u64 {
         let mut l: size_t = unsafe { x86_Convert(zip, buff as *mut uint8_t, *outbytes) };
         (safe_zip).odd_bcj_size = unsafe { (*outbytes).wrapping_sub(l) };
         if (safe_zip).odd_bcj_size > 0 as i32 as u64
@@ -1802,22 +1706,18 @@ unsafe fn decompress(
             };
             return -(25 as i32);
         }
-        (safe_zip).main_stream_bytes_remaining =
-            ((safe_zip).main_stream_bytes_remaining as u64).wrapping_sub(
+        (safe_zip).main_stream_bytes_remaining = ((safe_zip).main_stream_bytes_remaining as u64)
+            .wrapping_sub(
                 (safe_zip)
                     .tmp_stream_bytes_avail
                     .wrapping_sub((safe_zip).tmp_stream_bytes_remaining),
             ) as size_t as size_t;
-        bcj2_avail_out = (bcj2_avail_out as u64).wrapping_sub(bytes_1 as u64)
-            as size_t as size_t;
+        bcj2_avail_out = (bcj2_avail_out as u64).wrapping_sub(bytes_1 as u64) as size_t as size_t;
         unsafe { *outbytes = o_avail_out.wrapping_sub(bcj2_avail_out) }
     }
     return ret;
 }
-unsafe fn free_decompression(
-    mut a: *mut archive_read,
-    mut zip: *mut _7zip,
-) -> i32 {
+unsafe fn free_decompression(mut a: *mut archive_read, mut zip: *mut _7zip) -> i32 {
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
     #[cfg_attr(not(HAVE_ZLIB_H), not(HAVE_BZLIB_H), BZ_CONFIG_ERROR)]
@@ -1835,8 +1735,7 @@ unsafe fn free_decompression(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Failed to clean up bzip2 decompressor\x00" as *const u8
-                        as *const i8,
+                    b"Failed to clean up bzip2 decompressor\x00" as *const u8 as *const i8,
                 )
             };
             r = -(30 as i32)
@@ -1869,10 +1768,7 @@ unsafe fn free_decompression(
     }
     return r;
 }
-unsafe fn parse_7zip_uint64(
-    mut a: *mut archive_read,
-    mut val: *mut uint64_t,
-) -> i32 {
+unsafe fn parse_7zip_uint64(mut a: *mut archive_read, mut val: *mut uint64_t) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     let mut avail: u8 = 0;
     let mut mask: u8 = 0;
@@ -1897,8 +1793,7 @@ unsafe fn parse_7zip_uint64(
         } else {
             unsafe {
                 *val = (*val as u64).wrapping_add(
-                    ((avail as i32 & mask as i32 - 1 as i32) as uint64_t)
-                        << 8 as i32 * i,
+                    ((avail as i32 & mask as i32 - 1 as i32) as uint64_t) << 8 as i32 * i,
                 ) as uint64_t as uint64_t
             };
             break;
@@ -1906,11 +1801,7 @@ unsafe fn parse_7zip_uint64(
     }
     return 0 as i32;
 }
-unsafe fn read_Bools(
-    mut a: *mut archive_read,
-    mut data: *mut u8,
-    mut num: size_t,
-) -> i32 {
+unsafe fn read_Bools(mut a: *mut archive_read, mut data: *mut u8, mut num: size_t) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     let mut i: u32 = 0;
     let mut mask: u32 = 0 as i32 as u32;
@@ -1942,11 +1833,7 @@ unsafe fn free_Digest(mut d: *mut _7z_digests) {
     free_safe((safe_d).defineds as *mut ());
     free_safe((safe_d).digests as *mut ());
 }
-unsafe fn read_Digests(
-    mut a: *mut archive_read,
-    mut d: *mut _7z_digests,
-    mut num: size_t,
-) -> i32 {
+unsafe fn read_Digests(mut a: *mut archive_read, mut d: *mut _7z_digests, mut num: size_t) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     let safe_d = unsafe { &mut *d };
     let mut i: u32 = 0;
@@ -1975,14 +1862,9 @@ unsafe fn read_Digests(
         }
     } else {
         /* All are defined */
-        memset_safe(
-            (safe_d).defineds as *mut (),
-            1 as i32,
-            num,
-        );
+        memset_safe((safe_d).defineds as *mut (), 1 as i32, num);
     }
-    (safe_d).digests =
-        calloc_safe(num, ::std::mem::size_of::<uint32_t>() as u64) as *mut uint32_t;
+    (safe_d).digests = calloc_safe(num, ::std::mem::size_of::<uint32_t>() as u64) as *mut uint32_t;
     if (safe_d).digests.is_null() {
         return -(1 as i32);
     }
@@ -2007,10 +1889,7 @@ unsafe fn free_PackInfo(mut pi: *mut _7z_pack_info) {
     free_safe(safe_pi.positions as *mut ());
     free_Digest(&mut safe_pi.digest);
 }
-unsafe fn read_PackInfo(
-    mut a: *mut archive_read,
-    mut pi: *mut _7z_pack_info,
-) -> i32 {
+unsafe fn read_PackInfo(mut a: *mut archive_read, mut pi: *mut _7z_pack_info) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     let mut i: u32 = 0;
     let safe_pi = unsafe { &mut *pi };
@@ -2064,8 +1943,7 @@ unsafe fn read_PackInfo(
     }
     i = 0 as i32 as u32;
     while (i as u64) < (safe_pi).numPackStreams {
-        if parse_7zip_uint64(a, unsafe { &mut *(*pi).sizes.offset(i as isize) }) < 0 as i32
-        {
+        if parse_7zip_uint64(a, unsafe { &mut *(*pi).sizes.offset(i as isize) }) < 0 as i32 {
             return -(1 as i32);
         }
         i = i.wrapping_add(1)
@@ -2079,10 +1957,8 @@ unsafe fn read_PackInfo(
     }
     if unsafe { *p as i32 == 0 as i32 } {
         /* PackStreamDigests[num] are not present. */
-        (safe_pi).digest.defineds = calloc_safe(
-            (safe_pi).numPackStreams,
-            ::std::mem::size_of::<u8>() as u64,
-        ) as *mut u8;
+        (safe_pi).digest.defineds =
+            calloc_safe((safe_pi).numPackStreams, ::std::mem::size_of::<u8>() as u64) as *mut u8;
         (safe_pi).digest.digests = calloc_safe(
             (safe_pi).numPackStreams,
             ::std::mem::size_of::<uint32_t>() as u64,
@@ -2116,9 +1992,7 @@ unsafe fn free_Folder(mut f: *mut _7z_folder) {
     if !(safe_f).coders.is_null() {
         i = 0 as i32 as u32;
         while (i as u64) < (safe_f).numCoders {
-            free_safe(unsafe {
-                (*(safe_f).coders.offset(i as isize)).properties as *mut ()
-            });
+            free_safe(unsafe { (*(safe_f).coders.offset(i as isize)).properties as *mut () });
             i = i.wrapping_add(1)
         }
         free_safe((safe_f).coders as *mut ());
@@ -2162,10 +2036,8 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
             /* Too many coders. */
             return -(1 as i32);
         }
-        (*f).coders = calloc(
-            (*f).numCoders,
-            ::std::mem::size_of::<_7z_coder>() as u64,
-        ) as *mut _7z_coder;
+        (*f).coders =
+            calloc((*f).numCoders, ::std::mem::size_of::<_7z_coder>() as u64) as *mut _7z_coder;
         if (*f).coders.is_null() {
             return -(1 as i32);
         }
@@ -2213,9 +2085,7 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
                 {
                     return -(1 as i32);
                 }
-                if (100000000 as u64)
-                    < (*(*f).coders.offset(i as isize)).numInStreams as u64
-                {
+                if (100000000 as u64) < (*(*f).coders.offset(i as isize)).numInStreams as u64 {
                     return -(1 as i32);
                 }
                 if parse_7zip_uint64(a, &mut (*(*f).coders.offset(i as isize)).numOutStreams)
@@ -2223,9 +2093,7 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
                 {
                     return -(1 as i32);
                 }
-                if (100000000 as u64)
-                    < (*(*f).coders.offset(i as isize)).numOutStreams as u64
-                {
+                if (100000000 as u64) < (*(*f).coders.offset(i as isize)).numOutStreams as u64 {
                     return -(1 as i32);
                 }
             }
@@ -2240,8 +2108,7 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
                     return -(1 as i32);
                 }
                 let ref mut fresh3 = (*(*f).coders.offset(i as isize)).properties;
-                *fresh3 =
-                    malloc((*(*f).coders.offset(i as isize)).propertiesSize) as *mut u8;
+                *fresh3 = malloc((*(*f).coders.offset(i as isize)).propertiesSize) as *mut u8;
                 if (*(*f).coders.offset(i as isize)).properties.is_null() {
                     return -(1 as i32);
                 }
@@ -2260,8 +2127,7 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
             i = i.wrapping_add(1)
         }
         if numOutStreamsTotal == 0 as i32 as u64
-            || numInStreamsTotal
-                < numOutStreamsTotal.wrapping_sub(1 as i32 as u64)
+            || numInStreamsTotal < numOutStreamsTotal.wrapping_sub(1 as i32 as u64)
         {
             return -(1 as i32);
         }
@@ -2270,10 +2136,8 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
             return -(1 as i32);
         }
         if (*f).numBindPairs > 0 as i32 as u64 {
-            (*f).bindPairs = calloc(
-                (*f).numBindPairs,
-                ::std::mem::size_of::<obj1>() as u64,
-            ) as *mut obj1;
+            (*f).bindPairs =
+                calloc((*f).numBindPairs, ::std::mem::size_of::<obj1>() as u64) as *mut obj1;
             if (*f).bindPairs.is_null() {
                 return -(1 as i32);
             }
@@ -2282,24 +2146,16 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
         }
         i = 0 as i32 as u32;
         while (i as u64) < (*f).numBindPairs {
-            if parse_7zip_uint64(a, &mut (*(*f).bindPairs.offset(i as isize)).inIndex)
-                < 0 as i32
-            {
+            if parse_7zip_uint64(a, &mut (*(*f).bindPairs.offset(i as isize)).inIndex) < 0 as i32 {
                 return -(1 as i32);
             }
-            if (100000000 as u64)
-                < (*(*f).bindPairs.offset(i as isize)).inIndex as u64
-            {
+            if (100000000 as u64) < (*(*f).bindPairs.offset(i as isize)).inIndex as u64 {
                 return -(1 as i32);
             }
-            if parse_7zip_uint64(a, &mut (*(*f).bindPairs.offset(i as isize)).outIndex)
-                < 0 as i32
-            {
+            if parse_7zip_uint64(a, &mut (*(*f).bindPairs.offset(i as isize)).outIndex) < 0 as i32 {
                 return -(1 as i32);
             }
-            if (100000000 as u64)
-                < (*(*f).bindPairs.offset(i as isize)).outIndex as u64
-            {
+            if (100000000 as u64) < (*(*f).bindPairs.offset(i as isize)).outIndex as u64 {
                 return -(1 as i32);
             }
             i = i.wrapping_add(1)
@@ -2335,14 +2191,10 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
         } else {
             i = 0 as i32 as u32;
             while (i as u64) < (*f).numPackedStreams {
-                if parse_7zip_uint64(a, &mut *(*f).packedStreams.offset(i as isize))
-                    < 0 as i32
-                {
+                if parse_7zip_uint64(a, &mut *(*f).packedStreams.offset(i as isize)) < 0 as i32 {
                     return -(1 as i32);
                 }
-                if (100000000 as u64)
-                    < *(*f).packedStreams.offset(i as isize) as u64
-                {
+                if (100000000 as u64) < *(*f).packedStreams.offset(i as isize) as u64 {
                     return -(1 as i32);
                 }
                 i = i.wrapping_add(1)
@@ -2354,10 +2206,7 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
     }
 }
 
-unsafe fn read_CodersInfo(
-    mut a: *mut archive_read,
-    mut ci: *mut _7z_coders_info,
-) -> i32 {
+unsafe fn read_CodersInfo(mut a: *mut archive_read, mut ci: *mut _7z_coders_info) -> i32 {
     let mut current_block: u64;
     let mut p: *const u8 = 0 as *const u8;
     let mut digest: _7z_digests = _7z_digests {
@@ -2419,14 +2268,10 @@ unsafe fn read_CodersInfo(
                             }
                         }
                         1 => {
-                            if parse_7zip_uint64(a, &mut (safe_ci).dataStreamIndex)
-                                < 0 as i32
-                            {
+                            if parse_7zip_uint64(a, &mut (safe_ci).dataStreamIndex) < 0 as i32 {
                                 return -(1 as i32);
                             }
-                            if (100000000 as u64)
-                                < (safe_ci).dataStreamIndex as u64
-                            {
+                            if (100000000 as u64) < (safe_ci).dataStreamIndex as u64 {
                                 return -(1 as i32);
                             }
                             if (safe_ci).numFolders > 0 as i32 as u64 {
@@ -2434,8 +2279,7 @@ unsafe fn read_CodersInfo(
                                     archive_set_error(
                                         &mut (safe_a).archive as *mut archive,
                                         -(1 as i32),
-                                        b"Malformed 7-Zip archive\x00" as *const u8
-                                            as *const i8,
+                                        b"Malformed 7-Zip archive\x00" as *const u8 as *const i8,
                                     )
                                 };
                                 current_block = 14585062455194940643;
@@ -2448,8 +2292,7 @@ unsafe fn read_CodersInfo(
                                 archive_set_error(
                                     &mut (*a).archive as *mut archive,
                                     -(1 as i32),
-                                    b"Malformed 7-Zip archive\x00" as *const u8
-                                        as *const i8,
+                                    b"Malformed 7-Zip archive\x00" as *const u8 as *const i8,
                                 )
                             };
                             current_block = 14585062455194940643;
@@ -2508,13 +2351,10 @@ unsafe fn read_CodersInfo(
                                         {
                                             p = header_bytes(a, 1 as i32 as size_t);
                                             if !p.is_null() {
-                                                if unsafe { *p as i32 == 0 as i32 }
-                                                {
+                                                if unsafe { *p as i32 == 0 as i32 } {
                                                     return 0 as i32;
                                                 }
-                                                if unsafe {
-                                                    !(*p as i32 != 0xa as i32)
-                                                } {
+                                                if unsafe { !(*p as i32 != 0xa as i32) } {
                                                     if !(read_Digests(
                                                         a,
                                                         &mut digest,
@@ -2522,9 +2362,7 @@ unsafe fn read_CodersInfo(
                                                     ) < 0 as i32)
                                                     {
                                                         i = 0 as i32 as u32;
-                                                        while (i as u64)
-                                                            < (safe_ci).numFolders
-                                                        {
+                                                        while (i as u64) < (safe_ci).numFolders {
                                                             unsafe {
                                                                 (*(*ci)
                                                                     .folders
@@ -2544,15 +2382,9 @@ unsafe fn read_CodersInfo(
                                                         /*
                                                          *  Must be kEnd.
                                                          */
-                                                        p = header_bytes(
-                                                            a,
-                                                            1 as i32 as size_t,
-                                                        );
+                                                        p = header_bytes(a, 1 as i32 as size_t);
                                                         if !p.is_null() {
-                                                            if unsafe {
-                                                                !(*p as i32
-                                                                    != 0 as i32)
-                                                            } {
+                                                            if unsafe { !(*p as i32 != 0 as i32) } {
                                                                 free_Digest(&mut digest);
                                                                 return 0 as i32;
                                                             }
@@ -2636,26 +2468,20 @@ unsafe fn read_SubStreamsInfo(
         i = 0 as i32 as u32;
         while (i as u64) < numFolders {
             if unsafe {
-                parse_7zip_uint64(a, &mut (*f.offset(i as isize)).numUnpackStreams)
-                    < 0 as i32
+                parse_7zip_uint64(a, &mut (*f.offset(i as isize)).numUnpackStreams) < 0 as i32
             } {
                 return -(1 as i32);
             }
-            if unsafe {
-                (100000000 as u64)
-                    < (*f.offset(i as isize)).numUnpackStreams as u64
-            } {
+            if unsafe { (100000000 as u64) < (*f.offset(i as isize)).numUnpackStreams as u64 } {
                 return -(1 as i32);
             }
             if unpack_streams as u64
-                > (18446744073709551615 as u64 as u64)
-                    .wrapping_sub(100000000 as u64)
+                > (18446744073709551615 as u64 as u64).wrapping_sub(100000000 as u64)
             {
                 return -(1 as i32);
             }
             unpack_streams = unsafe {
-                (unpack_streams as u64)
-                    .wrapping_add((*f.offset(i as isize)).numUnpackStreams)
+                (unpack_streams as u64).wrapping_add((*f.offset(i as isize)).numUnpackStreams)
                     as size_t as size_t
             };
             i = i.wrapping_add(1)
@@ -2670,18 +2496,12 @@ unsafe fn read_SubStreamsInfo(
     }
     (safe_ss).unpack_streams = unpack_streams;
     if unpack_streams != 0 {
-        (safe_ss).unpackSizes = calloc_safe(
-            unpack_streams,
-            ::std::mem::size_of::<uint64_t>() as u64,
-        ) as *mut uint64_t;
-        (safe_ss).digestsDefined = calloc_safe(
-            unpack_streams,
-            ::std::mem::size_of::<u8>() as u64,
-        ) as *mut u8;
-        (safe_ss).digests = calloc_safe(
-            unpack_streams,
-            ::std::mem::size_of::<uint32_t>() as u64,
-        ) as *mut uint32_t;
+        (safe_ss).unpackSizes =
+            calloc_safe(unpack_streams, ::std::mem::size_of::<uint64_t>() as u64) as *mut uint64_t;
+        (safe_ss).digestsDefined =
+            calloc_safe(unpack_streams, ::std::mem::size_of::<u8>() as u64) as *mut u8;
+        (safe_ss).digests =
+            calloc_safe(unpack_streams, ::std::mem::size_of::<uint32_t>() as u64) as *mut uint32_t;
         if (safe_ss).unpackSizes.is_null()
             || (safe_ss).digestsDefined.is_null()
             || (safe_ss).digests.is_null()
@@ -2694,22 +2514,17 @@ unsafe fn read_SubStreamsInfo(
     while (i as u64) < numFolders {
         let mut pack: u32 = 0;
         let mut sum: uint64_t = 0;
-        if unsafe {
-            !((*f.offset(i as isize)).numUnpackStreams == 0 as i32 as u64)
-        } {
+        if unsafe { !((*f.offset(i as isize)).numUnpackStreams == 0 as i32 as u64) } {
             sum = 0 as i32 as uint64_t;
             if type_0 == 0x9 as i32 {
                 pack = 1 as i32 as u32;
-                while unsafe { (pack as u64) < (*f.offset(i as isize)).numUnpackStreams }
-                {
+                while unsafe { (pack as u64) < (*f.offset(i as isize)).numUnpackStreams } {
                     if parse_7zip_uint64(a, usizes) < 0 as i32 {
                         return -(1 as i32);
                     }
                     let fresh4 = usizes;
                     usizes = unsafe { usizes.offset(1) };
-                    sum = unsafe {
-                        (sum as u64).wrapping_add(*fresh4) as uint64_t as uint64_t
-                    };
+                    sum = unsafe { (sum as u64).wrapping_add(*fresh4) as uint64_t as uint64_t };
                     pack = pack.wrapping_add(1)
                 }
             }
@@ -2817,10 +2632,7 @@ unsafe fn free_StreamsInfo(mut si: *mut _7z_stream_info) {
     free_CodersInfo(&mut safe_si.ci);
     free_SubStreamsInfo(&mut safe_si.ss);
 }
-unsafe fn read_StreamsInfo(
-    mut a: *mut archive_read,
-    mut si: *mut _7z_stream_info,
-) -> i32 {
+unsafe fn read_StreamsInfo(mut a: *mut archive_read, mut si: *mut _7z_stream_info) -> i32 {
     let mut zip: *mut _7zip = unsafe { (*(*a).format).data as *mut _7zip };
     let mut p: *const u8 = 0 as *const u8;
     let mut i: u32 = 0;
@@ -2850,8 +2662,7 @@ unsafe fn read_StreamsInfo(
         while (i as u64) < (safe_si).pi.numPackStreams {
             unsafe {
                 *(safe_si).pi.positions.offset(i as isize) = packPos;
-                packPos = (packPos as u64)
-                    .wrapping_add(*(*si).pi.sizes.offset(i as isize))
+                packPos = (packPos as u64).wrapping_add(*(*si).pi.sizes.offset(i as isize))
                     as uint64_t as uint64_t;
                 if packPos > (*zip).header_offset {
                     return -(1 as i32);
@@ -3006,10 +2817,8 @@ unsafe fn read_Header(
         if (100000000 as u64) < (*zip).numFiles as u64 {
             return -(1 as i32);
         }
-        (*zip).entries = calloc(
-            (*zip).numFiles,
-            ::std::mem::size_of::<_7zip_entry>() as u64,
-        ) as *mut _7zip_entry;
+        (*zip).entries = calloc((*zip).numFiles, ::std::mem::size_of::<_7zip_entry>() as u64)
+            as *mut _7zip_entry;
         if (*zip).entries.is_null() {
             return -(1 as i32);
         }
@@ -3040,10 +2849,8 @@ unsafe fn read_Header(
                     if !(*h).emptyStreamBools.is_null() {
                         return -(1 as i32);
                     }
-                    (*h).emptyStreamBools = calloc(
-                        (*zip).numFiles,
-                        ::std::mem::size_of::<u8>() as u64,
-                    ) as *mut u8;
+                    (*h).emptyStreamBools =
+                        calloc((*zip).numFiles, ::std::mem::size_of::<u8>() as u64) as *mut u8;
                     if (*h).emptyStreamBools.is_null() {
                         return -(1 as i32);
                     }
@@ -3070,16 +2877,13 @@ unsafe fn read_Header(
                         if !(*h).emptyFileBools.is_null() {
                             return -(1 as i32);
                         }
-                        (*h).emptyFileBools = calloc(
-                            empty_streams as u64,
-                            ::std::mem::size_of::<u8>() as u64,
-                        ) as *mut u8;
+                        (*h).emptyFileBools =
+                            calloc(empty_streams as u64, ::std::mem::size_of::<u8>() as u64)
+                                as *mut u8;
                         if (*h).emptyFileBools.is_null() {
                             return -(1 as i32);
                         }
-                        if read_Bools(a, (*h).emptyFileBools, empty_streams as size_t)
-                            < 0 as i32
-                        {
+                        if read_Bools(a, (*h).emptyFileBools, empty_streams as size_t) < 0 as i32 {
                             return -(1 as i32);
                         }
                     }
@@ -3095,15 +2899,13 @@ unsafe fn read_Header(
                         if !(*h).antiBools.is_null() {
                             return -(1 as i32);
                         }
-                        (*h).antiBools = calloc(
-                            empty_streams as u64,
-                            ::std::mem::size_of::<u8>() as u64,
-                        ) as *mut u8;
+                        (*h).antiBools =
+                            calloc(empty_streams as u64, ::std::mem::size_of::<u8>() as u64)
+                                as *mut u8;
                         if (*h).antiBools.is_null() {
                             return -(1 as i32);
                         }
-                        if read_Bools(a, (*h).antiBools, empty_streams as size_t) < 0 as i32
-                        {
+                        if read_Bools(a, (*h).antiBools, empty_streams as size_t) < 0 as i32 {
                             return -(1 as i32);
                         }
                     }
@@ -3126,10 +2928,7 @@ unsafe fn read_Header(
                     }
                     ll = ll.wrapping_sub(1);
                     if ll & 1 as i32 as u64 != 0
-                        || ll
-                            < (*zip)
-                                .numFiles
-                                .wrapping_mul(4 as i32 as u64)
+                        || ll < (*zip).numFiles.wrapping_mul(4 as i32 as u64)
                     {
                         return -(1 as i32);
                     }
@@ -3186,9 +2985,7 @@ unsafe fn read_Header(
                                 || *np.offset(1 as i32 as isize) as i32 != 0)
                         {
                             np = np.offset(2 as i32 as isize); /* Terminator not found */
-                            nl = (nl as u64)
-                                .wrapping_sub(2 as i32 as u64)
-                                as size_t as size_t
+                            nl = (nl as u64).wrapping_sub(2 as i32 as u64) as size_t as size_t
                         }
                         if nl < 2 as i32 as u64 {
                             return -(1 as i32);
@@ -3197,8 +2994,7 @@ unsafe fn read_Header(
                             np.offset_from((*entries.offset(i as isize)).utf16name) as i64
                                 as size_t;
                         np = np.offset(2 as i32 as isize);
-                        nl = (nl as u64).wrapping_sub(2 as i32 as u64)
-                            as size_t as size_t;
+                        nl = (nl as u64).wrapping_sub(2 as i32 as u64) as size_t as size_t;
                         i = i.wrapping_add(1)
                     }
                     current_block_137 = 7999014830792590863;
@@ -3213,19 +3009,13 @@ unsafe fn read_Header(
                     if !(*h).attrBools.is_null() {
                         return -(1 as i32);
                     }
-                    (*h).attrBools = calloc(
-                        (*zip).numFiles,
-                        ::std::mem::size_of::<u8>() as u64,
-                    ) as *mut u8;
+                    (*h).attrBools =
+                        calloc((*zip).numFiles, ::std::mem::size_of::<u8>() as u64) as *mut u8;
                     if (*h).attrBools.is_null() {
                         return -(1 as i32);
                     }
                     if allAreDefined != 0 {
-                        memset(
-                            (*h).attrBools as *mut (),
-                            1 as i32,
-                            (*zip).numFiles,
-                        );
+                        memset((*h).attrBools as *mut (), 1 as i32, (*zip).numFiles);
                     } else if read_Bools(a, (*h).attrBools, (*zip).numFiles) < 0 as i32 {
                         return -(1 as i32);
                     }
@@ -3236,8 +3026,7 @@ unsafe fn read_Header(
                             if p.is_null() {
                                 return -(1 as i32);
                             }
-                            (*entries.offset(i as isize)).attr =
-                                archive_le32dec(p as *const ())
+                            (*entries.offset(i as isize)).attr = archive_le32dec(p as *const ())
                         }
                         i = i.wrapping_add(1)
                     }
@@ -3276,16 +3065,11 @@ unsafe fn read_Header(
             if (*h).emptyStreamBools.is_null()
                 || *(*h).emptyStreamBools.offset(i as isize) as i32 == 0 as i32
             {
-                (*entries.offset(i as isize)).flg |=
-                    ((1 as i32) << 4 as i32) as u32
+                (*entries.offset(i as isize)).flg |= ((1 as i32) << 4 as i32) as u32
             }
             /* The high 16 bits of attributes is a posix file mode. */
-            (*entries.offset(i as isize)).mode =
-                (*entries.offset(i as isize)).attr >> 16 as i32; /* Read only. */
-            if (*entries.offset(i as isize)).flg
-                & ((1 as i32) << 4 as i32) as u32
-                != 0
-            {
+            (*entries.offset(i as isize)).mode = (*entries.offset(i as isize)).attr >> 16 as i32; /* Read only. */
+            if (*entries.offset(i as isize)).flg & ((1 as i32) << 4 as i32) as u32 != 0 {
                 if sindex as size_t >= (*si).ss.unpack_streams {
                     return -(1 as i32);
                 }
@@ -3294,8 +3078,7 @@ unsafe fn read_Header(
                         0o100000 as i32 as mode_t | 0o666 as i32 as u32
                 }
                 if *(*si).ss.digestsDefined.offset(sindex as isize) != 0 {
-                    (*entries.offset(i as isize)).flg |=
-                        ((1 as i32) << 3 as i32) as u32
+                    (*entries.offset(i as isize)).flg |= ((1 as i32) << 3 as i32) as u32
                 }
                 (*entries.offset(i as isize)).ssIndex = sindex as uint32_t;
                 sindex += 1
@@ -3334,32 +3117,26 @@ unsafe fn read_Header(
                     && (*(*entries.offset(i as isize)).utf16name.offset(
                         (*entries.offset(i as isize))
                             .name_len
-                            .wrapping_sub(2 as i32 as u64)
-                            as isize,
+                            .wrapping_sub(2 as i32 as u64) as isize,
                     ) as i32
                         != '/' as i32
                         || *(*entries.offset(i as isize)).utf16name.offset(
                             (*entries.offset(i as isize))
                                 .name_len
-                                .wrapping_sub(1 as i32 as u64)
-                                as isize,
+                                .wrapping_sub(1 as i32 as u64) as isize,
                         ) as i32
                             != 0 as i32)
                 {
                     *(*entries.offset(i as isize))
                         .utf16name
-                        .offset((*entries.offset(i as isize)).name_len as isize) =
-                        '/' as i32 as u8;
+                        .offset((*entries.offset(i as isize)).name_len as isize) = '/' as i32 as u8;
                     *(*entries.offset(i as isize)).utf16name.offset(
                         (*entries.offset(i as isize))
                             .name_len
-                            .wrapping_add(1 as i32 as u64)
-                            as isize,
+                            .wrapping_add(1 as i32 as u64) as isize,
                     ) = 0 as i32 as u8;
                     let ref mut fresh13 = (*entries.offset(i as isize)).name_len;
-                    *fresh13 = (*fresh13 as u64)
-                        .wrapping_add(2 as i32 as u64)
-                        as size_t as size_t
+                    *fresh13 = (*fresh13 as u64).wrapping_add(2 as i32 as u64) as size_t as size_t
                 }
                 (*entries.offset(i as isize)).ssIndex = -(1 as i32) as uint32_t
             }
@@ -3367,8 +3144,7 @@ unsafe fn read_Header(
                 let ref mut fresh14 = (*entries.offset(i as isize)).mode;
                 *fresh14 &= !(0o222 as i32) as u32
             }
-            if (*entries.offset(i as isize)).flg
-                & ((1 as i32) << 4 as i32) as u32
+            if (*entries.offset(i as isize)).flg & ((1 as i32) << 4 as i32) as u32
                 == 0 as i32 as u32
                 && indexInFolder == 0 as i32 as u32
             {
@@ -3390,8 +3166,7 @@ unsafe fn read_Header(
                     }
                 }
                 (*entries.offset(i as isize)).folderIndex = folderIndex;
-                if !((*entries.offset(i as isize)).flg
-                    & ((1 as i32) << 4 as i32) as u32
+                if !((*entries.offset(i as isize)).flg & ((1 as i32) << 4 as i32) as u32
                     == 0 as i32 as u32)
                 {
                     indexInFolder = indexInFolder.wrapping_add(1);
@@ -3408,21 +3183,15 @@ unsafe fn read_Header(
         return 0 as i32;
     }
 }
-unsafe fn fileTimeToUtc(
-    mut fileTime: uint64_t,
-    mut timep: *mut time_t,
-    mut ns: *mut i64,
-) {
+unsafe fn fileTimeToUtc(mut fileTime: uint64_t, mut timep: *mut time_t, mut ns: *mut i64) {
     if fileTime as u64 >= 116444736000000000 as u64 {
-        fileTime = (fileTime as u64)
-            .wrapping_sub(116444736000000000 as u64) as uint64_t
-            as uint64_t;
+        fileTime =
+            (fileTime as u64).wrapping_sub(116444736000000000 as u64) as uint64_t as uint64_t;
         /* milli seconds base */
         unsafe {
             *timep = fileTime.wrapping_div(10000000 as i32 as u64) as time_t;
             /* nano seconds base */
-            *ns = fileTime.wrapping_rem(10000000 as i32 as u64) as i64
-                * 100 as i32 as i64
+            *ns = fileTime.wrapping_rem(10000000 as i32 as u64) as i64 * 100 as i32 as i64
         }
     } else {
         unsafe {
@@ -3444,10 +3213,7 @@ unsafe fn read_Times(
     let mut timeBools: *mut u8 = 0 as *mut u8;
     let mut allAreDefined: i32 = 0;
     let mut i: u32 = 0;
-    timeBools = calloc_safe(
-        (safe_zip).numFiles,
-        ::std::mem::size_of::<u8>() as u64,
-    ) as *mut u8;
+    timeBools = calloc_safe((safe_zip).numFiles, ::std::mem::size_of::<u8>() as u64) as *mut u8;
     if timeBools.is_null() {
         return -(1 as i32);
     }
@@ -3456,11 +3222,7 @@ unsafe fn read_Times(
     if !p.is_null() {
         allAreDefined = unsafe { *p as i32 };
         if allAreDefined != 0 {
-            memset_safe(
-                timeBools as *mut (),
-                1 as i32,
-                (safe_zip).numFiles,
-            );
+            memset_safe(timeBools as *mut (), 1 as i32, (safe_zip).numFiles);
             current_block = 7746791466490516765;
         } else if read_Bools(a, timeBools, (safe_zip).numFiles) < 0 as i32 {
             current_block = 4688298256779699391;
@@ -3477,8 +3239,7 @@ unsafe fn read_Times(
                     unsafe {
                         if *p != 0 {
                             if parse_7zip_uint64(a, &mut (*h).dataIndex) < 0 as i32
-                                || (100000000 as u64)
-                                    < (*h).dataIndex as u64
+                                || (100000000 as u64) < (*h).dataIndex as u64
                             {
                                 current_block = 4688298256779699391;
                             } else {
@@ -3512,8 +3273,7 @@ unsafe fn read_Times(
                                                     &mut (*entries.offset(i as isize)).ctime_ns,
                                                 );
                                                 (*entries.offset(i as isize)).flg |=
-                                                    ((1 as i32) << 2 as i32)
-                                                        as u32
+                                                    ((1 as i32) << 2 as i32) as u32
                                             }
                                             19 => {
                                                 fileTimeToUtc(
@@ -3522,8 +3282,7 @@ unsafe fn read_Times(
                                                     &mut (*entries.offset(i as isize)).atime_ns,
                                                 );
                                                 (*entries.offset(i as isize)).flg |=
-                                                    ((1 as i32) << 1 as i32)
-                                                        as u32
+                                                    ((1 as i32) << 1 as i32) as u32
                                             }
                                             20 => {
                                                 fileTimeToUtc(
@@ -3532,8 +3291,7 @@ unsafe fn read_Times(
                                                     &mut (*entries.offset(i as isize)).mtime_ns,
                                                 );
                                                 (*entries.offset(i as isize)).flg |=
-                                                    ((1 as i32) << 0 as i32)
-                                                        as u32
+                                                    ((1 as i32) << 0 as i32) as u32
                                             }
                                             _ => {}
                                         }
@@ -3586,8 +3344,7 @@ unsafe fn decode_encoded_header_info(
         }
         return -(30 as i32);
     }
-    if (safe_si).pi.numPackStreams == 0 as i32 as u64
-        || (safe_si).ci.numFolders == 0 as i32 as u64
+    if (safe_si).pi.numPackStreams == 0 as i32 as u64 || (safe_si).ci.numFolders == 0 as i32 as u64
     {
         unsafe {
             archive_set_error(
@@ -3610,8 +3367,7 @@ unsafe fn decode_encoded_header_info(
                 .wrapping_add(*(safe_si).pi.sizes.offset(0 as i32 as isize))
                 as int64_t)
                 < 0 as i32 as i64
-            || *(safe_si).pi.sizes.offset(0 as i32 as isize)
-                == 0 as i32 as u64
+            || *(safe_si).pi.sizes.offset(0 as i32 as isize) == 0 as i32 as u64
             || ((safe_si).pi.pos as int64_t) < 0 as i32 as i64
     } {
         unsafe {
@@ -3625,10 +3381,7 @@ unsafe fn decode_encoded_header_info(
     }
     return 0 as i32;
 }
-unsafe fn header_bytes(
-    mut a: *mut archive_read,
-    mut rbytes: size_t,
-) -> *const u8 {
+unsafe fn header_bytes(mut a: *mut archive_read, mut rbytes: size_t) -> *const u8 {
     let mut zip: *mut _7zip = unsafe { (*(*a).format).data as *mut _7zip };
     let mut p: *const u8 = 0 as *const u8;
     let safe_zip = unsafe { &mut *zip };
@@ -3643,9 +3396,8 @@ unsafe fn header_bytes(
         if p.is_null() {
             return 0 as *const u8;
         }
-        (safe_zip).header_bytes_remaining = ((safe_zip).header_bytes_remaining as u64)
-            .wrapping_sub(rbytes) as uint64_t
-            as uint64_t;
+        (safe_zip).header_bytes_remaining =
+            ((safe_zip).header_bytes_remaining as u64).wrapping_sub(rbytes) as uint64_t as uint64_t;
         (safe_zip).pack_stream_bytes_unconsumed = rbytes
     } else {
         let mut buff: *const () = 0 as *const ();
@@ -3655,8 +3407,8 @@ unsafe fn header_bytes(
             return 0 as *const u8;
         }
         (safe_zip).header_bytes_remaining = ((safe_zip).header_bytes_remaining as u64)
-            .wrapping_sub(bytes as u64)
-            as uint64_t as uint64_t;
+            .wrapping_sub(bytes as u64) as uint64_t
+            as uint64_t;
         p = buff as *const u8
     }
     /* Update checksum */
@@ -3677,8 +3429,7 @@ unsafe fn slurp_central_directory(
     let mut r: i32 = 0;
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
-    p = __archive_read_ahead_safe(a, 32 as i32 as size_t, &mut bytes_avail)
-        as *const u8;
+    p = __archive_read_ahead_safe(a, 32 as i32 as size_t, &mut bytes_avail) as *const u8;
     if p.is_null() {
         return -(30 as i32);
     }
@@ -3696,15 +3447,13 @@ unsafe fn slurp_central_directory(
         if r < -(20 as i32) {
             return r;
         }
-        p = __archive_read_ahead_safe(a, 32 as i32 as size_t, &mut bytes_avail)
-            as *const u8;
+        p = __archive_read_ahead_safe(a, 32 as i32 as size_t, &mut bytes_avail) as *const u8;
         if p.is_null() {
             return -(30 as i32);
         }
     }
-    (safe_zip).seek_base = ((safe_zip).seek_base as u64)
-        .wrapping_add(32 as i32 as u64) as uint64_t
-        as uint64_t;
+    (safe_zip).seek_base =
+        ((safe_zip).seek_base as u64).wrapping_add(32 as i32 as u64) as uint64_t as uint64_t;
     if memcmp_safe(
         p as *const (),
         b"7z\xbc\xaf\'\x1c\x00" as *const u8 as *const i8 as *const (),
@@ -3725,8 +3474,7 @@ unsafe fn slurp_central_directory(
         0 as i32 as uLong,
         unsafe { p.offset(12 as i32 as isize) },
         20 as i32 as uInt,
-    ) != archive_le32dec(unsafe { p.offset(8 as i32 as isize) as *const () })
-        as u64
+    ) != archive_le32dec(unsafe { p.offset(8 as i32 as isize) as *const () }) as u64
     {
         unsafe {
             archive_set_error(
@@ -3737,12 +3485,9 @@ unsafe fn slurp_central_directory(
         };
         return -(30 as i32);
     }
-    next_header_offset =
-        archive_le64dec(unsafe { p.offset(12 as i32 as isize) as *const () });
-    next_header_size =
-        archive_le64dec(unsafe { p.offset(20 as i32 as isize) as *const () });
-    next_header_crc =
-        archive_le32dec(unsafe { p.offset(28 as i32 as isize) as *const () });
+    next_header_offset = archive_le64dec(unsafe { p.offset(12 as i32 as isize) as *const () });
+    next_header_size = archive_le64dec(unsafe { p.offset(20 as i32 as isize) as *const () });
+    next_header_crc = archive_le32dec(unsafe { p.offset(28 as i32 as isize) as *const () });
     if next_header_size == 0 as i32 as u64 {
         /* There is no entry in an archive file. */
         return 1 as i32;
@@ -3798,8 +3543,7 @@ unsafe fn slurp_central_directory(
              */
             r = decode_encoded_header_info(a, &mut (safe_zip).si);
             /* Check the EncodedHeader CRC.*/
-            if r == 0 as i32 && (safe_zip).header_crc32 != next_header_crc as u64
-            {
+            if r == 0 as i32 && (safe_zip).header_crc32 != next_header_crc as u64 {
                 unsafe {
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
@@ -3811,12 +3555,10 @@ unsafe fn slurp_central_directory(
             }
             if r == 0 as i32 {
                 if unsafe {
-                    (*(safe_zip).si.ci.folders.offset(0 as i32 as isize)).digest_defined
-                        != 0
+                    (*(safe_zip).si.ci.folders.offset(0 as i32 as isize)).digest_defined != 0
                 } {
-                    next_header_crc = unsafe {
-                        (*(safe_zip).si.ci.folders.offset(0 as i32 as isize)).digest
-                    }
+                    next_header_crc =
+                        unsafe { (*(safe_zip).si.ci.folders.offset(0 as i32 as isize)).digest }
                 } else {
                     check_header_crc = 0 as i32
                 }
@@ -3925,9 +3667,7 @@ unsafe fn get_uncompressed_data(
     let mut bytes_avail: ssize_t = 0;
     let safe_zip = unsafe { &mut *zip };
     let safe_a = unsafe { &mut *a };
-    if (safe_zip).codec == 0 as i32 as u64
-        && (safe_zip).codec2 == -(1 as i32) as u64
-    {
+    if (safe_zip).codec == 0 as i32 as u64 && (safe_zip).codec2 == -(1 as i32) as u64 {
         /* Copy mode. */
         unsafe { *buff = __archive_read_ahead(a, minimum, &mut bytes_avail) };
         if bytes_avail <= 0 as i32 as i64 {
@@ -3982,8 +3722,8 @@ unsafe fn get_uncompressed_data(
         }
     }
     (safe_zip).uncompressed_buffer_bytes_remaining =
-        ((safe_zip).uncompressed_buffer_bytes_remaining as u64)
-            .wrapping_sub(bytes_avail as u64) as size_t as size_t;
+        ((safe_zip).uncompressed_buffer_bytes_remaining as u64).wrapping_sub(bytes_avail as u64)
+            as size_t as size_t;
     return bytes_avail;
 }
 unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> ssize_t {
@@ -3992,9 +3732,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
     let mut r: i32 = 0;
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
-    if (safe_zip).codec == 0 as i32 as u64
-        && (safe_zip).codec2 == -(1 as i32) as u64
-    {
+    if (safe_zip).codec == 0 as i32 as u64 && (safe_zip).codec2 == -(1 as i32) as u64 {
         if minimum == 0 as i32 as u64 {
             minimum = 1 as i32 as size_t
         }
@@ -4013,15 +3751,15 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
         if bytes_avail as uint64_t > (safe_zip).pack_stream_inbytes_remaining {
             bytes_avail = (safe_zip).pack_stream_inbytes_remaining as ssize_t
         }
-        (safe_zip).pack_stream_inbytes_remaining =
-            ((safe_zip).pack_stream_inbytes_remaining as u64)
-                .wrapping_sub(bytes_avail as u64) as uint64_t as uint64_t;
+        (safe_zip).pack_stream_inbytes_remaining = ((safe_zip).pack_stream_inbytes_remaining as u64)
+            .wrapping_sub(bytes_avail as u64)
+            as uint64_t as uint64_t;
         if bytes_avail as uint64_t > (safe_zip).folder_outbytes_remaining {
             bytes_avail = (safe_zip).folder_outbytes_remaining as ssize_t
         }
-        (safe_zip).folder_outbytes_remaining =
-            ((safe_zip).folder_outbytes_remaining as u64)
-                .wrapping_sub(bytes_avail as u64) as uint64_t as uint64_t;
+        (safe_zip).folder_outbytes_remaining = ((safe_zip).folder_outbytes_remaining as u64)
+            .wrapping_sub(bytes_avail as u64)
+            as uint64_t as uint64_t;
         (safe_zip).uncompressed_buffer_bytes_remaining = bytes_avail as size_t;
         return 0 as i32 as ssize_t;
     }
@@ -4029,8 +3767,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
     if (safe_zip).uncompressed_buffer.is_null() {
         (safe_zip).uncompressed_buffer_size = (64 as i32 * 1024 as i32) as size_t;
         if (safe_zip).uncompressed_buffer_size < minimum {
-            (safe_zip).uncompressed_buffer_size =
-                minimum.wrapping_add(1023 as i32 as u64);
+            (safe_zip).uncompressed_buffer_size = minimum.wrapping_add(1023 as i32 as u64);
             (safe_zip).uncompressed_buffer_size &= !(0x3ff as i32) as u64
         }
         (safe_zip).uncompressed_buffer =
@@ -4059,8 +3796,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
             used = unsafe {
                 (safe_zip)
                     .uncompressed_buffer_pointer
-                    .offset_from((safe_zip).uncompressed_buffer) as i64
-                    as size_t
+                    .offset_from((safe_zip).uncompressed_buffer) as i64 as size_t
             }
         } else {
             used = 0 as i32 as size_t
@@ -4074,17 +3810,13 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
             let mut new_size: size_t = 0;
             new_size = minimum.wrapping_add(1023 as i32 as u64);
             new_size &= !(0x3ff as i32) as u64;
-            p = realloc_safe(
-                (safe_zip).uncompressed_buffer as *mut (),
-                new_size,
-            );
+            p = realloc_safe((safe_zip).uncompressed_buffer as *mut (), new_size);
             if p.is_null() {
                 unsafe {
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         12 as i32,
-                        b"No memory for 7-Zip decompression\x00" as *const u8
-                            as *const i8,
+                        b"No memory for 7-Zip decompression\x00" as *const u8 as *const i8,
                     )
                 };
                 return -(30 as i32) as ssize_t;
@@ -4098,9 +3830,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
         if used != 0 {
             memmove_safe(
                 (safe_zip).uncompressed_buffer as *mut (),
-                unsafe {
-                    (safe_zip).uncompressed_buffer.offset(used as isize) as *const ()
-                },
+                unsafe { (safe_zip).uncompressed_buffer.offset(used as isize) as *const () },
                 (safe_zip).uncompressed_buffer_bytes_remaining,
             );
         }
@@ -4157,18 +3887,18 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
             1 => end_of_data = 1 as i32,
             _ => return -(30 as i32) as ssize_t,
         }
-        (safe_zip).pack_stream_inbytes_remaining =
-            ((safe_zip).pack_stream_inbytes_remaining as u64).wrapping_sub(bytes_in)
-                as uint64_t as uint64_t;
+        (safe_zip).pack_stream_inbytes_remaining = ((safe_zip).pack_stream_inbytes_remaining as u64)
+            .wrapping_sub(bytes_in) as uint64_t
+            as uint64_t;
         if bytes_out > (safe_zip).folder_outbytes_remaining {
             bytes_out = (safe_zip).folder_outbytes_remaining
         }
-        (safe_zip).folder_outbytes_remaining =
-            ((safe_zip).folder_outbytes_remaining as u64).wrapping_sub(bytes_out)
-                as uint64_t as uint64_t;
+        (safe_zip).folder_outbytes_remaining = ((safe_zip).folder_outbytes_remaining as u64)
+            .wrapping_sub(bytes_out) as uint64_t
+            as uint64_t;
         (safe_zip).uncompressed_buffer_bytes_remaining =
-            ((safe_zip).uncompressed_buffer_bytes_remaining as u64)
-                .wrapping_add(bytes_out) as size_t as size_t;
+            ((safe_zip).uncompressed_buffer_bytes_remaining as u64).wrapping_add(bytes_out)
+                as size_t as size_t;
         (safe_zip).pack_stream_bytes_unconsumed = bytes_in;
         /*
          * Continue decompression until uncompressed_buffer is full.
@@ -4190,10 +3920,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
         {
             break;
         }
-        if end_of_data != 0
-            || bytes_in == 0 as i32 as u64
-                && bytes_out == 0 as i32 as u64
-        {
+        if end_of_data != 0 || bytes_in == 0 as i32 as u64 && bytes_out == 0 as i32 as u64 {
             unsafe {
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
@@ -4398,8 +4125,7 @@ unsafe fn read_stream(
         if skipped < 0 as i32 as i64 {
             return skipped;
         }
-        skip_bytes = (skip_bytes as u64).wrapping_sub(skipped as u64)
-            as uint64_t as uint64_t;
+        skip_bytes = (skip_bytes as u64).wrapping_sub(skipped as u64) as uint64_t as uint64_t;
         if (safe_zip).pack_stream_bytes_unconsumed != 0 {
             read_consume(a);
         }
@@ -4452,14 +4178,8 @@ unsafe fn setup_decode_folder(
                 it as encrypted (data+metadata). */
                 (safe_zip).has_encrypted_entries = 1 as i32;
                 if !(safe_a).entry.is_null() {
-                    archive_entry_set_is_data_encrypted_safe(
-                        (safe_a).entry,
-                        1 as i32 as i8,
-                    );
-                    archive_entry_set_is_metadata_encrypted_safe(
-                        (safe_a).entry,
-                        1 as i32 as i8,
-                    );
+                    archive_entry_set_is_data_encrypted_safe((safe_a).entry, 1 as i32 as i8);
+                    archive_entry_set_is_metadata_encrypted_safe((safe_a).entry, 1 as i32 as i8);
                 }
                 unsafe {
                     archive_set_error(
@@ -4483,9 +4203,7 @@ unsafe fn setup_decode_folder(
     if (safe_zip).has_encrypted_entries == -(1 as i32) {
         (safe_zip).has_encrypted_entries = 0 as i32
     }
-    if (safe_folder).numCoders > 2 as i32 as u64 && found_bcj2 == 0
-        || found_bcj2 > 1 as i32
-    {
+    if (safe_folder).numCoders > 2 as i32 as u64 && found_bcj2 == 0 || found_bcj2 > 1 as i32 {
         unsafe {
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
@@ -4497,12 +4215,9 @@ unsafe fn setup_decode_folder(
         };
         return -(30 as i32);
     }
-    coder1 =
-        unsafe { &mut *(safe_folder).coders.offset(0 as i32 as isize) as *mut _7z_coder };
+    coder1 = unsafe { &mut *(safe_folder).coders.offset(0 as i32 as isize) as *mut _7z_coder };
     if (safe_folder).numCoders == 2 as i32 as u64 {
-        coder2 = unsafe {
-            &mut *(safe_folder).coders.offset(1 as i32 as isize) as *mut _7z_coder
-        }
+        coder2 = unsafe { &mut *(safe_folder).coders.offset(1 as i32 as isize) as *mut _7z_coder }
     } else {
         coder2 = 0 as *const _7z_coder
     }
@@ -4526,74 +4241,54 @@ unsafe fn setup_decode_folder(
         let mut scoder: [*const _7z_coder; 3] = unsafe { [&coder_copy, &coder_copy, &coder_copy] };
         let mut buff: *const () = 0 as *const ();
         let mut bytes: ssize_t = 0;
-        let mut b: [*mut u8; 3] = [
-            0 as *mut u8,
-            0 as *mut u8,
-            0 as *mut u8,
-        ];
+        let mut b: [*mut u8; 3] = [0 as *mut u8, 0 as *mut u8, 0 as *mut u8];
         let mut sunpack: [uint64_t; 3] = [
             -(1 as i32) as uint64_t,
             -(1 as i32) as uint64_t,
             -(1 as i32) as uint64_t,
         ];
-        let mut s: [size_t; 3] = [
-            0 as i32 as size_t,
-            0 as i32 as size_t,
-            0 as i32 as size_t,
-        ];
+        let mut s: [size_t; 3] = [0 as i32 as size_t, 0 as i32 as size_t, 0 as i32 as size_t];
         let mut idx: [i32; 3] = [0 as i32, 1 as i32, 2 as i32];
         if unsafe {
             (safe_folder).numCoders == 4 as i32 as u64
-                && (*fc.offset(3 as i32 as isize)).codec
-                    == 0x303011b as i32 as u64
+                && (*fc.offset(3 as i32 as isize)).codec == 0x303011b as i32 as u64
                 && (safe_folder).numInStreams == 7 as i32 as u64
                 && (safe_folder).numOutStreams == 4 as i32 as u64
                 && (safe_zip).pack_stream_remaining == 4 as i32 as u32
         } {
             /* Source type 1 made by 7zr or 7z with -m options. */
             if unsafe {
-                (*(safe_folder).bindPairs.offset(0 as i32 as isize)).inIndex
-                    == 5 as i32 as u64
+                (*(safe_folder).bindPairs.offset(0 as i32 as isize)).inIndex == 5 as i32 as u64
             } {
                 /* The form made by 7zr */
                 idx[0 as i32 as usize] = 1 as i32;
                 idx[1 as i32 as usize] = 2 as i32;
                 idx[2 as i32 as usize] = 0 as i32;
                 unsafe {
-                    scoder[1 as i32 as usize] =
-                        &*fc.offset(1 as i32 as isize) as *const _7z_coder;
-                    scoder[2 as i32 as usize] =
-                        &*fc.offset(0 as i32 as isize) as *const _7z_coder;
-                    sunpack[1 as i32 as usize] =
-                        *(*folder).unPackSize.offset(1 as i32 as isize);
-                    sunpack[2 as i32 as usize] =
-                        *(*folder).unPackSize.offset(0 as i32 as isize);
+                    scoder[1 as i32 as usize] = &*fc.offset(1 as i32 as isize) as *const _7z_coder;
+                    scoder[2 as i32 as usize] = &*fc.offset(0 as i32 as isize) as *const _7z_coder;
+                    sunpack[1 as i32 as usize] = *(*folder).unPackSize.offset(1 as i32 as isize);
+                    sunpack[2 as i32 as usize] = *(*folder).unPackSize.offset(0 as i32 as isize);
                     coder1 = &*fc.offset(2 as i32 as isize) as *const _7z_coder
                 }
             } else if unsafe {
                 (*fc.offset(0 as i32 as isize)).codec == 0 as i32 as u64
-                    && (*fc.offset(1 as i32 as isize)).codec
-                        == 0 as i32 as u64
+                    && (*fc.offset(1 as i32 as isize)).codec == 0 as i32 as u64
             } {
-                coder1 = unsafe {
-                    &mut *(*folder).coders.offset(2 as i32 as isize) as *mut _7z_coder
-                }
+                coder1 =
+                    unsafe { &mut *(*folder).coders.offset(2 as i32 as isize) as *mut _7z_coder }
             } else if unsafe {
                 (*fc.offset(0 as i32 as isize)).codec == 0 as i32 as u64
-                    && (*fc.offset(2 as i32 as isize)).codec
-                        == 0 as i32 as u64
+                    && (*fc.offset(2 as i32 as isize)).codec == 0 as i32 as u64
             } {
-                coder1 = unsafe {
-                    &mut *(*folder).coders.offset(1 as i32 as isize) as *mut _7z_coder
-                }
+                coder1 =
+                    unsafe { &mut *(*folder).coders.offset(1 as i32 as isize) as *mut _7z_coder }
             } else if unsafe {
                 (*fc.offset(1 as i32 as isize)).codec == 0 as i32 as u64
-                    && (*fc.offset(2 as i32 as isize)).codec
-                        == 0 as i32 as u64
+                    && (*fc.offset(2 as i32 as isize)).codec == 0 as i32 as u64
             } {
-                coder1 = unsafe {
-                    &mut *(*folder).coders.offset(0 as i32 as isize) as *mut _7z_coder
-                }
+                coder1 =
+                    unsafe { &mut *(*folder).coders.offset(0 as i32 as isize) as *mut _7z_coder }
             } else {
                 unsafe {
                     archive_set_error(
@@ -4687,8 +4382,7 @@ unsafe fn setup_decode_folder(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         12 as i32,
-                        b"No memory for 7-Zip decompression\x00" as *const u8
-                            as *const i8,
+                        b"No memory for 7-Zip decompression\x00" as *const u8 as *const i8,
                     )
                 };
                 return -(30 as i32);
@@ -4719,9 +4413,8 @@ unsafe fn setup_decode_folder(
                     buff,
                     bytes as u64,
                 );
-                s[i as usize] = (s[i as usize] as u64)
-                    .wrapping_add(bytes as u64) as size_t
-                    as size_t;
+                s[i as usize] =
+                    (s[i as usize] as u64).wrapping_add(bytes as u64) as size_t as size_t;
                 if (safe_zip).pack_stream_bytes_unconsumed != 0 {
                     read_consume(a);
                 }
@@ -4740,15 +4433,13 @@ unsafe fn setup_decode_folder(
         /* Allocate memory used for decoded main stream bytes. */
         if (safe_zip).tmp_stream_buff.is_null() {
             (safe_zip).tmp_stream_buff_size = (32 as i32 * 1024 as i32) as size_t;
-            (safe_zip).tmp_stream_buff =
-                malloc_safe((safe_zip).tmp_stream_buff_size) as *mut u8;
+            (safe_zip).tmp_stream_buff = malloc_safe((safe_zip).tmp_stream_buff_size) as *mut u8;
             if (safe_zip).tmp_stream_buff.is_null() {
                 unsafe {
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         12 as i32,
-                        b"No memory for 7-Zip decompression\x00" as *const u8
-                            as *const i8,
+                        b"No memory for 7-Zip decompression\x00" as *const u8 as *const i8,
                     )
                 };
                 return -(30 as i32);
@@ -4810,8 +4501,7 @@ unsafe fn skip_stream(mut a: *mut archive_read, mut skip_bytes: size_t) -> int64
                 );
                 return -(30 as i32) as int64_t;
             }
-            bytes =
-                (bytes as u64).wrapping_sub(skipped_bytes as size_t) as size_t as size_t;
+            bytes = (bytes as u64).wrapping_sub(skipped_bytes as size_t) as size_t as size_t;
             if (*zip).pack_stream_bytes_unconsumed != 0 {
                 read_consume(a);
             }
@@ -4823,17 +4513,12 @@ unsafe fn skip_stream(mut a: *mut archive_read, mut skip_bytes: size_t) -> int64
 unsafe fn x86_Init(mut zip: *mut _7zip) {
     let safe_zip = unsafe { &mut *zip };
     safe_zip.bcj_state = 0 as i32 as uint32_t;
-    safe_zip.bcj_prevPosT =
-        unsafe { (0 as i32 as size_t).wrapping_sub(1 as i32 as u64) };
+    safe_zip.bcj_prevPosT = unsafe { (0 as i32 as size_t).wrapping_sub(1 as i32 as u64) };
     safe_zip.bcj_prevMask = 0 as i32 as uint32_t;
     safe_zip.bcj_ip = 5 as i32 as uint32_t;
 }
 
-unsafe fn x86_Convert(
-    mut zip: *mut _7zip,
-    mut data: *mut uint8_t,
-    mut size: size_t,
-) -> size_t {
+unsafe fn x86_Convert(mut zip: *mut _7zip, mut data: *mut uint8_t, mut size: size_t) -> size_t {
     static mut kMaskToAllowedStatus: [uint8_t; 8] = [
         1 as i32 as uint8_t,
         1 as i32 as uint8_t,
@@ -4868,10 +4553,8 @@ unsafe fn x86_Convert(
     ip = (safe_zip).bcj_ip;
     loop {
         let mut p: *mut uint8_t = unsafe { data.offset(bufferPos as isize) };
-        let mut limit: *mut uint8_t = unsafe {
-            data.offset(size as isize)
-                .offset(-(4 as i32 as isize))
-        };
+        let mut limit: *mut uint8_t =
+            unsafe { data.offset(size as isize).offset(-(4 as i32 as isize)) };
         unsafe {
             while p < limit {
                 if *p as i32 & 0xfe as i32 == 0xe8 as i32 {
@@ -4888,23 +4571,17 @@ unsafe fn x86_Convert(
         if prevPosT > 3 as i32 as u64 {
             prevMask = 0 as i32 as uint32_t
         } else {
-            prevMask = prevMask << prevPosT as i32 - 1 as i32
-                & 0x7 as i32 as u32;
+            prevMask = prevMask << prevPosT as i32 - 1 as i32 & 0x7 as i32 as u32;
             if prevMask != 0 as i32 as u32 {
                 let mut b: u8 = unsafe {
-                    *p.offset(
-                        (4 as i32 - kMaskToBitNumber[prevMask as usize] as i32)
-                            as isize,
-                    )
+                    *p.offset((4 as i32 - kMaskToBitNumber[prevMask as usize] as i32) as isize)
                 };
                 if unsafe {
                     kMaskToAllowedStatus[prevMask as usize] == 0
-                        || (b as i32 == 0 as i32
-                            || b as i32 == 0xff as i32)
+                        || (b as i32 == 0 as i32 || b as i32 == 0xff as i32)
                 } {
                     prevPosT = bufferPos;
-                    prevMask = prevMask << 1 as i32 & 0x7 as i32 as u32
-                        | 1 as i32 as u32;
+                    prevMask = prevMask << 1 as i32 & 0x7 as i32 as u32 | 1 as i32 as u32;
                     bufferPos = bufferPos.wrapping_add(1);
                     continue;
                 }
@@ -4929,40 +4606,30 @@ unsafe fn x86_Convert(
                 if prevMask == 0 as i32 as u32 {
                     break;
                 }
-                b_index = unsafe {
-                    kMaskToBitNumber[prevMask as usize] as i32 * 8 as i32
-                };
+                b_index = unsafe { kMaskToBitNumber[prevMask as usize] as i32 * 8 as i32 };
                 b_0 = (dest >> 24 as i32 - b_index) as uint8_t;
-                if !(b_0 as i32 == 0 as i32
-                    || b_0 as i32 == 0xff as i32)
-                {
+                if !(b_0 as i32 == 0 as i32 || b_0 as i32 == 0xff as i32) {
                     break;
                 }
-                src = dest
-                    ^ (((1 as i32) << 32 as i32 - b_index) - 1 as i32)
-                        as u32
+                src = dest ^ (((1 as i32) << 32 as i32 - b_index) - 1 as i32) as u32
             }
             unsafe {
-                *p.offset(4 as i32 as isize) = !(dest >> 24 as i32
-                    & 1 as i32 as u32)
-                    .wrapping_sub(1 as i32 as u32)
-                    as uint8_t;
+                *p.offset(4 as i32 as isize) =
+                    !(dest >> 24 as i32 & 1 as i32 as u32).wrapping_sub(1 as i32 as u32) as uint8_t;
                 *p.offset(3 as i32 as isize) = (dest >> 16 as i32) as uint8_t;
                 *p.offset(2 as i32 as isize) = (dest >> 8 as i32) as uint8_t;
                 *p.offset(1 as i32 as isize) = dest as uint8_t;
             }
-            bufferPos = (bufferPos as u64).wrapping_add(5 as i32 as u64)
-                as size_t as size_t
+            bufferPos = (bufferPos as u64).wrapping_add(5 as i32 as u64) as size_t as size_t
         } else {
-            prevMask = prevMask << 1 as i32 & 0x7 as i32 as u32
-                | 1 as i32 as u32;
+            prevMask = prevMask << 1 as i32 & 0x7 as i32 as u32 | 1 as i32 as u32;
             bufferPos = bufferPos.wrapping_add(1)
         }
     }
     (safe_zip).bcj_prevPosT = prevPosT;
     (safe_zip).bcj_prevMask = prevMask;
-    (safe_zip).bcj_ip = ((safe_zip).bcj_ip as u32).wrapping_add(bufferPos as uint32_t)
-        as uint32_t as uint32_t;
+    (safe_zip).bcj_ip =
+        ((safe_zip).bcj_ip as u32).wrapping_add(bufferPos as uint32_t) as uint32_t as uint32_t;
     return bufferPos;
 }
 unsafe fn Bcj2_Decode(
@@ -5023,8 +4690,7 @@ unsafe fn Bcj2_Decode(
                 < (::std::mem::size_of::<[uint16_t; 258]>() as u64)
                     .wrapping_div(::std::mem::size_of::<uint16_t>() as u64)
             {
-                safe_zip.bcj2_p[i as usize] =
-                    ((1 as i32) << 11 as i32 >> 1 as i32) as uint16_t;
+                safe_zip.bcj2_p[i as usize] = ((1 as i32) << 11 as i32 >> 1 as i32) as uint16_t;
                 i = i.wrapping_add(1)
             }
             safe_zip.bcj2_code = 0 as i32 as uint32_t;
@@ -5037,8 +4703,7 @@ unsafe fn Bcj2_Decode(
                 }
                 let fresh16 = buffer;
                 buffer = unsafe { buffer.offset(1) };
-                safe_zip.bcj2_code =
-                    safe_zip.bcj2_code << 8 as i32 | *fresh16 as u32;
+                safe_zip.bcj2_code = safe_zip.bcj2_code << 8 as i32 | *fresh16 as u32;
                 ii += 1
             }
             safe_zip.bcj_state = 1 as i32 as uint32_t
@@ -5055,8 +4720,8 @@ unsafe fn Bcj2_Decode(
             i = i.wrapping_add(1)
         }
         if outSize == 0 as i32 as u64 {
-            safe_zip.bcj2_outPos = (safe_zip.bcj2_outPos as u64).wrapping_add(outPos)
-                as uint64_t as uint64_t;
+            safe_zip.bcj2_outPos =
+                (safe_zip.bcj2_outPos as u64).wrapping_add(outPos) as uint64_t as uint64_t;
             return outPos as ssize_t;
         }
         loop {
@@ -5102,19 +4767,9 @@ unsafe fn Bcj2_Decode(
                         .offset(safe_zip.bcj2_prevByte as i32 as isize)
                 }
             } else if b as i32 == 0xe9 as i32 {
-                prob = unsafe {
-                    safe_zip
-                        .bcj2_p
-                        .as_mut_ptr()
-                        .offset(256 as i32 as isize)
-                }
+                prob = unsafe { safe_zip.bcj2_p.as_mut_ptr().offset(256 as i32 as isize) }
             } else {
-                prob = unsafe {
-                    safe_zip
-                        .bcj2_p
-                        .as_mut_ptr()
-                        .offset(257 as i32 as isize)
-                }
+                prob = unsafe { safe_zip.bcj2_p.as_mut_ptr().offset(257 as i32 as isize) }
             }
             ttt = unsafe { *prob as uint32_t };
             bound = (safe_zip.bcj2_range >> 11 as i32).wrapping_mul(ttt);
@@ -5122,9 +4777,7 @@ unsafe fn Bcj2_Decode(
                 safe_zip.bcj2_range = bound;
                 unsafe {
                     *prob = ttt.wrapping_add(
-                        (((1 as i32) << 11 as i32) as u32)
-                            .wrapping_sub(ttt)
-                            >> 5 as i32,
+                        (((1 as i32) << 11 as i32) as u32).wrapping_sub(ttt) >> 5 as i32,
                     ) as uint16_t
                 };
                 if safe_zip.bcj2_range < (1 as i32 as uint32_t) << 24 as i32 {
@@ -5134,18 +4787,17 @@ unsafe fn Bcj2_Decode(
                     safe_zip.bcj2_range <<= 8 as i32;
                     let fresh20 = buffer;
                     buffer = unsafe { buffer.offset(1) };
-                    safe_zip.bcj2_code =
-                        unsafe { safe_zip.bcj2_code << 8 as i32 | *fresh20 as u32 }
+                    safe_zip.bcj2_code = unsafe { safe_zip.bcj2_code << 8 as i32 | *fresh20 as u32 }
                 }
                 safe_zip.bcj2_prevByte = b
             } else {
                 let mut dest: uint32_t = 0;
                 let mut v: *const uint8_t = 0 as *const uint8_t;
                 let mut out: [uint8_t; 4] = [0; 4];
-                safe_zip.bcj2_range = (safe_zip.bcj2_range as u32).wrapping_sub(bound)
-                    as uint32_t as uint32_t;
-                safe_zip.bcj2_code = (safe_zip.bcj2_code as u32).wrapping_sub(bound)
-                    as uint32_t as uint32_t;
+                safe_zip.bcj2_range =
+                    (safe_zip.bcj2_range as u32).wrapping_sub(bound) as uint32_t as uint32_t;
+                safe_zip.bcj2_code =
+                    (safe_zip.bcj2_code as u32).wrapping_sub(bound) as uint32_t as uint32_t;
                 unsafe { *prob = ttt.wrapping_sub(ttt >> 5 as i32) as uint16_t };
                 if safe_zip.bcj2_range < (1 as i32 as uint32_t) << 24 as i32 {
                     if buffer == bufferLim {
@@ -5154,8 +4806,7 @@ unsafe fn Bcj2_Decode(
                     safe_zip.bcj2_range <<= 8 as i32;
                     let fresh21 = buffer;
                     buffer = buffer.offset(1);
-                    safe_zip.bcj2_code =
-                        safe_zip.bcj2_code << 8 as i32 | *fresh21 as u32
+                    safe_zip.bcj2_code = safe_zip.bcj2_code << 8 as i32 | *fresh21 as u32
                 }
                 if b as i32 == 0xe8 as i32 {
                     v = buf1;
@@ -5163,16 +4814,14 @@ unsafe fn Bcj2_Decode(
                         return -(25 as i32) as ssize_t;
                     }
                     buf1 = buf1.offset(4 as i32 as isize);
-                    size1 = (size1 as u64).wrapping_sub(4 as i32 as u64)
-                        as size_t as size_t
+                    size1 = (size1 as u64).wrapping_sub(4 as i32 as u64) as size_t as size_t
                 } else {
                     v = buf2;
                     if size2 < 4 as i32 as u64 {
                         return -(25 as i32) as ssize_t;
                     }
                     buf2 = unsafe { buf2.offset(4 as i32 as isize) };
-                    size2 = (size2 as u64).wrapping_sub(4 as i32 as u64)
-                        as size_t as size_t
+                    size2 = (size2 as u64).wrapping_sub(4 as i32 as u64) as size_t as size_t
                 }
                 dest = unsafe {
                     ((*v.offset(0 as i32 as isize) as uint32_t) << 24 as i32
@@ -5204,8 +4853,7 @@ unsafe fn Bcj2_Decode(
                  * Save odd bytes which we could not add into
                  * the output buffer because of out of space.
                  */
-                safe_zip.odd_bcj_size =
-                    (4 as i32 as u32).wrapping_sub(i) as size_t;
+                safe_zip.odd_bcj_size = (4 as i32 as u32).wrapping_sub(i) as size_t;
                 while i < 4 as i32 as u32 {
                     j = i
                         .wrapping_sub(4 as i32 as u32)
@@ -5216,8 +4864,8 @@ unsafe fn Bcj2_Decode(
                 break;
             }
         }
-        safe_zip.tmp_stream_bytes_remaining = (safe_zip.tmp_stream_bytes_remaining as u64)
-            .wrapping_sub(inPos) as size_t as size_t;
+        safe_zip.tmp_stream_bytes_remaining =
+            (safe_zip.tmp_stream_bytes_remaining as u64).wrapping_sub(inPos) as size_t as size_t;
         safe_zip.sub_stream_bytes_remaining[0 as i32 as usize] = size1;
         safe_zip.sub_stream_bytes_remaining[1 as i32 as usize] = size2;
         safe_zip.sub_stream_bytes_remaining[2 as i32 as usize] =
@@ -5243,20 +4891,13 @@ pub unsafe fn archive_test_skip_sfx(mut _a: *mut archive, mut bytes_avail: ssize
 pub unsafe fn archive_test_init_decompression(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut _7zip: *mut _7zip = 0 as *mut _7zip;
-    _7zip = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip>() as u64,
-    ) as *mut _7zip;
+    _7zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
     let mut coder1: *mut _7z_coder = 0 as *mut _7z_coder;
-    coder1 = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7z_coder>() as u64,
-    ) as *mut _7z_coder;
+    coder1 =
+        calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7z_coder>() as u64) as *mut _7z_coder;
     let mut coder2: *mut _7z_coder = 0 as *mut _7z_coder;
-    coder2 = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7z_coder>() as u64,
-    ) as *mut _7z_coder;
+    coder2 =
+        calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7z_coder>() as u64) as *mut _7z_coder;
     (*(coder1)).codec = 0x030401 as u64;
     (*(coder1)).propertiesSize = 4 as uint64_t;
     (*(_7zip)).ppmd7_valid = 1 as i32;
@@ -5303,16 +4944,10 @@ pub unsafe fn archive_test_archive_read_support_format_7zip() {
 pub unsafe fn archive_test_ppmd_read(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip>() as u64,
-    ) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
     (*zip).ppstream.avail_in = 0;
     let mut ibytein: *mut IByteIn = 0 as *mut IByteIn;
-    ibytein = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<IByteIn>() as u64,
-    ) as *mut IByteIn;
+    ibytein = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<IByteIn>() as u64) as *mut IByteIn;
     (*ibytein).a = a as *mut archive_read;
     let mut p: *mut () = ibytein as *mut ();
     ppmd_read(p);
@@ -5322,10 +4957,7 @@ pub unsafe fn archive_test_ppmd_read(mut _a: *mut archive) {
 pub unsafe fn archive_test_decompress(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip>() as u64,
-    ) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
     (*zip).codec = 0x20;
     (*zip).codec2 = 0x03030103;
     (*zip).odd_bcj_size = 1;
@@ -5365,10 +4997,7 @@ pub unsafe fn archive_test_decompress(mut _a: *mut archive) {
 #[no_mangle]
 pub unsafe fn archive_test_Bcj2_Decode() {
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip>() as u64,
-    ) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
     (*zip).bcj_state = 1;
     (*zip).odd_bcj[0] = 'a' as u8;
     (*zip).odd_bcj[1] = 'b' as u8;
@@ -5381,10 +5010,7 @@ pub unsafe fn archive_test_Bcj2_Decode() {
 #[no_mangle]
 pub unsafe fn archive_test_x86_Convert() {
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip>() as u64,
-    ) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
     (*zip).bcj_prevMask = 0x7;
     (*zip).bcj_prevPosT = 2;
     (*zip).bcj_ip = 0;
@@ -5418,10 +5044,7 @@ pub unsafe fn archive_test_x86_Convert() {
 pub unsafe fn archive_test_seek_pack(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip>() as u64,
-    ) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
     (*(*a).format).data = zip as *mut ();
     (*zip).pack_stream_remaining = 0;
     seek_pack(a);
@@ -5431,18 +5054,13 @@ pub unsafe fn archive_test_seek_pack(mut _a: *mut archive) {
 pub unsafe fn archive_test_extract_pack_stream(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip>() as u64,
-    ) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
     (*(*a).format).data = zip as *mut ();
     extract_pack_stream(a, (64 * 1024) + 1);
     let mut p1: [u8; 2] = ['1' as u8, '2' as u8];
-    let mut p2: *mut u8 =
-        &p1 as *const [u8; 2] as *mut [u8; 2] as *mut u8;
+    let mut p2: *mut u8 = &p1 as *const [u8; 2] as *mut [u8; 2] as *mut u8;
     let mut p3: [u8; 2] = ['1' as u8, '2' as u8];
-    let mut p4: *mut u8 =
-        &p3 as *const [u8; 2] as *mut [u8; 2] as *mut u8;
+    let mut p4: *mut u8 = &p3 as *const [u8; 2] as *mut [u8; 2] as *mut u8;
     (*zip).uncompressed_buffer = p2;
     (*zip).uncompressed_buffer_pointer = p4;
     (*zip).uncompressed_buffer_size = 1;
@@ -5453,14 +5071,10 @@ pub unsafe fn archive_test_extract_pack_stream(mut _a: *mut archive) {
 pub unsafe fn archive_test_get_uncompressed_data(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut buff: *mut () = 0 as *const () as *mut ();
-    let mut buff2: *mut *const () = unsafe {
-        &buff as *const *mut () as *mut *mut () as *mut *const ()
-    };
+    let mut buff2: *mut *const () =
+        unsafe { &buff as *const *mut () as *mut *mut () as *mut *const () };
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip>() as u64,
-    ) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
     (*(*a).format).data = zip as *mut ();
     get_uncompressed_data(a, buff2, 1, 1);
     (*zip).codec = 0;
@@ -5511,24 +5125,16 @@ pub unsafe fn archive_test_archive_read_format_7zip_bid(mut _a: *mut archive) {
 pub unsafe fn archive_test_read_stream(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut buff: *mut () = 0 as *const () as *mut ();
-    let mut buff2: *mut *const () = unsafe {
-        &buff as *const *mut () as *mut *mut () as *mut *const ()
-    };
+    let mut buff2: *mut *const () =
+        unsafe { &buff as *const *mut () as *mut *mut () as *mut *const () };
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip>() as u64,
-    ) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
     let mut _7zip_entry: *mut _7zip_entry = 0 as *mut _7zip_entry;
-    _7zip_entry = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7zip_entry>() as u64,
-    ) as *mut _7zip_entry;
+    _7zip_entry = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip_entry>() as u64)
+        as *mut _7zip_entry;
     let mut _7z_folder: *mut _7z_folder = 0 as *mut _7z_folder;
-    _7z_folder = calloc_safe(
-        2 as i32 as u64,
-        ::std::mem::size_of::<_7z_folder>() as u64,
-    ) as *mut _7z_folder;
+    _7z_folder =
+        calloc_safe(2 as i32 as u64, ::std::mem::size_of::<_7z_folder>() as u64) as *mut _7z_folder;
     (*(*a).format).data = zip as *mut ();
     (*zip).uncompressed_buffer_bytes_remaining = 0;
     (*zip).pack_stream_remaining = 0;
