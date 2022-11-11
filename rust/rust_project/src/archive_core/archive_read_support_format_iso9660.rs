@@ -1724,7 +1724,7 @@ unsafe fn zisofs_read_data(
                     r = unsafe {
                         libz_sys::inflateInit_(
                             &mut zisofs.stream,
-                            b"1.2.7\x00" as *const u8 as *const i8,
+                            b"1.2.7\x00" as *const u8 as *const libc::c_char,
                             ::std::mem::size_of::<z_stream>() as u64 as i32,
                         )
                     }
