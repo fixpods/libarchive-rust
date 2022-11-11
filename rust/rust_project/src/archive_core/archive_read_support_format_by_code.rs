@@ -17,18 +17,18 @@ use rust_ffi::ffi_struct::struct_transfer::*;
 #[no_mangle]
 pub unsafe extern "C" fn archive_read_support_format_by_code(
     mut a: *mut archive,
-    mut format_code: libc::c_int,
-) -> libc::c_int {
-    let mut magic_test: libc::c_int = __archive_check_magic_safe(
+    mut format_code: i32,
+) -> i32 {
+    let mut magic_test: i32 = __archive_check_magic_safe(
         a,
-        0xdeb0c5 as libc::c_uint,
-        1 as libc::c_uint,
-        b"archive_read_support_format_by_code\x00" as *const u8 as *const libc::c_char,
+        0xdeb0c5 as u32,
+        1 as u32,
+        b"archive_read_support_format_by_code\x00" as *const u8 as *const i8,
     );
-    if magic_test == -(30 as libc::c_int) {
-        return -(30 as libc::c_int);
+    if magic_test == -(30 as i32) {
+        return -(30 as i32);
     }
-    match format_code & 0xff0000 as libc::c_int {
+    match format_code & 0xff0000 as i32 {
         917504 => return archive_read_support_format_7zip(a),
         458752 => return archive_read_support_format_ar(a),
         786432 => return archive_read_support_format_cab(a),
@@ -49,7 +49,7 @@ pub unsafe extern "C" fn archive_read_support_format_by_code(
     archive_set_error_safe!(
         a,
         ARCHIVE_BY_CODE_DEFINED_PARAM.archive_errno_programmer,
-        b"Invalid format code specified\x00" as *const u8 as *const libc::c_char
+        b"Invalid format code specified\x00" as *const u8 as *const i8
     );
     return ARCHIVE_BY_CODE_DEFINED_PARAM.archive_fatal;
 }
