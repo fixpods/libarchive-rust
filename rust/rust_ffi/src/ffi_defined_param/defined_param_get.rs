@@ -5,6 +5,8 @@ extern "C" {
 
     fn get_archive_zip_defined_param() -> archive_zip_defined_param;
 
+    fn get_archive_all_defined_param() -> archive_all_defined_param;
+
     fn get_archive_iso9660_defined_param() -> archive_iso9660_defined_param;
 
     fn get_archive_lha_defined_param() -> archive_lha_defined_param;
@@ -188,6 +190,16 @@ pub struct archive_7zip_defined_param {
     pub kbitmodeltotal: i32,
     pub knummovebits: i32,
 }
+
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+pub struct archive_all_defined_param {
+    pub archive_read_magic: u32,
+    pub archive_state_new: u32,
+    pub archive_ok: i32,
+}
+
+
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
@@ -905,6 +917,8 @@ lazy_static! {
         unsafe { get_archive_7zip_defined_param() };
     pub static ref ARCHIVE_ZIP_DEFINED_PARAM: archive_zip_defined_param =
         unsafe { get_archive_zip_defined_param() };
+    pub static ref ARCHIVE_ALL_DEFINED_PARAM: archive_all_defined_param =
+        unsafe { get_archive_all_defined_param() };
     pub static ref ARCHIVE_LHA_DEFINED_PARAM: archive_lha_defined_param =
         unsafe { get_archive_lha_defined_param() };
     pub static ref ARCHIVE_RAW_DEFINED_PARAM: archive_raw_defined_param =
