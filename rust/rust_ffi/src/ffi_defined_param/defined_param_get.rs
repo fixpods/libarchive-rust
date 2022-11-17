@@ -241,6 +241,7 @@ pub struct archive_zip_defined_param {
     pub max_derived_key_buf_size: i32,
     pub md_size: i32,
     pub enc_header_size: i32,
+    pub archive_failed: i32,
 }
 
 
@@ -630,6 +631,24 @@ pub struct archive_tar_defined_param {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive_by_code_defined_param {
+    pub archive_read_magic: u32,
+    pub archive_state_new: u32,
+    pub archive_format_base_mask: i32,
+    pub archive_format_7zip: i32,
+    pub archive_format_ar: i32,
+    pub archive_format_cab: i32,
+    pub archive_format_cpio: i32,
+    pub archive_format_empty: i32,
+    pub archive_format_iso9660: i32,
+    pub archive_format_lha: i32,
+    pub archive_format_mtree: i32,
+    pub archive_format_rar: i32,
+    pub archive_format_rar_v5: i32,
+    pub archive_format_raw: i32,
+    pub archive_format_tar: i32,
+    pub archive_format_warc: i32,
+    pub archive_format_xar: i32,
+    pub archive_format_zip: i32,
     pub archive_fatal: i32,
     pub archive_errno_programmer: i32,
 }

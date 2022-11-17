@@ -155,6 +155,7 @@ struct archive_zip_defined_param
 	int max_derived_key_buf_size;
 	int md_size;
 	int enc_header_size;
+	int archive_failed;
 };
 
 struct archive_zip_defined_param get_archive_zip_defined_param();
@@ -198,6 +199,7 @@ struct archive_zip_defined_param get_archive_zip_defined_param(){
 	param.max_derived_key_buf_size = MAX_DERIVED_KEY_BUF_SIZE;
 	param.md_size = MD_SIZE;
 	param.enc_header_size = ENC_HEADER_SIZE;
+	param.archive_failed = ARCHIVE_FAILED;
 	return param;
 }
 
