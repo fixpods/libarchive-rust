@@ -121,7 +121,7 @@ fn ppmd_read( p: *mut ()) -> Byte {
     /* Increment the counter. */
     safe_zip.zipx_ppmd_read_compressed += 1;
     /* Return the next compressed byte. */
-    unsafe { return *data.offset(0) };
+    unsafe { return *data.offset(0 as isize) };
 }
 
 fn trad_enc_update_keys( ctx: *mut trad_enc_ctx, mut c: uint8_t) {
@@ -192,7 +192,7 @@ fn trad_enc_init(
         let fresh0 = pw;
         let safe_fresh0 = unsafe { &*fresh0 };
         unsafe {
-            pw = pw.offset(1);
+            pw = pw.offset(1 as isize);
         }
         trad_enc_update_keys(ctx, *safe_fresh0 as uint8_t);
         pw_len = pw_len-1
@@ -379,11 +379,11 @@ fn zip_time( p: *const i8) -> time_t {
         tm_zone: 0 as *const i8,
     }; /* Day of month. */
     unsafe {
-        msTime = ((0xff  & *p.offset(0) as u32)+256*(0xff & *p.offset(1) as u32)
+        msTime = ((0xff  & *p.offset(0 as isize) as u32)+256*(0xff & *p.offset(1 as isize) as u32)
         ) as i32;
     }
     unsafe {
-        msDate = ((0xff & *p.offset(2) as u32)+256*(0xff & *p.offset(3) as u32)
+        msDate = ((0xff & *p.offset(2 as isize) as u32)+256*(0xff & *p.offset(3 as isize) as u32)
         ) as i32;
     }
     unsafe{memset_safe(
@@ -449,7 +449,7 @@ fn process_extra(
     while offset as u64 <= extra_length-4 {
         let headerid: u16 = archive_le16dec( unsafe{p.offset(offset as isize) as *const ()});
         let mut datasize: u16 = archive_le16dec(unsafe {
-            p.offset(offset as isize).offset(2) as *const ()
+            p.offset(offset as isize).offset(2 as isize) as *const ()
         });
         offset = offset+4;
         if (offset+datasize as u32) as u64 > extra_length {
@@ -601,15 +601,15 @@ fn process_extra(
                         archive_le32dec(unsafe { p.offset(offset as isize) as *const () })
                             as time_t;
                     safe_zip_entry.mtime = archive_le32dec(unsafe {
-                        p.offset(offset as isize).offset(4) 
+                        p.offset(offset as isize).offset(4 as isize) 
                     } as *const ()) as time_t 
                 }
                 if datasize as i32 >= 12 {
                     safe_zip_entry.uid = archive_le16dec(unsafe {
-                        p.offset(offset as isize).offset(8) as *const ()
+                        p.offset(offset as isize).offset(8 as isize) as *const ()
                     }) as int64_t;
                     safe_zip_entry.gid = archive_le16dec(unsafe {
-                        p.offset(offset as isize).offset(10) as *const ()
+                        p.offset(offset as isize).offset(10 as isize) as *const ()
                     }) as int64_t
                 }
             }
@@ -845,7 +845,7 @@ fn process_extra(
                 }
                 if datasize  >= 4 {
                     safe_zip_entry.gid = archive_le16dec(unsafe {
-                        p.offset(offset as isize).offset(2)  as *const ()
+                        p.offset(offset as isize).offset(2 as isize)  as *const ()
                     }) as int64_t
                 }
             }
@@ -866,11 +866,11 @@ fn process_extra(
                         }
                         if uidsize == 2{
                             safe_zip_entry.uid = archive_le16dec(unsafe {
-                                p.offset(offset as isize).offset(2) as *const ()
+                                p.offset(offset as isize).offset(2 as isize) as *const ()
                             }) as int64_t
                         } else if uidsize == 4 as i32 && datasize as i32 >= 6 as i32 {
                             safe_zip_entry.uid = archive_le32dec(unsafe {
-                                p.offset(offset as isize).offset(2) as *const ()
+                                p.offset(offset as isize).offset(2 as isize) as *const ()
                             }) as int64_t
                         }
                     }
@@ -886,9 +886,9 @@ fn process_extra(
                             unsafe {
                                 safe_zip_entry.gid = archive_le16dec(
                                     p.offset(offset as isize)
-                                        .offset(2)
+                                        .offset(2 as isize)
                                         .offset(uidsize as isize)
-                                        .offset(1)
+                                        .offset(1 as isize)
                                         as *const (),
                                 ) as int64_t
                             }
@@ -898,9 +898,9 @@ fn process_extra(
                             unsafe {
                                 safe_zip_entry.gid = archive_le32dec(
                                     p.offset(offset as isize)
-                                        .offset(2)
+                                        .offset(2 as isize)
                                         .offset(uidsize as isize)
-                                        .offset(1)
+                                        .offset(1 as isize)
                                         as *const (),
                                 ) as int64_t
                             }
@@ -1044,9 +1044,9 @@ fn zip_read_local_file_header(
         };
         return -30;
     }
-    version = unsafe { *p.offset(4) };
-    safe_zip_entry.system = unsafe { *p.offset(5) as u8 };
-    safe_zip_entry.zip_flags = archive_le16dec(unsafe { p.offset(6) as *const () });
+    version = unsafe { *p.offset(4 as isize) };
+    safe_zip_entry.system = unsafe { *p.offset(5 as isize) as u8 };
+    safe_zip_entry.zip_flags = archive_le16dec(unsafe { p.offset(6 as isize) as *const () });
     if safe_zip_entry.zip_flags as i32 & ((1) << 0 | (1 << 6)) != 0 {
         safe_zip.has_encrypted_entries = 1;
         unsafe{archive_entry_set_is_data_encrypted_safe(entry, 1 as i8)};
@@ -1060,21 +1060,21 @@ fn zip_read_local_file_header(
     }
     safe_zip.init_decryption = (safe_zip_entry.zip_flags as i32 & (1 << 0) as i32) as i8;
     safe_zip_entry.compression =
-        archive_le16dec(unsafe { p.offset(8) as *const () })as u8;
-    safe_zip_entry.mtime = zip_time(unsafe { p.offset(10) });
-    safe_zip_entry.crc32 = archive_le32dec(unsafe { p.offset(14) as *const () });
+        archive_le16dec(unsafe { p.offset(8 as isize) as *const () })as u8;
+    safe_zip_entry.mtime = zip_time(unsafe { p.offset(10 as isize) });
+    safe_zip_entry.crc32 = archive_le32dec(unsafe { p.offset(14 as isize) as *const () });
     if safe_zip_entry.zip_flags as i32 & (1 << 3) as i32 != 0 {
-        safe_zip_entry.decdat = unsafe { *p.offset(11) as u8 }
+        safe_zip_entry.decdat = unsafe { *p.offset(11 as isize) as u8 }
     } else {
-        safe_zip_entry.decdat = unsafe { *p.offset(17) as u8 }
+        safe_zip_entry.decdat = unsafe { *p.offset(17 as isize) as u8 }
     }
     safe_zip_entry.compressed_size =
-        archive_le32dec(unsafe { p.offset(18) as *const () }) as int64_t;
+        archive_le32dec(unsafe { p.offset(18 as isize) as *const () }) as int64_t;
     safe_zip_entry.uncompressed_size =
-        archive_le32dec(unsafe { p.offset(22) as *const () }) as int64_t;
+        archive_le32dec(unsafe { p.offset(22 as isize) as *const () }) as int64_t;
     filename_length =
-        archive_le16dec(unsafe { p.offset(26) as *const () }) as size_t;
-    extra_length = archive_le16dec(unsafe { p.offset(28) as *const () }) as size_t;
+        archive_le16dec(unsafe { p.offset(26 as isize) as *const () }) as size_t;
+    extra_length = archive_le16dec(unsafe { p.offset(28 as isize) as *const () }) as size_t;
     unsafe{__archive_read_consume_safe(a, 30)};
     /* Read the filename. */
     h = unsafe{__archive_read_ahead_safe(a, filename_length, 0 as *mut ssize_t)};
@@ -1650,7 +1650,7 @@ fn zip_read_data_none(
                 return 0;
             }
             /* If not at EOF, ensure we consume at least one byte. */
-            p = p.offset(1);
+            p = p.offset(1 as isize);
             /* Scan forward until we see where a PK\007\010 signature
              * might be. */
             /* Return bytes up until that point.  On the next call,
@@ -1771,10 +1771,10 @@ fn consume_optional_marker(a: *mut archive_read, zip: *mut zip) -> i32 {
         }
         /* Consume the optional PK\007\010 marker. */
         if unsafe {
-            *p.offset(0) as i32 == 'P' as i32
-                && *p.offset(1) as i32 == 'K' as i32
-                && *p.offset(2) as i32 == '\u{7}' as i32
-                && *p.offset(3) as i32 == '\u{8}' as i32
+            *p.offset(0 as isize) as i32 == 'P' as i32
+                && *p.offset(1 as isize) as i32 == 'K' as i32
+                && *p.offset(2 as isize) as i32 == '\u{7}' as i32
+                && *p.offset(3 as isize) as i32 == '\u{8}' as i32
         } {
             unsafe { p = p.offset(4 as isize) };
             safe_zip.unconsumed = 4 as size_t
@@ -1914,8 +1914,8 @@ fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
             return -30;
         }
         if unsafe {
-            *p.offset(2) as i32 != 0x5
-                || *p.offset(3) as i32 != 0
+            *p.offset(2 as isize) as i32 != 0x5
+                || *p.offset(3 as isize) as i32 != 0
         } {
             unsafe {
                 archive_set_error(
@@ -1931,7 +1931,7 @@ fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         memcpy_safe(
             &mut *alone_header.bytes.as_mut_ptr().offset(0 as isize) as *mut uint8_t
                 as *mut (),
-            p.offset(4) as *const (),
+            p.offset(4 as isize) as *const (),
             5,
         );
         /* Initialize the 'uncompressed size' field to unknown; we'll manually
@@ -2890,7 +2890,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                             current_block = 4407371520091252421;
                         } else {
                             /* Check if format version is supported. */
-                            if archive_le16dec(unsafe { p.offset(4) as *const () })
+                            if archive_le16dec(unsafe { p.offset(4 as isize) as *const () })
                                 as i32
                                 != 3
                             {
@@ -2901,7 +2901,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                         b"Unsupported encryption format version: %u\x00"
                                             as *const u8
                                             as *const i8,
-                                        archive_le16dec(p.offset(4) as *const ())
+                                        archive_le16dec(p.offset(4 as isize) as *const ())
                                             as i32,
                                     )
                                 };
@@ -2911,7 +2911,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                              * Read an encryption algorithm field.
                              */
                             (safe_zip).alg_id = archive_le16dec(unsafe {
-                                p.offset(6) as *const ()
+                                p.offset(6 as isize) as *const ()
                             }) as u32;
                             let mut current_block_20: u64;
                             match (safe_zip).alg_id {
@@ -3037,13 +3037,13 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                              * Read a bit length field.
                              */
                             (safe_zip).bit_len = archive_le16dec(unsafe {
-                                p.offset(8) as *const ()
+                                p.offset(8 as isize) as *const ()
                             }) as u32;
                             /*
                              * Read a flags field.
                              */
                             (safe_zip).flags = archive_le16dec(unsafe {
-                                p.offset(10) as *const ()
+                                p.offset(10 as isize) as *const ()
                             }) as u32;
                             let mut current_block_25: u64;
                             match (safe_zip).flags & 0xf000 {
@@ -3095,7 +3095,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                              */
                             ts = (safe_zip).erd_size;
                             (safe_zip).erd_size = archive_le16dec(unsafe {
-                                p.offset(12) as *const ()
+                                p.offset(12 as isize) as *const ()
                             }) as u32;
                             unsafe{__archive_read_consume_safe(a, 14)};
                             if (safe_zip).erd_size & 0xf != 0
@@ -3548,7 +3548,7 @@ fn init_WinZip_AES_decryption(a: *mut archive_read) -> i32 {
                             == *pv.offset(0 as isize) as i32
                             && derived_key[(key_len * 2 + 1)
                                 as usize] as i32
-                                == *pv.offset(1) as i32
+                                == *pv.offset(1 as isize) as i32
                     } {
                         break;
                     }
@@ -3887,7 +3887,7 @@ fn archive_read_format_zip_options(
         return 0;
     } else {
         if unsafe {strcmp_safe(key, b"hdrcharset\x00" as *const u8 as *const i8)} == 0 {
-            if unsafe { val.is_null() || *val.offset(0) as i32 == 0 } {
+            if unsafe { val.is_null() || *val.offset(0 as isize) as i32 == 0 } {
                 unsafe {
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
@@ -3929,7 +3929,7 @@ fn archive_read_format_zip_options(
                 if unsafe {strcmp_safe(key, b"mac-ext\x00" as *const u8 as *const i8)} == 0 {
                     unsafe {
                         (safe_zip).process_mac_extensions = (!val.is_null()
-                            && *val.offset(0) as i32 != 0)
+                            && *val.offset(0 as isize) as i32 != 0)
                             as i32;
                     }
                     return 0;
@@ -3978,20 +3978,20 @@ fn archive_read_format_zip_streamable_bid(
      * So we've effectively verified ~29 total bits of check data.
      */
     unsafe {
-        if *p.offset(0) as i32 == 'P' as i32
-            && *p.offset(1) as i32 == 'K' as i32
+        if *p.offset(0 as isize) as i32 == 'P' as i32
+            && *p.offset(1 as isize) as i32 == 'K' as i32
         {
-            if *p.offset(2) as i32 == '\u{1}' as i32
-                && *p.offset(3) as i32 == '\u{2}' as i32
-                || *p.offset(2) as i32 == '\u{3}' as i32
-                    && *p.offset(3) as i32 == '\u{4}' as i32
-                || *p.offset(2) as i32 == '\u{5}' as i32
-                    && *p.offset(3) as i32 == '\u{6}' as i32
-                || *p.offset(2) as i32 == '\u{6}' as i32
-                    && *p.offset(3) as i32 == '\u{6}' as i32
-                || *p.offset(2) as i32 == '\u{7}' as i32
-                    && *p.offset(3) as i32 == '\u{8}' as i32
-                || *p.offset(2) as i32 == '0' as i32
+            if *p.offset(2 as isize) as i32 == '\u{1}' as i32
+                && *p.offset(3 as isize) as i32 == '\u{2}' as i32
+                || *p.offset(2 as isize) as i32 == '\u{3}' as i32
+                    && *p.offset(3 as isize) as i32 == '\u{4}' as i32
+                || *p.offset(2 as isize) as i32 == '\u{5}' as i32
+                    && *p.offset(3 as isize) as i32 == '\u{6}' as i32
+                || *p.offset(2 as isize) as i32 == '\u{6}' as i32
+                    && *p.offset(3 as isize) as i32 == '\u{6}' as i32
+                || *p.offset(2 as isize) as i32 == '\u{7}' as i32
+                    && *p.offset(3 as isize) as i32 == '\u{8}' as i32
+                || *p.offset(2 as isize) as i32 == '0' as i32
                     && *p.offset(3 as isize) as i32 == '0' as i32
             {
                 return 29 as i32;
@@ -4084,12 +4084,12 @@ fn archive_read_format_zip_streamable_read_header(
         }
         end = unsafe { p.offset(bytes as isize) };
         unsafe {
-            while p.offset(4) <= end {
-                if *p.offset(0) as i32 == 'P' as i32
+            while p.offset(4 as isize) <= end {
+                if *p.offset(0 as isize) as i32 == 'P' as i32
                     && *p.offset(1 as isize) as i32 == 'K' as i32
                 {
-                    if *p.offset(2) as i32 == '\u{3}' as i32
-                        && *p.offset(3) as i32 == '\u{4}' as i32
+                    if *p.offset(2 as isize) as i32 == '\u{3}' as i32
+                        && *p.offset(3 as isize) as i32 == '\u{4}' as i32
                     {
                         /* Regular file entry. */
                         __archive_read_consume_safe(a, skipped);
@@ -4108,22 +4108,22 @@ fn archive_read_format_zip_streamable_read_header(
                      * and may not help with regular file
                      * permissions, either.  <sigh>
                      */
-                    if *p.offset(2) as i32 == '\u{1}' as i32
-                        && *p.offset(3) as i32 == '\u{2}' as i32
+                    if *p.offset(2 as isize) as i32 == '\u{1}' as i32
+                        && *p.offset(3 as isize) as i32 == '\u{2}' as i32
                     {
                         return 1;
                     }
                     /* End of central directory?  Must be an
                      * empty archive. */
-                    if *p.offset(2) as i32 == '\u{5}' as i32
-                        && *p.offset(3) as i32 == '\u{6}' as i32
+                    if *p.offset(2 as isize) as i32 == '\u{5}' as i32
+                        && *p.offset(3 as isize) as i32 == '\u{6}' as i32
                         || *p.offset(2 ) as i32 == '\u{6}' as i32
                             && *p.offset(3 ) as i32 == '\u{6}' as i32
                     {
                         return 1;
                     }
                 }
-                p = p.offset(1);
+                p = p.offset(1 as isize);
                 skipped += 1
             }
         }
@@ -4223,16 +4223,16 @@ fn archive_read_format_zip_read_data_skip_streamable(a: *mut archive_read) -> i3
                             .offset(bytes_avail as isize)
                             .offset(-(16))
                     {
-                        if *p.offset(3) as i32 == 'P' as i32 {
-                            p = p.offset(3)
-                        } else if *p.offset(3) as i32 == 'K' as i32 {
-                            p = p.offset(2)
-                        } else if *p.offset(3) as i32 == '\u{7}' as i32 {
-                            p = p.offset(1)
-                        } else if *p.offset(3) as i32 == '\u{8}' as i32
-                            && *p.offset(2) as i32 == '\u{7}' as i32
-                            && *p.offset(1) as i32 == 'K' as i32
-                            && *p.offset(0) as i32 == 'P' as i32
+                        if *p.offset(3 as isize) as i32 == 'P' as i32 {
+                            p = p.offset(3 as isize)
+                        } else if *p.offset(3 as isize) as i32 == 'K' as i32 {
+                            p = p.offset(2 as isize)
+                        } else if *p.offset(3 as isize) as i32 == '\u{7}' as i32 {
+                            p = p.offset(1 as isize)
+                        } else if *p.offset(3 as isize) as i32 == '\u{8}' as i32
+                            && *p.offset(2 as isize) as i32 == '\u{7}' as i32
+                            && *p.offset(1 as isize) as i32 == 'K' as i32
+                            && *p.offset(0 as isize) as i32 == 'P' as i32
                         {
                             if (*(*zip).entry).flags as i32 & (1 << 0) != 0 {
                                 __archive_read_consume(
@@ -4247,7 +4247,7 @@ fn archive_read_format_zip_read_data_skip_streamable(a: *mut archive_read) -> i3
                             }
                             return 0;
                         } else {
-                            p = p.offset(4)
+                            p = p.offset(4 as isize)
                         }
                     }
                 }
@@ -4357,9 +4357,9 @@ unsafe fn read_eocd(zip: *mut zip, p: *const i8, current_offset: int64_t) -> i32
     let disk_num: uint16_t;
     let cd_size: uint32_t;
     let cd_offset: uint32_t;
-    disk_num = archive_le16dec(unsafe { p.offset(4) as *const () });
-    cd_size = archive_le32dec(unsafe { p.offset(12) as *const () });
-    cd_offset = archive_le32dec(unsafe { p.offset(16) as *const () });
+    disk_num = archive_le16dec(unsafe { p.offset(4 as isize) as *const () });
+    cd_size = archive_le32dec(unsafe { p.offset(12 as isize) as *const () });
+    cd_offset = archive_le32dec(unsafe { p.offset(16 as isize) as *const () });
     /* Sanity-check the EOCD we've found. */
     /* This must be the first volume. */
     if disk_num as i32 != 0 {
@@ -4367,13 +4367,13 @@ unsafe fn read_eocd(zip: *mut zip, p: *const i8, current_offset: int64_t) -> i32
     }
     /* Central directory must be on this volume. */
     if disk_num as i32
-        != archive_le16dec(unsafe { p.offset(6) as *const () }) as i32
+        != archive_le16dec(unsafe { p.offset(6 as isize) as *const () }) as i32
     {
         return 0;
     }
     /* All central directory entries must be on this volume. */
-    if archive_le16dec(unsafe { p.offset(10) as *const () }) as i32
-        != archive_le16dec(unsafe { p.offset(8) as *const () }) as i32
+    if archive_le16dec(unsafe { p.offset(10 as isize) as *const () }) as i32
+        != archive_le16dec(unsafe { p.offset(8 as isize) as *const () }) as i32
     {
         return 0;
     }
@@ -4401,15 +4401,15 @@ fn read_zip64_eocd(a: *mut archive_read, zip: *mut zip,mut p: *const i8) -> i32 
     let safe_zip = unsafe { &mut *zip };
     /* Sanity-check the locator record. */
     /* Central dir must be on first volume. */
-    if archive_le32dec(unsafe { p.offset(4) as *const () }) != 0 {
+    if archive_le32dec(unsafe { p.offset(4 as isize) as *const () }) != 0 {
         return 0;
     }
     /* Must be only a single volume. */
-    if archive_le32dec(unsafe { p.offset(16) as *const () }) != 1 {
+    if archive_le32dec(unsafe { p.offset(16 as isize) as *const () }) != 1 {
         return 0;
     }
     /* Find the Zip64 EOCD record. */
-    eocd64_offset = archive_le64dec(unsafe { p.offset(8) as *const () }) as int64_t;
+    eocd64_offset = archive_le64dec(unsafe { p.offset(8 as isize) as *const () }) as int64_t;
     if unsafe{__archive_read_seek_safe(a, eocd64_offset, 0) < 0} {
         return 0;
     }
@@ -4418,7 +4418,7 @@ fn read_zip64_eocd(a: *mut archive_read, zip: *mut zip,mut p: *const i8) -> i32 
         return 0;
     }
     /* Make sure we can read all of it. */
-    eocd64_size = archive_le64dec(unsafe { p.offset(4) as *const () }) as int64_t
+    eocd64_size = archive_le64dec(unsafe { p.offset(4 as isize) as *const () }) as int64_t
         +12 as int64_t;
     if eocd64_size < 56 || eocd64_size > 16384 {
         return 0;
@@ -4428,23 +4428,23 @@ fn read_zip64_eocd(a: *mut archive_read, zip: *mut zip,mut p: *const i8) -> i32 
         return 0;
     }
     /* Sanity-check the EOCD64 */
-    if archive_le32dec(unsafe { p.offset(16) as *const () }) != 0 {
+    if archive_le32dec(unsafe { p.offset(16 as isize) as *const () }) != 0 {
         /* Must be disk #0 */
         return 0;
     }
-    if archive_le32dec(unsafe { p.offset(20) as *const () }) != 0 {
+    if archive_le32dec(unsafe { p.offset(20 as isize) as *const () }) != 0 {
         /* CD must be on disk #0 */
         return 0;
     }
     /* CD can't be split. */
-    if archive_le64dec(unsafe { p.offset(24) as *const () })
-        != archive_le64dec(unsafe { p.offset(32) as *const () })
+    if archive_le64dec(unsafe { p.offset(24 as isize) as *const () })
+        != archive_le64dec(unsafe { p.offset(32 as isize) as *const () })
     {
         return 0;
     }
     /* Save the central directory offset for later use. */
     (safe_zip).central_directory_offset =
-        archive_le64dec(unsafe { p.offset(48) as *const () }) as int64_t;
+        archive_le64dec(unsafe { p.offset(48 as isize) as *const () }) as int64_t;
     /* TODO: Needs scanning backwards to find the eocd64 instead of assuming */
     (safe_zip).central_directory_offset_adjusted = (safe_zip).central_directory_offset;
     return 32;
@@ -4598,7 +4598,7 @@ fn rsrc_basename(name: *const i8, name_length: size_t) -> *const i8 {
         if s.is_null() {
             break;
         }
-        s = unsafe { s.offset(1) };
+        s = unsafe { s.offset(1 as isize) };
         r = s
     }
     return r;
@@ -4786,41 +4786,41 @@ fn slurp_central_directory(
         (safe_zip).central_directory_entries_total =
             (safe_zip).central_directory_entries_total+1;
         /* version = p[4]; */
-        safe_zip_entry.system = unsafe { *p.offset(5) as u8 };
+        safe_zip_entry.system = unsafe { *p.offset(5 as isize) as u8 };
         /* version_required = archive_le16dec(p + 6); */
         safe_zip_entry.zip_flags =
-            archive_le16dec(unsafe { p.offset(8) as *const () });
+            archive_le16dec(unsafe { p.offset(8 as isize) as *const () });
         if safe_zip_entry.zip_flags as i32 & ((1<<0) | (1 << 6)) != 0
         {
             (safe_zip).has_encrypted_entries = 1
         }
         safe_zip_entry.compression =
-            archive_le16dec(unsafe { p.offset(10) as *const () }) as i8 as u8;
-        safe_zip_entry.mtime = zip_time(unsafe { p.offset(12) });
+            archive_le16dec(unsafe { p.offset(10 as isize) as *const () }) as i8 as u8;
+        safe_zip_entry.mtime = zip_time(unsafe { p.offset(12 as isize) });
         safe_zip_entry.crc32 =
-            archive_le32dec(unsafe { p.offset(16) as *const () });
+            archive_le32dec(unsafe { p.offset(16 as isize) as *const () });
         if safe_zip_entry.zip_flags as i32 & (1 << 3) != 0 {
-            safe_zip_entry.decdat = unsafe { *p.offset(13) as u8 }
+            safe_zip_entry.decdat = unsafe { *p.offset(13 as isize) as u8 }
         } else {
-            safe_zip_entry.decdat = unsafe { *p.offset(19) as u8 }
+            safe_zip_entry.decdat = unsafe { *p.offset(19 as isize) as u8 }
         }
         safe_zip_entry.compressed_size =
-            archive_le32dec(unsafe { p.offset(20) as *const () }) as int64_t;
+            archive_le32dec(unsafe { p.offset(20 as isize) as *const () }) as int64_t;
         safe_zip_entry.uncompressed_size =
-            archive_le32dec(unsafe { p.offset(24) as *const () }) as int64_t;
+            archive_le32dec(unsafe { p.offset(24 as isize) as *const () }) as int64_t;
         filename_length =
-            archive_le16dec(unsafe { p.offset(28) as *const () }) as size_t;
+            archive_le16dec(unsafe { p.offset(28 as isize) as *const () }) as size_t;
         extra_length =
-            archive_le16dec(unsafe { p.offset(30) as *const () }) as size_t;
+            archive_le16dec(unsafe { p.offset(30 as isize) as *const () }) as size_t;
         comment_length =
-            archive_le16dec(unsafe { p.offset(32) as *const () }) as size_t;
+            archive_le16dec(unsafe { p.offset(32 as isize) as *const () }) as size_t;
         /* disk_start = archive_le16dec(p + 34);
          *   Better be zero.
          * internal_attributes = archive_le16dec(p + 36);
          *   text bit */
-        external_attributes = archive_le32dec(unsafe { p.offset(38) as *const () });
+        external_attributes = archive_le32dec(unsafe { p.offset(38 as isize) as *const () });
         safe_zip_entry.local_header_offset =
-            archive_le32dec(unsafe { p.offset(42) as *const () }) as i64
+            archive_le32dec(unsafe { p.offset(42 as isize) as *const () }) as i64
                 + correction;
         /* If we can't guess the mode, leave it zero here;
         when we read the local file header we might get
@@ -4998,8 +4998,8 @@ fn zip_get_local_file_header_size( a: *mut archive_read, extra: size_t) -> ssize
         return -20;
     }
     filename_length =
-        archive_le16dec(unsafe { p.offset(26) as *const () }) as ssize_t;
-    extra_length = archive_le16dec(unsafe { p.offset(28) as *const () }) as ssize_t;
+        archive_le16dec(unsafe { p.offset(26 as isize) as *const () }) as ssize_t;
+    extra_length = archive_le16dec(unsafe { p.offset(28 as isize) as *const () }) as ssize_t;
     return 30 + filename_length + extra_length;
 }
 
