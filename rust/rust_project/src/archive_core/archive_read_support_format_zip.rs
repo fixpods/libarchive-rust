@@ -105,13 +105,13 @@ pub struct _alone_header {
 fn ppmd_read( p: *mut ()) -> Byte {
     /* Get the handle to current decompression context. */
 
-    let   a: *mut archive_read = unsafe { (*(p as *mut IByteIn)).a };
-    let  zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let  a: *mut archive_read = unsafe { (*(p as *mut IByteIn)).a };
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let safe_p = unsafe { &mut *p };
     let safe_zip = unsafe { &mut *zip };
     let mut bytes_avail: ssize_t = 0;
     /* Fetch next byte. */
-    let  data: *const uint8_t =unsafe{
+    let data: *const uint8_t =unsafe{
         __archive_read_ahead_safe(a, 1, &mut bytes_avail) as *const uint8_t};
     if bytes_avail < 1 {
         safe_zip.ppmd8_stream_failed = 1;
@@ -145,7 +145,7 @@ fn trad_enc_update_keys( ctx: *mut trad_enc_ctx, mut c: uint8_t) {
 }
 fn trad_enc_decrypt_byte(ctx: *mut trad_enc_ctx) -> uint8_t {
     let safe_ctx = unsafe { &mut *ctx };
-    let mut temp: u32 = safe_ctx.keys[2] | 2;
+    let temp: u32 = safe_ctx.keys[2] | 2;
     return ((temp*(temp ^ 1) >> 8) as i32 & 0xff)
         as uint8_t;
 }
@@ -156,17 +156,17 @@ fn trad_enc_decrypt_update(
     out: *mut uint8_t,
     out_len: size_t,
 ) {
-    let  mut i: u32;
-    let  max: u32;
+    let mut i: u32;
+    let max: u32;
     max = if in_len < out_len { in_len } else { out_len } as u32;
     i = 0;
     unsafe {
         while i < max {
-            let mut t: uint8_t =
+            let t: uint8_t =
                 (*in_0.offset(i as isize) as i32 ^ trad_enc_decrypt_byte(ctx) as i32) as uint8_t;
             *out.offset(i as isize) = t;
             trad_enc_update_keys(ctx, t);
-            i = i+1
+            i = i + 1
         }
     }
 }
@@ -214,11 +214,11 @@ fn trad_enc_init(
 * Includes code to read local file headers, decompress data
 * from entry bodies, and common API.
 */
-fn real_crc32( crc: u64,  buff: *const (),  len: size_t) -> u64 {
+fn real_crc32( crc: u64, buff: *const (), len: size_t) -> u64 {
     return unsafe{crc32_safe(crc, buff as *const Bytef, len as u32)};
 }
 /* Used by "ignorecrc32" option to speed up tests. */
-fn fake_crc32( crc: u64,  buff: *const (),  len: size_t) -> u64 {
+fn fake_crc32( crc: u64, buff: *const (), len: size_t) -> u64 {
     /* UNUSED */
     return 0 ;
 }
@@ -363,8 +363,8 @@ fn compression_name(compression: i32) -> *const i8 {
 }
 /* Convert an MSDOS-style date/time into Unix-style time. */
 fn zip_time( p: *const i8) -> time_t {
-    let  msTime: i32; /* Years since 1900. */
-    let  msDate: i32; /* Month number. */
+    let msTime: i32; /* Years since 1900. */
+    let msDate: i32; /* Month number. */
     let mut ts: tm = tm {
         tm_sec: 0,
         tm_min: 0,
@@ -406,11 +406,11 @@ fn zip_time( p: *const i8) -> time_t {
 *  triplets.  id and size are 2 bytes each.
 */
 fn process_extra(
-    mut a: *mut archive_read,
-    mut entry: *mut archive_entry,
-    mut p: *const i8,
+    a: *mut archive_read,
+    entry: *mut archive_entry,
+    p: *const i8,
     extra_length: size_t,
-    mut zip_entry: *mut zip_entry,
+    zip_entry: *mut zip_entry,
 ) -> i32 {
     let mut offset: u32 = 0;
     let mut zip: *mut zip = unsafe{(*(*a).format).data as *mut zip};
@@ -442,12 +442,12 @@ fn process_extra(
                 }
                 return -25;
             }
-            i = i+1
+            i = i + 1
         }
         return 0;
     }
     while offset as u64 <= extra_length-4 {
-        let mut headerid: u16 = archive_le16dec( unsafe{p.offset(offset as isize) as *const ()});
+        let headerid: u16 = archive_le16dec( unsafe{p.offset(offset as isize) as *const ()});
         let mut datasize: u16 = archive_le16dec(unsafe {
             p.offset(offset as isize).offset(2) as *const ()
         });
@@ -530,7 +530,7 @@ fn process_extra(
             }
             21589 => {
                 /* Extended time field "UT". */
-                let mut flags: i32;
+                let flags: i32;
                 if datasize as i32 == 0 {
                     unsafe {
                         archive_set_error(
@@ -642,7 +642,7 @@ fn process_extra(
                  *  if bitmap & 8, 2 byte comment length + n byte
                  *  comment
                  */
-                let mut bitmap: i32;
+                let bitmap: i32;
                 let mut bitmap_last: i32;
                 if !(datasize < 1) {
                     unsafe {
@@ -962,7 +962,7 @@ fn zip_read_local_file_header(
     let filename_length: size_t;
     let extra_length: size_t;
     let mut sconv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    let mut zip_entry: *mut zip_entry = safe_zip.entry;
+    let zip_entry: *mut zip_entry = safe_zip.entry;
     let safe_sconv = unsafe { &mut *sconv };
     let safe_zip_entry = unsafe { &mut *zip_entry };
     let mut zip_entry_central_dir: zip_entry = zip_entry {
@@ -1189,7 +1189,7 @@ fn zip_read_local_file_header(
                     if *s.s.offset(i as isize) == '\\' as wchar_t {
                         *s.s.offset(i as isize) = '/' as wchar_t
                     }
-                    i = i+1
+                    i = i + 1
                 }
             }
             unsafe{archive_entry_copy_pathname_w_safe(entry, s.s);
@@ -1510,9 +1510,9 @@ fn zip_read_local_file_header(
 }
 
 fn check_authentication_code(mut a: *mut archive_read, mut _p: *const ()) -> i32 {
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let safe_a = unsafe { &mut *a };
-    let safe__p = unsafe { &*_p };
+    let mut safe__p = unsafe { &*_p };
     let safe_zip = unsafe { &mut *zip };
 
     /* Check authentication code. */
@@ -1569,10 +1569,10 @@ fn zip_read_data_none(
     offset: *mut int64_t,
 ) -> i32 {
     unsafe {
-        let mut zip: *mut zip;
+        let zip: *mut zip;
         let mut buff: *const i8;
         let mut bytes_avail: ssize_t = 0;
-        let mut r: i32;
+        let r: i32;
         /* UNUSED */
         zip = (*(*a).format).data as *mut zip;
         if (*(*zip).entry).zip_flags as i32 & (1 << 3) != 0 {
@@ -1749,7 +1749,7 @@ fn zip_read_data_none(
     }
 }
 
-fn consume_optional_marker(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
+fn consume_optional_marker(a: *mut archive_read, zip: *mut zip) -> i32 {
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
 
@@ -1771,10 +1771,10 @@ fn consume_optional_marker(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
         }
         /* Consume the optional PK\007\010 marker. */
         if unsafe {
-            *p.offset(0 as isize) as i32 == 'P' as i32
-                && *p.offset(1 as isize) as i32 == 'K' as i32
-                && *p.offset(2 as isize) as i32 == '\u{7}' as i32
-                && *p.offset(3 as isize) as i32 == '\u{8}' as i32
+            *p.offset(0) as i32 == 'P' as i32
+                && *p.offset(1) as i32 == 'K' as i32
+                && *p.offset(2) as i32 == '\u{7}' as i32
+                && *p.offset(3) as i32 == '\u{8}' as i32
         } {
             unsafe { p = p.offset(4 as isize) };
             safe_zip.unconsumed = 4 as size_t
@@ -1819,7 +1819,7 @@ fn consume_optional_marker(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
 }
 
 #[cfg(all(HAVE_LZMA_H, HAVE_LIBLZMA))]
-fn zipx_xz_init(mut a: *mut archive_read, mut zip: *mut zip) -> i32 {
+fn zipx_xz_init(a: *mut archive_read, zip: *mut zip) -> i32 {
     let mut r: lzma_ret = LZMA_OK;
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
@@ -1902,7 +1902,7 @@ fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
 
         (safe_zip).zipx_lzma_valid = 1 ;
 
-        p = __archive_read_ahead_safe(a, 9 as size_t, 0 as *mut ssize_t) as *const uint8_t;
+        p = __archive_read_ahead_safe(a, 9, 0 as *mut ssize_t) as *const uint8_t;
         if p.is_null() {
             unsafe {
                 archive_set_error(
@@ -1931,7 +1931,7 @@ fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         memcpy_safe(
             &mut *alone_header.bytes.as_mut_ptr().offset(0 as isize) as *mut uint8_t
                 as *mut (),
-            p.offset(4 as isize) as *const (),
+            p.offset(4) as *const (),
             5,
         );
         /* Initialize the 'uncompressed size' field to unknown; we'll manually
@@ -1986,7 +1986,7 @@ fn zip_read_data_zipx_xz(
     offset: *mut int64_t,
 ) -> i32 {
     let safe_a = unsafe { &mut *a };
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let safe_zip = unsafe { &mut *zip };
     let mut ret: i32 = 0;
     let mut lz_ret: lzma_ret = LZMA_OK;
@@ -2088,7 +2088,7 @@ fn zip_read_data_zipx_lzma_alone(
     size: *mut size_t,
     offset: *mut int64_t,
 ) -> i32 {
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
 
@@ -2346,7 +2346,7 @@ fn zip_read_data_zipx_ppmd(
     size: *mut size_t,
     offset: *mut int64_t,
 ) -> i32 {
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
     let mut ret: i32 = 0;
@@ -2497,7 +2497,7 @@ fn zip_read_data_zipx_bzip2(
     size: *mut size_t,
     offset: *mut int64_t,
 ) -> i32 {
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
 
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
@@ -2835,9 +2835,9 @@ fn zip_read_data_deflate(
 
 fn read_decryption_header(a: *mut archive_read) -> i32 {
     let mut current_block: u64;
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut p: *const i8;
-    let mut remaining_size: u32;
+    let remaining_size: u32;
     let mut ts: u32;
 
     let safe_a = unsafe { &mut *a };
@@ -3318,8 +3318,8 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
     return -30;
 }
 fn zip_alloc_decryption_buffer(a: *mut archive_read) -> i32 {
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
-    let mut bs: size_t = (256 * 1024) as size_t;
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let bs: size_t = (256 * 1024) as size_t;
 
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
@@ -3342,7 +3342,7 @@ fn zip_alloc_decryption_buffer(a: *mut archive_read) -> i32 {
     return 0;
 }
 fn init_traditional_PKWARE_decryption(a: *mut archive_read) -> i32 {
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut p: *const () = 0 as *const ();
     let mut retry: i32 = 0;
     let mut r: i32 = 0;
@@ -3440,8 +3440,8 @@ fn init_traditional_PKWARE_decryption(a: *mut archive_read) -> i32 {
     return zip_alloc_decryption_buffer(a);
 }
 fn init_WinZip_AES_decryption(a: *mut archive_read) -> i32 {
-    let mut current_block: u64;
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let current_block: u64;
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
     let mut p: *const () = 0 as *const ();
     let mut pv: *const uint8_t = 0 as *const uint8_t;
     let mut key_len: size_t=0;
@@ -3649,7 +3649,7 @@ fn archive_read_format_zip_read_data(
     offset: *mut int64_t,
 ) -> i32 {
     let mut r: i32;
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
 
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
@@ -3860,7 +3860,7 @@ fn archive_read_format_zip_has_encrypted_entries(_a: *mut archive_read) -> i32 {
     let safe__a = unsafe { &mut *_a };
 
     if !_a.is_null() && !(safe__a).format.is_null() {
-        let mut zip: *mut zip = unsafe { (*(safe__a).format).data as *mut zip };
+        let zip: *mut zip = unsafe { (*(safe__a).format).data as *mut zip };
         let safe_zip = unsafe { &mut *zip };
         if !zip.is_null() {
             return (safe_zip).has_encrypted_entries;
@@ -3957,9 +3957,7 @@ pub fn archive_read_support_format_zip(a: *mut archive) -> i32 {
 */
 fn archive_read_support_format_zip_capabilities_streamable(a: *mut archive_read) -> i32 {
     /* UNUSED */
-    unsafe {
-        return (1 << 0) | (1 << 1);
-    }
+    return (1 << 0) | (1 << 1);
 }
 fn archive_read_format_zip_streamable_bid(
     a: *mut archive_read,
@@ -4342,7 +4340,6 @@ pub fn archive_read_support_format_zip_streamable(_a: *mut archive) -> i32 {
 */
 fn archive_read_support_format_zip_capabilities_seekable(a: *mut archive_read) -> i32 {
     /* UNUSED */
-
     return (1 << 0) | (1 << 1);
 }
 /*
@@ -4357,9 +4354,9 @@ fn archive_read_support_format_zip_capabilities_seekable(a: *mut archive_read) -
 unsafe fn read_eocd(zip: *mut zip, p: *const i8, current_offset: int64_t) -> i32 {
     let safe_p = unsafe { &*p };
     let safe_zip = unsafe { &mut *zip };
-    let mut disk_num: uint16_t;
-    let mut cd_size: uint32_t;
-    let mut cd_offset: uint32_t;
+    let disk_num: uint16_t;
+    let cd_size: uint32_t;
+    let cd_offset: uint32_t;
     disk_num = archive_le16dec(unsafe { p.offset(4) as *const () });
     cd_size = archive_le32dec(unsafe { p.offset(12) as *const () });
     cd_offset = archive_le32dec(unsafe { p.offset(16) as *const () });
@@ -4397,7 +4394,7 @@ unsafe fn read_eocd(zip: *mut zip, p: *const i8, current_offset: int64_t) -> i32
 * Examine Zip64 EOCD locator:  If it's valid, store the information
 * from it.
 */
-fn read_zip64_eocd(a: *mut archive_read,  zip: *mut zip, mut p: *const i8) -> i32 {
+fn read_zip64_eocd(a: *mut archive_read, zip: *mut zip,mut p: *const i8) -> i32 {
     let mut eocd64_offset: int64_t = 0;
     let mut eocd64_size: int64_t = 0;
     let safe_p = unsafe { &*p };
@@ -4453,12 +4450,12 @@ fn read_zip64_eocd(a: *mut archive_read,  zip: *mut zip, mut p: *const i8) -> i3
     return 32;
 }
 fn archive_read_format_zip_seekable_bid( a: *mut archive_read, best_bid: i32) -> i32 {
-    let mut zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
-    let mut file_size: int64_t;
-    let mut current_offset: int64_t;
+    let zip: *mut zip = unsafe { (*(*a).format).data as *mut zip };
+    let file_size: int64_t;
+    let current_offset: int64_t;
     let mut p: *const i8 = 0 as *const i8;
     let mut i: i32;
-    let mut tail: i32;
+    let tail: i32;
 
     let safe_zip = unsafe { &mut *zip };
     /* If someone has already bid more than 32, then avoid
@@ -4536,8 +4533,8 @@ fn archive_read_format_zip_seekable_bid( a: *mut archive_read, best_bid: i32) ->
 /* The red-black trees are only used in seeking mode to manage
 * the in-memory copy of the central directory. */
 fn cmp_node(n1: *const archive_rb_node, n2: *const archive_rb_node) -> i32 {
-    let mut e1: *const zip_entry = n1 as *const zip_entry;
-    let mut e2: *const zip_entry = n2 as *const zip_entry;
+    let e1: *const zip_entry = n1 as *const zip_entry;
+    let e2: *const zip_entry = n2 as *const zip_entry;
     let safe_e1 = unsafe { &*e1 };
     let safe_e2 = unsafe { &*e2 };
     if (safe_e1).local_header_offset > (safe_e2).local_header_offset {
@@ -4548,7 +4545,7 @@ fn cmp_node(n1: *const archive_rb_node, n2: *const archive_rb_node) -> i32 {
     }
     return 0;
 }
-fn cmp_key( n: *const archive_rb_node,  key: *const ()) -> i32 {
+fn cmp_key( n: *const archive_rb_node, key: *const ()) -> i32 {
     /* This function won't be called */
     /* UNUSED */
     return 1;
@@ -4572,7 +4569,7 @@ fn rsrc_cmp_node( n1: *const archive_rb_node, n2: *const archive_rb_node) -> i32
     return unsafe{strcmp_safe(safe_e2.rsrcname.s, safe_e1.rsrcname.s)};
 }
 fn rsrc_cmp_key(n: *const archive_rb_node, key: *const ()) -> i32 {
-    let mut e: *const zip_entry = n as *const zip_entry;
+    let e: *const zip_entry = n as *const zip_entry;
     let safe_e = unsafe { &*e };
     return unsafe{strcmp_safe(key as *const i8, safe_e.rsrcname.s)};
 }
@@ -4606,7 +4603,7 @@ fn rsrc_basename(name: *const i8, name_length: size_t) -> *const i8 {
     }
     return r;
 }
-fn expose_parent_dirs(zip: *mut zip,  name: *const i8,  name_length: size_t) {
+fn expose_parent_dirs(zip: *mut zip, name: *const i8, name_length: size_t) {
     let mut str: archive_string = archive_string {
         s: 0 as *mut i8,
         length: 0,
@@ -4967,10 +4964,10 @@ fn slurp_central_directory(
     return 0;
 }
 
-fn zip_get_local_file_header_size( a: *mut archive_read,  extra: size_t) -> ssize_t {
+fn zip_get_local_file_header_size( a: *mut archive_read, extra: size_t) -> ssize_t {
     let mut p: *const i8 = 0 as *const i8;
-    let mut filename_length: ssize_t;
-    let mut extra_length: ssize_t;
+    let filename_length: ssize_t;
+    let extra_length: ssize_t;
     p = unsafe{__archive_read_ahead_safe(a, extra+30, 0 as *mut ssize_t)}
         as *const i8;
     let safe_a = unsafe { &mut *a };
