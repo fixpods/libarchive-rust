@@ -907,10 +907,11 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
         /* Make sure we have no converter. */
         safe_sc.nconverter = 0 as i32
     };
-} /*
-  * Return canonicalized charset-name but this supports just UTF-8, UTF-16BE
-  * and CP932 which are referenced in create_sconv_object().
-  */
+} 
+/*
+* Return canonicalized charset-name but this supports just UTF-8, UTF-16BE
+* and CP932 which are referenced in create_sconv_object().
+*/
 extern "C" fn canonical_charset_name(charset: *const i8) -> *const i8 {
     let mut cs: [i8; 16] = [0; 16];
     let mut p: *mut i8 = 0 as *mut i8;
