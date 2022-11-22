@@ -321,6 +321,8 @@ struct archive_cpio_defined_param
     int archive_format_cpio_posix;
     int archive_format_cpio_bin_le;
     int archive_format_cpio_bin_be;
+
+    int size_max;
 };
 
 #ifndef COMPILE_WITH_RUST
@@ -458,6 +460,8 @@ struct archive_cpio_defined_param get_archive_cpio_defined_param()
     defined_param.archive_format_cpio_posix = ARCHIVE_FORMAT_CPIO_POSIX;
     defined_param.archive_format_cpio_bin_le = ARCHIVE_FORMAT_CPIO_BIN_LE;
     defined_param.archive_format_cpio_bin_be = ARCHIVE_FORMAT_CPIO_BIN_BE;
+    
+    defined_param.size_max = SIZE_MAX;
     return defined_param;
 }
 
