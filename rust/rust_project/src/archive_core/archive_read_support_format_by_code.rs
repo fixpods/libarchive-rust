@@ -28,21 +28,21 @@ pub extern "C" fn archive_read_support_format_by_code(a: *mut archive, format_co
         return -30;
     }
     match format_code & 0xff0000 as i32 {
-        917504 => return archive_read_support_format_7zip(a),
-        458752 => return archive_read_support_format_ar(a),
-        786432 => return archive_read_support_format_cab(a),
-        65536 => return archive_read_support_format_cpio(a),
-        393216 => return archive_read_support_format_empty(a),
-        262144 => return archive_read_support_format_iso9660(a),
-        720896 => return archive_read_support_format_lha(a),
-        524288 => return archive_read_support_format_mtree(a),
-        851968 => return archive_read_support_format_rar(a),
-        1048576 => return archive_read_support_format_rar5(a),
-        589824 => return archive_read_support_format_raw(a),
-        196608 => return archive_read_support_format_tar(a),
-        983040 => return archive_read_support_format_warc(a),
-        655360 => return archive_read_support_format_xar(a),
-        327680 => return archive_read_support_format_zip(a),
+        917504 => return unsafe { archive_read_support_format_7zip(a) },
+        458752 => return unsafe { archive_read_support_format_ar(a) },
+        786432 => return unsafe { archive_read_support_format_cab(a) },
+        65536 => return unsafe { archive_read_support_format_cpio(a) },
+        393216 => return unsafe { archive_read_support_format_empty(a) },
+        262144 => return unsafe { archive_read_support_format_iso9660(a) },
+        720896 => return unsafe { archive_read_support_format_lha(a) },
+        524288 => return unsafe { archive_read_support_format_mtree(a) },
+        851968 => return unsafe { archive_read_support_format_rar(a) },
+        1048576 => return unsafe { archive_read_support_format_rar5(a) },
+        589824 => return unsafe { archive_read_support_format_raw(a) },
+        196608 => return unsafe { archive_read_support_format_tar(a) },
+        983040 => return unsafe { archive_read_support_format_warc(a) },
+        655360 => return unsafe { archive_read_support_format_xar(a) },
+        327680 => return unsafe { archive_read_support_format_zip(a) },
         _ => {}
     }
     archive_set_error_safe!(
