@@ -598,7 +598,7 @@ extern "C" fn add_converter(
 extern "C" fn setup_converter(sc: *mut archive_string_conv) {
     let safe_sc = unsafe { &mut *sc };
     /* Reset. */
-    safe_sc.nconverter = 0 as i32;
+    safe_sc.nconverter = 0;
     /*
      * Perform special sequence for the incorrect UTF-8 filenames
      * made by libarchive2.x.
@@ -686,7 +686,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
             }
         } else {
             /* Make sure we have no converter. */
-            safe_sc.nconverter = 0 as i32
+            safe_sc.nconverter = 0
         }
         return;
     }
@@ -905,7 +905,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
         );
     } else {
         /* Make sure we have no converter. */
-        safe_sc.nconverter = 0 as i32
+        safe_sc.nconverter = 0
     };
 } 
 /*
