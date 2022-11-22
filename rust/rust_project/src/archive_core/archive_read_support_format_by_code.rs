@@ -19,31 +19,45 @@ pub extern "C" fn archive_read_support_format_by_code(a: *mut archive, format_co
     let magic_test: i32 = unsafe {
         __archive_check_magic_safe(
             a,
-            0xdeb0c5 as u32,
-            1 as u32,
+            ARCHIVE_BY_CODE_DEFINED_PARAM.archive_read_magic,
+            ARCHIVE_BY_CODE_DEFINED_PARAM.archive_state_new,
             b"archive_read_support_format_by_code\x00" as *const u8 as *const i8,
         )
     };
     if magic_test == -30 {
         return -30;
     }
-    match format_code & 0xff0000 as i32 {
-        917504 => return unsafe { archive_read_support_format_7zip(a) },
-        458752 => return unsafe { archive_read_support_format_ar(a) },
-        786432 => return unsafe { archive_read_support_format_cab(a) },
-        65536 => return unsafe { archive_read_support_format_cpio(a) },
-        393216 => return unsafe { archive_read_support_format_empty(a) },
-        262144 => return unsafe { archive_read_support_format_iso9660(a) },
-        720896 => return unsafe { archive_read_support_format_lha(a) },
-        524288 => return unsafe { archive_read_support_format_mtree(a) },
-        851968 => return unsafe { archive_read_support_format_rar(a) },
-        1048576 => return unsafe { archive_read_support_format_rar5(a) },
-        589824 => return unsafe { archive_read_support_format_raw(a) },
-        196608 => return unsafe { archive_read_support_format_tar(a) },
-        983040 => return unsafe { archive_read_support_format_warc(a) },
-        655360 => return unsafe { archive_read_support_format_xar(a) },
-        327680 => return unsafe { archive_read_support_format_zip(a) },
-        _ => {}
+    let p: i32 = format_code & ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_base_mask as i32;
+    if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_7zip {
+        return unsafe { archive_read_support_format_7zip(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_ar {
+        return unsafe { archive_read_support_format_ar(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_cab {
+        return unsafe { archive_read_support_format_cab(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_cpio {
+        return unsafe { archive_read_support_format_cpio(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_empty {
+        return unsafe { archive_read_support_format_empty(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_iso9660 {
+        return unsafe { archive_read_support_format_iso9660(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_lha {
+        return unsafe { archive_read_support_format_lha(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_mtree {
+        return unsafe { archive_read_support_format_mtree(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_rar {
+        return unsafe { archive_read_support_format_rar(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_rar_v5 {
+        return unsafe { archive_read_support_format_rar5(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_raw {
+        return unsafe { archive_read_support_format_raw(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_tar {
+        return unsafe { archive_read_support_format_tar(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_warc {
+        return unsafe { archive_read_support_format_warc(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_xar {
+        return unsafe { archive_read_support_format_xar(a) };
+    } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_zip {
+        return unsafe { archive_read_support_format_zip(a) };
     }
     archive_set_error_safe!(
         a,
