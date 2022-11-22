@@ -1,6 +1,12 @@
 extern "C" {
     fn get_archive_empty_defined_param() -> archive_empty_defined_param;
 
+    fn get_archive_7zip_defined_param() -> archive_7zip_defined_param;
+
+    fn get_archive_zip_defined_param() -> archive_zip_defined_param;
+
+    fn get_archive_all_defined_param() -> archive_all_defined_param;
+
     fn get_archive_iso9660_defined_param() -> archive_iso9660_defined_param;
 
     fn get_archive_lha_defined_param() -> archive_lha_defined_param;
@@ -114,6 +120,126 @@ pub struct archive_iso9660_defined_param {
     pub pvd_type_1_path_table_offset: i32,
     pub pvd_type_m_path_table_offset: i32,
     pub pvd_root_directory_record_offset: i32,
+}
+
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+pub struct archive_7zip_defined_param {
+    pub archive_read_magic: u32,
+    pub archive_state_new: u32,
+    pub enomem: i32,
+    pub archive_ok: i32,
+    pub archive_fatal: i32,
+    pub archive_errno_misc: i32,
+    pub ae_ifreg: i32,
+    pub archive_eof: i32,
+    pub archive_errno_file_format: i32,
+    pub archive_warn: i32,
+    pub sfx_min_addr: i32,
+    pub sfx_max_addr: i32,
+    pub _7z_copy: i32,
+    pub _7z_lzma: i32,
+    pub _7z_lzma2: i32,
+    pub _7z_deflate: i32,
+    pub _7z_bz2: i32,
+    pub _7z_ppmd: i32,
+    pub _7z_delta: i32,
+    pub _7z_crypto_main_zip: i32,
+    pub _7z_crypto_rar_29: i32,
+    pub _7z_crypto_aes_256_sha_256: i32,
+    pub _7z_x86: i32,
+    pub _7z_x86_bcj2: i32,
+    pub _7z_powerpc: i32,
+    pub _7z_ia64: i32,
+    pub _7z_arm: i32,
+    pub _7z_armthumb: i32,
+    pub _7z_sparc: i32,
+    pub kend: i32,
+    pub kheader: i32,
+    pub karchiveproperties: i32,
+    pub kadditionalstreamsinfo: i32,
+    pub kmainstreamsinfo: i32,
+    pub kfilesinfo: i32,
+    pub kpackinfo: i32,
+    pub kunpackinfo: i32,
+    pub ksubstreamsinfo: i32,
+    pub ksize: i32,
+    pub kcrc: i32,
+    pub kfolder: i32,
+    pub kcodersunpacksize: i32,
+    pub knumunpackstream: i32,
+    pub kemptystream: i32,
+    pub kemptyfile: i32,
+    pub kanti: i32,
+    pub kname: i32,
+    pub kctime: i32,
+    pub katime: i32,
+    pub kmtime: i32,
+    pub kattributes: i32,
+    pub kencodedheader: i32,
+    pub kdummy: i32,
+    pub mtime_is_set: i32,
+    pub atime_is_set: i32,
+    pub ctime_is_set: i32,
+    pub crc32_is_set: i32,
+    pub has_stream: i32,
+    pub ubuff_size: i32,
+    pub sz_error_data: i32,
+    pub knumtopbits: i32,
+    pub knumbitmodeltotalbits: i32,
+    pub kbitmodeltotal: i32,
+    pub knummovebits: i32,
+}
+
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+pub struct archive_all_defined_param {
+    pub archive_read_magic: u32,
+    pub archive_state_new: u32,
+    pub archive_ok: i32,
+}
+
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+pub struct archive_zip_defined_param {
+    pub archive_read_magic: u32,
+    pub archive_state_new: u32,
+    pub ae_ifdir: u32,
+    pub ae_ifmt: u32,
+    pub ae_ififo: u32,
+    pub ae_iflnk: u32,
+    pub ae_ifreg: u32,
+    pub uint32_max: i64,
+    pub enomem: i32,
+    pub archive_ok: i32,
+    pub archive_fatal: i32,
+    pub archive_errno_misc: i32,
+    pub archive_errno_programmer: i32,
+    pub archive_read_format_encryption_dont_know: i32,
+    pub archive_eof: i32,
+    pub archive_errno_file_format: i32,
+    pub archive_warn: i32,
+    pub archive_read_format_caps_encrypt_metadata: i32,
+    pub archive_read_format_caps_encrypt_data: i32,
+    pub archive_format_zip: i32,
+    pub seek_set: i32,
+    pub seek_end: i32,
+    pub archive_rb_dir_right: i32,
+    pub aes_vendor_ae_1: i32,
+    pub aes_vendor_ae_2: i32,
+    pub zip_encrypted: i32,
+    pub zip_length_at_end: i32,
+    pub zip_strong_encrypted: i32,
+    pub zip_utf8_name: i32,
+    pub zip_central_directory_encrypted: i32,
+    pub la_used_zip64: i32,
+    pub la_from_central_directory: i32,
+    pub winzip_aes_encryption: i32,
+    pub auth_code_size: i32,
+    pub max_derived_key_buf_size: i32,
+    pub md_size: i32,
+    pub enc_header_size: i32,
+    pub archive_failed: i32,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -502,6 +628,24 @@ pub struct archive_tar_defined_param {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive_by_code_defined_param {
+    pub archive_read_magic: u32,
+    pub archive_state_new: u32,
+    pub archive_format_base_mask: i32,
+    pub archive_format_7zip: i32,
+    pub archive_format_ar: i32,
+    pub archive_format_cab: i32,
+    pub archive_format_cpio: i32,
+    pub archive_format_empty: i32,
+    pub archive_format_iso9660: i32,
+    pub archive_format_lha: i32,
+    pub archive_format_mtree: i32,
+    pub archive_format_rar: i32,
+    pub archive_format_rar_v5: i32,
+    pub archive_format_raw: i32,
+    pub archive_format_tar: i32,
+    pub archive_format_warc: i32,
+    pub archive_format_xar: i32,
+    pub archive_format_zip: i32,
     pub archive_fatal: i32,
     pub archive_errno_programmer: i32,
 }
@@ -785,6 +929,12 @@ lazy_static! {
         unsafe { get_archive_empty_defined_param() };
     pub static ref ARCHIVE_ISO9660_DEFINED_PARAM: archive_iso9660_defined_param =
         unsafe { get_archive_iso9660_defined_param() };
+    pub static ref ARCHIVE_7ZIP_DEFINED_PARAM: archive_7zip_defined_param =
+        unsafe { get_archive_7zip_defined_param() };
+    pub static ref ARCHIVE_ZIP_DEFINED_PARAM: archive_zip_defined_param =
+        unsafe { get_archive_zip_defined_param() };
+    pub static ref ARCHIVE_ALL_DEFINED_PARAM: archive_all_defined_param =
+        unsafe { get_archive_all_defined_param() };
     pub static ref ARCHIVE_LHA_DEFINED_PARAM: archive_lha_defined_param =
         unsafe { get_archive_lha_defined_param() };
     pub static ref ARCHIVE_RAW_DEFINED_PARAM: archive_raw_defined_param =

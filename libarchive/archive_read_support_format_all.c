@@ -30,6 +30,23 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_all.c 174991
 #include "archive_private.h"
 
 #ifndef COMPILE_WITH_RUST
+
+struct archive_all_defined_param
+{
+	unsigned int archive_read_magic;
+	unsigned int archive_state_new;
+	int archive_ok;
+};
+
+struct archive_all_defined_param get_archive_all_defined_param();
+
+struct archive_all_defined_param get_archive_all_defined_param(){
+	struct archive_all_defined_param param;
+	param.archive_read_magic = ARCHIVE_READ_MAGIC;
+	param.archive_state_new = ARCHIVE_STATE_NEW;
+	param.archive_ok = ARCHIVE_OK;
+	return param;
+}
 // 编译时使用
 int archive_read_support_format_all(struct archive *a)
 {
