@@ -24,10 +24,10 @@ pub fn archive_read_support_format_gnutar(a: *mut archive) -> i32 {
 }
 #[no_mangle]
 pub fn archive_read_support_format_tar(_a: *mut archive) -> i32 {
-    let  a: *mut archive_read = _a as *mut archive_read;
-    let  tar: *mut tar;
-    let  r: i32 ;
-    let  safe_a = unsafe { &mut *a };
+    let a: *mut archive_read = _a as *mut archive_read;
+    let tar: *mut tar;
+    let r: i32;
+    let safe_a = unsafe { &mut *a };
 
     let mut magic_test: i32 = unsafe {
         __archive_check_magic_safe(
@@ -35,14 +35,12 @@ pub fn archive_read_support_format_tar(_a: *mut archive) -> i32 {
             ARCHIVE_TAR_DEFINED_PARAM.archive_read_magic,
             ARCHIVE_TAR_DEFINED_PARAM.archive_state_new,
             b"archive_read_support_format_tar\x00" as *const u8 as *const i8,
-        )     
+        )
     };
     if magic_test == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
     }
-    tar = unsafe {
-        calloc_safe(1 , ::std::mem::size_of::<tar>() as u64) as *mut tar
-    };
+    tar = unsafe { calloc_safe(1, ::std::mem::size_of::<tar>() as u64) as *mut tar };
     let mut safe_tar = unsafe { &mut *tar };
     if tar.is_null() {
         archive_set_error_safe!(
@@ -89,10 +87,10 @@ pub fn archive_read_support_format_tar(_a: *mut archive) -> i32 {
             Some(archive_read_format_tar_cleanup as unsafe fn(_: *mut archive_read) -> i32),
             None,
             None,
-        ) 
+        )
     };
     if r != ARCHIVE_TAR_DEFINED_PARAM.archive_ok {
-        unsafe{free_safe(tar as *mut ())};
+        unsafe { free_safe(tar as *mut ()) };
     }
     return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
 }
@@ -101,20 +99,20 @@ fn archive_read_format_tar_cleanup(a: *mut archive_read) -> i32 {
     tar = unsafe { (*(*a).format).data as *mut tar };
     gnu_clear_sparse_list(tar);
     let mut safe_tar = unsafe { &mut *tar };
-    unsafe{
-    archive_string_free_safe(&mut safe_tar.acl_text);
-    archive_string_free_safe(&mut safe_tar.entry_pathname);
-    archive_string_free_safe(&mut safe_tar.entry_pathname_override);
-    archive_string_free_safe(&mut safe_tar.entry_linkpath);
-    archive_string_free_safe(&mut safe_tar.entry_uname);
-    archive_string_free_safe(&mut safe_tar.entry_gname);
-    archive_string_free_safe(&mut safe_tar.line);
-    archive_string_free_safe(&mut safe_tar.pax_global);
-    archive_string_free_safe(&mut safe_tar.pax_header);
-    archive_string_free_safe(&mut safe_tar.longname);
-    archive_string_free_safe(&mut safe_tar.longlink);
-    archive_string_free_safe(&mut safe_tar.localname);
-    free_safe(tar as *mut ());
+    unsafe {
+        archive_string_free_safe(&mut safe_tar.acl_text);
+        archive_string_free_safe(&mut safe_tar.entry_pathname);
+        archive_string_free_safe(&mut safe_tar.entry_pathname_override);
+        archive_string_free_safe(&mut safe_tar.entry_linkpath);
+        archive_string_free_safe(&mut safe_tar.entry_uname);
+        archive_string_free_safe(&mut safe_tar.entry_gname);
+        archive_string_free_safe(&mut safe_tar.line);
+        archive_string_free_safe(&mut safe_tar.pax_global);
+        archive_string_free_safe(&mut safe_tar.pax_header);
+        archive_string_free_safe(&mut safe_tar.longname);
+        archive_string_free_safe(&mut safe_tar.longlink);
+        archive_string_free_safe(&mut safe_tar.localname);
+        free_safe(tar as *mut ());
     }
     unsafe { (*(*a).format).data = 0 as *mut () };
     return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
@@ -142,24 +140,24 @@ fn archive_read_format_tar_cleanup(a: *mut archive_read) -> i32 {
  * This should tolerate all variants in use.  It will reject a field
  * where the writer just left garbage after a trailing NUL.
  */
-fn validate_number_field( p_field: *const i8, i_size: size_t) -> i32 {
-    let  marker: u8 = unsafe { *p_field.offset(0 ) as u8 };
-    if marker  == 128 || marker  == 255  || marker  == 0 {
+fn validate_number_field(p_field: *const i8, i_size: size_t) -> i32 {
+    let marker: u8 = unsafe { *p_field.offset(0) as u8 };
+    if marker == 128 || marker == 255 || marker == 0 {
         /* Base-256 marker, there's nothing we can check. */
-        return 1 ;
+        return 1;
     } else {
         /* Must be octal */
         let mut i: size_t = 0;
         /* Skip any leading spaces */
         while i < i_size && unsafe { *p_field.offset(i as isize) as i32 } == ' ' as i32 {
-            i = i+1
+            i = i + 1
         }
         /* Skip octal digits. */
         while i < i_size
             && unsafe { *p_field.offset(i as isize) as i32 } >= '0' as i32
             && unsafe { *p_field.offset(i as isize) as i32 } <= '7' as i32
         {
-            i=i+1
+            i = i + 1
         }
         /* Any remaining characters must be space or NUL padding. */
         while i < i_size {
@@ -168,22 +166,20 @@ fn validate_number_field( p_field: *const i8, i_size: size_t) -> i32 {
             {
                 return 0;
             }
-            i =i+1
+            i = i + 1
         }
         return 1;
     };
 }
 
-fn archive_read_format_tar_bid( a: *mut archive_read,  best_bid: i32) -> i32 {
-    let mut bid: i32 ;
+fn archive_read_format_tar_bid(a: *mut archive_read, best_bid: i32) -> i32 {
+    let mut bid: i32;
     let h: *const i8;
     let mut header: *const archive_entry_header_ustar;
     /* UNUSED */
     bid = 0;
     /* Now let's look at the actual header and see if it matches. */
-    h = unsafe {
-        __archive_read_ahead_safe(a, 512, 0 as *mut ssize_t) as *const i8
-    };
+    h = unsafe { __archive_read_ahead_safe(a, 512, 0 as *mut ssize_t) as *const i8 };
     if h.is_null() {
         return -1;
     }
@@ -200,17 +196,15 @@ fn archive_read_format_tar_bid( a: *mut archive_read,  best_bid: i32) -> i32 {
     if checksum(a, h as *const ()) == 0 {
         return 0;
     } /* Checksum is usually 6 octal digits. */
-    bid += 48 ;
+    bid += 48;
     header = h as *const archive_entry_header_ustar;
-    let safe_header : &archive_entry_header_ustar=unsafe {
-        & *header
-    };
+    let safe_header: &archive_entry_header_ustar = unsafe { &*header };
     /* Recognize POSIX formats. */
-    unsafe{
+    unsafe {
         if memcmp_safe(
             safe_header.magic.as_ptr() as *const (),
             b"ustar\x00\x00" as *const u8 as *const i8 as *const (),
-            6
+            6,
         ) == 0
             && memcmp_safe(
                 safe_header.version.as_ptr() as *const (),
@@ -224,7 +218,7 @@ fn archive_read_format_tar_bid( a: *mut archive_read,  best_bid: i32) -> i32 {
         if memcmp_safe(
             safe_header.magic.as_ptr() as *const (),
             b"ustar \x00" as *const u8 as *const i8 as *const (),
-            6
+            6,
         ) == 0
             && memcmp_safe(
                 safe_header.version.as_ptr() as *const (),
@@ -236,7 +230,7 @@ fn archive_read_format_tar_bid( a: *mut archive_read,  best_bid: i32) -> i32 {
         }
     }
     /* Type flag must be null, digit or A-Z, a-z. */
-    if safe_header.typeflag[0] as i32 != 0 
+    if safe_header.typeflag[0] as i32 != 0
         && !(safe_header.typeflag[0] as i32 >= '0' as i32
             && safe_header.typeflag[0] as i32 <= '9' as i32)
         && !(safe_header.typeflag[0] as i32 >= 'A' as i32
@@ -254,7 +248,7 @@ fn archive_read_format_tar_bid( a: *mut archive_read,  best_bid: i32) -> i32 {
         && (validate_number_field(
             safe_header.mode.as_ptr(),
             ::std::mem::size_of::<[i8; 8]>() as u64,
-        ) == 0 
+        ) == 0
             || validate_number_field(
                 safe_header.uid.as_ptr(),
                 ::std::mem::size_of::<[i8; 8]>() as u64,
@@ -274,11 +268,11 @@ fn archive_read_format_tar_bid( a: *mut archive_read,  best_bid: i32) -> i32 {
             || validate_number_field(
                 safe_header.rdevmajor.as_ptr(),
                 ::std::mem::size_of::<[i8; 8]>() as u64,
-            ) == 0 
+            ) == 0
             || validate_number_field(
                 safe_header.rdevminor.as_ptr(),
                 ::std::mem::size_of::<[i8; 8]>() as u64,
-            ) == 0 )
+            ) == 0)
     {
         bid = 0
     }
@@ -286,24 +280,23 @@ fn archive_read_format_tar_bid( a: *mut archive_read,  best_bid: i32) -> i32 {
 }
 
 unsafe fn archive_read_format_tar_options(
-     a: *mut archive_read,
-     key: *const i8,
-     val: *const i8,
+    a: *mut archive_read,
+    key: *const i8,
+    val: *const i8,
 ) -> i32 {
-    let  tar: *mut tar;
+    let tar: *mut tar;
     let mut ret: i32 = ARCHIVE_TAR_DEFINED_PARAM.archive_failed;
     tar = unsafe { (*(*a).format).data as *mut tar };
-    let  safe_tar = unsafe { &mut *tar };
-    let  safe_a = unsafe { &mut *a };
+    let safe_tar = unsafe { &mut *tar };
+    let safe_a = unsafe { &mut *a };
     if strcmp_safe(key, b"compat-2x\x00" as *const u8 as *const i8) == 0 as i32 {
         /* Handle UTF-8 filenames as libarchive 2.x */
-        safe_tar.compat_2x =
-            (!val.is_null() && unsafe { *val.offset(0 ) } as i32 != 0) as i32;
+        safe_tar.compat_2x = (!val.is_null() && unsafe { *val.offset(0) } as i32 != 0) as i32;
         safe_tar.init_default_conversion = safe_tar.compat_2x;
         return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
     } else {
         if strcmp_safe(key, b"hdrcharset\x00" as *const u8 as *const i8) == 0 as i32 {
-            if val.is_null() || unsafe { *val.offset(0 ) as i32 } == 0 as i32 {
+            if val.is_null() || unsafe { *val.offset(0) as i32 } == 0 as i32 {
                 archive_set_error_safe!(
                     &mut safe_a.archive as *mut archive,
                     ARCHIVE_TAR_DEFINED_PARAM.archive_errno_misc,
@@ -322,9 +315,8 @@ unsafe fn archive_read_format_tar_options(
             return ret;
         } else {
             if strcmp_safe(key, b"mac-ext\x00" as *const u8 as *const i8) == 0 as i32 {
-                safe_tar.process_mac_extensions = (!val.is_null()
-                    && unsafe { *val.offset(0 ) as i32 } != 0 as i32)
-                    as i32;
+                safe_tar.process_mac_extensions =
+                    (!val.is_null() && unsafe { *val.offset(0) as i32 } != 0 as i32) as i32;
                 return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
             } else {
                 if strcmp_safe(
@@ -361,7 +353,7 @@ fn tar_flush_unconsumed(a: *mut archive_read, unconsumed: *mut size_t) {
                     memset(data, 0xff, *unconsumed);
                 }
         */
-        unsafe{__archive_read_consume_safe(a, *unconsumed_safe as int64_t)};
+        unsafe { __archive_read_consume_safe(a, *unconsumed_safe as int64_t) };
         *unconsumed_safe = 0
     };
 }
@@ -370,10 +362,7 @@ fn tar_flush_unconsumed(a: *mut archive_read, unconsumed: *mut size_t) {
  * just sets up a few things and then calls the internal
  * tar_read_header() function below.
  */
-fn archive_read_format_tar_read_header(
-     a: *mut archive_read,
-     entry: *mut archive_entry,
-) -> i32 {
+fn archive_read_format_tar_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
     /*
      * When converting tar archives to cpio archives, it is
      * essential that each distinct file have a distinct inode
@@ -398,13 +387,13 @@ fn archive_read_format_tar_read_header(
     let mut unconsumed: size_t = 0;
 
     /* Assign default device/inode values. */
-    unsafe{archive_entry_set_dev_safe(entry, (1+ default_dev) as dev_t)}; /* Don't use zero. */
+    unsafe { archive_entry_set_dev_safe(entry, (1 + default_dev) as dev_t) }; /* Don't use zero. */
     default_inode += 1; /* Don't use zero. */
-    unsafe{archive_entry_set_ino_safe(entry, default_inode as la_int64_t)};
+    unsafe { archive_entry_set_ino_safe(entry, default_inode as la_int64_t) };
     /* Limit generated st_ino number to 16 bits. */
     if default_inode >= 0xffff {
         default_dev += 1; /* Mark this as "unset" */
-        default_inode = 0 
+        default_inode = 0
     }
     tar = unsafe { (*(*a).format).data as *mut tar };
     let mut safe_tar = unsafe { &mut *tar };
@@ -422,9 +411,7 @@ fn archive_read_format_tar_read_header(
         }
         safe_tar.sconv = safe_tar.sconv_default
     }
-    r = unsafe {
-        tar_read_header(a, tar, entry, &mut unconsumed)
-    };
+    r = unsafe { tar_read_header(a, tar, entry, &mut unconsumed) };
     tar_flush_unconsumed(a, &mut unconsumed);
     /*
      * "non-sparse" files are really just sparse files with
@@ -437,50 +424,46 @@ fn archive_read_format_tar_read_header(
             return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
         }
     } else {
-        let mut sb: *mut sparse_block ;
+        let mut sb: *mut sparse_block;
         sb = safe_tar.sparse_list;
         while !sb.is_null() {
             if unsafe { (*sb) }.hole == 0 {
-                unsafe{
-                archive_entry_sparse_add_entry_safe(
-                    entry,
-                    unsafe { (*sb) }.offset,
-                    unsafe { (*sb) }.remaining,
-                )};
+                unsafe {
+                    archive_entry_sparse_add_entry_safe(
+                        entry,
+                        unsafe { (*sb) }.offset,
+                        unsafe { (*sb) }.remaining,
+                    )
+                };
             }
             unsafe { sb = (*sb).next }
         }
     }
     if r == ARCHIVE_TAR_DEFINED_PARAM.archive_ok
-        && unsafe{archive_entry_filetype_safe(entry)} == ARCHIVE_TAR_DEFINED_PARAM.ae_ifreg as mode_t
+        && unsafe { archive_entry_filetype_safe(entry) }
+            == ARCHIVE_TAR_DEFINED_PARAM.ae_ifreg as mode_t
     {
         /*
          * "Regular" entry with trailing '/' is really
          * directory: This is needed for certain old tar
          * variants and even for some broken newer ones.
          */
-        wp = unsafe{archive_entry_pathname_w_safe(entry)};
+        wp = unsafe { archive_entry_pathname_w_safe(entry) };
         if !wp.is_null() {
-            l = unsafe{wcslen_safe(wp)};
-            if l > 0 && unsafe { *wp.offset((l-1) as isize) } == '/' as wchar_t
-            {
-                unsafe{archive_entry_set_filetype_safe(
-                    entry,
-                    ARCHIVE_TAR_DEFINED_PARAM.ae_ifdir,
-                )};
+            l = unsafe { wcslen_safe(wp) };
+            if l > 0 && unsafe { *wp.offset((l - 1) as isize) } == '/' as wchar_t {
+                unsafe {
+                    archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifdir)
+                };
             }
         } else {
-            p = unsafe{archive_entry_pathname_safe(entry)};
+            p = unsafe { archive_entry_pathname_safe(entry) };
             if !p.is_null() {
-                l =unsafe{strlen_safe(p)};
-                if l > 0 
-                    && unsafe { *p.offset((l-1) as isize) as i32 }
-                        == '/' as i32
-                {
-                   unsafe{ archive_entry_set_filetype_safe(
-                        entry,
-                        ARCHIVE_TAR_DEFINED_PARAM.ae_ifdir,
-                    )};
+                l = unsafe { strlen_safe(p) };
+                if l > 0 && unsafe { *p.offset((l - 1) as isize) as i32 } == '/' as i32 {
+                    unsafe {
+                        archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifdir)
+                    };
                 }
             }
         }
@@ -488,10 +471,10 @@ fn archive_read_format_tar_read_header(
     return r;
 }
 fn archive_read_format_tar_read_data(
-     a: *mut archive_read,
-     buff: *mut *const (),
-     size: *mut size_t,
-     offset: *mut int64_t,
+    a: *mut archive_read,
+    buff: *mut *const (),
+    size: *mut size_t,
+    offset: *mut int64_t,
 ) -> i32 {
     let mut bytes_read: ssize_t = 0;
     let mut tar: *mut tar;
@@ -501,20 +484,22 @@ fn archive_read_format_tar_read_data(
     let mut safe_a = unsafe { &mut *a };
     loop {
         /* Remove exhausted entries from sparse list. */
-        while !safe_tar.sparse_list.is_null()
-            && unsafe { (*safe_tar.sparse_list) }.remaining == 0
-        {
+        while !safe_tar.sparse_list.is_null() && unsafe { (*safe_tar.sparse_list) }.remaining == 0 {
             p = safe_tar.sparse_list;
             safe_tar.sparse_list = unsafe { (*p).next };
-            unsafe{free_safe(p as *mut ());}
+            unsafe {
+                free_safe(p as *mut ());
+            }
         }
         if safe_tar.entry_bytes_unconsumed != 0 {
-            unsafe{__archive_read_consume_safe(a, safe_tar.entry_bytes_unconsumed);}
+            unsafe {
+                __archive_read_consume_safe(a, safe_tar.entry_bytes_unconsumed);
+            }
             safe_tar.entry_bytes_unconsumed = 0
         }
         /* Current is hole data and skip this. */
         if safe_tar.sparse_list.is_null() || safe_tar.entry_bytes_remaining == 0 {
-            if unsafe{__archive_read_consume_safe(a, safe_tar.entry_padding)} < 0{
+            if unsafe { __archive_read_consume_safe(a, safe_tar.entry_padding) } < 0 {
                 return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
             }
             safe_tar.entry_padding = 0;
@@ -559,7 +544,7 @@ fn archive_read_format_tar_read_data(
 fn archive_read_format_tar_skip(a: *mut archive_read) -> i32 {
     let mut bytes_skipped: int64_t = 0;
     let mut request: int64_t;
-    let mut p: *mut sparse_block ;
+    let mut p: *mut sparse_block;
     let tar: *mut tar;
     tar = unsafe { (*(*a).format).data as *mut tar };
     let safe_tar = unsafe { &mut *tar };
@@ -584,8 +569,8 @@ fn archive_read_format_tar_skip(a: *mut archive_read) -> i32 {
         request = safe_tar.entry_bytes_remaining
     }
     request += safe_tar.entry_padding + safe_tar.entry_bytes_unconsumed;
-    bytes_skipped = unsafe{__archive_read_consume_safe(a, request)};
-    if bytes_skipped < 0{
+    bytes_skipped = unsafe { __archive_read_consume_safe(a, request) };
+    if bytes_skipped < 0 {
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
     }
     safe_tar.entry_bytes_remaining = 0;
@@ -601,9 +586,9 @@ fn archive_read_format_tar_skip(a: *mut archive_read) -> i32 {
  */
 fn tar_read_header(
     a: *mut archive_read,
-     tar: *mut tar,
-     entry: *mut archive_entry,
-     unconsumed: *mut size_t,
+    tar: *mut tar,
+    entry: *mut archive_entry,
+    unconsumed: *mut size_t,
 ) -> i32 {
     let mut bytes: ssize_t = 0;
     let mut err: i32;
@@ -619,7 +604,7 @@ fn tar_read_header(
     {
         tar_flush_unconsumed(a, unconsumed);
         /* Read 512-byte header record */
-        h =unsafe{__archive_read_ahead_safe(a, 512, &mut bytes) as *const i8};
+        h = unsafe { __archive_read_ahead_safe(a, 512, &mut bytes) as *const i8 };
         if bytes < 0 {
             return bytes as i32;
         }
@@ -628,7 +613,7 @@ fn tar_read_header(
             /* Some writers do omit the block of nulls. <sigh> */
             return ARCHIVE_TAR_DEFINED_PARAM.archive_eof;
         }
-        if bytes < 512{
+        if bytes < 512 {
             /* Short block at EOF; this is bad. */
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
@@ -639,9 +624,7 @@ fn tar_read_header(
         }
         unsafe { *unconsumed = 512 };
         /* Header is workable if it's not an end-of-archive mark. */
-        if unsafe { *h.offset(0 ) as i32 } != 0 as i32
-            || archive_block_is_null(h) == 0
-        {
+        if unsafe { *h.offset(0) as i32 } != 0 as i32 || archive_block_is_null(h) == 0 {
             break;
         }
         /* Ensure format is set for archives with only null blocks. */
@@ -652,14 +635,16 @@ fn tar_read_header(
         if safe_tar.read_concatenated_archives == 0 {
             /* Try to consume a second all-null record, as well. */
             tar_flush_unconsumed(a, unconsumed);
-            h = unsafe{__archive_read_ahead_safe(a, 512, 0 as *mut ssize_t) as *const i8};
+            h = unsafe { __archive_read_ahead_safe(a, 512, 0 as *mut ssize_t) as *const i8 };
             if !h.is_null()
-                && unsafe { *h.offset(0 ) as i32 } == 0 as i32
+                && unsafe { *h.offset(0) as i32 } == 0 as i32
                 && archive_block_is_null(h) != 0
             {
-                unsafe{__archive_read_consume_safe(a, 512)};
+                unsafe { __archive_read_consume_safe(a, 512) };
             }
-            unsafe{archive_clear_error_safe(&mut safe_a.archive);}
+            unsafe {
+                archive_clear_error_safe(&mut safe_a.archive);
+            }
             return ARCHIVE_TAR_DEFINED_PARAM.archive_eof;
         }
     }
@@ -681,7 +666,7 @@ fn tar_read_header(
         /* Retryable: Invalid header */
     }
     safe_tar.header_recursion_depth += 1;
-    if safe_tar.header_recursion_depth > 32{
+    if safe_tar.header_recursion_depth > 32 {
         tar_flush_unconsumed(a, unconsumed);
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
@@ -744,21 +729,25 @@ fn tar_read_header(
         }
         _ => {
             gnuheader = h as *const archive_entry_header_gnutar;
-            if unsafe{memcmp_safe(
-                unsafe { (*gnuheader) }.magic.as_ptr() as *const (),
-                b"ustar  \x00\x00" as *const u8 as *const i8 as *const (),
-                8,
-            )} == 0
+            if unsafe {
+                memcmp_safe(
+                    unsafe { (*gnuheader) }.magic.as_ptr() as *const (),
+                    b"ustar  \x00\x00" as *const u8 as *const i8 as *const (),
+                    8,
+                )
+            } == 0
             {
                 safe_a.archive.archive_format = ARCHIVE_TAR_DEFINED_PARAM.archive_format_tar_gnutar;
                 safe_a.archive.archive_format_name =
                     b"GNU tar format\x00" as *const u8 as *const i8;
                 err = header_gnutar(a, tar, entry, h as *const (), unconsumed)
-            } else if unsafe{memcmp_safe(
-                unsafe { *header }.magic.as_ptr() as *const (),
-                b"ustar\x00" as *const u8 as *const i8 as *const (),
-                5,
-            )} == 0
+            } else if unsafe {
+                memcmp_safe(
+                    unsafe { *header }.magic.as_ptr() as *const (),
+                    b"ustar\x00" as *const u8 as *const i8 as *const (),
+                    5,
+                )
+            } == 0
             {
                 if safe_a.archive.archive_format
                     != ARCHIVE_TAR_DEFINED_PARAM.archive_format_tar_pax_interchange
@@ -793,7 +782,7 @@ fn tar_read_header(
         && safe_tar.header_recursion_depth == 0
         && safe_tar.process_mac_extensions != 0
     {
-        let  err2: i32 = read_mac_metadata_blob(a, tar, entry, h as *const (), unconsumed);
+        let err2: i32 = read_mac_metadata_blob(a, tar, entry, h as *const (), unconsumed);
         if err2 < err {
             err = err2
         }
@@ -807,7 +796,7 @@ fn tar_read_header(
                 safe_tar.sparse_gnu_pending = 0;
                 /* Read initial sparse map. */
                 bytes_read = gnu_sparse_10_read(a, tar, unconsumed);
-                if bytes_read < 0{
+                if bytes_read < 0 {
                     return bytes_read as i32;
                 }
                 safe_tar.entry_bytes_remaining -= bytes_read
@@ -843,8 +832,8 @@ fn tar_read_header(
  * Return true if block checksum is correct.
  */
 fn checksum(mut a: *mut archive_read, mut h: *const ()) -> i32 {
-    let  bytes: *const u8 ;
-    let  header: *const archive_entry_header_ustar;
+    let bytes: *const u8;
+    let header: *const archive_entry_header_ustar;
     let mut check: i32 = 0;
     let mut sum: i32 = 0;
     let mut i: size_t;
@@ -861,29 +850,29 @@ fn checksum(mut a: *mut archive_read, mut h: *const ()) -> i32 {
         {
             return 0;
         }
-        i = i+1;
+        i = i + 1;
     }
     /*
      * Test the checksum.  Note that POSIX specifies _unsigned_
      * bytes for this calculation.
      */
-    sum =tar_atol(
-            unsafe { *header }.checksum.as_ptr(),
-            ::std::mem::size_of::<[i8; 8]>() as u64,
-        ) as i32 ;
+    sum = tar_atol(
+        unsafe { *header }.checksum.as_ptr(),
+        ::std::mem::size_of::<[i8; 8]>() as u64,
+    ) as i32;
     check = 0;
-    i = 0 ;
+    i = 0;
     while i < 148 {
         unsafe { check += *bytes.offset(i as isize) as i32 };
-        i = i+1
+        i = i + 1
     }
-    while i < 156  {
+    while i < 156 {
         check += 32;
-        i = i+1
+        i = i + 1
     }
     while i < 512 {
         unsafe { check += *bytes.offset(i as isize) as i32 };
-        i = i+1
+        i = i + 1
     }
     if sum == check {
         return 1;
@@ -894,18 +883,18 @@ fn checksum(mut a: *mut archive_read, mut h: *const ()) -> i32 {
      * broken checksum calculation.
      */
     check = 0;
-    i = 0 ;
+    i = 0;
     while i < 148 {
         unsafe { check += *bytes.offset(i as isize) as libc::c_schar as i32 };
-        i = i+1;
+        i = i + 1;
     }
     while i < 156 {
         check += 32;
-        i = i+1;
+        i = i + 1;
     }
     while i < 512 {
         unsafe { check += *bytes.offset(i as isize) as libc::c_schar as i32 };
-        i = i+1;
+        i = i + 1;
     }
     if sum == check {
         return 1;
@@ -924,7 +913,7 @@ fn archive_block_is_null(mut p: *const i8) -> i32 {
         if unsafe { *fresh0 } != 0 {
             return 0 as i32;
         }
-        i = i+1;
+        i = i + 1;
     }
     return 1;
 }
@@ -938,13 +927,13 @@ fn header_Solaris_ACL(
     h: *const (),
     unconsumed: *mut size_t,
 ) -> i32 {
-    let  header: *const archive_entry_header_ustar;
+    let header: *const archive_entry_header_ustar;
     let mut size: size_t = 0;
     let mut err: i32 = 0;
     let mut acl_type: i32 = 0;
     let mut type_0: int64_t = 0;
-    let mut acl: *mut i8 ;
-    let mut p: *mut i8 ;
+    let mut acl: *mut i8;
+    let mut p: *mut i8;
     let safe_tar = unsafe { &mut *tar };
     let safe_a = unsafe { &mut *a };
     /*
@@ -1036,26 +1025,29 @@ fn header_Solaris_ACL(
         }
     }
     if safe_tar.sconv_acl.is_null() {
-        safe_tar.sconv_acl = unsafe{archive_string_conversion_from_charset_safe(
-            &mut safe_a.archive,
-            b"UTF-8\x00" as *const u8 as *const i8,
-            1 ,
-        )};
+        safe_tar.sconv_acl = unsafe {
+            archive_string_conversion_from_charset_safe(
+                &mut safe_a.archive,
+                b"UTF-8\x00" as *const u8 as *const i8,
+                1,
+            )
+        };
         if safe_tar.sconv_acl.is_null() {
             return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
         }
     }
     safe_tar.localname.length = 0 as i32 as size_t;
-    unsafe{
-    archive_strncat_safe(&mut safe_tar.localname, acl as *const (), unsafe {
-        p.offset_from(acl) as i64 as size_t
-    });
-    err = archive_acl_from_text_l_safe(
-        archive_entry_acl_safe(entry),
-        safe_tar.localname.s,
-        acl_type,
-        safe_tar.sconv_acl,
-    )};
+    unsafe {
+        archive_strncat_safe(&mut safe_tar.localname, acl as *const (), unsafe {
+            p.offset_from(acl) as i64 as size_t
+        });
+        err = archive_acl_from_text_l_safe(
+            archive_entry_acl_safe(entry),
+            safe_tar.localname.s,
+            acl_type,
+            safe_tar.sconv_acl,
+        )
+    };
     if err != ARCHIVE_TAR_DEFINED_PARAM.archive_ok {
         if unsafe { *__errno_location() == ARCHIVE_TAR_DEFINED_PARAM.enomem } {
             archive_set_error_safe!(
@@ -1089,13 +1081,13 @@ fn header_longlink(
     if err != ARCHIVE_TAR_DEFINED_PARAM.archive_ok {
         return err;
     }
-    err = tar_read_header(a, tar, entry, unconsumed) ;
+    err = tar_read_header(a, tar, entry, unconsumed);
     if err != ARCHIVE_TAR_DEFINED_PARAM.archive_ok && err != ARCHIVE_TAR_DEFINED_PARAM.archive_warn
     {
         return err;
     }
     /* Set symlink if symlink already set, else hardlink. */
-    unsafe{archive_entry_copy_link_safe(entry, safe_tar.longlink.s)};
+    unsafe { archive_entry_copy_link_safe(entry, safe_tar.longlink.s) };
     return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
 }
 fn set_conversion_failed_error(
@@ -1144,12 +1136,14 @@ fn header_longname(
     {
         return err;
     }
-    if unsafe{_archive_entry_copy_pathname_l_safe(
-        entry,
-        safe_tar.longname.s,
-        safe_tar.longname.length,
-        safe_tar.sconv,
-    )} != 0
+    if unsafe {
+        _archive_entry_copy_pathname_l_safe(
+            entry,
+            safe_tar.longname.s,
+            safe_tar.longname.length,
+            safe_tar.sconv,
+        )
+    } != 0
     {
         err = set_conversion_failed_error(
             a,
@@ -1193,7 +1187,7 @@ fn read_body_to_string(
         unsafe { *header }.size.as_ptr(),
         ::std::mem::size_of::<[i8; 12]>() as u64,
     );
-    if size > 1048576|| size < 0 {
+    if size > 1048576 || size < 0 {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_TAR_DEFINED_PARAM.einval,
@@ -1202,7 +1196,7 @@ fn read_body_to_string(
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
     }
     /* Fail if we can't make our buffer big enough. */
-    if unsafe{archive_string_ensure_safe(as_0, (size as size_t)+1)}.is_null() {
+    if unsafe { archive_string_ensure_safe(as_0, (size as size_t) + 1) }.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_TAR_DEFINED_PARAM.enomem,
@@ -1212,13 +1206,13 @@ fn read_body_to_string(
     }
     tar_flush_unconsumed(a, unconsumed);
     /* Read the body into the string. */
-    unsafe { *unconsumed = ((size + 511)& !(511)) as size_t };
-    src =unsafe{__archive_read_ahead_safe(a, unsafe { *unconsumed }, 0 as *mut ssize_t)};
+    unsafe { *unconsumed = ((size + 511) & !(511)) as size_t };
+    src = unsafe { __archive_read_ahead_safe(a, unsafe { *unconsumed }, 0 as *mut ssize_t) };
     if src == 0 as *mut () {
         unsafe { *unconsumed = 0 };
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
     }
-    unsafe{memcpy_safe(safe_as_0.s as *mut (), src, size as size_t)};
+    unsafe { memcpy_safe(safe_as_0.s as *mut (), src, size as size_t) };
     unsafe { *safe_as_0.s.offset(size as isize) = '\u{0}' as i32 as i8 };
     safe_as_0.length = size as size_t;
     return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
@@ -1239,45 +1233,47 @@ fn header_common(
     entry: *mut archive_entry,
     h: *const (),
 ) -> i32 {
-    let  header;
-    let  safe_tar = unsafe { &mut *tar };
-    let  safe_a = unsafe { &mut *a };
+    let header;
+    let safe_tar = unsafe { &mut *tar };
+    let safe_a = unsafe { &mut *a };
     let mut tartype: i8 = 0;
     let mut err: i32 = ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
     header = h as *const archive_entry_header_ustar;
     if unsafe { *header }.linkname[0 as i32 as usize] != 0 {
         safe_tar.entry_linkpath.length = 0;
-        unsafe{archive_strncat_safe(
-            &mut safe_tar.entry_linkpath,
-            unsafe { *header }.linkname.as_ptr() as *const (),
-            ::std::mem::size_of::<[i8; 100]>() as u64,
-        )};
+        unsafe {
+            archive_strncat_safe(
+                &mut safe_tar.entry_linkpath,
+                unsafe { *header }.linkname.as_ptr() as *const (),
+                ::std::mem::size_of::<[i8; 100]>() as u64,
+            )
+        };
     } else {
         safe_tar.entry_linkpath.length = 0
     }
     /* Parse out the numeric fields (all are octal) */
-    unsafe{
-    archive_entry_set_mode_safe(
-        entry,
-        tar_atol(
-            unsafe { *header }.mode.as_ptr(),
-            ::std::mem::size_of::<[i8; 8]>() as u64,
-        ) as mode_t,
-    );
-    archive_entry_set_uid_safe(
-        entry,
-        tar_atol(
-            unsafe { *header }.uid.as_ptr(),
-            ::std::mem::size_of::<[i8; 8]>() as u64,
-        ),
-    );
-    archive_entry_set_gid_safe(
-        entry,
-        tar_atol(
-            unsafe { *header }.gid.as_ptr(),
-            ::std::mem::size_of::<[i8; 8]>() as u64,
-        ),
-    );
+    unsafe {
+        archive_entry_set_mode_safe(
+            entry,
+            tar_atol(
+                unsafe { *header }.mode.as_ptr(),
+                ::std::mem::size_of::<[i8; 8]>() as u64,
+            ) as mode_t,
+        );
+        archive_entry_set_uid_safe(
+            entry,
+            tar_atol(
+                unsafe { *header }.uid.as_ptr(),
+                ::std::mem::size_of::<[i8; 8]>() as u64,
+            ),
+        );
+        archive_entry_set_gid_safe(
+            entry,
+            tar_atol(
+                unsafe { *header }.gid.as_ptr(),
+                ::std::mem::size_of::<[i8; 8]>() as u64,
+            ),
+        );
     }
     safe_tar.entry_bytes_remaining = tar_atol(
         unsafe { *header }.size.as_ptr(),
@@ -1303,28 +1299,30 @@ fn header_common(
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
     }
     safe_tar.realsize = safe_tar.entry_bytes_remaining;
-    unsafe{
-    archive_entry_set_size_safe(entry, safe_tar.entry_bytes_remaining);
-    archive_entry_set_mtime_safe(
-        entry,
-        tar_atol(
-            unsafe { *header }.mtime.as_ptr(),
-            ::std::mem::size_of::<[i8; 12]>() as u64,
-        ),
-        0 ,
-    );
+    unsafe {
+        archive_entry_set_size_safe(entry, safe_tar.entry_bytes_remaining);
+        archive_entry_set_mtime_safe(
+            entry,
+            tar_atol(
+                unsafe { *header }.mtime.as_ptr(),
+                ::std::mem::size_of::<[i8; 12]>() as u64,
+            ),
+            0,
+        );
     }
     /* Handle the tar type flag appropriately. */
     tartype = unsafe { *header }.typeflag[0 as i32 as usize];
     match tartype as u8 as char {
         '1' => {
             /* Hard link */
-            if unsafe{_archive_entry_copy_hardlink_l_safe(
-                entry,
-                safe_tar.entry_linkpath.s,
-                safe_tar.entry_linkpath.length,
-                safe_tar.sconv,
-            )} != 0
+            if unsafe {
+                _archive_entry_copy_hardlink_l_safe(
+                    entry,
+                    safe_tar.entry_linkpath.s,
+                    safe_tar.entry_linkpath.length,
+                    safe_tar.sconv,
+                )
+            } != 0
             {
                 err = set_conversion_failed_error(
                     a,
@@ -1344,13 +1342,14 @@ fn header_common(
              * implies that the underlying entry is a regular
              * file.
              */
-            unsafe{
-             if archive_entry_size_safe(entry) > 0 {
-                archive_entry_set_filetype_safe(
-                    entry,
-                    ARCHIVE_TAR_DEFINED_PARAM.ae_ifreg as mode_t,
-                );
-            }}
+            unsafe {
+                if archive_entry_size_safe(entry) > 0 {
+                    archive_entry_set_filetype_safe(
+                        entry,
+                        ARCHIVE_TAR_DEFINED_PARAM.ae_ifreg as mode_t,
+                    );
+                }
+            }
             /*
              * A tricky point: Traditionally, tar readers have
              * ignored the size field when reading hardlink
@@ -1364,7 +1363,7 @@ fn header_common(
              * from earlier archives (the 'x' and 'g' entries are
              * optional, after all), we need a heuristic.
              */
-            if !(unsafe{archive_entry_size_safe(entry)} == 0) {
+            if !(unsafe { archive_entry_size_safe(entry) } == 0) {
                 if !(safe_a.archive.archive_format
                     == ARCHIVE_TAR_DEFINED_PARAM.archive_format_tar_pax_interchange)
                 {
@@ -1374,8 +1373,8 @@ fn header_common(
                         || archive_read_format_tar_bid(a, 50 as i32) > 50 as i32
                     {
                         /* Old-style or GNU tar: we must ignore the size. */
-                        unsafe{archive_entry_set_size_safe(entry, 0)};
-                        safe_tar.entry_bytes_remaining = 0 
+                        unsafe { archive_entry_set_size_safe(entry, 0) };
+                        safe_tar.entry_bytes_remaining = 0
                     }
                 }
             }
@@ -1392,17 +1391,22 @@ fn header_common(
         }
         '2' => {
             /* Symlink */
-            unsafe{
-            archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_iflnk as mode_t);
-            archive_entry_set_size_safe(entry, 0);
+            unsafe {
+                archive_entry_set_filetype_safe(
+                    entry,
+                    ARCHIVE_TAR_DEFINED_PARAM.ae_iflnk as mode_t,
+                );
+                archive_entry_set_size_safe(entry, 0);
             }
             safe_tar.entry_bytes_remaining = 0;
-            if unsafe{_archive_entry_copy_symlink_l_safe(
-                entry,
-                safe_tar.entry_linkpath.s,
-                safe_tar.entry_linkpath.length,
-                safe_tar.sconv,
-            )} != 0
+            if unsafe {
+                _archive_entry_copy_symlink_l_safe(
+                    entry,
+                    safe_tar.entry_linkpath.s,
+                    safe_tar.entry_linkpath.length,
+                    safe_tar.sconv,
+                )
+            } != 0
             {
                 err = set_conversion_failed_error(
                     a,
@@ -1416,33 +1420,45 @@ fn header_common(
         }
         '3' => {
             /* Character device */
-            unsafe{
-            archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifchr as mode_t);
-            archive_entry_set_size_safe(entry, 0);
+            unsafe {
+                archive_entry_set_filetype_safe(
+                    entry,
+                    ARCHIVE_TAR_DEFINED_PARAM.ae_ifchr as mode_t,
+                );
+                archive_entry_set_size_safe(entry, 0);
             }
             safe_tar.entry_bytes_remaining = 0;
         }
         '4' => {
             /* Block device */
-            unsafe{
-            archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifblk as mode_t);
-            archive_entry_set_size_safe(entry, 0);
+            unsafe {
+                archive_entry_set_filetype_safe(
+                    entry,
+                    ARCHIVE_TAR_DEFINED_PARAM.ae_ifblk as mode_t,
+                );
+                archive_entry_set_size_safe(entry, 0);
             }
             safe_tar.entry_bytes_remaining = 0;
         }
         '5' => {
             /* Dir */
-            unsafe{
-            archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifdir as mode_t);
-            archive_entry_set_size_safe(entry, 0);
+            unsafe {
+                archive_entry_set_filetype_safe(
+                    entry,
+                    ARCHIVE_TAR_DEFINED_PARAM.ae_ifdir as mode_t,
+                );
+                archive_entry_set_size_safe(entry, 0);
             }
             safe_tar.entry_bytes_remaining = 0;
         }
         '6' => {
             /* FIFO device */
-            unsafe{
-            archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ififo as mode_t);
-            archive_entry_set_size_safe(entry, 0);
+            unsafe {
+                archive_entry_set_filetype_safe(
+                    entry,
+                    ARCHIVE_TAR_DEFINED_PARAM.ae_ififo as mode_t,
+                );
+                archive_entry_set_size_safe(entry, 0);
             }
             safe_tar.entry_bytes_remaining = 0;
         }
@@ -1453,16 +1469,19 @@ fn header_common(
              * It might be nice someday to preprocess the file list and
              * provide it to the client, though.
              */
-            unsafe{archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifdir as mode_t)};
+            unsafe {
+                archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifdir as mode_t)
+            };
         }
-        'M' => {
-        }
+        'M' => {}
         'N' => {
             /* Old GNU "long filename" entry. */
             /* The body of this entry is a script for renaming
              * previously-extracted entries.  Ugh.  It will never
              * be supported by libarchive. */
-            unsafe{archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifreg as mode_t)};
+            unsafe {
+                archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifreg as mode_t)
+            };
         }
         'S' | '0' => {
             /* GNU sparse files */
@@ -1477,10 +1496,14 @@ fn header_common(
              * don't allow non-standard file types to be sparse.
              */
             safe_tar.sparse_allowed = 1 as i32;
-            unsafe{archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifreg as mode_t)};
+            unsafe {
+                archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifreg as mode_t)
+            };
         }
         _ => {
-            unsafe{archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifreg as mode_t)};
+            unsafe {
+                archive_entry_set_filetype_safe(entry, ARCHIVE_TAR_DEFINED_PARAM.ae_ifreg as mode_t)
+            };
         }
     }
     return err;
@@ -1500,12 +1523,14 @@ fn header_old_tar(
     let mut safe_tar = unsafe { &mut *tar };
     /* Copy filename over (to ensure null termination). */
     header = h as *const archive_entry_header_ustar;
-    if unsafe{_archive_entry_copy_pathname_l_safe(
-        entry,
-        unsafe { *header }.name.as_ptr(),
-        ::std::mem::size_of::<[i8; 100]>() as u64,
-        safe_tar.sconv,
-    )} != 0
+    if unsafe {
+        _archive_entry_copy_pathname_l_safe(
+            entry,
+            unsafe { *header }.name.as_ptr(),
+            ::std::mem::size_of::<[i8; 100]>() as u64,
+            safe_tar.sconv,
+        )
+    } != 0
     {
         err = set_conversion_failed_error(
             a,
@@ -1542,15 +1567,12 @@ fn read_mac_metadata_blob(
     let mut wp: *const wchar_t;
     let mut wname: *const wchar_t;
     /* UNUSED */
-    wp = unsafe{archive_entry_pathname_w_safe(entry)};
+    wp = unsafe { archive_entry_pathname_w_safe(entry) };
     wname = wp;
     if !wp.is_null() {
         /* Find the last path element. */
         while unsafe { *wp } != '\u{0}' as wchar_t {
-            if unsafe {
-                *wp.offset(0 ) == '/' as wchar_t
-                    && *wp.offset(1) != '\u{0}' as wchar_t
-            } {
+            if unsafe { *wp.offset(0) == '/' as wchar_t && *wp.offset(1) != '\u{0}' as wchar_t } {
                 unsafe { wname = wp.offset(1) }
             }
             unsafe { wp = wp.offset(1) }
@@ -1568,7 +1590,7 @@ fn read_mac_metadata_blob(
         }
     } else {
         /* Find the last path element. */
-        p = unsafe{archive_entry_pathname_safe(entry)};
+        p = unsafe { archive_entry_pathname_safe(entry) };
         name = p;
         if p.is_null() {
             return ARCHIVE_TAR_DEFINED_PARAM.archive_failed;
@@ -1594,7 +1616,7 @@ fn read_mac_metadata_blob(
         }
     }
     /* Read the body as a Mac OS metadata blob. */
-    size = unsafe{archive_entry_size_safe(entry)};
+    size = unsafe { archive_entry_size_safe(entry) };
     /*
      * TODO: Look beyond the body here to peek at the next header.
      * If it's a regular header (not an extension header)
@@ -1607,13 +1629,13 @@ fn read_mac_metadata_blob(
      * Q: Is the above idea really possible?  Even
      * when there are GNU or pax extension entries?
      */
-    data = unsafe{__archive_read_ahead_safe(a, size as size_t, 0 as *mut ssize_t)};
+    data = unsafe { __archive_read_ahead_safe(a, size as size_t, 0 as *mut ssize_t) };
     if data == 0 as *mut () {
-        unsafe { *unconsumed = 0};
+        unsafe { *unconsumed = 0 };
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
     }
-    unsafe{archive_entry_copy_mac_metadata_safe(entry, data, size as size_t)};
-    unsafe { *unconsumed = ((size + 511)& !(511 as i32) as i64) as size_t };
+    unsafe { archive_entry_copy_mac_metadata_safe(entry, data, size as size_t) };
+    unsafe { *unconsumed = ((size + 511) & !(511 as i32) as i64) as size_t };
     tar_flush_unconsumed(a, unconsumed);
     return tar_read_header(a, tar, entry, unconsumed);
 }
@@ -1629,7 +1651,7 @@ fn header_pax_global(
 ) -> i32 {
     let mut err: i32;
     err = read_body_to_string(a, tar, unsafe { &mut (*tar).pax_global }, h, unconsumed);
-    if err != 0{
+    if err != 0 {
         return err;
     }
     err = tar_read_header(a, tar, entry, unconsumed);
@@ -1681,7 +1703,7 @@ fn header_ustar(
     mut h: *const (),
 ) -> i32 {
     let mut header: *const archive_entry_header_ustar;
-    let mut as_0: *mut archive_string ;
+    let mut as_0: *mut archive_string;
     let mut err: i32 = ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
     let mut r: i32 = 0;
     let mut safe_tar = unsafe { &mut *tar };
@@ -1692,34 +1714,41 @@ fn header_ustar(
     let mut safe_as_0 = unsafe { &mut *as_0 };
     if unsafe { *header }.prefix[0 as i32 as usize] != 0 {
         safe_as_0.length = 0;
-        unsafe{archive_strncat_safe(
-            as_0,
-            unsafe { *header }.prefix.as_ptr() as *const (),
-            ::std::mem::size_of::<[i8; 155]>() as u64,
-        )};
+        unsafe {
+            archive_strncat_safe(
+                as_0,
+                unsafe { *header }.prefix.as_ptr() as *const (),
+                ::std::mem::size_of::<[i8; 155]>() as u64,
+            )
+        };
         if unsafe {
             *safe_as_0
                 .s
                 .offset(safe_as_0.length.wrapping_sub(1 as i32 as u64) as isize) as i32
         } != '/' as i32
         {
-            unsafe{archive_strappend_char_safe(as_0, '/' as i32 as i8)};
+            unsafe { archive_strappend_char_safe(as_0, '/' as i32 as i8) };
         }
-        unsafe{archive_strncat_safe(
-            as_0,
-            unsafe { *header }.name.as_ptr() as *const (),
-            ::std::mem::size_of::<[i8; 100]>() as u64,
-        )};
+        unsafe {
+            archive_strncat_safe(
+                as_0,
+                unsafe { *header }.name.as_ptr() as *const (),
+                ::std::mem::size_of::<[i8; 100]>() as u64,
+            )
+        };
     } else {
         safe_as_0.length = 0;
-        unsafe{archive_strncat_safe(
-            as_0,
-            unsafe { *header }.name.as_ptr() as *const (),
-            ::std::mem::size_of::<[i8; 100]>() as u64,
-        )};
+        unsafe {
+            archive_strncat_safe(
+                as_0,
+                unsafe { *header }.name.as_ptr() as *const (),
+                ::std::mem::size_of::<[i8; 100]>() as u64,
+            )
+        };
     }
-    if unsafe{_archive_entry_copy_pathname_l_safe(entry, safe_as_0.s, safe_as_0.length, safe_tar.sconv)}
-        != 0
+    if unsafe {
+        _archive_entry_copy_pathname_l_safe(entry, safe_as_0.s, safe_as_0.length, safe_tar.sconv)
+    } != 0
     {
         err = set_conversion_failed_error(
             a,
@@ -1739,12 +1768,14 @@ fn header_ustar(
         err = r
     }
     /* Handle POSIX ustar fields. */
-    if unsafe{_archive_entry_copy_uname_l_safe(
-        entry,
-        unsafe { *header }.uname.as_ptr(),
-        ::std::mem::size_of::<[i8; 32]>() as u64,
-        safe_tar.sconv,
-    )} != 0
+    if unsafe {
+        _archive_entry_copy_uname_l_safe(
+            entry,
+            unsafe { *header }.uname.as_ptr(),
+            ::std::mem::size_of::<[i8; 32]>() as u64,
+            safe_tar.sconv,
+        )
+    } != 0
     {
         err =
             set_conversion_failed_error(a, safe_tar.sconv, b"Uname\x00" as *const u8 as *const i8);
@@ -1752,12 +1783,14 @@ fn header_ustar(
             return err;
         }
     }
-    if unsafe{_archive_entry_copy_gname_l_safe(
-        entry,
-        unsafe { *header }.gname.as_ptr(),
-        ::std::mem::size_of::<[i8; 32]>() as u64,
-        safe_tar.sconv,
-    )} != 0
+    if unsafe {
+        _archive_entry_copy_gname_l_safe(
+            entry,
+            unsafe { *header }.gname.as_ptr(),
+            ::std::mem::size_of::<[i8; 32]>() as u64,
+            safe_tar.sconv,
+        )
+    } != 0
     {
         err =
             set_conversion_failed_error(a, safe_tar.sconv, b"Gname\x00" as *const u8 as *const i8);
@@ -1769,22 +1802,22 @@ fn header_ustar(
     if unsafe { *header }.typeflag[0 as i32 as usize] as i32 == '3' as i32
         || unsafe { (*header) }.typeflag[0 as i32 as usize] as i32 == '4' as i32
     {
-        unsafe{
-        archive_entry_set_rdevmajor_safe(
-            entry,
-            tar_atol(
-                unsafe { *header }.rdevmajor.as_ptr(),
-                ::std::mem::size_of::<[i8; 8]>() as u64,
-            ) as dev_t,
-        );
-        archive_entry_set_rdevminor_safe(
-            entry,
-            tar_atol(
-                unsafe { *header }.rdevminor.as_ptr(),
-                ::std::mem::size_of::<[i8; 8]>() as u64,
-            ) as dev_t,
-        );
-    }
+        unsafe {
+            archive_entry_set_rdevmajor_safe(
+                entry,
+                tar_atol(
+                    unsafe { *header }.rdevmajor.as_ptr(),
+                    ::std::mem::size_of::<[i8; 8]>() as u64,
+                ) as dev_t,
+            );
+            archive_entry_set_rdevminor_safe(
+                entry,
+                tar_atol(
+                    unsafe { *header }.rdevminor.as_ptr(),
+                    ::std::mem::size_of::<[i8; 8]>() as u64,
+                ) as dev_t,
+            );
+        }
     }
     safe_tar.entry_padding = 0x1ff & -safe_tar.entry_bytes_remaining;
     return err;
@@ -1824,15 +1857,15 @@ fn pax_header(
     safe_tar.entry_pathname_override.length = 0;
     safe_tar.entry_uname.length = 0;
     err = ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
-    while attr_length > 0{
+    while attr_length > 0 {
         /* Parse decimal length field at start of line. */
         line_length = 0; /* Record start of line. */
         l = attr_length;
         p = attr;
-        while l > 0{
+        while l > 0 {
             if unsafe { *p as i32 } == ' ' as i32 {
                 unsafe { p = p.offset(1) };
-                l = l-1;
+                l = l - 1;
                 break;
             } else {
                 if unsafe { (*p as i32) < '0' as i32 || *p as i32 > '9' as i32 } {
@@ -1843,10 +1876,9 @@ fn pax_header(
                     );
                     return ARCHIVE_TAR_DEFINED_PARAM.archive_warn;
                 }
-                line_length =
-                    (line_length*10) ;
-                line_length = (line_length+((unsafe { *p as i32 } - '0' as i32) as u64));
-                if line_length > 999999{
+                line_length = (line_length * 10);
+                line_length = (line_length + ((unsafe { *p as i32 } - '0' as i32) as u64));
+                if line_length > 999999 {
                     archive_set_error_safe!(
                         &mut safe_a.archive as *mut archive,
                         ARCHIVE_TAR_DEFINED_PARAM.archive_errno_misc,
@@ -1855,7 +1887,7 @@ fn pax_header(
                     return ARCHIVE_TAR_DEFINED_PARAM.archive_warn;
                 }
                 unsafe { p = p.offset(1) };
-                l = l-1;
+                l = l - 1;
             }
         }
         /*
@@ -1876,12 +1908,10 @@ fn pax_header(
             return ARCHIVE_TAR_DEFINED_PARAM.archive_warn;
         }
         /* Null-terminate the line. */
-        unsafe {
-            *attr.offset((line_length-1) as isize) = '\u{0}' as i32 as i8
-        };
+        unsafe { *attr.offset((line_length - 1) as isize) = '\u{0}' as i32 as i8 };
         /* Find end of key and null terminate it. */
         key = p;
-        if unsafe { *key.offset(0 ) as i32 } == '=' as i32 {
+        if unsafe { *key.offset(0) as i32 } == '=' as i32 {
             return -1;
         }
         unsafe {
@@ -1899,7 +1929,7 @@ fn pax_header(
         }
         unsafe {
             *p = '\u{0}' as i32 as i8;
-            value = p.offset(1 )
+            value = p.offset(1)
         };
         /* Some values may be binary data */
         value_length = unsafe {
@@ -1915,7 +1945,7 @@ fn pax_header(
         err = if err < err2 { err } else { err2 };
         /* Skip to next line */
         unsafe { attr = attr.offset(line_length as isize) };
-        attr_length = attr_length-line_length
+        attr_length = attr_length - line_length
     }
     /*
      * PAX format uses UTF-8 as default charset for its metadata
@@ -1929,51 +1959,59 @@ fn pax_header(
     if safe_tar.pax_hdrcharset_binary != 0 {
         sconv = safe_tar.opt_sconv
     } else {
-        sconv =unsafe{archive_string_conversion_from_charset_safe(
-            &mut safe_a.archive,
-            b"UTF-8\x00" as *const u8 as *const i8,
-            1,
-        )};
+        sconv = unsafe {
+            archive_string_conversion_from_charset_safe(
+                &mut safe_a.archive,
+                b"UTF-8\x00" as *const u8 as *const i8,
+                1,
+            )
+        };
         if sconv.is_null() {
             return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
         }
         if safe_tar.compat_2x != 0 {
-            unsafe{archive_string_conversion_set_opt_safe(
-                sconv,
-                ARCHIVE_TAR_DEFINED_PARAM.sconv_set_opt_utf8_libarchive2x,
-            )};
+            unsafe {
+                archive_string_conversion_set_opt_safe(
+                    sconv,
+                    ARCHIVE_TAR_DEFINED_PARAM.sconv_set_opt_utf8_libarchive2x,
+                )
+            };
         }
     }
-    if safe_tar.entry_gname.length > 0{
-        if unsafe{_archive_entry_copy_gname_l_safe(
-            entry,
-            safe_tar.entry_gname.s,
-            safe_tar.entry_gname.length,
-            sconv,
-        )} != 0
+    if safe_tar.entry_gname.length > 0 {
+        if unsafe {
+            _archive_entry_copy_gname_l_safe(
+                entry,
+                safe_tar.entry_gname.s,
+                safe_tar.entry_gname.length,
+                sconv,
+            )
+        } != 0
         {
             err = set_conversion_failed_error(a, sconv, b"Gname\x00" as *const u8 as *const i8);
             if err == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
                 return err;
             }
             /* Use a converted an original name. */
-            unsafe{archive_entry_copy_gname_safe(entry, safe_tar.entry_gname.s)};
+            unsafe { archive_entry_copy_gname_safe(entry, safe_tar.entry_gname.s) };
         }
     }
-    if safe_tar.entry_linkpath.length > 0{
-        if unsafe{_archive_entry_copy_link_l_safe(
-            entry,
-            safe_tar.entry_linkpath.s,
-            safe_tar.entry_linkpath.length,
-            sconv,
-        )} != 0
+    if safe_tar.entry_linkpath.length > 0 {
+        if unsafe {
+            _archive_entry_copy_link_l_safe(
+                entry,
+                safe_tar.entry_linkpath.s,
+                safe_tar.entry_linkpath.length,
+                sconv,
+            )
+        } != 0
         {
             err = set_conversion_failed_error(a, sconv, b"Linkname\x00" as *const u8 as *const i8);
             if err == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
                 return err;
             }
             /* Use a converted an original name. */
-            unsafe{archive_entry_copy_link_safe(entry, safe_tar.entry_linkpath.s)};
+            unsafe { archive_entry_copy_link_safe(entry, safe_tar.entry_linkpath.s) };
         }
     }
     /*
@@ -1987,7 +2025,7 @@ fn pax_header(
      */
     as_0 = 0 as *mut archive_string;
     safe_as_0 = unsafe { &mut *as_0 };
-    if safe_tar.entry_pathname_override.length > 0{
+    if safe_tar.entry_pathname_override.length > 0 {
         as_0 = &mut safe_tar.entry_pathname_override;
         safe_as_0 = unsafe { &mut *as_0 };
     } else if safe_tar.entry_pathname.length > 0 {
@@ -1995,68 +2033,70 @@ fn pax_header(
         safe_as_0 = unsafe { &mut *as_0 };
     }
     if !as_0.is_null() {
-        if unsafe{_archive_entry_copy_pathname_l_safe(entry, safe_as_0.s, safe_as_0.length, sconv)}
-            != 0
+        if unsafe {
+            _archive_entry_copy_pathname_l_safe(entry, safe_as_0.s, safe_as_0.length, sconv)
+        } != 0
         {
             err = set_conversion_failed_error(a, sconv, b"Pathname\x00" as *const u8 as *const i8);
             if err == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
                 return err;
             }
             /* Use a converted an original name. */
-            unsafe{archive_entry_copy_pathname_safe(entry, safe_as_0.s)};
+            unsafe { archive_entry_copy_pathname_safe(entry, safe_as_0.s) };
         }
     }
     if safe_tar.entry_uname.length > 0 {
-        if unsafe{_archive_entry_copy_uname_l_safe(
-            entry,
-            safe_tar.entry_uname.s,
-            safe_tar.entry_uname.length,
-            sconv,
-        )} != 0
+        if unsafe {
+            _archive_entry_copy_uname_l_safe(
+                entry,
+                safe_tar.entry_uname.s,
+                safe_tar.entry_uname.length,
+                sconv,
+            )
+        } != 0
         {
             err = set_conversion_failed_error(a, sconv, b"Uname\x00" as *const u8 as *const i8);
             if err == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
                 return err;
             }
             /* Use a converted an original name. */
-            unsafe{archive_entry_copy_uname_safe(entry, safe_tar.entry_uname.s)};
+            unsafe { archive_entry_copy_uname_safe(entry, safe_tar.entry_uname.s) };
         }
     }
     return err;
 }
-fn pax_attribute_xattr(
-    entry: *mut archive_entry,
-    mut name: *const i8,
-    value: *const i8,
-) -> i32 {
+fn pax_attribute_xattr(entry: *mut archive_entry, mut name: *const i8, value: *const i8) -> i32 {
     let mut name_decoded: *mut i8;
     let mut value_decoded: *mut ();
     let mut value_len: size_t = 0;
-    if unsafe{strlen_safe(name)} < 18
-        || unsafe{memcmp_safe(
-            name as *const (),
-            b"LIBARCHIVE.xattr.\x00" as *const u8 as *const i8 as *const (),
-            17,
-        )} != 0
+    if unsafe { strlen_safe(name) } < 18
+        || unsafe {
+            memcmp_safe(
+                name as *const (),
+                b"LIBARCHIVE.xattr.\x00" as *const u8 as *const i8 as *const (),
+                17,
+            )
+        } != 0
     {
         return 3;
     }
-    unsafe { name = name.offset(17 ) };
+    unsafe { name = name.offset(17) };
     /* URL-decode name */
     name_decoded = url_decode(name);
     if name_decoded.is_null() {
         return 2;
     }
     /* Base-64 decode value */
-    value_decoded = base64_decode(value, unsafe{strlen_safe(value)}, &mut value_len) as *mut ();
+    value_decoded = base64_decode(value, unsafe { strlen_safe(value) }, &mut value_len) as *mut ();
     if value_decoded.is_null() {
-        unsafe{free_safe(name_decoded as *mut ())};
+        unsafe { free_safe(name_decoded as *mut ()) };
         return 1;
     }
-    unsafe{
-    archive_entry_xattr_add_entry_safe(entry, name_decoded, value_decoded, value_len);
-    free_safe(name_decoded as *mut ());
-    free_safe(value_decoded)};
+    unsafe {
+        archive_entry_xattr_add_entry_safe(entry, name_decoded, value_decoded, value_len);
+        free_safe(name_decoded as *mut ());
+        free_safe(value_decoded)
+    };
     return 0;
 }
 fn pax_attribute_schily_xattr(
@@ -2065,19 +2105,19 @@ fn pax_attribute_schily_xattr(
     mut value: *const i8,
     mut value_length: size_t,
 ) -> i32 {
-    unsafe{
-    if strlen_safe(name) < 14 as i32 as u64
-        || memcmp_safe(
-            name as *const (),
-            b"SCHILY.xattr.\x00" as *const u8 as *const i8 as *const (),
-            13,
-        ) != 0
-    {
-        return 1;
+    unsafe {
+        if strlen_safe(name) < 14 as i32 as u64
+            || memcmp_safe(
+                name as *const (),
+                b"SCHILY.xattr.\x00" as *const u8 as *const i8 as *const (),
+                13,
+            ) != 0
+        {
+            return 1;
+        }
     }
-}
-    unsafe { name = name.offset(13 ) };
-    unsafe{archive_entry_xattr_add_entry_safe(entry, name, value as *const (), value_length)};
+    unsafe { name = name.offset(13) };
+    unsafe { archive_entry_xattr_add_entry_safe(entry, name, value as *const (), value_length) };
     return 0;
 }
 fn pax_attribute_rht_security_selinux(
@@ -2085,12 +2125,14 @@ fn pax_attribute_rht_security_selinux(
     value: *const i8,
     value_length: size_t,
 ) -> i32 {
-    unsafe{archive_entry_xattr_add_entry_safe(
-        entry,
-        b"security.selinux\x00" as *const u8 as *const i8,
-        value as *const (),
-        value_length,
-    )};
+    unsafe {
+        archive_entry_xattr_add_entry_safe(
+            entry,
+            b"security.selinux\x00" as *const u8 as *const i8,
+            value as *const (),
+            value_length,
+        )
+    };
     return 0 as i32;
 }
 fn pax_attribute_acl(
@@ -2105,13 +2147,13 @@ fn pax_attribute_acl(
     let mut safe_a = unsafe { &mut *a };
     let mut errstr: *const i8 = 0 as *const i8;
     //改match为if else
-    if type_0==ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_access {
+    if type_0 == ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_access {
         errstr = b"SCHILY.acl.access\x00" as *const u8 as *const i8;
-    }else if type_0==ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_default {
+    } else if type_0 == ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_default {
         errstr = b"SCHILY.acl.default\x00" as *const u8 as *const i8;
-    }else if type_0==ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_nfs4{
+    } else if type_0 == ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_nfs4 {
         errstr = b"SCHILY.acl.ace\x00" as *const u8 as *const i8;
-    }else{
+    } else {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_TAR_DEFINED_PARAM.archive_errno_misc,
@@ -2122,21 +2164,25 @@ fn pax_attribute_acl(
     }
 
     if safe_tar.sconv_acl.is_null() {
-        safe_tar.sconv_acl = unsafe{archive_string_conversion_from_charset_safe(
-            &mut safe_a.archive,
-            b"UTF-8\x00" as *const u8 as *const i8,
-            1,
-        )};
+        safe_tar.sconv_acl = unsafe {
+            archive_string_conversion_from_charset_safe(
+                &mut safe_a.archive,
+                b"UTF-8\x00" as *const u8 as *const i8,
+                1,
+            )
+        };
         if safe_tar.sconv_acl.is_null() {
             return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
         }
     }
-    r =unsafe{archive_acl_from_text_l_safe(
-        archive_entry_acl_safe(entry),
-        value,
-        type_0,
-        safe_tar.sconv_acl,
-    )};
+    r = unsafe {
+        archive_acl_from_text_l_safe(
+            archive_entry_acl_safe(entry),
+            value,
+            type_0,
+            safe_tar.sconv_acl,
+        )
+    };
     if r != ARCHIVE_TAR_DEFINED_PARAM.archive_ok {
         if r == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
             archive_set_error_safe!(
@@ -2189,14 +2235,10 @@ fn pax_attribute(
     if value.is_null() {
         value = b"\x00" as *const u8 as *const i8
     }
-    match unsafe { *key.offset(0 ) } as u8 as char {
+    match unsafe { *key.offset(0) } as u8 as char {
         'G' => {
             /* Reject GNU.sparse.* headers on non-regular files. */
-            if unsafe{strncmp_safe(
-                key,
-                b"GNU.sparse\x00" as *const u8 as *const i8,
-                104,
-            )} == 0
+            if unsafe { strncmp_safe(key, b"GNU.sparse\x00" as *const u8 as *const i8, 104) } == 0
                 && safe_tar.sparse_allowed == 0
             {
                 archive_set_error_safe!(
@@ -2207,14 +2249,17 @@ fn pax_attribute(
                 return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
             }
             /* GNU "0.0" sparse pax format. */
-            if unsafe{strcmp_safe(key, b"GNU.sparse.numblocks\x00" as *const u8 as *const i8)} == 0 {
+            if unsafe { strcmp_safe(key, b"GNU.sparse.numblocks\x00" as *const u8 as *const i8) }
+                == 0
+            {
                 safe_tar.sparse_offset = -1;
                 safe_tar.sparse_numbytes = -1;
                 safe_tar.sparse_gnu_major = 0;
                 safe_tar.sparse_gnu_minor = 0
             }
-            if unsafe{strcmp_safe(key, b"GNU.sparse.offset\x00" as *const u8 as *const i8)} == 0{
-                safe_tar.sparse_offset = tar_atol10(value, unsafe{strlen_safe(value)});
+            if unsafe { strcmp_safe(key, b"GNU.sparse.offset\x00" as *const u8 as *const i8) } == 0
+            {
+                safe_tar.sparse_offset = tar_atol10(value, unsafe { strlen_safe(value) });
                 if safe_tar.sparse_numbytes != -1 {
                     if gnu_add_sparse_entry(
                         a,
@@ -2229,8 +2274,10 @@ fn pax_attribute(
                     safe_tar.sparse_numbytes = -1
                 }
             }
-            if unsafe{strcmp_safe(key, b"GNU.sparse.numbytes\x00" as *const u8 as *const i8)} == 0{
-                safe_tar.sparse_numbytes = tar_atol10(value, unsafe{strlen_safe(value)});
+            if unsafe { strcmp_safe(key, b"GNU.sparse.numbytes\x00" as *const u8 as *const i8) }
+                == 0
+            {
+                safe_tar.sparse_numbytes = tar_atol10(value, unsafe { strlen_safe(value) });
                 if safe_tar.sparse_offset != -1 {
                     if gnu_add_sparse_entry(
                         a,
@@ -2245,13 +2292,13 @@ fn pax_attribute(
                     safe_tar.sparse_numbytes = -1
                 }
             }
-            if unsafe{strcmp_safe(key, b"GNU.sparse.size\x00" as *const u8 as *const i8)} == 0{
-                safe_tar.realsize = tar_atol10(value, unsafe{strlen_safe(value)});
-                unsafe{archive_entry_set_size_safe(entry, safe_tar.realsize)};
+            if unsafe { strcmp_safe(key, b"GNU.sparse.size\x00" as *const u8 as *const i8) } == 0 {
+                safe_tar.realsize = tar_atol10(value, unsafe { strlen_safe(value) });
+                unsafe { archive_entry_set_size_safe(entry, safe_tar.realsize) };
                 safe_tar.realsize_override = 1
             }
             /* GNU "0.1" sparse pax format. */
-            if unsafe{strcmp_safe(key, b"GNU.sparse.map\x00" as *const u8 as *const i8)} == 0{
+            if unsafe { strcmp_safe(key, b"GNU.sparse.map\x00" as *const u8 as *const i8) } == 0 {
                 safe_tar.sparse_gnu_major = 0;
                 safe_tar.sparse_gnu_minor = 1;
                 if gnu_sparse_01_parse(a, tar, value) != ARCHIVE_TAR_DEFINED_PARAM.archive_ok {
@@ -2259,15 +2306,17 @@ fn pax_attribute(
                 }
             }
             /* GNU "1.0" sparse pax format */
-            if unsafe{strcmp_safe(key, b"GNU.sparse.major\x00" as *const u8 as *const i8)} == 0 {
-                safe_tar.sparse_gnu_major = tar_atol10(value, unsafe{strlen_safe(value)}) as i32;
+            if unsafe { strcmp_safe(key, b"GNU.sparse.major\x00" as *const u8 as *const i8) } == 0 {
+                safe_tar.sparse_gnu_major = tar_atol10(value, unsafe { strlen_safe(value) }) as i32;
                 safe_tar.sparse_gnu_pending = 1
             }
-            if unsafe{strcmp_safe(key, b"GNU.sparse.minor\x00" as *const u8 as *const i8)} == 0 {
-                safe_tar.sparse_gnu_minor = tar_atol10(value, unsafe{strlen_safe(value)}) as i32;
+            if unsafe { strcmp_safe(key, b"GNU.sparse.minor\x00" as *const u8 as *const i8) } == 0 {
+                safe_tar.sparse_gnu_minor = tar_atol10(value, unsafe { strlen_safe(value) }) as i32;
                 safe_tar.sparse_gnu_pending = 1
             }
-            if unsafe{strcmp_safe(key, b"GNU.sparse.name\x00" as *const u8 as *const i8)} == 0 as i32 {
+            if unsafe { strcmp_safe(key, b"GNU.sparse.name\x00" as *const u8 as *const i8) }
+                == 0 as i32
+            {
                 /*
                  * The real filename; when storing sparse
                  * files, GNU tar puts a synthesized name into
@@ -2275,19 +2324,23 @@ fn pax_attribute(
                  * to limit confusion. ;-)
                  */
                 safe_tar.entry_pathname_override.length = 0;
-                unsafe{archive_strncat_safe(
-                    &mut safe_tar.entry_pathname_override,
-                    value as *const (),
-                    (if value.is_null() {
-                        0
-                    } else {
-                        strlen_safe(value)
-                    }),
-                )};
+                unsafe {
+                    archive_strncat_safe(
+                        &mut safe_tar.entry_pathname_override,
+                        value as *const (),
+                        (if value.is_null() {
+                            0
+                        } else {
+                            strlen_safe(value)
+                        }),
+                    )
+                };
             }
-            if unsafe{strcmp_safe(key, b"GNU.sparse.realsize\x00" as *const u8 as *const i8)} == 0{
-                safe_tar.realsize = tar_atol10(value, unsafe{strlen_safe(value)});
-                unsafe{archive_entry_set_size_safe(entry, safe_tar.realsize)};
+            if unsafe { strcmp_safe(key, b"GNU.sparse.realsize\x00" as *const u8 as *const i8) }
+                == 0
+            {
+                safe_tar.realsize = tar_atol10(value, unsafe { strlen_safe(value) });
+                unsafe { archive_entry_set_size_safe(entry, safe_tar.realsize) };
                 safe_tar.realsize_override = 1
             }
         }
@@ -2298,35 +2351,40 @@ fn pax_attribute(
                     if (strcmp_safe(key, "LIBARCHIVE.xxxxxxx") == 0)
                         archive_entry_set_xxxxxx(entry, value);
             */
-            if unsafe{strcmp_safe(
-                key,
-                b"LIBARCHIVE.creationtime\x00" as *const u8 as *const i8,
-            )} == 0
+            if unsafe {
+                strcmp_safe(
+                    key,
+                    b"LIBARCHIVE.creationtime\x00" as *const u8 as *const i8,
+                )
+            } == 0
             {
                 pax_time(value, &mut s, &mut n);
-                unsafe{archive_entry_set_birthtime_safe(entry, s, n)};
+                unsafe { archive_entry_set_birthtime_safe(entry, s, n) };
             }
-            if unsafe{strcmp_safe(key, b"LIBARCHIVE.symlinktype\x00" as *const u8 as *const i8)} == 0 
+            if unsafe { strcmp_safe(key, b"LIBARCHIVE.symlinktype\x00" as *const u8 as *const i8) }
+                == 0
             {
-                unsafe{
-                if strcmp_safe(value, b"file\x00" as *const u8 as *const i8) == 0 {
-                    archive_entry_set_symlink_type_safe(
-                        entry,
-                        ARCHIVE_TAR_DEFINED_PARAM.ae_symlink_type_file,
-                    );
-                } else if strcmp_safe(value, b"dir\x00" as *const u8 as *const i8) == 0{
-                    archive_entry_set_symlink_type_safe(
-                        entry,
-                        ARCHIVE_TAR_DEFINED_PARAM.ae_symlink_type_directory,
-                    );
+                unsafe {
+                    if strcmp_safe(value, b"file\x00" as *const u8 as *const i8) == 0 {
+                        archive_entry_set_symlink_type_safe(
+                            entry,
+                            ARCHIVE_TAR_DEFINED_PARAM.ae_symlink_type_file,
+                        );
+                    } else if strcmp_safe(value, b"dir\x00" as *const u8 as *const i8) == 0 {
+                        archive_entry_set_symlink_type_safe(
+                            entry,
+                            ARCHIVE_TAR_DEFINED_PARAM.ae_symlink_type_directory,
+                        );
+                    }
                 }
             }
-            }
-            if unsafe{memcmp_safe(
-                key as *const (),
-                b"LIBARCHIVE.xattr.\x00" as *const u8 as *const i8 as *const (),
-                17,
-            )} == 0
+            if unsafe {
+                memcmp_safe(
+                    key as *const (),
+                    b"LIBARCHIVE.xattr.\x00" as *const u8 as *const i8 as *const (),
+                    17,
+                )
+            } == 0
             {
                 pax_attribute_xattr(entry, key, value);
             }
@@ -2334,122 +2392,116 @@ fn pax_attribute(
         'R' => {
             /* GNU tar uses RHT.security header to store SELinux xattrs
              * SCHILY.xattr.security.selinux == RHT.security.selinux */
-            unsafe{
+            unsafe {
                 if strcmp_safe(key, b"RHT.security.selinux\x00" as *const u8 as *const i8) == 0 {
                     pax_attribute_rht_security_selinux(entry, value, value_length);
                 }
             }
         }
         'S' => {
-            unsafe{
-            /* We support some keys used by the "star" archiver */
-            if strcmp_safe(key, b"SCHILY.acl.access\x00" as *const u8 as *const i8) == 0{
-                r = pax_attribute_acl(
-                    a,
-                    tar,
-                    entry,
-                    value,
-                    ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_access,
-                );
-                if r == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
-                    return r;
-                }
-            } else if strcmp_safe(key, b"SCHILY.acl.default\x00" as *const u8 as *const i8)
-                == 0
-            {
-                r = pax_attribute_acl(
-                    a,
-                    tar,
-                    entry,
-                    value,
-                    ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_default,
-                );
-                if r == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
-                    return r;
-                }
-            } else if strcmp_safe(key, b"SCHILY.acl.ace\x00" as *const u8 as *const i8) == 0
-            {
-                r = pax_attribute_acl(
-                    a,
-                    tar,
-                    entry,
-                    value,
-                    ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_nfs4,
-                );
-                if r == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
-                    return r;
-                }
-            } else if strcmp_safe(key, b"SCHILY.devmajor\x00" as *const u8 as *const i8) == 0
-            {
-                archive_entry_set_rdevmajor_safe(
-                    entry,
-                    tar_atol10(value, strlen_safe(value)) as dev_t,
-                );
-            } else if strcmp_safe(key, b"SCHILY.devminor\x00" as *const u8 as *const i8) == 0
-            {
-                archive_entry_set_rdevminor_safe(
-                    entry,
-                    tar_atol10(value, strlen_safe(value)) as dev_t,
-                );
-            } else if strcmp_safe(key, b"SCHILY.fflags\x00" as *const u8 as *const i8) == 0{
-                archive_entry_copy_fflags_text_safe(entry, value);
-            } else if strcmp_safe(key, b"SCHILY.dev\x00" as *const u8 as *const i8) == 0 {
-                archive_entry_set_dev_safe(entry, tar_atol10(value, strlen_safe(value)) as dev_t);
-            } else if strcmp_safe(key, b"SCHILY.ino\x00" as *const u8 as *const i8) == 0 {
-                archive_entry_set_ino_safe(entry, tar_atol10(value, strlen_safe(value)));
-            } else if strcmp_safe(key, b"SCHILY.nlink\x00" as *const u8 as *const i8) == 0 {
-                archive_entry_set_nlink_safe(entry, tar_atol10(value, strlen_safe(value)) as u32);
-            } else if strcmp_safe(key, b"SCHILY.realsize\x00" as *const u8 as *const i8) == 0
-            {
-                safe_tar.realsize = tar_atol10(value, strlen_safe(value));
-                safe_tar.realsize_override = 1;
-                archive_entry_set_size_safe(entry, safe_tar.realsize);
-            } else if strncmp_safe(
-                key,
-                b"SCHILY.xattr.\x00" as *const u8 as *const i8,
-                13,
-            ) == 0
-            {
-                pax_attribute_schily_xattr(entry, key, value, value_length);
-            } else if strcmp_safe(key, b"SUN.holesdata\x00" as *const u8 as *const i8) == 0{
-                /* A Solaris extension for sparse. */
-                r = solaris_sparse_parse(a, tar, entry, value);
-                if r < err {
+            unsafe {
+                /* We support some keys used by the "star" archiver */
+                if strcmp_safe(key, b"SCHILY.acl.access\x00" as *const u8 as *const i8) == 0 {
+                    r = pax_attribute_acl(
+                        a,
+                        tar,
+                        entry,
+                        value,
+                        ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_access,
+                    );
                     if r == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
                         return r;
                     }
-                    err = r;
-                    archive_set_error_safe!(
-                        &mut safe_a.archive as *mut archive,
-                        ARCHIVE_TAR_DEFINED_PARAM.archive_errno_misc,
-                        b"Parse error: SUN.holesdata\x00" as *const u8 as *const i8
+                } else if strcmp_safe(key, b"SCHILY.acl.default\x00" as *const u8 as *const i8) == 0
+                {
+                    r = pax_attribute_acl(
+                        a,
+                        tar,
+                        entry,
+                        value,
+                        ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_default,
                     );
+                    if r == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
+                        return r;
+                    }
+                } else if strcmp_safe(key, b"SCHILY.acl.ace\x00" as *const u8 as *const i8) == 0 {
+                    r = pax_attribute_acl(
+                        a,
+                        tar,
+                        entry,
+                        value,
+                        ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_nfs4,
+                    );
+                    if r == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
+                        return r;
+                    }
+                } else if strcmp_safe(key, b"SCHILY.devmajor\x00" as *const u8 as *const i8) == 0 {
+                    archive_entry_set_rdevmajor_safe(
+                        entry,
+                        tar_atol10(value, strlen_safe(value)) as dev_t,
+                    );
+                } else if strcmp_safe(key, b"SCHILY.devminor\x00" as *const u8 as *const i8) == 0 {
+                    archive_entry_set_rdevminor_safe(
+                        entry,
+                        tar_atol10(value, strlen_safe(value)) as dev_t,
+                    );
+                } else if strcmp_safe(key, b"SCHILY.fflags\x00" as *const u8 as *const i8) == 0 {
+                    archive_entry_copy_fflags_text_safe(entry, value);
+                } else if strcmp_safe(key, b"SCHILY.dev\x00" as *const u8 as *const i8) == 0 {
+                    archive_entry_set_dev_safe(
+                        entry,
+                        tar_atol10(value, strlen_safe(value)) as dev_t,
+                    );
+                } else if strcmp_safe(key, b"SCHILY.ino\x00" as *const u8 as *const i8) == 0 {
+                    archive_entry_set_ino_safe(entry, tar_atol10(value, strlen_safe(value)));
+                } else if strcmp_safe(key, b"SCHILY.nlink\x00" as *const u8 as *const i8) == 0 {
+                    archive_entry_set_nlink_safe(
+                        entry,
+                        tar_atol10(value, strlen_safe(value)) as u32,
+                    );
+                } else if strcmp_safe(key, b"SCHILY.realsize\x00" as *const u8 as *const i8) == 0 {
+                    safe_tar.realsize = tar_atol10(value, strlen_safe(value));
+                    safe_tar.realsize_override = 1;
+                    archive_entry_set_size_safe(entry, safe_tar.realsize);
+                } else if strncmp_safe(key, b"SCHILY.xattr.\x00" as *const u8 as *const i8, 13) == 0
+                {
+                    pax_attribute_schily_xattr(entry, key, value, value_length);
+                } else if strcmp_safe(key, b"SUN.holesdata\x00" as *const u8 as *const i8) == 0 {
+                    /* A Solaris extension for sparse. */
+                    r = solaris_sparse_parse(a, tar, entry, value);
+                    if r < err {
+                        if r == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
+                            return r;
+                        }
+                        err = r;
+                        archive_set_error_safe!(
+                            &mut safe_a.archive as *mut archive,
+                            ARCHIVE_TAR_DEFINED_PARAM.archive_errno_misc,
+                            b"Parse error: SUN.holesdata\x00" as *const u8 as *const i8
+                        );
+                    }
                 }
             }
         }
-        }
         'a' => {
-            if unsafe{strcmp_safe(key, b"atime\x00" as *const u8 as *const i8)} == 0 as i32 {
+            if unsafe { strcmp_safe(key, b"atime\x00" as *const u8 as *const i8) } == 0 as i32 {
                 pax_time(value, &mut s, &mut n);
-                unsafe{archive_entry_set_atime_safe(entry, s, n)};
+                unsafe { archive_entry_set_atime_safe(entry, s, n) };
             }
         }
-        
-        'c' => {
-            unsafe{
+
+        'c' => unsafe {
             if strcmp_safe(key, b"ctime\x00" as *const u8 as *const i8) == 0 {
                 pax_time(value, &mut s, &mut n);
                 archive_entry_set_ctime_safe(entry, s, n);
             } else if !(strcmp_safe(key, b"charset\x00" as *const u8 as *const i8) == 0) {
                 (strcmp_safe(key, b"comment\x00" as *const u8 as *const i8)) == 0;
             }
-        }
-        }
-        'g' => {
-            unsafe{
-            if strcmp_safe(key, b"gid\x00" as *const u8 as *const i8) == 0{
+        },
+        'g' => unsafe {
+            if strcmp_safe(key, b"gid\x00" as *const u8 as *const i8) == 0 {
                 archive_entry_set_gid_safe(entry, tar_atol10(value, strlen_safe(value)));
-            } else if strcmp_safe(key, b"gname\x00" as *const u8 as *const i8) == 0{
+            } else if strcmp_safe(key, b"gname\x00" as *const u8 as *const i8) == 0 {
                 safe_tar.entry_gname.length = 0;
                 archive_strncat_safe(
                     &mut safe_tar.entry_gname,
@@ -2461,17 +2513,18 @@ fn pax_attribute(
                     }),
                 );
             }
-        }
-        }
+        },
         'h' => {
-            if unsafe{strcmp_safe(key, b"hdrcharset\x00" as *const u8 as *const i8)} == 0 {
-                if unsafe{strcmp_safe(value, b"BINARY\x00" as *const u8 as *const i8)} == 0{
+            if unsafe { strcmp_safe(key, b"hdrcharset\x00" as *const u8 as *const i8) } == 0 {
+                if unsafe { strcmp_safe(value, b"BINARY\x00" as *const u8 as *const i8) } == 0 {
                     /* Binary  mode. */
                     safe_tar.pax_hdrcharset_binary = 1
-                } else if unsafe{strcmp_safe(
-                    value,
-                    b"ISO-IR 10646 2000 UTF-8\x00" as *const u8 as *const i8,
-                )} == 0
+                } else if unsafe {
+                    strcmp_safe(
+                        value,
+                        b"ISO-IR 10646 2000 UTF-8\x00" as *const u8 as *const i8,
+                    )
+                } == 0
                 {
                     safe_tar.pax_hdrcharset_binary = 0
                 }
@@ -2479,46 +2532,49 @@ fn pax_attribute(
         }
         'l' => {
             /* pax interchange doesn't distinguish hardlink vs. symlink. */
-            unsafe{
-            if strcmp_safe(key, b"linkpath\x00" as *const u8 as *const i8) == 0{
-                safe_tar.entry_linkpath.length = 0;
-                archive_strncat_safe(
-                    &mut safe_tar.entry_linkpath,
-                    value as *const (),
-                    (if value.is_null() {
-                        0 
-                    } else {
-                        strlen_safe(value)
-                    }),
-                );
-            }}
+            unsafe {
+                if strcmp_safe(key, b"linkpath\x00" as *const u8 as *const i8) == 0 {
+                    safe_tar.entry_linkpath.length = 0;
+                    archive_strncat_safe(
+                        &mut safe_tar.entry_linkpath,
+                        value as *const (),
+                        (if value.is_null() {
+                            0
+                        } else {
+                            strlen_safe(value)
+                        }),
+                    );
+                }
+            }
         }
         'm' => {
-            if unsafe{strcmp_safe(key, b"mtime\x00" as *const u8 as *const i8)} == 0{
+            if unsafe { strcmp_safe(key, b"mtime\x00" as *const u8 as *const i8) } == 0 {
                 pax_time(value, &mut s, &mut n);
-                unsafe{archive_entry_set_mtime_safe(entry, s, n)};
+                unsafe { archive_entry_set_mtime_safe(entry, s, n) };
             }
         }
         'p' => {
-            if unsafe{strcmp_safe(key, b"path\x00" as *const u8 as *const i8)} == 0{
+            if unsafe { strcmp_safe(key, b"path\x00" as *const u8 as *const i8) } == 0 {
                 safe_tar.entry_pathname.length = 0 as i32 as size_t;
-                unsafe{archive_strncat_safe(
-                    &mut safe_tar.entry_pathname,
-                    value as *const (),
-                    (if value.is_null() {
-                        0
-                    } else {
-                        strlen_safe(value)
-                    }),
-                )};
+                unsafe {
+                    archive_strncat_safe(
+                        &mut safe_tar.entry_pathname,
+                        value as *const (),
+                        (if value.is_null() {
+                            0
+                        } else {
+                            strlen_safe(value)
+                        }),
+                    )
+                };
             }
         }
         's' => {
             /* POSIX has reserved 'security.*' */
             /* Someday: if (strcmp_safe(key, "security.acl") == 0) { ... } */
-            if unsafe{strcmp_safe(key, b"size\x00" as *const u8 as *const i8)} == 0{
+            if unsafe { strcmp_safe(key, b"size\x00" as *const u8 as *const i8) } == 0 {
                 /* "size" is the size of the data in the entry. */
-                safe_tar.entry_bytes_remaining = tar_atol10(value, unsafe{strlen_safe(value)});
+                safe_tar.entry_bytes_remaining = tar_atol10(value, unsafe { strlen_safe(value) });
                 /*
                  * The "size" pax header keyword always overrides the
                  * "size" field in the tar header.
@@ -2526,13 +2582,12 @@ fn pax_attribute(
                  * SCHILY.realsize override this value.
                  */
                 if safe_tar.realsize_override == 0 {
-                    unsafe{archive_entry_set_size_safe(entry, safe_tar.entry_bytes_remaining)};
+                    unsafe { archive_entry_set_size_safe(entry, safe_tar.entry_bytes_remaining) };
                     safe_tar.realsize = safe_tar.entry_bytes_remaining
                 }
             }
         }
-        'u' => {
-            unsafe{
+        'u' => unsafe {
             if strcmp_safe(key, b"uid\x00" as *const u8 as *const i8) == 0 {
                 archive_entry_set_uid_safe(entry, tar_atol10(value, strlen_safe(value)));
             } else if strcmp_safe(key, b"uname\x00" as *const u8 as *const i8) == 0 {
@@ -2541,14 +2596,13 @@ fn pax_attribute(
                     &mut safe_tar.entry_uname,
                     value as *const (),
                     (if value.is_null() {
-                        0 
+                        0
                     } else {
                         strlen_safe(value)
                     }),
                 );
             }
-            }
-        }
+        },
         'r' | _ => {}
     }
     return err;
@@ -2563,7 +2617,7 @@ fn pax_time(mut p: *const i8, ps: *mut int64_t, pn: *mut i64) {
     let mut sign: i32;
     let mut limit: int64_t;
     let mut last_digit_limit: int64_t;
-    limit =  i64::MAX / 10;
+    limit = i64::MAX / 10;
     last_digit_limit = i64::MAX % 10;
     s = 0;
     sign = 1;
@@ -2577,7 +2631,7 @@ fn pax_time(mut p: *const i8, ps: *mut int64_t, pn: *mut i64) {
             s = i64::MAX;
             break;
         } else {
-            s = s * 10+ digit as i64;
+            s = s * 10 + digit as i64;
             unsafe { p = p.offset(1) }
         }
     }
@@ -2594,10 +2648,9 @@ fn pax_time(mut p: *const i8, ps: *mut int64_t, pn: *mut i64) {
             break;
         }
         unsafe {
-            *pn = (*pn as u64).wrapping_add(((*p as i32 - '0' as i32) as u64)*l)
-                as i64 as i64
+            *pn = (*pn as u64).wrapping_add(((*p as i32 - '0' as i32) as u64) * l) as i64 as i64
         };
-        l = l/10;
+        l = l / 10;
         if !(l != 0) {
             break;
         }
@@ -2629,12 +2682,14 @@ fn header_gnutar(
     }
     /* Copy filename over (to ensure null termination). */
     header = h as *const archive_entry_header_gnutar;
-    if unsafe{_archive_entry_copy_pathname_l_safe(
-        entry,
-        unsafe { *header }.name.as_ptr(),
-        ::std::mem::size_of::<[i8; 100]>() as u64,
-        safe_tar.sconv,
-    )} != 0 
+    if unsafe {
+        _archive_entry_copy_pathname_l_safe(
+            entry,
+            unsafe { *header }.name.as_ptr(),
+            ::std::mem::size_of::<[i8; 100]>() as u64,
+            safe_tar.sconv,
+        )
+    } != 0
     {
         err = set_conversion_failed_error(
             a,
@@ -2649,12 +2704,14 @@ fn header_gnutar(
     /* XXX Can the following be factored out since it's common
      * to ustar and gnu tar?  Is it okay to move it down into
      * header_common, perhaps?  */
-    if unsafe{_archive_entry_copy_uname_l_safe(
-        entry,
-        unsafe { *header }.uname.as_ptr(),
-        ::std::mem::size_of::<[i8; 32]>() as u64,
-        safe_tar.sconv,
-    )} != 0
+    if unsafe {
+        _archive_entry_copy_uname_l_safe(
+            entry,
+            unsafe { *header }.uname.as_ptr(),
+            ::std::mem::size_of::<[i8; 32]>() as u64,
+            safe_tar.sconv,
+        )
+    } != 0
     {
         err =
             set_conversion_failed_error(a, safe_tar.sconv, b"Uname\x00" as *const u8 as *const i8);
@@ -2662,12 +2719,14 @@ fn header_gnutar(
             return err;
         }
     }
-    if unsafe{_archive_entry_copy_gname_l_safe(
-        entry,
-        unsafe { *header }.gname.as_ptr(),
-        ::std::mem::size_of::<[i8; 32]>() as u64,
-        safe_tar.sconv,
-    )} != 0 
+    if unsafe {
+        _archive_entry_copy_gname_l_safe(
+            entry,
+            unsafe { *header }.gname.as_ptr(),
+            ::std::mem::size_of::<[i8; 32]>() as u64,
+            safe_tar.sconv,
+        )
+    } != 0
     {
         err =
             set_conversion_failed_error(a, safe_tar.sconv, b"Gname\x00" as *const u8 as *const i8);
@@ -2679,50 +2738,54 @@ fn header_gnutar(
     if unsafe { *header }.typeflag[0 as i32 as usize] as i32 == '3' as i32
         || unsafe { *header }.typeflag[0 as i32 as usize] as i32 == '4' as i32
     {
-        unsafe{
-        archive_entry_set_rdevmajor_safe(
-            entry,
-            tar_atol(
-                unsafe { *header }.rdevmajor.as_ptr(),
-                ::std::mem::size_of::<[i8; 8]>() as u64,
-            ) as dev_t,
-        );
-        archive_entry_set_rdevminor_safe(
-            entry,
-            tar_atol(
-                unsafe { *header }.rdevminor.as_ptr(),
-                ::std::mem::size_of::<[i8; 8]>() as u64,
-            ) as dev_t,
-        );
-    }
+        unsafe {
+            archive_entry_set_rdevmajor_safe(
+                entry,
+                tar_atol(
+                    unsafe { *header }.rdevmajor.as_ptr(),
+                    ::std::mem::size_of::<[i8; 8]>() as u64,
+                ) as dev_t,
+            );
+            archive_entry_set_rdevminor_safe(
+                entry,
+                tar_atol(
+                    unsafe { *header }.rdevminor.as_ptr(),
+                    ::std::mem::size_of::<[i8; 8]>() as u64,
+                ) as dev_t,
+            );
+        }
     } else {
-        unsafe{archive_entry_set_rdev_safe(entry, 0)};
+        unsafe { archive_entry_set_rdev_safe(entry, 0) };
     }
-    safe_tar.entry_padding = 0x1ff& -safe_tar.entry_bytes_remaining;
+    safe_tar.entry_padding = 0x1ff & -safe_tar.entry_bytes_remaining;
     /* Grab GNU-specific fields. */
     t = tar_atol(
         unsafe { *header }.atime.as_ptr(),
         ::std::mem::size_of::<[i8; 12]>() as u64,
     );
-    if t > 0{
-        unsafe{archive_entry_set_atime_safe(entry, t, 0 as i32 as i64)};
+    if t > 0 {
+        unsafe { archive_entry_set_atime_safe(entry, t, 0 as i32 as i64) };
     }
     t = tar_atol(
         unsafe { *header }.ctime.as_ptr(),
         ::std::mem::size_of::<[i8; 12]>() as u64,
     );
-    if t > 0{
-        unsafe{archive_entry_set_ctime_safe(entry, t, 0 as i32 as i64);}
+    if t > 0 {
+        unsafe {
+            archive_entry_set_ctime_safe(entry, t, 0 as i32 as i64);
+        }
     }
-    if unsafe { *header }.realsize[0 as i32 as usize] as i32 != 0{
+    if unsafe { *header }.realsize[0 as i32 as usize] as i32 != 0 {
         safe_tar.realsize = tar_atol(
             unsafe { *header }.realsize.as_ptr(),
             ::std::mem::size_of::<[i8; 12]>() as u64,
         );
-        unsafe{archive_entry_set_size_safe(entry, safe_tar.realsize);}
+        unsafe {
+            archive_entry_set_size_safe(entry, safe_tar.realsize);
+        }
         safe_tar.realsize_override = 1
     }
-    if unsafe { *header }.sparse[0 as i32 as usize].offset[0 as i32 as usize] as i32 != 0{
+    if unsafe { *header }.sparse[0 as i32 as usize].offset[0 as i32 as usize] as i32 != 0 {
         if gnu_sparse_old_read(a, tar, header, unconsumed) != ARCHIVE_TAR_DEFINED_PARAM.archive_ok {
             return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
         }
@@ -2740,10 +2803,9 @@ fn gnu_add_sparse_entry(
     let mut p: *mut sparse_block;
     let mut safe_a = unsafe { &mut *a };
     let mut safe_tar = unsafe { &mut *tar };
-    p = unsafe{calloc_safe(
-        1,
-        ::std::mem::size_of::<sparse_block>() as u64,
-    ) as *mut sparse_block};
+    p = unsafe {
+        calloc_safe(1, ::std::mem::size_of::<sparse_block>() as u64) as *mut sparse_block
+    };
     if p.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
@@ -2758,10 +2820,7 @@ fn gnu_add_sparse_entry(
         safe_tar.sparse_list = p
     }
     safe_tar.sparse_last = p;
-    if remaining < 0
-        || offset < 0
-        || offset > i64::MAX - remaining
-    {
+    if remaining < 0 || offset < 0 || offset > i64::MAX - remaining {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_TAR_DEFINED_PARAM.archive_errno_misc,
@@ -2781,9 +2840,7 @@ fn gnu_clear_sparse_list(mut tar: *mut tar) {
         p = safe_tar.sparse_list;
         safe_p = unsafe { &mut *p };
         safe_tar.sparse_list = safe_p.next;
-        unsafe{
-        free_safe(p as *mut ())
-        };
+        unsafe { free_safe(p as *mut ()) };
     }
     safe_tar.sparse_last = 0 as *mut sparse_block;
 }
@@ -2815,16 +2872,16 @@ fn gnu_sparse_old_read(
     {
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
     }
-    if unsafe { (*header).isextended[0 as i32 as usize] == 0} {
+    if unsafe { (*header).isextended[0 as i32 as usize] == 0 } {
         return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
     }
     loop {
         tar_flush_unconsumed(a, unconsumed);
-        data = unsafe{__archive_read_ahead_safe(a, 512, &mut bytes_read)};
-        if bytes_read < 0{
+        data = unsafe { __archive_read_ahead_safe(a, 512, &mut bytes_read) };
+        if bytes_read < 0 {
             return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
         }
-        if bytes_read < 512{
+        if bytes_read < 512 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_TAR_DEFINED_PARAM.archive_errno_file_format,
@@ -2857,7 +2914,7 @@ fn gnu_sparse_old_parse(
     mut sparse: *const gnu_sparse,
     mut length: i32,
 ) -> i32 {
-    while length > 0&& unsafe { (*sparse).offset[0 as i32 as usize] as i32 != 0 as i32 } {
+    while length > 0 && unsafe { (*sparse).offset[0 as i32 as usize] as i32 != 0 as i32 } {
         if gnu_add_sparse_entry(
             a,
             tar,
@@ -2902,11 +2959,7 @@ fn gnu_sparse_old_parse(
  * importantly, the sparse data was lost when extracted by archivers
  * that didn't recognize this extension.
  */
-fn gnu_sparse_01_parse(
-    a: *mut archive_read,
-    tar: *mut tar,
-    mut p: *const i8,
-) -> i32 {
+fn gnu_sparse_01_parse(a: *mut archive_read, tar: *mut tar, mut p: *const i8) -> i32 {
     let mut e: *const i8 = 0 as *const i8;
     let mut offset: int64_t = -1;
     let mut size: int64_t = -1;
@@ -2920,14 +2973,14 @@ fn gnu_sparse_01_parse(
                 e = e.offset(1)
             }
         }
-        if offset < 0{
+        if offset < 0 {
             offset = tar_atol10(p, unsafe { e.offset_from(p) as i64 as size_t });
-            if offset < 0{
+            if offset < 0 {
                 return ARCHIVE_TAR_DEFINED_PARAM.archive_warn;
             }
         } else {
             size = tar_atol10(p, unsafe { e.offset_from(p) as i64 as size_t });
-            if size < 0{
+            if size < 0 {
                 return ARCHIVE_TAR_DEFINED_PARAM.archive_warn;
             }
             if gnu_add_sparse_entry(a, tar, offset, size) != ARCHIVE_TAR_DEFINED_PARAM.archive_ok {
@@ -2986,27 +3039,29 @@ fn gnu_sparse_10_atol(
      * don't require this, but they should.
      */
     {
-        bytes_read = unsafe{readline(
-            a,
-            tar,
-            &mut p,
-            if *safe_remaining < 100 {
-                *safe_remaining
-            } else {
-                100
-            },
-            unconsumed,
-        )}; /* Truncate on overflow. */
+        bytes_read = unsafe {
+            readline(
+                a,
+                tar,
+                &mut p,
+                if *safe_remaining < 100 {
+                    *safe_remaining
+                } else {
+                    100
+                },
+                unconsumed,
+            )
+        }; /* Truncate on overflow. */
         if bytes_read <= 0 {
             return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal as int64_t;
         }
         *safe_remaining -= bytes_read;
-        if !unsafe { (*p.offset(0  ) as i32 == '#' as i32) } {
+        if !unsafe { (*p.offset(0) as i32 == '#' as i32) } {
             break;
         }
     }
     l = 0;
-    while bytes_read > 0{
+    while bytes_read > 0 {
         if unsafe { *p as i32 == '\n' as i32 } {
             return l;
         }
@@ -3029,11 +3084,7 @@ fn gnu_sparse_10_atol(
  * Returns length (in bytes) of the sparse data description
  * that was read.
  */
-fn gnu_sparse_10_read(
-    a: *mut archive_read,
-    tar: *mut tar,
-    unconsumed: *mut size_t,
-) -> ssize_t {
+fn gnu_sparse_10_read(a: *mut archive_read, tar: *mut tar, unconsumed: *mut size_t) -> ssize_t {
     let mut bytes_read: ssize_t;
     let mut entries: i32;
     let mut offset: int64_t;
@@ -3074,12 +3125,12 @@ fn gnu_sparse_10_read(
     /* Skip rest of block... */
     tar_flush_unconsumed(a, unconsumed);
     bytes_read = safe_tar.entry_bytes_remaining - remaining;
-    to_skip = 0x1ff  & -bytes_read;
+    to_skip = 0x1ff & -bytes_read;
     /* Fail if tar->entry_bytes_remaing would get negative */
     if to_skip > remaining {
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal as ssize_t;
     }
-    if to_skip != unsafe{__archive_read_consume_safe(a, to_skip)} {
+    if to_skip != unsafe { __archive_read_consume_safe(a, to_skip) } {
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal as ssize_t;
     }
     return bytes_read + to_skip;
@@ -3101,7 +3152,7 @@ fn solaris_sparse_parse(
     let mut end: int64_t;
     let mut hole: i32 = 1;
     /* UNUSED */
-    end = 0 ;
+    end = 0;
     if unsafe { *p as i32 == ' ' as i32 } {
         unsafe { p = p.offset(1) }
     } else {
@@ -3117,7 +3168,7 @@ fn solaris_sparse_parse(
         }
         start = end;
         end = tar_atol10(p, unsafe { e.offset_from(p) as i64 as size_t });
-        if end < 0{
+        if end < 0 {
             return ARCHIVE_TAR_DEFINED_PARAM.archive_warn;
         }
         if start < end {
@@ -3131,7 +3182,7 @@ fn solaris_sparse_parse(
         if unsafe { *e as i32 == '\u{0}' as i32 } {
             return ARCHIVE_TAR_DEFINED_PARAM.archive_ok;
         }
-        unsafe { p = e.offset(1  ) };
+        unsafe { p = e.offset(1) };
         hole = (hole == 0) as i32
     }
 }
@@ -3167,7 +3218,7 @@ fn tar_atol(mut p: *const i8, mut char_cnt: size_t) -> int64_t {
  * locale settings; you cannot simply substitute strtol here, since
  * it does obey locale.
  */
-fn tar_atol_base_n(mut p: *const i8,mut char_cnt: size_t, base: i32) -> int64_t {
+fn tar_atol_base_n(mut p: *const i8, mut char_cnt: size_t, base: i32) -> int64_t {
     let mut l: int64_t;
     let mut maxval: int64_t;
     let mut limit: int64_t;
@@ -3176,30 +3227,28 @@ fn tar_atol_base_n(mut p: *const i8,mut char_cnt: size_t, base: i32) -> int64_t 
     let mut sign: i32;
     //wei
     maxval = i64::MAX;
-    limit = i64::MAX/ base as i64;
+    limit = i64::MAX / base as i64;
     last_digit_limit = i64::MAX % base as i64;
     /* the pointer will not be dereferenced if char_cnt is zero
      * due to the way the && operator is evaluated.
      */
-    while char_cnt != 0
-        && unsafe { (*p as i32 == ' ' as i32 || *p as i32 == '\t' as i32) }
-    {
+    while char_cnt != 0 && unsafe { (*p as i32 == ' ' as i32 || *p as i32 == '\t' as i32) } {
         unsafe { p = p.offset(1) };
-        char_cnt = char_cnt-1
+        char_cnt = char_cnt - 1
     }
     sign = 1;
     if char_cnt != 0 && unsafe { *p as i32 == '-' as i32 } {
         sign = -1;
         unsafe { p = p.offset(1) };
-        char_cnt = char_cnt-1;
+        char_cnt = char_cnt - 1;
         maxval = i64::MIN;
         limit = -(i64::MIN / base as i64);
         last_digit_limit = -(i64::MIN % base as i64)
     }
     l = 0;
-    if char_cnt != 0{
+    if char_cnt != 0 {
         unsafe { digit = *p as i32 - '0' as i32 };
-        while digit >= 0 && digit < base && char_cnt != 0{
+        while digit >= 0 && digit < base && char_cnt != 0 {
             if l > limit || l == limit && digit as i64 >= last_digit_limit {
                 return maxval;
                 /* Truncate on overflow. */
@@ -3207,7 +3256,7 @@ fn tar_atol_base_n(mut p: *const i8,mut char_cnt: size_t, base: i32) -> int64_t 
             l = l * base as i64 + digit as i64;
             unsafe { p = p.offset(1) };
             unsafe { digit = *p as i32 - '0' as i32 };
-            char_cnt = char_cnt-1
+            char_cnt = char_cnt - 1
         }
     }
     return if sign < 0 as i32 { -l } else { l };
@@ -3251,22 +3300,14 @@ fn tar_atol256(mut _p: *const i8, mut char_cnt: size_t) -> int64_t {
     while char_cnt > ::std::mem::size_of::<int64_t>() as u64 {
         char_cnt = char_cnt.wrapping_sub(1);
         if c as i32 != neg as i32 {
-            return if neg as i32 != 0 {
-                i64::MIN
-            } else {
-                i64::MAX
-            };
+            return if neg as i32 != 0 { i64::MIN } else { i64::MAX };
         }
         unsafe { p = p.offset(1) };
         c = unsafe { *p }
     }
     /* c is first byte that fits; if sign mismatch, return overflow */
     if (c as i32 ^ neg as i32) & 0x80 as i32 != 0 {
-        return if neg as i32 != 0 {
-            i64::MIN
-        } else {
-            i64::MAX
-        };
+        return if neg as i32 != 0 { i64::MIN } else { i64::MAX };
     }
     loop
     /* Accumulate remaining bytes. */
@@ -3306,12 +3347,12 @@ fn readline(
     let mut safe_start = unsafe { &mut *start };
     let mut safe_tar = unsafe { &mut *tar };
     tar_flush_unconsumed(a, unconsumed);
-    t = unsafe{__archive_read_ahead_safe(a, 1, &mut bytes_read)};
+    t = unsafe { __archive_read_ahead_safe(a, 1, &mut bytes_read) };
     if bytes_read <= 0 {
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal as ssize_t;
     }
     s = t as *const i8;
-    p =unsafe{memchr_safe(t, '\n' as i32, bytes_read as u64)};
+    p = unsafe { memchr_safe(t, '\n' as i32, bytes_read as u64) };
     /* If we found '\n' in the read buffer, return pointer to that. */
     if !p.is_null() {
         bytes_read = unsafe { (p as *const i8).offset(1).offset_from(s) as i64 };
@@ -3339,9 +3380,10 @@ fn readline(
             );
             return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal as ssize_t;
         }
-        if unsafe{archive_string_ensure_safe(&mut safe_tar.line, (total_size + bytes_read) as size_t)
-            .is_null()}
-        {
+        if unsafe {
+            archive_string_ensure_safe(&mut safe_tar.line, (total_size + bytes_read) as size_t)
+                .is_null()
+        } {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_TAR_DEFINED_PARAM.enomem,
@@ -3349,11 +3391,13 @@ fn readline(
             );
             return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal as ssize_t;
         }
-        unsafe{memcpy_safe(
-            unsafe { safe_tar.line.s.offset(total_size as isize) as *mut () },
-            t,
-            bytes_read as u64,
-        )};
+        unsafe {
+            memcpy_safe(
+                unsafe { safe_tar.line.s.offset(total_size as isize) as *mut () },
+                t,
+                bytes_read as u64,
+            )
+        };
         tar_flush_unconsumed(a, unconsumed);
         total_size += bytes_read;
         /* If we found '\n', clean up and return. */
@@ -3362,12 +3406,12 @@ fn readline(
             return total_size;
         }
         /* Read some more. */
-        t = unsafe{__archive_read_ahead_safe(a, 1, &mut bytes_read)}; /* Start of line? */
-        if bytes_read <= 0{
+        t = unsafe { __archive_read_ahead_safe(a, 1, &mut bytes_read) }; /* Start of line? */
+        if bytes_read <= 0 {
             return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal as ssize_t;
         }
         s = t as *const i8;
-        p = unsafe{memchr_safe(t, '\n' as i32, bytes_read as u64)};
+        p = unsafe { memchr_safe(t, '\n' as i32, bytes_read as u64) };
         /* If we found '\n', trim the read. */
         if !p.is_null() {
             bytes_read = unsafe { (p as *const i8).offset(1).offset_from(s) as i64 }
@@ -3384,72 +3428,16 @@ fn readline(
  * (The most economical Base-64 variant does not pad the last group and
  * omits line breaks; RFC1341 used for MIME requires both.)
  */
-fn base64_decode(s: *const i8,mut len: size_t, out_len: *mut size_t) -> *mut i8 {
+fn base64_decode(s: *const i8, mut len: size_t, out_len: *mut size_t) -> *mut i8 {
     static mut digits: [u8; 64] = [
-        'A' as u8,
-        'B' as u8,
-        'C' as u8,
-        'D' as u8,
-        'E' as u8,
-        'F' as u8,
-        'G' as u8,
-        'H' as u8,
-        'I' as u8,
-        'J' as u8,
-        'K' as u8,
-        'L' as u8,
-        'M' as u8,
-        'N' as u8,
-        'O' as u8,
-        'P' as u8,
-        'Q' as u8,
-        'R' as u8,
-        'S' as u8,
-        'T' as u8,
-        'U' as u8,
-        'V' as u8,
-        'W' as u8,
-        'X' as u8,
-        'Y' as u8,
-        'Z' as u8,
-        'a' as u8,
-        'b' as u8,
-        'c' as u8,
-        'd' as u8,
-        'e' as u8,
-        'f' as u8,
-        'g' as u8,
-        'h' as u8,
-        'i' as u8,
-        'j' as u8,
-        'k' as u8,
-        'l' as u8,
-        'm' as u8,
-        'n' as u8,
-        'o' as u8,
-        'p' as u8,
-        'q' as u8,
-        'r' as u8,
-        's' as u8,
-        't' as u8,
-        'u' as u8,
-        'v' as u8,
-        'w' as u8,
-        'x' as u8,
-        'y' as u8,
-        'z' as u8,
-        '0' as u8,
-        '1' as u8,
-        '2' as u8,
-        '3' as u8,
-        '4' as u8,
-        '5' as u8,
-        '6' as u8,
-        '7' as u8,
-        '8' as u8,
-        '9' as u8,
-        '+' as u8,
-        '/' as u8,
+        'A' as u8, 'B' as u8, 'C' as u8, 'D' as u8, 'E' as u8, 'F' as u8, 'G' as u8, 'H' as u8,
+        'I' as u8, 'J' as u8, 'K' as u8, 'L' as u8, 'M' as u8, 'N' as u8, 'O' as u8, 'P' as u8,
+        'Q' as u8, 'R' as u8, 'S' as u8, 'T' as u8, 'U' as u8, 'V' as u8, 'W' as u8, 'X' as u8,
+        'Y' as u8, 'Z' as u8, 'a' as u8, 'b' as u8, 'c' as u8, 'd' as u8, 'e' as u8, 'f' as u8,
+        'g' as u8, 'h' as u8, 'i' as u8, 'j' as u8, 'k' as u8, 'l' as u8, 'm' as u8, 'n' as u8,
+        'o' as u8, 'p' as u8, 'q' as u8, 'r' as u8, 's' as u8, 't' as u8, 'u' as u8, 'v' as u8,
+        'w' as u8, 'x' as u8, 'y' as u8, 'z' as u8, '0' as u8, '1' as u8, '2' as u8, '3' as u8,
+        '4' as u8, '5' as u8, '6' as u8, '7' as u8, '8' as u8, '9' as u8, '+' as u8, '/' as u8,
     ];
     static mut decode_table: [u8; 128] = [0; 128];
     let mut out: *mut i8;
@@ -3458,24 +3446,24 @@ fn base64_decode(s: *const i8,mut len: size_t, out_len: *mut size_t) -> *mut i8 
     /* If the decode table is not yet initialized, prepare it. */
     if unsafe { decode_table[digits[1 as i32 as usize] as usize] as i32 } != 1 as i32 {
         let mut i: u32 = 0;
-        unsafe{memset_safe(
-            unsafe { decode_table.as_mut_ptr() } as *mut (),
-            0xff as i32,
-            unsafe { ::std::mem::size_of::<[u8; 128]>() as u64 },
-        )};
+        unsafe {
+            memset_safe(
+                unsafe { decode_table.as_mut_ptr() } as *mut (),
+                0xff as i32,
+                unsafe { ::std::mem::size_of::<[u8; 128]>() as u64 },
+            )
+        };
         i = 0;
         while (i as u64) < unsafe { ::std::mem::size_of::<[u8; 64]>() as u64 } {
             unsafe { decode_table[digits[i as usize] as usize] = i as u8 };
-            i = i+1
+            i = i + 1
         }
     }
     /* Allocate enough space to hold the entire output. */
     /* Note that we may not use all of this... */
-    out = unsafe{malloc_safe(
-        len-len/4+1,
-    )} as *mut i8;
+    out = unsafe { malloc_safe(len - len / 4 + 1) } as *mut i8;
     if out.is_null() {
-        unsafe { *out_len = 0};
+        unsafe { *out_len = 0 };
         return 0 as *mut i8;
     }
     d = out;
@@ -3493,7 +3481,7 @@ fn base64_decode(s: *const i8,mut len: size_t, out_len: *mut size_t) -> *mut i8 
                     || (*src as i32) < 32 as i32
                     || decode_table[*src as usize] as i32 == 0xff as i32
             } {
-                len = len-1;
+                len = len - 1;
                 src = unsafe { src.offset(1) }
             } else {
                 v <<= 6;
@@ -3506,13 +3494,13 @@ fn base64_decode(s: *const i8,mut len: size_t, out_len: *mut size_t) -> *mut i8 
         }
         /* Skip illegal characters (including line breaks) */
         /* Align a short group properly. */
-        v <<= 6 * (4- group_size);
+        v <<= 6 * (4 - group_size);
         let mut current_block_23: u64;
         /* Unpack the group we just collected. */
         //无法理解
         match group_size {
             4 => {
-                unsafe { *d.offset(2  ) = (v & 0xff as i32) as i8 };
+                unsafe { *d.offset(2) = (v & 0xff as i32) as i8 };
                 current_block_23 = 13843085778775597086;
             }
             3 => {
@@ -3529,7 +3517,7 @@ fn base64_decode(s: *const i8,mut len: size_t, out_len: *mut size_t) -> *mut i8 
             13843085778775597086 =>
             /* FALLTHROUGH */
             {
-                unsafe { *d.offset(1 ) = (v >> 8 as i32 & 0xff as i32) as i8 };
+                unsafe { *d.offset(1) = (v >> 8 as i32 & 0xff as i32) as i8 };
                 current_block_23 = 10880025040852361420;
             }
             _ => {}
@@ -3537,7 +3525,7 @@ fn base64_decode(s: *const i8,mut len: size_t, out_len: *mut size_t) -> *mut i8 
         match current_block_23 {
             10880025040852361420 =>
             /* FALLTHROUGH */
-            unsafe { *d.offset(0 ) = (v >> 16 as i32 & 0xff as i32) as i8 },
+            unsafe { *d.offset(0) = (v >> 16 as i32 & 0xff as i32) as i8 },
             _ => {}
         }
         d = unsafe { d.offset((group_size * 3 / 4) as isize) }
@@ -3549,7 +3537,7 @@ fn url_decode(in_0: *const i8) -> *mut i8 {
     let mut out: *mut i8;
     let mut d: *mut i8;
     let mut s: *const i8;
-    out = unsafe{malloc_safe(strlen_safe(in_0)+1)} as *mut i8;
+    out = unsafe { malloc_safe(strlen_safe(in_0) + 1) } as *mut i8;
     if out.is_null() {
         return 0 as *mut i8;
     }
@@ -3558,16 +3546,16 @@ fn url_decode(in_0: *const i8) -> *mut i8 {
     while unsafe { *s as i32 } != '\u{0}' as i32 {
         //fresh改了就过不了ctest
         if unsafe {
-            *s.offset(0 ) as i32 == '%' as i32
-                && *s.offset(1 ) as i32 != '\u{0}' as i32
-                && *s.offset(2 ) as i32 != '\u{0}' as i32
+            *s.offset(0) as i32 == '%' as i32
+                && *s.offset(1) as i32 != '\u{0}' as i32
+                && *s.offset(2) as i32 != '\u{0}' as i32
         } {
             /* Try to convert % escape */
-            let mut digit1: i32 = tohex(unsafe { *s.offset(1 ) as i32 });
-            let mut digit2: i32 = tohex(unsafe { *s.offset(2 ) as i32 });
+            let mut digit1: i32 = tohex(unsafe { *s.offset(1) as i32 });
+            let mut digit2: i32 = tohex(unsafe { *s.offset(2) as i32 });
             if digit1 >= 0 as i32 && digit2 >= 0 as i32 {
                 /* Looks good, consume three chars */
-                unsafe { s = s.offset(3 ) };
+                unsafe { s = s.offset(3) };
                 /* Convert output */
                 let fresh3 = d;
                 unsafe { d = d.offset(1) };
@@ -3613,6 +3601,6 @@ pub fn archive_test_pax_attribute(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut tar: *mut tar;
-    tar = unsafe{calloc_safe(1 as i32 as u64, ::std::mem::size_of::<tar>() as u64) as *mut tar};
+    tar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<tar>() as u64) as *mut tar };
     pax_attribute(a, tar, entry, key, value, value_length);
 }

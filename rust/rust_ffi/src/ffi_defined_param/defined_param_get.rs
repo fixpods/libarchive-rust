@@ -199,8 +199,6 @@ pub struct archive_all_defined_param {
     pub archive_ok: i32,
 }
 
-
-
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]
 pub struct archive_zip_defined_param {
@@ -243,7 +241,6 @@ pub struct archive_zip_defined_param {
     pub enc_header_size: i32,
     pub archive_failed: i32,
 }
-
 
 #[derive(Debug, Copy, Clone)]
 #[repr(C)]

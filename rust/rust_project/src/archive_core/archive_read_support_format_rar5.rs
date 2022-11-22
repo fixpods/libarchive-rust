@@ -49,9 +49,11 @@ fn cdeque_init(d: *mut cdeque, max_capacity_power_of_2: i32) -> i32 {
         return CDE_PARAM as i32;
     }
     cdeque_clear(d);
-    safe_d.arr =unsafe{malloc_safe(
-        (::std::mem::size_of::<*mut ()>() as u64).wrapping_mul(max_capacity_power_of_2 as u64),
-    )} as *mut size_t;
+    safe_d.arr = unsafe {
+        malloc_safe(
+            (::std::mem::size_of::<*mut ()>() as u64).wrapping_mul(max_capacity_power_of_2 as u64),
+        )
+    } as *mut size_t;
     return if !safe_d.arr.is_null() {
         CDE_OK as i32
     } else {
@@ -75,7 +77,7 @@ fn cdeque_front_fast(d: *mut cdeque, value: *mut *mut ()) {
  * performs bounds checking. */
 fn cdeque_front(d: *mut cdeque, mut value: *mut *mut ()) -> i32 {
     let safe_d = unsafe { &mut *d };
-    if safe_d.size > 0{
+    if safe_d.size > 0 {
         cdeque_front_fast(d, value);
         return CDE_OK as i32;
     } else {
@@ -93,18 +95,18 @@ fn cdeque_push_back(d: *mut cdeque, item: *mut ()) -> i32 {
         return CDE_OUT_OF_BOUNDS as i32;
     }
     unsafe { *(*d).arr.offset((*d).end_pos as isize) = item as size_t };
-    safe_d.end_pos = (safe_d.end_pos+ 1& safe_d.cap_mask);
-    safe_d.size = safe_d.size+1;
+    safe_d.end_pos = (safe_d.end_pos + 1 & safe_d.cap_mask);
+    safe_d.size = safe_d.size + 1;
     return CDE_OK as i32;
 }
 /* Pops a front element of this circular deque object and returns its value.
  * This function doesn't perform any bounds checking. */
-fn cdeque_pop_front_fast(d: *mut cdeque,value: *mut *mut ()) {
+fn cdeque_pop_front_fast(d: *mut cdeque, value: *mut *mut ()) {
     let safe_d = unsafe { &mut *d };
     let safe_value = unsafe { &mut *value };
     unsafe { *safe_value = *(*d).arr.offset(safe_d.beg_pos as isize) as *mut () };
     safe_d.beg_pos = (safe_d.beg_pos + 1 & safe_d.cap_mask);
-    safe_d.size = safe_d.size-1;
+    safe_d.size = safe_d.size - 1;
 }
 /* Pops a front element of this circular deque object and returns its value.
  * This function performs bounds checking. */
@@ -113,7 +115,7 @@ fn cdeque_pop_front(d: *mut cdeque, value: *mut *mut ()) -> i32 {
     if d.is_null() || value.is_null() {
         return CDE_PARAM as i32;
     }
-    if safe_d.size as i32 == 0{
+    if safe_d.size as i32 == 0 {
         return CDE_OUT_OF_BOUNDS as i32;
     }
     cdeque_pop_front_fast(d, value);
@@ -138,7 +140,9 @@ fn cdeque_free(d: *mut cdeque) {
     if safe_d.arr.is_null() {
         return;
     }
-    unsafe{free_safe(safe_d.arr as *mut ());}
+    unsafe {
+        free_safe(safe_d.arr as *mut ());
+    }
     safe_d.arr = 0 as *mut size_t;
     safe_d.beg_pos = -(1 as i32) as uint16_t;
     safe_d.end_pos = -(1 as i32) as uint16_t;
@@ -152,12 +156,12 @@ fn bf_bit_size(hdr: *const compressed_block_header) -> uint8_t {
 
 #[inline]
 fn bf_byte_count(hdr: *const compressed_block_header) -> uint8_t {
-    return unsafe { ((*hdr).block_flags_u8  >> 3 & 7) as uint8_t };
+    return unsafe { ((*hdr).block_flags_u8 >> 3 & 7) as uint8_t };
 }
 
 #[inline]
 fn bf_is_table_present(hdr: *const compressed_block_header) -> uint8_t {
-    return unsafe { ((*hdr).block_flags_u8 >> 7 & 1 ) as uint8_t };
+    return unsafe { ((*hdr).block_flags_u8 >> 7 & 1) as uint8_t };
 }
 
 #[inline]
@@ -173,30 +177,30 @@ fn circular_memcpy(
     mut end: int64_t,
 ) {
     if start as u64 & mask > end as u64 & mask {
-        let mut len1: ssize_t = (mask+1-(start as u64 & mask)) as ssize_t;
+        let mut len1: ssize_t = (mask + 1 - (start as u64 & mask)) as ssize_t;
         let mut len2: ssize_t = (end as u64 & mask) as ssize_t;
-        unsafe{
-        memcpy_safe(
-            dst as *mut (),
+        unsafe {
+            memcpy_safe(
+                dst as *mut (),
                 &mut *window.offset((start as u64 & mask) as isize) as *mut uint8_t as *const (),
-            len1 as u64,
-        );
-        memcpy_safe(
-        dst.offset(len1 as isize) as *mut (),
-            window as *const (),
-            len2 as u64,
-        );
-    }
+                len1 as u64,
+            );
+            memcpy_safe(
+                dst.offset(len1 as isize) as *mut (),
+                window as *const (),
+                len2 as u64,
+            );
+        }
     } else {
-        unsafe{
-        memcpy_safe(
-            dst as *mut (),
-            unsafe {
-                &mut *window.offset((start as u64 & mask) as isize) as *mut uint8_t as *const ()
-            },
-            (end - start) as size_t,
-        );
-    }
+        unsafe {
+            memcpy_safe(
+                dst as *mut (),
+                unsafe {
+                    &mut *window.offset((start as u64 & mask) as isize) as *mut uint8_t as *const ()
+                },
+                (end - start) as size_t,
+            );
+        }
     };
 }
 
@@ -208,7 +212,7 @@ fn read_filter_data(rar: *mut rar5, offset: uint32_t) -> uint32_t {
         safe_rar.cstate.window_buf,
         safe_rar.cstate.window_mask,
         offset as int64_t,
-        (offset+4) as int64_t,
+        (offset + 4) as int64_t,
     );
     return archive_le32dec(linear_buf.as_mut_ptr() as *const ());
 }
@@ -225,9 +229,7 @@ fn write_filter_data(rar: *mut rar5, offset: uint32_t, value: uint32_t) {
 fn add_new_filter(rar: *mut rar5) -> *mut filter_info {
     let safe_rar = unsafe { &mut *rar };
     let mut f: *mut filter_info =
-        unsafe{
-        calloc_safe(1, ::std::mem::size_of::<filter_info>() as u64)
-            as *mut filter_info};
+        unsafe { calloc_safe(1, ::std::mem::size_of::<filter_info>() as u64) as *mut filter_info };
     if f.is_null() {
         return 0 as *mut filter_info;
     }
@@ -238,12 +240,12 @@ fn add_new_filter(rar: *mut rar5) -> *mut filter_info {
 fn run_delta_filter(rar: *mut rar5, flt: *mut filter_info) -> i32 {
     let mut i: i32;
     let mut dest_pos: ssize_t = 0;
-    let mut src_pos: ssize_t = 0 ;
+    let mut src_pos: ssize_t = 0;
     let safe_flt = unsafe { &mut *flt };
     let safe_rar = unsafe { &mut *rar };
     i = 0;
     while i < safe_flt.channels {
-        let mut prev_byte: uint8_t = 0 ;
+        let mut prev_byte: uint8_t = 0;
         dest_pos = i as ssize_t;
         while dest_pos < safe_flt.block_length {
             let mut byte: uint8_t = 0;
@@ -253,7 +255,7 @@ fn run_delta_filter(rar: *mut rar5, flt: *mut filter_info) -> i32 {
                         & safe_rar.cstate.window_mask) as isize,
                 )
             };
-            prev_byte = (prev_byte - byte ) ;
+            prev_byte = (prev_byte - byte);
             unsafe { *(*rar).cstate.filtered_buf.offset(dest_pos as isize) = prev_byte };
             src_pos += 1;
             dest_pos += safe_flt.channels as i64
@@ -263,9 +265,9 @@ fn run_delta_filter(rar: *mut rar5, flt: *mut filter_info) -> i32 {
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-fn run_e8e9_filter( rar: *mut rar5, flt: *mut filter_info, extended: i32) -> i32 {
-    let file_size: uint32_t = 0x1000000 ;
-    let mut i: ssize_t ;
+fn run_e8e9_filter(rar: *mut rar5, flt: *mut filter_info, extended: i32) -> i32 {
+    let file_size: uint32_t = 0x1000000;
+    let mut i: ssize_t;
     let safe_rar = unsafe { &mut *rar };
     let safe_flt = unsafe { &mut *flt };
     circular_memcpy(
@@ -275,8 +277,8 @@ fn run_e8e9_filter( rar: *mut rar5, flt: *mut filter_info, extended: i32) -> i32
         safe_rar.cstate.solid_offset + safe_flt.block_start,
         safe_rar.cstate.solid_offset + safe_flt.block_start + safe_flt.block_length,
     );
-    i = 0 ;
-    while i < safe_flt.block_length - 4{
+    i = 0;
+    while i < safe_flt.block_length - 4 {
         let fresh0 = i;
         i = i + 1;
         let mut b: uint8_t = unsafe {
@@ -290,7 +292,7 @@ fn run_e8e9_filter( rar: *mut rar5, flt: *mut filter_info, extended: i32) -> i32
          * 0xE9 = x86's jmp <relative_addr_uint32> (unconditional jump)
          */
         if b == 0xe8 || extended != 0 && b == 0xe9 {
-            let mut addr: uint32_t ;
+            let mut addr: uint32_t;
             let mut offset: uint32_t = ((i + safe_flt.block_start) % file_size as i64) as uint32_t;
             addr = read_filter_data(
                 rar,
@@ -298,11 +300,11 @@ fn run_e8e9_filter( rar: *mut rar5, flt: *mut filter_info, extended: i32) -> i32
                     & safe_rar.cstate.window_mask) as uint32_t,
             );
             if addr & 0x80000000 != 0 {
-                if addr.wrapping_add(offset) & 0x80000000  == 0 as i32 as u32 {
+                if addr.wrapping_add(offset) & 0x80000000 == 0 as i32 as u32 {
                     write_filter_data(rar, i as uint32_t, addr.wrapping_add(file_size));
                 }
             } else if addr.wrapping_sub(file_size) & 0x80000000 != 0 {
-                let mut naddr: uint32_t = addr-offset;
+                let mut naddr: uint32_t = addr - offset;
                 write_filter_data(rar, i as uint32_t, naddr);
             }
             i += 4
@@ -312,8 +314,8 @@ fn run_e8e9_filter( rar: *mut rar5, flt: *mut filter_info, extended: i32) -> i32
 }
 
 fn run_arm_filter(rar: *mut rar5, flt: *mut filter_info) -> i32 {
-    let mut i: ssize_t = 0 ;
-    let mut offset: uint32_t ;
+    let mut i: ssize_t = 0;
+    let mut offset: uint32_t;
     let safe_rar = unsafe { &mut *rar };
     let safe_flt = unsafe { &mut *flt };
     circular_memcpy(
@@ -324,7 +326,7 @@ fn run_arm_filter(rar: *mut rar5, flt: *mut filter_info) -> i32 {
         safe_rar.cstate.solid_offset + safe_flt.block_start + safe_flt.block_length,
     );
     i = 0;
-    while i < safe_flt.block_length - 3  {
+    while i < safe_flt.block_length - 3 {
         let mut b: *mut uint8_t = unsafe {
             &mut *(*rar).cstate.window_buf.offset(
                 ((safe_rar.cstate.solid_offset + safe_flt.block_start + i + 3 as i32 as i64) as u64
@@ -332,20 +334,20 @@ fn run_arm_filter(rar: *mut rar5, flt: *mut filter_info) -> i32 {
             ) as *mut uint8_t
         };
         let safe_b = unsafe { &mut *b };
-        if *safe_b == 0xeb  {
+        if *safe_b == 0xeb {
             /* 0xEB = ARM's BL (branch + link) instruction. */
             offset = read_filter_data(
                 rar,
                 ((safe_rar.cstate.solid_offset + safe_flt.block_start + i) as u64
                     & safe_rar.cstate.window_mask) as uint32_t,
-            ) & 0xffffff ;
+            ) & 0xffffff;
             offset = (offset as u32)
                 .wrapping_sub(((i + safe_flt.block_start) / 4 as i32 as i64) as uint32_t)
                 as uint32_t as uint32_t;
-            offset = offset & 0xffffff  | 0xeb000000;
+            offset = offset & 0xffffff | 0xeb000000;
             write_filter_data(rar, i as uint32_t, offset);
         }
-        i += 4 
+        i += 4
     }
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
@@ -355,8 +357,9 @@ fn run_filter(a: *mut archive_read, flt: *mut filter_info) -> i32 {
     let mut rar: *mut rar5 = get_context(a);
     let safe_rar = unsafe { &mut *rar };
     let safe_flt = unsafe { &mut *flt };
-    unsafe{free_safe(safe_rar.cstate.filtered_buf as *mut ())};
-    safe_rar.cstate.filtered_buf =unsafe{malloc_safe(safe_flt.block_length as u64)} as *mut uint8_t;
+    unsafe { free_safe(safe_rar.cstate.filtered_buf as *mut ()) };
+    safe_rar.cstate.filtered_buf =
+        unsafe { malloc_safe(safe_flt.block_length as u64) } as *mut uint8_t;
     if safe_rar.cstate.filtered_buf.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -371,7 +374,7 @@ fn run_filter(a: *mut archive_read, flt: *mut filter_info) -> i32 {
             /* fallthrough */
             ret = run_e8e9_filter(rar, flt, (safe_flt.type_0 == FILTER_E8E9 as i32) as i32)
         }
-        FILTER_ARM=> ret = run_arm_filter(rar, flt),
+        FILTER_ARM => ret = run_arm_filter(rar, flt),
         _ => {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
@@ -387,13 +390,15 @@ fn run_filter(a: *mut archive_read, flt: *mut filter_info) -> i32 {
         return ret;
     }
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok
-        !=unsafe{push_data_ready(
-            a,
-            rar,
-            safe_rar.cstate.filtered_buf,
-            safe_flt.block_length as size_t,
-            safe_rar.cstate.last_write_ptr,
-        )}
+        != unsafe {
+            push_data_ready(
+                a,
+                rar,
+                safe_rar.cstate.filtered_buf,
+                safe_flt.block_length as size_t,
+                safe_rar.cstate.last_write_ptr,
+            )
+        }
     {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -466,12 +471,7 @@ fn push_data(
 
 /* Convenience function that submits the data to the user. It uses the
  * unpack window buffer as a source location. */
-fn push_window_data(
-    a: *mut archive_read,
-    rar: *mut rar5,
-    idx_begin: int64_t,
-    idx_end: int64_t,
-) {
+fn push_window_data(a: *mut archive_read, rar: *mut rar5, idx_begin: int64_t, idx_end: int64_t) {
     let safe_rar = unsafe { &mut *rar };
     push_data(a, rar, safe_rar.cstate.window_buf, idx_begin, idx_end);
 }
@@ -480,7 +480,7 @@ fn apply_filters(mut a: *mut archive_read) -> i32 {
     let mut flt: *mut filter_info = 0 as *mut filter_info;
     let mut rar: *mut rar5 = get_context(a);
     let mut ret: i32 = 0;
-    unsafe { (*rar).cstate.set_all_filters_applied(0 ) };
+    unsafe { (*rar).cstate.set_all_filters_applied(0) };
     /* Get the first filter that can be applied to our data. The data
      * needs to be fully unpacked before the filter can be run. */
     if CDE_OK as i32
@@ -521,7 +521,7 @@ fn apply_filters(mut a: *mut archive_read) -> i32 {
             }
         }
     }
-    unsafe { (*rar).cstate.set_all_filters_applied(1 ) };
+    unsafe { (*rar).cstate.set_all_filters_applied(1) };
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
@@ -529,10 +529,10 @@ fn dist_cache_push(rar: *mut rar5, value: i32) {
     let safe_rar = unsafe { &mut *rar };
     let mut q: *mut i32 = safe_rar.cstate.dist_cache.as_mut_ptr();
     unsafe {
-        *q.offset(3 ) = *q.offset(2 );
-        *q.offset(2 ) = *q.offset(1 );
-        *q.offset(1 ) = *q.offset(0 );
-        *q.offset(0 ) = value;
+        *q.offset(3) = *q.offset(2);
+        *q.offset(2) = *q.offset(1);
+        *q.offset(1) = *q.offset(0);
+        *q.offset(0) = value;
     }
 }
 
@@ -546,7 +546,7 @@ fn dist_cache_touch(rar: *mut rar5, idx: i32) -> i32 {
         unsafe { *q.offset(i as isize) = *q.offset((i - 1 as i32) as isize) };
         i -= 1
     }
-    unsafe { *q.offset(0 ) = dist };
+    unsafe { *q.offset(0) = dist };
     return dist;
 }
 
@@ -559,36 +559,37 @@ fn free_filters(rar: *mut rar5) {
      * But still of course we shouldn't leak memory in such case. */
     /* cdeque_size() is a fast operation, so we can use it as a loop
      * expression. */
-    while cdeque_size(d) > 0{
+    while cdeque_size(d) > 0 {
         let mut f: *mut filter_info = 0 as *mut filter_info;
         /* Pop_front will also decrease the collection's size. */
         if CDE_OK as i32 == cdeque_pop_front(d, cdeque_filter_p(&mut f)) {
-            unsafe{free_safe(f as *mut ())};
+            unsafe { free_safe(f as *mut ()) };
         }
     }
     cdeque_clear(d);
     /* Also clear out the variables needed for sanity checking. */
-    safe_rar.cstate.last_block_start = 0 ;
-    safe_rar.cstate.last_block_length = 0 ;
+    safe_rar.cstate.last_block_start = 0;
+    safe_rar.cstate.last_block_length = 0;
 }
 
 fn reset_file_context(mut rar: *mut rar5) {
     let safe_rar = unsafe { &mut *rar };
-    unsafe{memset_safe(
-        &mut safe_rar.file as *mut file_header as *mut (),
-        0,
-        ::std::mem::size_of::<file_header>() as u64,
-    );
-    blake2sp_init_safe(&mut safe_rar.file.b2state, 32 );
-}
+    unsafe {
+        memset_safe(
+            &mut safe_rar.file as *mut file_header as *mut (),
+            0,
+            ::std::mem::size_of::<file_header>() as u64,
+        );
+        blake2sp_init_safe(&mut safe_rar.file.b2state, 32);
+    }
     if safe_rar.main.solid() != 0 {
         safe_rar.cstate.solid_offset += safe_rar.cstate.write_ptr
     } else {
-        safe_rar.cstate.solid_offset = 0 
+        safe_rar.cstate.solid_offset = 0
     }
-    safe_rar.cstate.write_ptr = 0 ;
-    safe_rar.cstate.last_write_ptr = 0 ;
-    safe_rar.cstate.last_unstore_ptr = 0 ;
+    safe_rar.cstate.write_ptr = 0;
+    safe_rar.cstate.last_write_ptr = 0;
+    safe_rar.cstate.last_unstore_ptr = 0;
     safe_rar.file.redir_type = REDIR_TYPE_NONE as i32 as uint64_t;
     safe_rar.file.redir_flags = 0;
     free_filters(rar);
@@ -597,29 +598,27 @@ fn reset_file_context(mut rar: *mut rar5) {
 #[inline]
 fn get_archive_read(a: *mut archive, ar: *mut *mut archive_read) -> i32 {
     unsafe { *ar = a as *mut archive_read };
-    let mut magic_test: i32 =unsafe{__archive_check_magic_safe(
-        a,
-        0xdeb0c5 ,
-        1,
-        b"archive_read_support_format_rar5\x00" as *const u8 as *const i8,
-    )};
+    let mut magic_test: i32 = unsafe {
+        __archive_check_magic_safe(
+            a,
+            0xdeb0c5,
+            1,
+            b"archive_read_support_format_rar5\x00" as *const u8 as *const i8,
+        )
+    };
     if magic_test == ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-fn read_ahead(
-    a: *mut archive_read,
-    how_many: size_t,
-    ptr: *mut *const uint8_t,
-) -> i32 {
+fn read_ahead(a: *mut archive_read, how_many: size_t, ptr: *mut *const uint8_t) -> i32 {
     let mut avail: ssize_t = -1;
     if ptr.is_null() {
         return 0;
     }
     let safe_ptr = unsafe { &mut *ptr };
-    *safe_ptr = unsafe{__archive_read_ahead_safe(a, how_many, &mut avail) as *const uint8_t};
+    *safe_ptr = unsafe { __archive_read_ahead_safe(a, how_many, &mut avail) as *const uint8_t };
     if safe_ptr.is_null() {
         return 0;
     }
@@ -628,7 +627,7 @@ fn read_ahead(
 
 fn consume(mut a: *mut archive_read, mut how_many: int64_t) -> i32 {
     let mut ret: i32 = 0;
-    ret = if how_many == unsafe{__archive_read_consume_safe(a, how_many)} {
+    ret = if how_many == unsafe { __archive_read_consume_safe(a, how_many) } {
         ARCHIVE_RAR5_DEFINED_PARAM.archive_ok
     } else {
         ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal
@@ -651,11 +650,7 @@ fn consume(mut a: *mut archive_read, mut how_many: int64_t) -> i32 {
  * Returns 0 if there was an error. In this case, *pvalue contains an
  *           invalid value.
  */
-fn read_var(
-    a: *mut archive_read,
-    pvalue: *mut uint64_t,
-    pvalue_len: *mut uint64_t,
-) -> i32 {
+fn read_var(a: *mut archive_read, pvalue: *mut uint64_t, pvalue_len: *mut uint64_t) -> i32 {
     let mut result: uint64_t = 0;
     let mut shift: size_t;
     let mut i: size_t;
@@ -666,11 +661,11 @@ fn read_var(
     /* We will read maximum of 8 bytes. We don't have to handle the
      * situation to read the RAR5 variable-sized value stored at the end of
      * the file, because such situation will never happen. */
-    if read_ahead(a, 8 , &mut p) == 0 {
-        return 0 ;
+    if read_ahead(a, 8, &mut p) == 0 {
+        return 0;
     }
     shift = 0;
-    i = 0 ;
+    i = 0;
     while i < 8 {
         unsafe { b = *p.offset(i as isize) };
         /* Strip the MSB from the input byte and add the resulting
@@ -690,11 +685,11 @@ fn read_var(
              * consume those bytes, since the caller has all the
              * information it needs to perform */
             if !pvalue_len.is_null() {
-                *safe_pvalue_len = i+1
+                *safe_pvalue_len = i + 1
             } else if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok
                 != consume(a, (1 as i32 as u64).wrapping_add(i) as int64_t)
             {
-                return 0 ;
+                return 0;
             }
             /* If the caller did not provide the
              * `pvalue_len` pointer, it will not have the
@@ -703,9 +698,9 @@ fn read_var(
              * needs to consume. This is why we handle
              * such situation here automatically. */
             /* End of decoding process, return success. */
-            return 1 ;
+            return 1;
         }
-        i = i+1;
+        i = i + 1;
         shift = (shift as u64).wrapping_add(7 as i32 as u64) as size_t as size_t
     }
     /* The decoded value takes the maximum number of 8 bytes.
@@ -715,20 +710,16 @@ fn read_var(
         *safe_pvalue = result
     }
     if !pvalue_len.is_null() {
-        *safe_pvalue_len = 9 
+        *safe_pvalue_len = 9
     } else if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, 9 as i32 as int64_t) {
-        return 0 ;
+        return 0;
     }
-    return 1 ;
+    return 1;
 }
 
-fn read_var_sized(
-    a: *mut archive_read,
-    pvalue: *mut size_t,
-    pvalue_len: *mut size_t,
-) -> i32 {
+fn read_var_sized(a: *mut archive_read, pvalue: *mut size_t, pvalue_len: *mut size_t) -> i32 {
     let mut v: uint64_t = 0;
-    let mut v_size: uint64_t = 0 ;
+    let mut v_size: uint64_t = 0;
     let safe_pvalue_len = unsafe { &mut *pvalue_len };
     let safe_pvalue = unsafe { &mut *pvalue };
     let ret: i32 = if !pvalue_len.is_null() {
@@ -786,17 +777,12 @@ fn skip_bits(rar: *mut rar5, bits: i32) {
     safe_rar.bits.bit_addr = (new_bits & 7 as i32) as int8_t;
 }
 /* n = up to 16 */
-fn read_consume_bits(
-    rar: *mut rar5,
-    p: *const uint8_t,
-    n: i32,
-    value: *mut i32,
-) -> i32 {
+fn read_consume_bits(rar: *mut rar5, p: *const uint8_t, n: i32, value: *mut i32) -> i32 {
     let mut v: uint16_t = 0;
     let mut ret: i32 = 0;
     let mut num: i32 = 0;
     let safe_value = unsafe { &mut *value };
-    if n == 0 || n > 16  {
+    if n == 0 || n > 16 {
         /* This is a programmer error and should never happen
          * in runtime. */
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
@@ -817,14 +803,14 @@ fn read_consume_bits(
 fn read_u32(a: *mut archive_read, pvalue: *mut uint32_t) -> i32 {
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let safe_pvalue = unsafe { &mut *pvalue };
-    if read_ahead(a, 4 , &mut p) == 0 {
-        return 0 ;
+    if read_ahead(a, 4, &mut p) == 0 {
+        return 0;
     }
     *safe_pvalue = archive_le32dec(p as *const ());
     return if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok == consume(a, 4 as i32 as int64_t) {
-        1 
+        1
     } else {
-        0 
+        0
     };
 }
 
@@ -836,9 +822,9 @@ fn read_u64(a: *mut archive_read, pvalue: *mut uint64_t) -> i32 {
     }
     *safe_pvalue = archive_le64dec(p as *const ());
     return if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok == consume(a, 8 as i32 as int64_t) {
-        1 
+        1
     } else {
-        0 
+        0
     };
 }
 
@@ -849,20 +835,22 @@ fn bid_standard(a: *mut archive_read) -> i32 {
     if read_ahead(a, ::std::mem::size_of::<[u8; 8]>() as u64, &mut p) == 0 {
         return -1;
     }
-    if unsafe{memcmp_safe(
-        signature.as_mut_ptr() as *const (),
-        p as *const (),
-        ::std::mem::size_of::<[u8; 8]>() as u64,
-    )} == 0
+    if unsafe {
+        memcmp_safe(
+            signature.as_mut_ptr() as *const (),
+            p as *const (),
+            ::std::mem::size_of::<[u8; 8]>() as u64,
+        )
+    } == 0
     {
-        return 30 ;
+        return 30;
     }
     return -1;
 }
 
 fn rar5_bid(a: *mut archive_read, best_bid: i32) -> i32 {
-    let mut my_bid: i32 ;
-    if best_bid > 30  {
+    let mut my_bid: i32;
+    if best_bid > 30 {
         return -1;
     }
     my_bid = bid_standard(a);
@@ -890,7 +878,7 @@ fn init_window_mask(mut rar: *mut rar5) {
     if safe_rar.cstate.window_size != 0 {
         safe_rar.cstate.window_mask = (safe_rar.cstate.window_size - 1 as i32 as i64) as size_t
     } else {
-        safe_rar.cstate.window_mask = 0 
+        safe_rar.cstate.window_mask = 0
     };
 }
 
@@ -941,13 +929,13 @@ fn parse_file_extra_hash(
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
         safe_rar.file.has_blake2 = 1;
-        unsafe{
-        memcpy_safe(
-            &mut safe_rar.file.blake2sp as *mut [uint8_t; 32] as *mut (),
-            p as *const (),
-            hash_size as u64,
-        );
-    }
+        unsafe {
+            memcpy_safe(
+                &mut safe_rar.file.blake2sp as *mut [uint8_t; 32] as *mut (),
+                p as *const (),
+                hash_size as u64,
+            );
+        }
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, hash_size as int64_t) {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
@@ -964,9 +952,9 @@ fn parse_file_extra_hash(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-fn time_win_to_unix( win_time: uint64_t) -> uint64_t {
-    let ns_in_sec: size_t = 10000000 ;
-    let sec_to_unix: uint64_t = 11644473600 ;
+fn time_win_to_unix(win_time: uint64_t) -> uint64_t {
+    let ns_in_sec: size_t = 10000000;
+    let sec_to_unix: uint64_t = 11644473600;
     return win_time.wrapping_div(ns_in_sec).wrapping_sub(sec_to_unix);
 }
 
@@ -983,7 +971,7 @@ fn parse_htime_item(
         if read_u32(a, &mut time_val) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        *safe_extra_data_size -= 4 ;
+        *safe_extra_data_size -= 4;
         *safe_where_0 = time_val as uint64_t
     } else {
         let mut windows_time: uint64_t = 0;
@@ -991,7 +979,7 @@ fn parse_htime_item(
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
         *safe_where_0 = time_win_to_unix(windows_time);
-        *safe_extra_data_size -= 8 
+        *safe_extra_data_size -= 8
     }
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
@@ -1034,7 +1022,7 @@ fn parse_file_extra_version(
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
     /* extra_data_size should be zero here. */
-    cur_filename =unsafe{archive_entry_pathname_utf8_safe(e)};
+    cur_filename = unsafe { archive_entry_pathname_utf8_safe(e) };
     if cur_filename.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -1057,14 +1045,14 @@ fn parse_file_extra_version(
         version
     );
     /* Build the new filename. */
-    unsafe{
-    archive_strcat_safe(&mut name_utf8_string, cur_filename as *const ());
-    archive_strcat_safe(&mut name_utf8_string, version_string.s as *const ());
-    /* Apply the new filename into this file's context. */
-    archive_entry_update_pathname_utf8_safe(e, name_utf8_string.s);
-    /* Free buffers. */
-    archive_string_free_safe(&mut version_string);
-    archive_string_free_safe(&mut name_utf8_string);
+    unsafe {
+        archive_strcat_safe(&mut name_utf8_string, cur_filename as *const ());
+        archive_strcat_safe(&mut name_utf8_string, version_string.s as *const ());
+        /* Apply the new filename into this file's context. */
+        archive_entry_update_pathname_utf8_safe(e, name_utf8_string.s);
+        /* Free buffers. */
+        archive_string_free_safe(&mut version_string);
+        archive_string_free_safe(&mut name_utf8_string);
     }
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
@@ -1091,15 +1079,21 @@ fn parse_file_extra_htime(
     unix_time = (flags & IS_UNIX as i32 as u64) as i8;
     if flags & HAS_MTIME as i32 as u64 != 0 {
         parse_htime_item(a, unix_time, &mut safe_rar.file.e_mtime, extra_data_size);
-        unsafe{archive_entry_set_mtime_safe(e, safe_rar.file.e_mtime as time_t, 0 as i32 as i64)};
+        unsafe {
+            archive_entry_set_mtime_safe(e, safe_rar.file.e_mtime as time_t, 0 as i32 as i64)
+        };
     }
     if flags & HAS_CTIME as i32 as u64 != 0 {
         parse_htime_item(a, unix_time, &mut safe_rar.file.e_ctime, extra_data_size);
-        unsafe{archive_entry_set_ctime_safe(e, safe_rar.file.e_ctime as time_t, 0 as i32 as i64)};
+        unsafe {
+            archive_entry_set_ctime_safe(e, safe_rar.file.e_ctime as time_t, 0 as i32 as i64)
+        };
     }
     if flags & HAS_ATIME as i32 as u64 != 0 {
         parse_htime_item(a, unix_time, &mut safe_rar.file.e_atime, extra_data_size);
-        unsafe{archive_entry_set_atime_safe(e, safe_rar.file.e_atime as time_t, 0 as i32 as i64)};
+        unsafe {
+            archive_entry_set_atime_safe(e, safe_rar.file.e_atime as time_t, 0 as i32 as i64)
+        };
     }
     if flags & HAS_UNIX_NS as i32 as u64 != 0 {
         if read_u32(a, &mut safe_rar.file.e_unix_ns) == 0 {
@@ -1141,9 +1135,8 @@ fn parse_file_extra_redir(
     if read_var_sized(a, &mut target_size, 0 as *mut size_t) == 0 {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
-    *safe_extra_data_size = (*safe_extra_data_size as u64)
-        .wrapping_sub(target_size+1)
-        as ssize_t as ssize_t;
+    *safe_extra_data_size =
+        (*safe_extra_data_size as u64).wrapping_sub(target_size + 1) as ssize_t as ssize_t;
     if read_ahead(a, target_size, &mut p) == 0 {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
@@ -1155,7 +1148,7 @@ fn parse_file_extra_redir(
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
-    if target_size == 0{
+    if target_size == 0 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
@@ -1163,41 +1156,45 @@ fn parse_file_extra_redir(
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
-    unsafe{memcpy_safe(
-        target_utf8_buf.as_mut_ptr() as *mut (),
-        p as *const (),
-        target_size,
-    )};
+    unsafe {
+        memcpy_safe(
+            target_utf8_buf.as_mut_ptr() as *mut (),
+            p as *const (),
+            target_size,
+        )
+    };
     target_utf8_buf[target_size as usize] = 0 as i32 as i8;
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, target_size as int64_t) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
-    match safe_rar.file.redir_type as u32{
-        REDIR_TYPE_UNIXSYMLINK| REDIR_TYPE_WINSYMLINK => {
-            unsafe{
-            archive_entry_set_filetype_safe(e, ARCHIVE_RAR5_DEFINED_PARAM.ae_iflnk as mode_t);
-            archive_entry_update_symlink_utf8_safe(e, target_utf8_buf.as_mut_ptr());
+    match safe_rar.file.redir_type as u32 {
+        REDIR_TYPE_UNIXSYMLINK | REDIR_TYPE_WINSYMLINK => {
+            unsafe {
+                archive_entry_set_filetype_safe(e, ARCHIVE_RAR5_DEFINED_PARAM.ae_iflnk as mode_t);
+                archive_entry_update_symlink_utf8_safe(e, target_utf8_buf.as_mut_ptr());
             }
             if safe_rar.file.redir_flags & ARCHIVE_RAR5_DEFINED_PARAM.redir_symlink_is_dir as u64
                 != 0
             {
-                unsafe{archive_entry_set_symlink_type_safe(
-                    e,
-                    ARCHIVE_RAR5_DEFINED_PARAM.ae_symlink_type_directory,
-                )};
+                unsafe {
+                    archive_entry_set_symlink_type_safe(
+                        e,
+                        ARCHIVE_RAR5_DEFINED_PARAM.ae_symlink_type_directory,
+                    )
+                };
             } else {
-                unsafe{archive_entry_set_symlink_type_safe(
-                    e,
-                    ARCHIVE_RAR5_DEFINED_PARAM.ae_symlink_type_file,
-                )};
+                unsafe {
+                    archive_entry_set_symlink_type_safe(
+                        e,
+                        ARCHIVE_RAR5_DEFINED_PARAM.ae_symlink_type_file,
+                    )
+                };
             }
         }
-        REDIR_TYPE_HARDLINK=> {
-            unsafe{
+        REDIR_TYPE_HARDLINK => unsafe {
             archive_entry_set_filetype_safe(e, ARCHIVE_RAR5_DEFINED_PARAM.ae_ifreg as mode_t);
             archive_entry_update_hardlink_utf8_safe(e, target_utf8_buf.as_mut_ptr());
-            }
-        }
+        },
         _ => {}
     }
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
@@ -1208,11 +1205,11 @@ fn parse_file_extra_owner(
     e: *mut archive_entry,
     extra_data_size: *mut ssize_t,
 ) -> i32 {
-    let mut flags: uint64_t = 0 ;
-    let mut value_size: uint64_t = 0 ;
-    let mut id: uint64_t = 0 ;
-    let mut name_len: size_t = 0 ;
-    let mut name_size: size_t = 0 ;
+    let mut flags: uint64_t = 0;
+    let mut value_size: uint64_t = 0;
+    let mut id: uint64_t = 0;
+    let mut name_len: size_t = 0;
+    let mut name_size: size_t = 0;
     let mut namebuf: [i8; 256] = [0; 256];
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let safe_extra_data_size = unsafe { &mut *extra_data_size };
@@ -1222,48 +1219,47 @@ fn parse_file_extra_owner(
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, value_size as int64_t) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
-    *safe_extra_data_size =
-        (*safe_extra_data_size as u64 - value_size) as ssize_t ;
+    *safe_extra_data_size = (*safe_extra_data_size as u64 - value_size) as ssize_t;
     if flags & ARCHIVE_RAR5_DEFINED_PARAM.owner_user_name as u64 != 0 as i32 as u64 {
         if read_var_sized(a, &mut name_size, 0 as *mut size_t) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        *safe_extra_data_size = (*safe_extra_data_size as u64-(name_size+1)) as ssize_t;
+        *safe_extra_data_size = (*safe_extra_data_size as u64 - (name_size + 1)) as ssize_t;
         if read_ahead(a, name_size, &mut p) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        if name_size >= ARCHIVE_RAR5_DEFINED_PARAM.owner_maxnamelen as size_t{
+        if name_size >= ARCHIVE_RAR5_DEFINED_PARAM.owner_maxnamelen as size_t {
             name_len = (ARCHIVE_RAR5_DEFINED_PARAM.owner_maxnamelen - 1) as size_t
         } else {
             name_len = name_size
         }
-        unsafe{memcpy_safe(namebuf.as_mut_ptr() as *mut (), p as *const (), name_len)};
+        unsafe { memcpy_safe(namebuf.as_mut_ptr() as *mut (), p as *const (), name_len) };
         namebuf[name_len as usize] = 0;
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, name_size as int64_t) {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        unsafe{archive_entry_set_uname_safe(e, namebuf.as_mut_ptr())};
+        unsafe { archive_entry_set_uname_safe(e, namebuf.as_mut_ptr()) };
     }
-    if flags & ARCHIVE_RAR5_DEFINED_PARAM.owner_group_name as u64 != 0{
+    if flags & ARCHIVE_RAR5_DEFINED_PARAM.owner_group_name as u64 != 0 {
         if read_var_sized(a, &mut name_size, 0 as *mut size_t) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        *safe_extra_data_size = (*safe_extra_data_size as u64)
-            .wrapping_sub(name_size+1) as ssize_t;
+        *safe_extra_data_size =
+            (*safe_extra_data_size as u64).wrapping_sub(name_size + 1) as ssize_t;
         if read_ahead(a, name_size, &mut p) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        if name_size >= ARCHIVE_RAR5_DEFINED_PARAM.owner_maxnamelen as u64{
+        if name_size >= ARCHIVE_RAR5_DEFINED_PARAM.owner_maxnamelen as u64 {
             name_len = (ARCHIVE_RAR5_DEFINED_PARAM.owner_maxnamelen - 1 as i32) as size_t
         } else {
             name_len = name_size
         }
-        unsafe{memcpy_safe(namebuf.as_mut_ptr() as *mut (), p as *const (), name_len)};
+        unsafe { memcpy_safe(namebuf.as_mut_ptr() as *mut (), p as *const (), name_len) };
         namebuf[name_len as usize] = 0;
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, name_size as int64_t) {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        unsafe{archive_entry_set_gname_safe(e, namebuf.as_mut_ptr())};
+        unsafe { archive_entry_set_gname_safe(e, namebuf.as_mut_ptr()) };
     }
     if flags & ARCHIVE_RAR5_DEFINED_PARAM.owner_user_uid as u64 != 0 as i32 as u64 {
         if read_var(a, &mut id, &mut value_size) == 0 {
@@ -1274,7 +1270,7 @@ fn parse_file_extra_owner(
         }
         *safe_extra_data_size =
             (*safe_extra_data_size as u64).wrapping_sub(value_size) as ssize_t as ssize_t;
-        unsafe{archive_entry_set_uid_safe(e, id as la_int64_t)};
+        unsafe { archive_entry_set_uid_safe(e, id as la_int64_t) };
     }
     if flags & ARCHIVE_RAR5_DEFINED_PARAM.owner_group_gid as u64 != 0 as i32 as u64 {
         if read_var(a, &mut id, &mut value_size) == 0 {
@@ -1285,37 +1281,41 @@ fn parse_file_extra_owner(
         }
         *safe_extra_data_size =
             (*safe_extra_data_size as u64).wrapping_sub(value_size) as ssize_t as ssize_t;
-        unsafe{archive_entry_set_gid_safe(e, id as la_int64_t)};
+        unsafe { archive_entry_set_gid_safe(e, id as la_int64_t) };
     }
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
 fn process_head_file_extra(
-     a: *mut archive_read,
-     e: *mut archive_entry,
-     rar: *mut rar5,
-     mut extra_data_size: ssize_t,
+    a: *mut archive_read,
+    e: *mut archive_entry,
+    rar: *mut rar5,
+    mut extra_data_size: ssize_t,
 ) -> i32 {
     let mut extra_field_size: size_t = 0;
-    let mut extra_field_id: size_t = 0 ;
+    let mut extra_field_id: size_t = 0;
     let mut ret: i32 = ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     let mut var_size: size_t = 0;
     while extra_data_size > 0 {
         if read_var_sized(a, &mut extra_field_size, &mut var_size) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        unsafe{extra_data_size = (extra_data_size as u64).wrapping_sub(var_size) as ssize_t as ssize_t};
+        unsafe {
+            extra_data_size = (extra_data_size as u64).wrapping_sub(var_size) as ssize_t as ssize_t
+        };
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, var_size as int64_t) {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
         if read_var_sized(a, &mut extra_field_id, &mut var_size) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        unsafe{extra_data_size = (extra_data_size as u64).wrapping_sub(var_size) as ssize_t as ssize_t};
+        unsafe {
+            extra_data_size = (extra_data_size as u64).wrapping_sub(var_size) as ssize_t as ssize_t
+        };
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, var_size as int64_t) {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        match extra_field_id as u32{
+        match extra_field_id as u32 {
             EX_HASH => {
                 ret = parse_file_extra_hash(a, rar, &mut extra_data_size);
             }
@@ -1323,7 +1323,7 @@ fn process_head_file_extra(
                 ret = parse_file_extra_htime(a, e, rar, &mut extra_data_size);
             }
             EX_REDIR => {
-                ret = parse_file_extra_redir(a, e, rar, &mut extra_data_size);;
+                ret = parse_file_extra_redir(a, e, rar, &mut extra_data_size);
             }
             EX_UOWNER => {
                 ret = parse_file_extra_owner(a, e, &mut extra_data_size);
@@ -1353,23 +1353,23 @@ fn process_head_file(
     entry: *mut archive_entry,
     block_flags: size_t,
 ) -> i32 {
-    let mut extra_data_size: ssize_t = 0 ;
-    let mut data_size: size_t = 0 ;
-    let mut file_flags: size_t = 0 ;
+    let mut extra_data_size: ssize_t = 0;
+    let mut data_size: size_t = 0;
+    let mut file_flags: size_t = 0;
     let mut file_attr: size_t = 0;
-    let mut compression_info: size_t = 0 ;
-    let mut host_os: size_t = 0 ;
-    let mut name_size: size_t = 0 ;
+    let mut compression_info: size_t = 0;
+    let mut host_os: size_t = 0;
+    let mut name_size: size_t = 0;
     let mut unpacked_size: uint64_t = 0;
     let mut window_size: uint64_t = 0;
-    let mut mtime: uint32_t = 0 ;
-    let mut crc: uint32_t = 0 ;
-    let mut c_method: i32 = 0 ;
+    let mut mtime: uint32_t = 0;
+    let mut crc: uint32_t = 0;
+    let mut c_method: i32 = 0;
     let mut c_version: i32 = 0;
     let mut name_utf8_buf: [i8; 8192] = [0; 8192];
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let safe_rar = unsafe { &mut *rar };
-    unsafe{archive_entry_clear_safe(entry)};
+    unsafe { archive_entry_clear_safe(entry) };
     /* Do not reset file context if we're switching archives. */
     if safe_rar.cstate.switch_multivolume() == 0 {
         reset_file_context(rar);
@@ -1455,7 +1455,7 @@ fn process_head_file(
     }
     /* Check if window_size is a sane value. Also, if the file is not
      * declared as a directory, disallow window_size == 0. */
-    if window_size > (64  * 1024 * 1024 ) 
+    if window_size > (64 * 1024 * 1024)
         || safe_rar.file.dir() as i32 == 0 as i32 && window_size == 0 as i32 as u64
     {
         archive_set_error_safe!(
@@ -1465,10 +1465,10 @@ fn process_head_file(
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
-    if safe_rar.file.solid() as i32 > 0  {
+    if safe_rar.file.solid() as i32 > 0 {
         /* Re-check if current window size is the same as previous
          * window size (for solid files only). */
-        if safe_rar.file.solid_window_size > 0 
+        if safe_rar.file.solid_window_size > 0
             && safe_rar.file.solid_window_size != window_size as ssize_t
         {
             archive_set_error_safe!(&mut (*a).archive as *mut archive,
@@ -1502,50 +1502,51 @@ fn process_head_file(
         let mut mode: mode_t = 0;
         if file_attr & ATTR_DIRECTORY as i32 as u64 != 0 {
             if file_attr & ATTR_READONLY as i32 as u64 != 0 {
-                mode = 0o555  | ARCHIVE_RAR5_DEFINED_PARAM.ae_ifdir as mode_t
+                mode = 0o555 | ARCHIVE_RAR5_DEFINED_PARAM.ae_ifdir as mode_t
             } else {
-                mode = 0o755  | ARCHIVE_RAR5_DEFINED_PARAM.ae_ifdir as mode_t
+                mode = 0o755 | ARCHIVE_RAR5_DEFINED_PARAM.ae_ifdir as mode_t
             }
         } else if file_attr & ATTR_READONLY as i32 as u64 != 0 {
-            mode = 0o444  | ARCHIVE_RAR5_DEFINED_PARAM.ae_ifreg as mode_t
+            mode = 0o444 | ARCHIVE_RAR5_DEFINED_PARAM.ae_ifreg as mode_t
         } else {
-            mode = 0o644  | ARCHIVE_RAR5_DEFINED_PARAM.ae_ifreg as mode_t
+            mode = 0o644 | ARCHIVE_RAR5_DEFINED_PARAM.ae_ifreg as mode_t
         }
 
-        unsafe{archive_entry_set_mode_safe(entry, mode)};
+        unsafe { archive_entry_set_mode_safe(entry, mode) };
         if file_attr & (ATTR_READONLY as i32 | ATTR_HIDDEN as i32 | ATTR_SYSTEM as i32) as u64 != 0
         {
             let mut fflags_text: *mut i8 = 0 as *mut i8;
             let mut ptr: *mut i8 = 0 as *mut i8;
             /* allocate for "rdonly,hidden,system," */
-            fflags_text =
-                unsafe{malloc_safe((22 as i32 as u64).wrapping_mul(::std::mem::size_of::<i8>() as u64))
-                    as *mut i8};
+            fflags_text = unsafe {
+                malloc_safe((22 as i32 as u64).wrapping_mul(::std::mem::size_of::<i8>() as u64))
+                    as *mut i8
+            };
             if !fflags_text.is_null() {
                 ptr = fflags_text;
                 if file_attr & ATTR_READONLY as i32 as u64 != 0 {
-                    unsafe{strcpy_safe(ptr, b"rdonly,\x00" as *const u8 as *const i8)};
-                    unsafe { ptr = ptr.offset(7 ) }
+                    unsafe { strcpy_safe(ptr, b"rdonly,\x00" as *const u8 as *const i8) };
+                    unsafe { ptr = ptr.offset(7) }
                 }
                 if file_attr & ATTR_HIDDEN as i32 as u64 != 0 {
-                    unsafe{strcpy_safe(ptr, b"hidden,\x00" as *const u8 as *const i8)};
-                    unsafe { ptr = ptr.offset(7 ) }
+                    unsafe { strcpy_safe(ptr, b"hidden,\x00" as *const u8 as *const i8) };
+                    unsafe { ptr = ptr.offset(7) }
                 }
                 if file_attr & ATTR_SYSTEM as i32 as u64 != 0 {
-                    unsafe{strcpy_safe(ptr, b"system,\x00" as *const u8 as *const i8)};
-                    unsafe { ptr = ptr.offset(7 ) }
+                    unsafe { strcpy_safe(ptr, b"system,\x00" as *const u8 as *const i8) };
+                    unsafe { ptr = ptr.offset(7) }
                 }
                 if ptr > fflags_text {
                     /* Delete trailing comma */
-                    unsafe { *ptr.offset(-(1 )) = '\u{0}' as i32 as i8 };
-                    unsafe{archive_entry_copy_fflags_text_safe(entry, fflags_text)};
+                    unsafe { *ptr.offset(-(1)) = '\u{0}' as i32 as i8 };
+                    unsafe { archive_entry_copy_fflags_text_safe(entry, fflags_text) };
                 }
-                unsafe{free_safe(fflags_text as *mut ())};
+                unsafe { free_safe(fflags_text as *mut ()) };
             }
         }
     } else if host_os == HOST_UNIX as i32 as u64 {
         /* Host OS is Unix */
-        unsafe{archive_entry_set_mode_safe(entry, file_attr as mode_t)};
+        unsafe { archive_entry_set_mode_safe(entry, file_attr as mode_t) };
     } else {
         /* Unknown host OS */
         archive_set_error_safe!(
@@ -1578,16 +1579,18 @@ fn process_head_file(
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
-    unsafe{memcpy_safe(
-        name_utf8_buf.as_mut_ptr() as *mut (),
-        p as *const (),
-        name_size,
-    )};
+    unsafe {
+        memcpy_safe(
+            name_utf8_buf.as_mut_ptr() as *mut (),
+            p as *const (),
+            name_size,
+        )
+    };
     name_utf8_buf[name_size as usize] = 0 as i32 as i8;
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, name_size as int64_t) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
-    unsafe{archive_entry_update_pathname_utf8_safe(entry, name_utf8_buf.as_mut_ptr())};
+    unsafe { archive_entry_update_pathname_utf8_safe(entry, name_utf8_buf.as_mut_ptr()) };
     if extra_data_size > 0 {
         let mut ret: i32 = process_head_file_extra(a, entry, rar, extra_data_size);
         /*
@@ -1604,14 +1607,14 @@ fn process_head_file(
             return ret;
         }
     }
-    if file_flags & UNKNOWN_UNPACKED_SIZE as i32 as u64 == 0  {
+    if file_flags & UNKNOWN_UNPACKED_SIZE as i32 as u64 == 0 {
         safe_rar.file.unpacked_size = unpacked_size as ssize_t;
         if safe_rar.file.redir_type == REDIR_TYPE_NONE as i32 as u64 {
-            unsafe{archive_entry_set_size_safe(entry, unpacked_size as la_int64_t)};
+            unsafe { archive_entry_set_size_safe(entry, unpacked_size as la_int64_t) };
         }
     }
     if file_flags & UTIME as i32 as u64 != 0 {
-        unsafe{archive_entry_set_mtime_safe(entry, mtime as time_t, 0 as i32 as i64)};
+        unsafe { archive_entry_set_mtime_safe(entry, mtime as time_t, 0 as i32 as i64) };
     }
     if file_flags & CRC32 as i32 as u64 != 0 {
         safe_rar.file.stored_crc32 = crc
@@ -1619,11 +1622,9 @@ fn process_head_file(
     if safe_rar.cstate.switch_multivolume() == 0 {
         /* Do not reinitialize unpacking state if we're switching
          * archives. */
-        safe_rar
-            .cstate
-            .set_block_parsing_finished(1 );
+        safe_rar.cstate.set_block_parsing_finished(1);
         safe_rar.cstate.set_all_filters_applied(1);
-        safe_rar.cstate.set_initialized(0 )
+        safe_rar.cstate.set_initialized(0)
     }
     if safe_rar.generic.split_before() as i32 > 0 {
         /* If now we're standing on a header that has a 'split before'
@@ -1638,10 +1639,10 @@ fn process_head_file(
 }
 
 fn process_head_service(
-     a: *mut archive_read,
-     rar: *mut rar5,
-     entry: *mut archive_entry,
-     block_flags: size_t,
+    a: *mut archive_read,
+    rar: *mut rar5,
+    entry: *mut archive_entry,
+    block_flags: size_t,
 ) -> i32 {
     /* Process this SERVICE block the same way as FILE blocks. */
     let mut ret: i32 = process_head_file(a, rar, entry, block_flags);
@@ -1649,7 +1650,7 @@ fn process_head_service(
     if ret != ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
         return ret;
     }
-    safe_rar.file.set_service(1 );
+    safe_rar.file.set_service(1);
     /* But skip the data part automatically. It's no use for the user
      * anyway.  It contains only service data, not even needed to
      * properly unpack the file. */
@@ -1662,23 +1663,23 @@ fn process_head_service(
 }
 
 fn process_head_main(
-     a: *mut archive_read,
+    a: *mut archive_read,
     rar: *mut rar5,
     entry: *mut archive_entry,
     block_flags: size_t,
 ) -> i32 {
     let mut ret: i32 = 0;
-    let mut extra_data_size: size_t = 0 ;
-    let mut extra_field_size: size_t = 0 ;
-    let mut extra_field_id: size_t = 0 ;
-    let mut archive_flags: size_t = 0 ;
+    let mut extra_data_size: size_t = 0;
+    let mut extra_field_size: size_t = 0;
+    let mut extra_field_id: size_t = 0;
+    let mut archive_flags: size_t = 0;
     let safe_rar = unsafe { &mut *rar };
     if block_flags & HFL_EXTRA_DATA as i32 as u64 != 0 {
         if read_var_sized(a, &mut extra_data_size, 0 as *mut size_t) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
     } else {
-        extra_data_size = 0 
+        extra_data_size = 0
     }
     if read_var_sized(a, &mut archive_flags, 0 as *mut size_t) == 0 {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
@@ -1690,7 +1691,7 @@ fn process_head_main(
         .main
         .set_solid((archive_flags & SOLID_0 as i32 as u64 > 0 as i32 as u64) as i32 as uint8_t);
     if archive_flags & VOLUME_NUMBER as i32 as u64 != 0 {
-        let mut v: size_t = 0 ;
+        let mut v: size_t = 0;
         if read_var_sized(a, &mut v, 0 as *mut size_t) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
@@ -1704,7 +1705,7 @@ fn process_head_main(
         }
         safe_rar.main.vol_no = v as u32
     } else {
-        safe_rar.main.vol_no = 0 
+        safe_rar.main.vol_no = 0
     }
     if safe_rar.vol.expected_vol_no > 0 as i32 as u32
         && safe_rar.main.vol_no != safe_rar.vol.expected_vol_no
@@ -1726,7 +1727,7 @@ fn process_head_main(
     if read_var_sized(a, &mut extra_field_id, 0 as *mut size_t) == 0 {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
-    if extra_field_size == 0  {
+    if extra_field_size == 0 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
@@ -1734,7 +1735,7 @@ fn process_head_main(
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
-    match extra_field_id as u32{
+    match extra_field_id as u32 {
         LOCATOR => {
             ret = process_main_locator_extra_block(a, rar);
             if ret != ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
@@ -1775,7 +1776,7 @@ fn skip_unprocessed_bytes(mut a: *mut archive_read) -> i32 {
             if ret != ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
                 return ret;
             }
-            safe_rar.file.bytes_remaining = 0 
+            safe_rar.file.bytes_remaining = 0
         } else {
             /* If we're not in merge mode, use safe skipping code.
              * This will ensure we'll handle solid archives
@@ -1837,11 +1838,11 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
     let mut rar: *mut rar5 = get_context(a);
     let mut hdr_crc: uint32_t = 0;
     let mut computed_crc: uint32_t = 0;
-    let mut raw_hdr_size: size_t = 0 ;
+    let mut raw_hdr_size: size_t = 0;
     let mut hdr_size_len: size_t = 0;
     let mut hdr_size: size_t = 0;
-    let mut header_id: size_t = 0 ;
-    let mut header_flags: size_t = 0 ;
+    let mut header_id: size_t = 0;
+    let mut header_flags: size_t = 0;
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let mut ret: i32 = 0;
     let safe_rar = unsafe { &mut *rar };
@@ -1858,9 +1859,9 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
     if read_var_sized(a, &mut raw_hdr_size, &mut hdr_size_len) == 0 {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
-    hdr_size = raw_hdr_size+hdr_size_len;
+    hdr_size = raw_hdr_size + hdr_size_len;
     /* Sanity check, maximum header size for RAR5 is 2MB. */
-    if hdr_size > (2  * 1024 * 1024 ) as u64 {
+    if hdr_size > (2 * 1024 * 1024) as u64 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
@@ -1869,10 +1870,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
     /* Additional sanity checks to weed out invalid files. */
-    if raw_hdr_size == 0 
-        || hdr_size_len == 0 
-        || hdr_size < SMALLEST_RAR5_BLOCK_SIZE
-    {
+    if raw_hdr_size == 0 || hdr_size_len == 0 || hdr_size < SMALLEST_RAR5_BLOCK_SIZE {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
@@ -1887,7 +1885,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
     /* Verify the CRC32 of the header data. */
-    computed_crc = unsafe{crc32_safe(0 , p, hdr_size as i32 as uInt) as uint32_t};
+    computed_crc = unsafe { crc32_safe(0, p, hdr_size as i32 as uInt) as uint32_t };
     if computed_crc != hdr_crc {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -1944,7 +1942,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
         HEAD_ENDARC => {
-            safe_rar.main.set_endarc(1 );
+            safe_rar.main.set_endarc(1);
             /* After encountering an end of file marker, we need
              * to take into consideration if this archive is
              * continued in another file (i.e. is it part01.rar:
@@ -1965,8 +1963,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
                         );
                         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                     }
-                    safe_rar.vol.expected_vol_no =
-                        safe_rar.main.vol_no+1;
+                    safe_rar.vol.expected_vol_no = safe_rar.main.vol_no + 1;
                     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
                 }
             } else {
@@ -2001,16 +1998,14 @@ fn skip_base_block(mut a: *mut archive_read) -> i32 {
     /* Create a new local archive_entry structure that will be operated on
      * by header reader; operations on this archive_entry will be discarded.
      */
-    let mut entry: *mut archive_entry = unsafe{archive_entry_new_safe()};
+    let mut entry: *mut archive_entry = unsafe { archive_entry_new_safe() };
     ret = process_base_block(a, entry);
     /* Discard operations on this archive_entry structure. */
-    unsafe{archive_entry_free_safe(entry)};
+    unsafe { archive_entry_free_safe(entry) };
     if ret == ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal {
         return ret;
     }
-    if safe_rar.generic.last_header_id == 2 
-        && safe_rar.generic.split_before() > 0 
-    {
+    if safe_rar.generic.last_header_id == 2 && safe_rar.generic.split_before() > 0 {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
     }
     if ret == ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
@@ -2028,19 +2023,18 @@ fn rar5_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         init_header(a);
         safe_rar.header_initialized = 1
     }
-    if safe_rar.skipped_magic == 0  {
+    if safe_rar.skipped_magic == 0 {
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok
             != consume(a, ::std::mem::size_of::<[u8; 8]>() as u64 as int64_t)
         {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        safe_rar.skipped_magic = 1 
+        safe_rar.skipped_magic = 1
     }
     loop {
         ret = process_base_block(a, entry);
         if !(ret == ARCHIVE_RAR5_DEFINED_PARAM.archive_retry
-            || safe_rar.main.endarc() as i32 > 0 
-                && ret == ARCHIVE_RAR5_DEFINED_PARAM.archive_ok)
+            || safe_rar.main.endarc() as i32 > 0 && ret == ARCHIVE_RAR5_DEFINED_PARAM.archive_ok)
         {
             break;
         }
@@ -2052,48 +2046,48 @@ fn init_unpack(mut rar: *mut rar5) {
     let safe_rar = unsafe { &mut *rar };
     safe_rar.file.calculated_crc32 = 0 as i32 as uint32_t;
     init_window_mask(rar);
-    unsafe{
-    free_safe(safe_rar.cstate.window_buf as *mut ());
-    free_safe(safe_rar.cstate.filtered_buf as *mut ());
+    unsafe {
+        free_safe(safe_rar.cstate.window_buf as *mut ());
+        free_safe(safe_rar.cstate.filtered_buf as *mut ());
     }
-    if safe_rar.cstate.window_size > 0  {
+    if safe_rar.cstate.window_size > 0 {
         safe_rar.cstate.window_buf =
-            unsafe{calloc_safe(1 , safe_rar.cstate.window_size as u64) as *mut uint8_t};
+            unsafe { calloc_safe(1, safe_rar.cstate.window_size as u64) as *mut uint8_t };
         safe_rar.cstate.filtered_buf =
-            unsafe{calloc_safe(1 , safe_rar.cstate.window_size as u64) as *mut uint8_t}
+            unsafe { calloc_safe(1, safe_rar.cstate.window_size as u64) as *mut uint8_t }
     } else {
         safe_rar.cstate.window_buf = 0 as *mut uint8_t;
         safe_rar.cstate.filtered_buf = 0 as *mut uint8_t
     }
-    safe_rar.cstate.write_ptr = 0 ;
-    safe_rar.cstate.last_write_ptr = 0 ;
-    unsafe{
-    memset_safe(
-        &mut safe_rar.cstate.bd as *mut decode_table as *mut (),
-        0 ,
-        ::std::mem::size_of::<decode_table>() as u64,
-    );
-    memset_safe(
-        &mut safe_rar.cstate.ld as *mut decode_table as *mut (),
-        0 ,
-        ::std::mem::size_of::<decode_table>() as u64,
-    );
-    memset_safe(
-        &mut safe_rar.cstate.dd as *mut decode_table as *mut (),
-        0 ,
-        ::std::mem::size_of::<decode_table>() as u64,
-    );
-    memset_safe(
-        &mut safe_rar.cstate.ldd as *mut decode_table as *mut (),
-        0 ,
-        ::std::mem::size_of::<decode_table>() as u64,
-    );
-    memset_safe(
-        &mut safe_rar.cstate.rd as *mut decode_table as *mut (),
-        0 ,
-        ::std::mem::size_of::<decode_table>() as u64,
-    );
-}
+    safe_rar.cstate.write_ptr = 0;
+    safe_rar.cstate.last_write_ptr = 0;
+    unsafe {
+        memset_safe(
+            &mut safe_rar.cstate.bd as *mut decode_table as *mut (),
+            0,
+            ::std::mem::size_of::<decode_table>() as u64,
+        );
+        memset_safe(
+            &mut safe_rar.cstate.ld as *mut decode_table as *mut (),
+            0,
+            ::std::mem::size_of::<decode_table>() as u64,
+        );
+        memset_safe(
+            &mut safe_rar.cstate.dd as *mut decode_table as *mut (),
+            0,
+            ::std::mem::size_of::<decode_table>() as u64,
+        );
+        memset_safe(
+            &mut safe_rar.cstate.ldd as *mut decode_table as *mut (),
+            0,
+            ::std::mem::size_of::<decode_table>() as u64,
+        );
+        memset_safe(
+            &mut safe_rar.cstate.rd as *mut decode_table as *mut (),
+            0,
+            ::std::mem::size_of::<decode_table>() as u64,
+        );
+    }
 }
 
 fn update_crc(rar: *mut rar5, p: *const uint8_t, to_read: size_t) {
@@ -2109,21 +2103,24 @@ fn update_crc(rar: *mut rar5, p: *const uint8_t, to_read: size_t) {
             _ => verify_crc = 0,
         }
     } else {
-        verify_crc = 1 
+        verify_crc = 1
     }
     if verify_crc != 0 {
         /* Don't update CRC32 if the file doesn't have the
          * `stored_crc32` info filled in. */
-        if safe_rar.file.stored_crc32 > 0  {
-            safe_rar.file.calculated_crc32 =
-               unsafe{crc32_safe(safe_rar.file.calculated_crc32 as uLong, p, to_read as uInt) as uint32_t}
+        if safe_rar.file.stored_crc32 > 0 {
+            safe_rar.file.calculated_crc32 = unsafe {
+                crc32_safe(safe_rar.file.calculated_crc32 as uLong, p, to_read as uInt) as uint32_t
+            }
         }
         /* Check if the file uses an optional BLAKE2sp checksum
          * algorithm. */
-        if safe_rar.file.has_blake2  > 0  {
+        if safe_rar.file.has_blake2 > 0 {
             /* Return value of the `update` function is always 0,
              * so we can explicitly ignore it here. */
-           unsafe{blake2sp_update_safe(&mut safe_rar.file.b2state, p, to_read);}
+            unsafe {
+                blake2sp_update_safe(&mut safe_rar.file.b2state, p, to_read);
+            }
         }
     };
 }
@@ -2141,64 +2138,63 @@ fn create_decode_tables(
     let mut cur_len: ssize_t = 0;
     let mut quick_data_size: ssize_t = 0;
     let safe_table = unsafe { &mut *table };
-    unsafe{
-    memset_safe(
-        &mut lc as *mut [i32; 16] as *mut (),
-        0 ,
-        ::std::mem::size_of::<[i32; 16]>() as u64,
-    );
-    memset_safe(
-        safe_table.decode_num.as_mut_ptr() as *mut (),
-        0 ,
-        ::std::mem::size_of::<[uint16_t; 306]>() as u64,
-    );
-}
+    unsafe {
+        memset_safe(
+            &mut lc as *mut [i32; 16] as *mut (),
+            0,
+            ::std::mem::size_of::<[i32; 16]>() as u64,
+        );
+        memset_safe(
+            safe_table.decode_num.as_mut_ptr() as *mut (),
+            0,
+            ::std::mem::size_of::<[uint16_t; 306]>() as u64,
+        );
+    }
     safe_table.size = size as uint32_t;
     safe_table.quick_bits = if size == ARCHIVE_RAR5_DEFINED_PARAM.huff_nc {
-        10 
+        10
     } else {
-        7 
+        7
     } as uint32_t;
-    i = 0 ;
+    i = 0;
     while i < size {
         unsafe { lc[(*bit_length.offset(i as isize) as i32 & 15 as i32) as usize] += 1 };
         i += 1
     }
     lc[0] = 0;
-    safe_table.decode_pos[0] = 0 ;
-    safe_table.decode_len[0] = 0 ;
-    i = 1 ;
+    safe_table.decode_pos[0] = 0;
+    safe_table.decode_len[0] = 0;
+    i = 1;
     while i < 16 {
         upper_limit += lc[i as usize];
         safe_table.decode_len[i as usize] = upper_limit << 16 as i32 - i;
         safe_table.decode_pos[i as usize] = safe_table.decode_pos[(i - 1 as i32) as usize]
-            .wrapping_add(lc[(i - 1 ) as usize] as u32);
-        upper_limit <<= 1 ;
+            .wrapping_add(lc[(i - 1) as usize] as u32);
+        upper_limit <<= 1;
         i += 1
     }
-    unsafe{
-    memcpy_safe(
-        decode_pos_clone.as_mut_ptr() as *mut (),
-        safe_table.decode_pos.as_mut_ptr() as *const (),
-        ::std::mem::size_of::<[uint32_t; 16]>() as u64,
-    );
-}
+    unsafe {
+        memcpy_safe(
+            decode_pos_clone.as_mut_ptr() as *mut (),
+            safe_table.decode_pos.as_mut_ptr() as *const (),
+            ::std::mem::size_of::<[uint32_t; 16]>() as u64,
+        );
+    }
     i = 0;
     while i < size {
-        let mut clen: uint8_t =
-            unsafe { (*bit_length.offset(i as isize) & 15 ) as uint8_t };
+        let mut clen: uint8_t = unsafe { (*bit_length.offset(i as isize) & 15) as uint8_t };
         if clen as i32 > 0 {
             let mut last_pos: i32 = decode_pos_clone[clen as usize] as i32;
             safe_table.decode_num[last_pos as usize] = i as uint16_t;
-            decode_pos_clone[clen as usize] = decode_pos_clone[clen as usize]+1
+            decode_pos_clone[clen as usize] = decode_pos_clone[clen as usize] + 1
         }
         i += 1
     }
-    quick_data_size = (1 ) << safe_table.quick_bits;
-    cur_len = 1 ;
-    code = 0 ;
+    quick_data_size = (1) << safe_table.quick_bits;
+    cur_len = 1;
+    code = 0;
     while (code as i64) < quick_data_size {
-        let mut bit_field: i32 = code << (16)-safe_table.quick_bits;
+        let mut bit_field: i32 = code << (16) - safe_table.quick_bits;
         let mut dist: i32 = 0;
         let mut pos: i32 = 0;
         while cur_len
@@ -2209,7 +2205,7 @@ fn create_decode_tables(
             cur_len += 1
         }
         safe_table.quick_len[code as usize] = cur_len as uint8_t;
-        dist = bit_field - safe_table.decode_len[(cur_len - 1 ) as usize];
+        dist = bit_field - safe_table.decode_len[(cur_len - 1) as usize];
         dist >>= 16 as i32 as i64 - cur_len;
         pos = safe_table.decode_pos[(cur_len & 15 as i32 as i64) as usize].wrapping_add(dist as u32)
             as i32;
@@ -2252,9 +2248,9 @@ fn decode_number(
         *safe_num = safe_table.quick_num[code as usize];
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
     }
-    bits = 15 ;
+    bits = 15;
     i = safe_table.quick_bits.wrapping_add(1 as i32 as u32) as i32;
-    while i < 15  {
+    while i < 15 {
         if (bitfield as i32) < safe_table.decode_len[i as usize] {
             bits = i;
             break;
@@ -2267,13 +2263,13 @@ fn decode_number(
     dist >>= 16 - bits;
     pos = safe_table.decode_pos[bits as usize].wrapping_add(dist as u32);
     if pos >= safe_table.size {
-        pos = 0 
+        pos = 0
     }
     *safe_num = safe_table.decode_num[pos as usize];
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 /* Reads and parses Huffman tables from the beginning of the block. */
-fn parse_tables(a: *mut archive_read,rar: *mut rar5, p: *const uint8_t) -> i32 {
+fn parse_tables(a: *mut archive_read, rar: *mut rar5, p: *const uint8_t) -> i32 {
     let mut ret: i32 = 0;
     let mut value: i32 = 0;
     let mut i: i32 = 0;
@@ -2281,13 +2277,13 @@ fn parse_tables(a: *mut archive_read,rar: *mut rar5, p: *const uint8_t) -> i32 {
     let mut idx: i32 = 0 as i32;
     let mut bit_length: [uint8_t; 20] = [0; 20];
     let mut table: [uint8_t; 430] = [0; 430];
-    let mut nibble_mask: uint8_t = 0xf0 ;
-    let mut nibble_shift: uint8_t = 4 ;
+    let mut nibble_mask: uint8_t = 0xf0;
+    let mut nibble_shift: uint8_t = 4;
     let safe_rar = unsafe { &mut *rar };
     /* The data for table generation is compressed using a simple RLE-like
      * algorithm when storing zeroes, so we need to unpack it first. */
-    w = 0 ;
-    i = 0 ;
+    w = 0;
+    i = 0;
     while w < ARCHIVE_RAR5_DEFINED_PARAM.huff_bc {
         if i as i64 >= safe_rar.cstate.cur_block_size {
             /* Truncated data, can't continue. */
@@ -2380,25 +2376,25 @@ fn parse_tables(a: *mut archive_read,rar: *mut rar5, p: *const uint8_t) -> i32 {
             /* 0..15: store directly */
             table[i as usize] = num as uint8_t;
             i += 1
-        } else if (num as i32) < 18{
+        } else if (num as i32) < 18 {
             /* 16..17: repeat previous code */
             let mut n: uint16_t = 0;
             if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != read_bits_16(rar, p, &mut n) {
                 return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
             }
-            if num as i32 == 16  {
-                n = (n as i32 >> 13 ) as uint16_t;
-                n = (n + 3 ) as uint16_t;
+            if num as i32 == 16 {
+                n = (n as i32 >> 13) as uint16_t;
+                n = (n + 3) as uint16_t;
                 skip_bits(rar, 3 as i32);
             } else {
-                n = (n >> 9 ) as uint16_t;
-                n = (n + 11 ) as uint16_t;
+                n = (n >> 9) as uint16_t;
+                n = (n + 11) as uint16_t;
                 skip_bits(rar, 7 as i32);
             }
             if i > 0 {
                 loop {
                     let fresh4 = n;
-                    n = n-1;
+                    n = n - 1;
                     if !(fresh4 as i32 > 0 as i32 && i < ARCHIVE_RAR5_DEFINED_PARAM.huff_table_size)
                     {
                         break;
@@ -2420,18 +2416,18 @@ fn parse_tables(a: *mut archive_read,rar: *mut rar5, p: *const uint8_t) -> i32 {
             if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != read_bits_16(rar, p, &mut n_0) {
                 return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
             }
-            if num  == 18  {
-                n_0 = (n_0  >> 13 ) as uint16_t;
-                n_0 = (n_0 + 3 ) as uint16_t;
-                skip_bits(rar, 3 );
+            if num == 18 {
+                n_0 = (n_0 >> 13) as uint16_t;
+                n_0 = (n_0 + 3) as uint16_t;
+                skip_bits(rar, 3);
             } else {
-                n_0 = (n_0  >> 9 ) as uint16_t;
-                n_0 = (n_0 + 11 ) as uint16_t;
-                skip_bits(rar, 7 );
+                n_0 = (n_0 >> 9) as uint16_t;
+                n_0 = (n_0 + 11) as uint16_t;
+                skip_bits(rar, 7);
             }
             loop {
                 let fresh5 = n_0;
-                n_0 = n_0-1;
+                n_0 = n_0 - 1;
                 if !(fresh5 as i32 > 0 as i32 && i < ARCHIVE_RAR5_DEFINED_PARAM.huff_table_size) {
                     break;
                 }
@@ -2510,12 +2506,14 @@ fn parse_block_header(
     let mut calculated_cksum: uint8_t = 0;
     let safe_block_size = unsafe { &mut *block_size };
     let safe_hdr = unsafe { &mut *hdr };
-    unsafe{memcpy_safe(
-        hdr as *mut (),
-        p as *const (),
-        ::std::mem::size_of::<compressed_block_header>() as u64,
-    )};
-    if bf_byte_count(hdr)  > 2  {
+    unsafe {
+        memcpy_safe(
+            hdr as *mut (),
+            p as *const (),
+            ::std::mem::size_of::<compressed_block_header>() as u64,
+        )
+    };
+    if bf_byte_count(hdr) > 2 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
@@ -2526,27 +2524,22 @@ fn parse_block_header(
     }
     /* This should probably use bit reader interface in order to be more
      * future-proof. */
-    *safe_block_size = 0 ;
+    *safe_block_size = 0;
     match bf_byte_count(hdr) as i32 {
         0 => {
             /* 1-byte block size */
-            *safe_block_size =
-                unsafe { *(&*p.offset(2 ) as *const uint8_t) as ssize_t }
+            *safe_block_size = unsafe { *(&*p.offset(2) as *const uint8_t) as ssize_t }
         }
         1 => {
             /* 2-byte block size */
-            *safe_block_size = unsafe {
-                archive_le16dec(&*p.offset(2 ) as *const uint8_t as *const ())
-                    as ssize_t
-            }
+            *safe_block_size =
+                unsafe { archive_le16dec(&*p.offset(2) as *const uint8_t as *const ()) as ssize_t }
         }
         2 => {
             /* 3-byte block size */
-            *safe_block_size = unsafe {
-                archive_le32dec(&*p.offset(2 ) as *const uint8_t as *const ())
-                    as ssize_t
-            };
-            *safe_block_size &= 0xffffff 
+            *safe_block_size =
+                unsafe { archive_le32dec(&*p.offset(2) as *const uint8_t as *const ()) as ssize_t };
+            *safe_block_size &= 0xffffff
         }
         _ => {
             /* Other block sizes are not supported. This case is not
@@ -2562,7 +2555,7 @@ fn parse_block_header(
         ^ *safe_block_size as uint8_t as i32
         ^ (*safe_block_size >> 8 as i32) as uint8_t as i32
         ^ (*safe_block_size >> 16 as i32) as uint8_t as i32) as uint8_t;
-    if calculated_cksum != safe_hdr.block_cksum  {
+    if calculated_cksum != safe_hdr.block_cksum {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
@@ -2575,11 +2568,7 @@ fn parse_block_header(
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 /* Convenience function used during filter processing. */
-fn parse_filter_data(
-    rar: *mut rar5,
-    p: *const uint8_t,
-    filter_data: *mut uint32_t,
-) -> i32 {
+fn parse_filter_data(rar: *mut rar5, p: *const uint8_t, filter_data: *mut uint32_t) -> i32 {
     let mut i: i32 = 0;
     let mut bytes: i32 = 0;
     let mut data: uint32_t = 0;
@@ -2588,7 +2577,7 @@ fn parse_filter_data(
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
     bytes += 1;
-    i = 0 ;
+    i = 0;
     while i < bytes {
         let mut byte: uint16_t = 0;
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != read_bits_16(rar, p, &mut byte) {
@@ -2610,7 +2599,7 @@ fn is_valid_filter_block_start(rar: *mut rar5, start: uint32_t) -> i32 {
     let block_start: int64_t = start as ssize_t + safe_rar.cstate.write_ptr;
     let last_bs: int64_t = safe_rar.cstate.last_block_start;
     let last_bl: ssize_t = safe_rar.cstate.last_block_length;
-    if last_bs == 0 || last_bl == 0  {
+    if last_bs == 0 || last_bl == 0 {
         /* We didn't have any filters yet, so accept this offset. */
         return 1;
     }
@@ -2641,13 +2630,13 @@ fn parse_filter(ar: *mut archive_read, p: *const uint8_t) -> i32 {
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != read_bits_16(rar, p, &mut filter_type) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
-    filter_type = (filter_type  >> 13 ) as uint16_t;
-    skip_bits(rar, 3 );
+    filter_type = (filter_type >> 13) as uint16_t;
+    skip_bits(rar, 3);
     /* Perform some sanity checks on this filter parameters. Note that we
      * allow only DELTA, E8/E9 and ARM filters here, because rest of
      * filters are not used in RARv5. */
-    if block_length < 4 
-        || block_length > 0x400000 
+    if block_length < 4
+        || block_length > 0x400000
         || filter_type as i32 > FILTER_ARM as i32
         || is_valid_filter_block_start(rar, block_start) == 0
     {
@@ -2693,8 +2682,8 @@ fn parse_filter(ar: *mut archive_read, p: *const uint8_t) -> i32 {
 fn decode_code_length(rar: *mut rar5, p: *const uint8_t, code: uint16_t) -> i32 {
     let mut lbits: i32 = 0;
     let mut length: i32 = 2 as i32;
-    if (code ) < 8 {
-        lbits = 0 ;
+    if (code) < 8 {
+        lbits = 0;
         length += code as i32
     } else {
         lbits = code as i32 / 4 as i32 - 1 as i32;
@@ -2726,7 +2715,7 @@ fn copy_string(a: *mut archive_read, len: i32, dist: i32) -> i32 {
      * Just remember that this loop treats buffers that overlap differently
      * than buffers that do not overlap. This is why a simple memcpy(3)
      * call will not be enough. */
-    i = 0 ;
+    i = 0;
     while i < len {
         let write_idx: ssize_t = (write_ptr.wrapping_add(i as u64) & cmask) as ssize_t;
         let read_idx: ssize_t =
@@ -2750,7 +2739,7 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
     let mut hdr: *const compressed_block_header = &mut safe_rar.last_block_hdr;
     let bit_size: uint8_t = (1 + bf_bit_size(hdr) as i32) as uint8_t;
     while !(safe_rar.cstate.write_ptr - safe_rar.cstate.last_write_ptr
-        > safe_rar.cstate.window_size >> 1 )
+        > safe_rar.cstate.window_size >> 1)
     {
         if safe_rar.bits.in_addr as i64 > safe_rar.cstate.cur_block_size - 1 as i32 as i64
             || safe_rar.bits.in_addr as i64 == safe_rar.cstate.cur_block_size - 1 as i32 as i64
@@ -2758,9 +2747,7 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
         {
             /* If the program counter is here, it means the
              * function has finished processing the block. */
-            safe_rar
-                .cstate
-                .set_block_parsing_finished(1 );
+            safe_rar.cstate.set_block_parsing_finished(1);
             break;
         } else {
             /* Decode the next literal. */
@@ -2782,7 +2769,7 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
              *   a repetition pattern that should be copied from
              *   an already uncompressed chunk of data.
              */
-            if num < 256  {
+            if num < 256 {
                 /* Directly store the byte. */
                 let fresh7 = safe_rar.cstate.write_ptr;
                 safe_rar.cstate.write_ptr = safe_rar.cstate.write_ptr + 1;
@@ -2793,13 +2780,12 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
                         .window_buf
                         .offset((write_idx as u64 & cmask) as isize) = num as uint8_t
                 }
-            } else if num  >= 262  {
+            } else if num >= 262 {
                 let mut dist_slot: uint16_t = 0;
-                let mut len: i32 =
-                    decode_code_length(rar, p, (num as i32 - 262 ) as uint16_t);
+                let mut len: i32 = decode_code_length(rar, p, (num as i32 - 262) as uint16_t);
                 let mut dbits: i32 = 0;
-                let mut dist: i32 = 1 ;
-                if len == -1  {
+                let mut dist: i32 = 1;
+                if len == -1 {
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
@@ -2817,8 +2803,8 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
                     );
                     return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                 }
-                if (dist_slot ) < 4  {
-                    dbits = 0 ;
+                if (dist_slot) < 4 {
+                    dbits = 0;
                     dist += dist_slot as i32
                 } else {
                     dbits = dist_slot as i32 / 2 as i32 - 1 as i32;
@@ -2832,7 +2818,7 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
                 }
                 if dbits > 0 {
                     if dbits >= 4 {
-                        let mut add: uint32_t = 0 ;
+                        let mut add: uint32_t = 0;
                         let mut low_dist: uint16_t = 0;
                         if dbits > 4 {
                             if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok
@@ -2843,8 +2829,8 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
                                  * data. */
                                 return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
                             }
-                            skip_bits(rar, dbits - 4 );
-                            add = add >> 36 - dbits << 4 ;
+                            skip_bits(rar, dbits - 4);
+                            add = add >> 36 - dbits << 4;
                             dist = (dist as u32).wrapping_add(add) as i32 as i32
                         }
                         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok
@@ -2881,11 +2867,11 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
                         dist += add_0
                     }
                 }
-                if dist > 0x100  {
+                if dist > 0x100 {
                     len += 1;
-                    if dist > 0x2000  {
+                    if dist > 0x2000 {
                         len += 1;
-                        if dist > 0x40000  {
+                        if dist > 0x40000 {
                             len += 1
                         }
                     }
@@ -2895,27 +2881,23 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
                 if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != copy_string(a, len, dist) {
                     return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                 }
-            } else if num == 256  {
+            } else if num == 256 {
                 /* Create a filter. */
                 ret = parse_filter(a, p);
                 if ret != ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
                     return ret;
                 }
-            } else if num  == 257  {
-                if safe_rar.cstate.last_len != 0  {
+            } else if num == 257 {
+                if safe_rar.cstate.last_len != 0 {
                     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok
-                        != copy_string(
-                            a,
-                            safe_rar.cstate.last_len,
-                            safe_rar.cstate.dist_cache[0 ],
-                        )
+                        != copy_string(a, safe_rar.cstate.last_len, safe_rar.cstate.dist_cache[0])
                     {
                         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                     }
                 }
             } else {
                 /* num < 262 */
-                let idx: i32 = num as i32 - 258 ;
+                let idx: i32 = num as i32 - 258;
                 let dist_0: i32 = dist_cache_touch(rar, idx);
                 let mut len_slot: uint16_t = 0;
                 let mut len_0: i32 = 0;
@@ -2938,7 +2920,7 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
 /* Binary search for the RARv5 signature. */
 fn scan_for_signature(mut a: *mut archive_read) -> i32 {
     let mut p: *const uint8_t = 0 as *const uint8_t;
-    let chunk_size: i32 = 512 ;
+    let chunk_size: i32 = 512;
     let mut i: ssize_t = 0;
     let mut signature: [i8; 8] = [0; 8];
     /* If we're here, it means we're on an 'unknown territory' data.
@@ -2956,13 +2938,15 @@ fn scan_for_signature(mut a: *mut archive_read) -> i32 {
         if read_ahead(a, chunk_size as size_t, &mut p) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
-        i = 0 ;
+        i = 0;
         while i < (chunk_size - ::std::mem::size_of::<[u8; 8]>() as u64 as i32) as i64 {
-            if unsafe{memcmp_safe(
-                unsafe { &*p.offset(i as isize) as *const uint8_t as *const () },
-                signature.as_mut_ptr() as *const (),
-                ::std::mem::size_of::<[u8; 8]>() as u64,
-            )} == 0 
+            if unsafe {
+                memcmp_safe(
+                    unsafe { &*p.offset(i as isize) as *const uint8_t as *const () },
+                    signature.as_mut_ptr() as *const (),
+                    ::std::mem::size_of::<[u8; 8]>() as u64,
+                )
+            } == 0
             {
                 /* Consume the number of bytes we've used to
                  * search for the signature, as well as the
@@ -3001,15 +2985,15 @@ fn advance_multivolume(a: *mut archive_read) -> i32 {
      * function encounters the 'end of archive' marker.
      */
     {
-        if safe_rar.main.endarc()  == 1  {
-            let mut looping: i32 = 1 ;
-            safe_rar.main.set_endarc(0 );
+        if safe_rar.main.endarc() == 1 {
+            let mut looping: i32 = 1;
+            safe_rar.main.set_endarc(0);
             while looping != 0 {
                 lret = skip_base_block(a);
                 if lret == ARCHIVE_RAR5_DEFINED_PARAM.archive_retry {
                 } else if lret == ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
                     /* Break loop. */
-                    looping = 0 
+                    looping = 0
                 } else {
                     /* Forward any errors to the
                      * caller. */
@@ -3036,7 +3020,7 @@ fn advance_multivolume(a: *mut archive_read) -> i32 {
             }
             /* If there was an error during skipping, or we
              * have just skipped a FILE base block... */
-            if !(safe_rar.main.endarc() == 0 ) {
+            if !(safe_rar.main.endarc() == 0) {
                 continue;
             }
             return lret;
@@ -3048,14 +3032,10 @@ fn advance_multivolume(a: *mut archive_read) -> i32 {
  * partial block from the second multivolume archive file. The result is
  * a chunk of memory containing the whole block, and the stream pointer
  * is advanced to the next block in the second multivolume archive file. */
-fn merge_block(
-    a: *mut archive_read,
-    block_size: ssize_t,
-    p: *mut *const uint8_t,
-) -> i32 {
+fn merge_block(a: *mut archive_read, block_size: ssize_t, p: *mut *const uint8_t) -> i32 {
     let mut rar: *mut rar5 = get_context(a);
     let mut cur_block_size: ssize_t = 0;
-    let mut partial_offset: ssize_t = 0 ;
+    let mut partial_offset: ssize_t = 0;
     let mut lp: *const uint8_t = 0 as *const uint8_t;
     let mut ret: i32 = 0;
     let safe_rar = unsafe { &mut *rar };
@@ -3069,16 +3049,16 @@ fn merge_block(
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
     /* Set a flag that we're in the switching mode. */
-    safe_rar.cstate.set_switch_multivolume(1 );
+    safe_rar.cstate.set_switch_multivolume(1);
     /* Reallocate the memory which will hold the whole block. */
     if !safe_rar.vol.push_buf.is_null() {
-        unsafe{free_safe(safe_rar.vol.push_buf as *mut ())};
+        unsafe { free_safe(safe_rar.vol.push_buf as *mut ()) };
     }
     /* Increasing the allocation block by 8 is due to bit reading functions,
      * which are using additional 2 or 4 bytes. Allocating the block size
      * by exact value would make bit reader perform reads from invalid
      * memory block when reading the last byte from the buffer. */
-    safe_rar.vol.push_buf = unsafe{malloc_safe((block_size + 8 ) as u64) as *mut uint8_t};
+    safe_rar.vol.push_buf = unsafe { malloc_safe((block_size + 8) as u64) as *mut uint8_t };
     if safe_rar.vol.push_buf.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -3089,12 +3069,15 @@ fn merge_block(
     }
     /* Valgrind complains if the extension block for bit reader is not
      * initialized, so initialize it. */
-     unsafe{
-    memset_safe(
-        unsafe { &mut *(*rar).vol.push_buf.offset(block_size as isize) as *mut uint8_t as *mut () },
-        0 ,
-        8 ,
-    )};
+    unsafe {
+        memset_safe(
+            unsafe {
+                &mut *(*rar).vol.push_buf.offset(block_size as isize) as *mut uint8_t as *mut ()
+            },
+            0,
+            8,
+        )
+    };
     loop
     /* A single block can span across multiple multivolume archive files,
      * so we use a loop here. This loop will consume enough multivolume
@@ -3107,7 +3090,7 @@ fn merge_block(
         } else {
             safe_rar.file.bytes_remaining
         };
-        if cur_block_size == 0  {
+        if cur_block_size == 0 {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
@@ -3131,14 +3114,16 @@ fn merge_block(
         /* Merge previous block chunk with current block chunk,
          * or create first block chunk if this is our first
          * iteration. */
-         unsafe{
-        memcpy_safe(
-            unsafe {
-                &mut *(*rar).vol.push_buf.offset(partial_offset as isize) as *mut uint8_t as *mut ()
-            },
-            lp as *const (),
-            cur_block_size as u64,
-        )};
+        unsafe {
+            memcpy_safe(
+                unsafe {
+                    &mut *(*rar).vol.push_buf.offset(partial_offset as isize) as *mut uint8_t
+                        as *mut ()
+                },
+                lp as *const (),
+                cur_block_size as u64,
+            )
+        };
         /* Advance the stream read pointer by this block chunk size. */
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, cur_block_size) {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
@@ -3155,7 +3140,7 @@ fn merge_block(
         }
         /* If we don't have any bytes to read, this means we should
          * switch to another multivolume archive file. */
-        if safe_rar.file.bytes_remaining == 0  {
+        if safe_rar.file.bytes_remaining == 0 {
             safe_rar.merge_mode += 1;
             ret = advance_multivolume(a);
             safe_rar.merge_mode -= 1;
@@ -3188,7 +3173,7 @@ fn process_block(a: *mut archive_read) -> i32 {
         let mut to_skip: ssize_t = 0;
         let mut cur_block_size: ssize_t = 0;
         /* The header size won't be bigger than 6 bytes. */
-        if read_ahead(a, 6 , &mut p) == 0 {
+        if read_ahead(a, 6, &mut p) == 0 {
             /* Failed to prefetch data block header. */
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
@@ -3207,7 +3192,7 @@ fn process_block(a: *mut archive_read) -> i32 {
          * if present. */
         to_skip = (::std::mem::size_of::<compressed_block_header>() as u64)
             .wrapping_add(bf_byte_count(&mut safe_rar.last_block_hdr) as u64)
-            .wrapping_add(1 ) as ssize_t;
+            .wrapping_add(1) as ssize_t;
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, to_skip) {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
@@ -3243,23 +3228,21 @@ fn process_block(a: *mut archive_read) -> i32 {
              * the *whole* block (merged from partial blocks
              * stored in multiple archives files). */
         } else {
-            safe_rar.cstate.set_switch_multivolume(0 );
+            safe_rar.cstate.set_switch_multivolume(0);
             /* Read the whole block size into memory. This can take
              * up to  8 megabytes of memory in theoretical cases.
              * Might be worth to optimize this and use a standard
              * chunk of 4kb's. */
-            if read_ahead(a, (4  + cur_block_size) as size_t, &mut p) == 0 {
+            if read_ahead(a, (4 + cur_block_size) as size_t, &mut p) == 0 {
                 /* Failed to prefetch block data. */
                 return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
             }
         }
         safe_rar.cstate.block_buf = p;
         safe_rar.cstate.cur_block_size = cur_block_size;
-        safe_rar
-            .cstate
-            .set_block_parsing_finished(0 );
-        safe_rar.bits.in_addr = 0 ;
-        safe_rar.bits.bit_addr = 0 ;
+        safe_rar.cstate.set_block_parsing_finished(0);
+        safe_rar.bits.in_addr = 0;
+        safe_rar.bits.bit_addr = 0;
         if bf_is_table_present(&mut safe_rar.last_block_hdr) != 0 {
             /* Load Huffman tables. */
             ret = parse_tables(a, rar, p);
@@ -3282,9 +3265,9 @@ fn process_block(a: *mut archive_read) -> i32 {
     if ret != ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
         return ret;
     }
-    if safe_rar.cstate.block_parsing_finished()  != 0
-        && safe_rar.cstate.switch_multivolume()  == 0 
-        && safe_rar.cstate.cur_block_size > 0 
+    if safe_rar.cstate.block_parsing_finished() != 0
+        && safe_rar.cstate.switch_multivolume() == 0
+        && safe_rar.cstate.cur_block_size > 0
     {
         /* If we're processing a normal block, consume the whole
          * block. We can do this because we've already read the whole
@@ -3297,7 +3280,7 @@ fn process_block(a: *mut archive_read) -> i32 {
         /* Don't consume the block if we're doing multivolume
          * processing. The volume switching function will consume
          * the proper count of bytes instead. */
-        safe_rar.cstate.set_switch_multivolume(0 )
+        safe_rar.cstate.set_switch_multivolume(0)
     }
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
@@ -3305,17 +3288,12 @@ fn process_block(a: *mut archive_read) -> i32 {
  *
  * Returns ARCHIVE_OK when those arguments can be used, ARCHIVE_RETRY
  * when there is no data on the stack. */
-fn use_data(
-    rar: *mut rar5,
-    buf: *mut *const (),
-    size: *mut size_t,
-    offset: *mut int64_t,
-) -> i32 {
+fn use_data(rar: *mut rar5, buf: *mut *const (), size: *mut size_t, offset: *mut int64_t) -> i32 {
     let mut i: i32 = 0;
     let safe_buf = unsafe { &mut *buf };
     let safe_size = unsafe { &mut *size };
     let safe_offset = unsafe { &mut *offset };
-    i = 0 ;
+    i = 0;
     while (i as i64)
         < (::std::mem::size_of::<[data_ready; 2]>() as u64)
             .wrapping_div(::std::mem::size_of::<data_ready>() as u64) as ssize_t
@@ -3371,7 +3349,7 @@ fn push_data_ready(
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
-    i = 0 ;
+    i = 0;
     while (i as i64)
         < (::std::mem::size_of::<[data_ready; 2]>() as u64)
             .wrapping_div(::std::mem::size_of::<data_ready>() as u64) as ssize_t
@@ -3460,7 +3438,7 @@ fn do_uncompress_file(mut a: *mut archive_read) -> i32 {
         }
         safe_rar.cstate.set_initialized(1)
     }
-    if safe_rar.cstate.all_filters_applied()  == 1  {
+    if safe_rar.cstate.all_filters_applied() == 1 {
         loop
         /* We use while(1) here, but standard case allows for just 1
          * iteration. The loop will iterate if process_block() didn't
@@ -3490,7 +3468,7 @@ fn do_uncompress_file(mut a: *mut archive_read) -> i32 {
         }
     }
     /* If apply_filters() will return ARCHIVE_OK, we can continue here. */
-    if cdeque_size(&mut safe_rar.cstate.filters) > 0  {
+    if cdeque_size(&mut safe_rar.cstate.filters) > 0 {
         /* Check if we can write something before hitting first
          * filter. */
         let mut flt: *mut filter_info = 0 as *mut filter_info;
@@ -3563,22 +3541,22 @@ fn do_unstore_file(
     let safe_buf = unsafe { &mut *buf };
     let safe_size = unsafe { &mut *size };
     let safe_offset = unsafe { &mut *offset };
-    if safe_rar.file.bytes_remaining == 0 
-        && safe_rar.main.volume() > 0 
-        && safe_rar.generic.split_after()  > 0 
+    if safe_rar.file.bytes_remaining == 0
+        && safe_rar.main.volume() > 0
+        && safe_rar.generic.split_after() > 0
     {
         let mut ret: i32 = 0;
         safe_rar.cstate.set_switch_multivolume(1);
         ret = advance_multivolume(a);
-        safe_rar.cstate.set_switch_multivolume(0 );
+        safe_rar.cstate.set_switch_multivolume(0);
         if ret != ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
             /* Failed to advance to next multivolume archive
              * file. */
             return ret;
         }
     }
-    to_read = if safe_rar.file.bytes_remaining > (64 * 1024 ) as i64 {
-        (64  * 1024 ) 
+    to_read = if safe_rar.file.bytes_remaining > (64 * 1024) as i64 {
+        (64 * 1024)
     } else {
         safe_rar.file.bytes_remaining
     } as size_t;
@@ -3621,23 +3599,17 @@ fn do_unpack(
     offset: *mut int64_t,
 ) -> i32 {
     let safe_rar = unsafe { &mut *rar };
-    if safe_rar.file.service() > 0  {
+    if safe_rar.file.service() > 0 {
         return do_unstore_file(a, rar, buf, size, offset);
     } else {
         match safe_rar.cstate.method as u32 {
             STORE => {
                 return do_unstore_file(a, rar, buf, size, offset);
             }
-            FASTEST => {
-                /* fallthrough */
-            }
-            FAST => {
-            }
-            GOOD => {
-                /* fallthrough */
-            }
-            NORMAL | BEST => {
-            }
+            FASTEST => { /* fallthrough */ }
+            FAST => {}
+            GOOD => { /* fallthrough */ }
+            NORMAL | BEST => {}
             _ => {
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
@@ -3663,7 +3635,7 @@ fn verify_checksums(a: *mut archive_read) -> i32 {
      * data and discarding the result). */
     if safe_rar.skip_mode == 0 {
         /* Always check checksums if we're not in skip mode */
-        verify_crc = 1 
+        verify_crc = 1
     } else {
         /* We can override the logic above with a compile-time option
          * NO_CRC_ON_SOLID_SKIP. This option is used during debugging,
@@ -3676,7 +3648,7 @@ fn verify_checksums(a: *mut archive_read) -> i32 {
                 verify_crc = 1 as i32;
             }
             #[cfg(not(CHECK_CRC_ON_SOLID_SKIP))]
-            _ => verify_crc = 0 ,
+            _ => verify_crc = 0,
         }
     }
     if verify_crc != 0 {
@@ -3685,7 +3657,7 @@ fn verify_checksums(a: *mut archive_read) -> i32 {
          * process is already over and we can check if calculated
          * checksum (CRC32 or BLAKE2sp) is the same as what is stored
          * in the archive. */
-        if safe_rar.file.stored_crc32 > 0  {
+        if safe_rar.file.stored_crc32 > 0 {
             /* Check CRC32 only when the file contains a CRC32
              * value for this file. */
             if safe_rar.file.calculated_crc32 != safe_rar.file.stored_crc32 {
@@ -3707,7 +3679,7 @@ fn verify_checksums(a: *mut archive_read) -> i32 {
                 }
             }
         }
-        if safe_rar.file.has_blake2  > 0  {
+        if safe_rar.file.has_blake2 > 0 {
             /* BLAKE2sp is an optional checksum algorithm that is
              * added to RARv5 archives when using the `-htb` switch
              *  during creation of archive.
@@ -3721,18 +3693,16 @@ fn verify_checksums(a: *mut archive_read) -> i32 {
              * very helpful, as it guards only against improper use.
              * This is why we're explicitly ignoring it. */
             let mut b2_buf: [uint8_t; 32] = [0; 32];
-            unsafe{
-            blake2sp_final_safe(
-                &mut safe_rar.file.b2state,
-                b2_buf.as_mut_ptr(),
-                32 ,
-            );
-        }
-            if unsafe{memcmp_safe(
-                &mut safe_rar.file.blake2sp as *mut [uint8_t; 32] as *const (),
-                b2_buf.as_mut_ptr() as *const (),
-                32 ,
-            )} != 0 
+            unsafe {
+                blake2sp_final_safe(&mut safe_rar.file.b2state, b2_buf.as_mut_ptr(), 32);
+            }
+            if unsafe {
+                memcmp_safe(
+                    &mut safe_rar.file.blake2sp as *mut [uint8_t; 32] as *const (),
+                    b2_buf.as_mut_ptr() as *const (),
+                    32,
+                )
+            } != 0
             {
                 match () {
                     #[cfg(not(DONT_FAIL_ON_CRC_ERROR))]
@@ -3751,7 +3721,7 @@ fn verify_checksums(a: *mut archive_read) -> i32 {
         }
     }
     /* Finalization for this file has been successfully completed. */
-    return 0 ;
+    return 0;
 }
 
 fn verify_global_checksums(mut a: *mut archive_read) -> i32 {
@@ -3764,12 +3734,12 @@ fn verify_global_checksums(mut a: *mut archive_read) -> i32 {
  */
 fn rar5_signature(buf: *mut i8) {
     let mut i: size_t = 0;
-    i = 0 ;
+    i = 0;
     while i < ::std::mem::size_of::<[u8; 8]>() as u64 {
         unsafe {
             *buf.offset(i as isize) = (rar5_signature_xor[i as usize] as i32 ^ 0xa1 as i32) as i8
         };
-        i = i+1
+        i = i + 1
     }
 }
 
@@ -3784,9 +3754,9 @@ fn rar5_read_data(
     let safe_rar = unsafe { &mut *rar };
     let safe_size = unsafe { &mut *size };
     if !size.is_null() {
-        *safe_size = 0 
+        *safe_size = 0
     }
-    if safe_rar.file.dir()  > 0  {
+    if safe_rar.file.dir() > 0 {
         /* Don't process any data if this file entry was declared
          * as a directory. This is needed, because entries marked as
          * directory doesn't have any dictionary buffer allocated, so
@@ -3810,14 +3780,14 @@ fn rar5_read_data(
     if ret == ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
         return ret;
     }
-    if safe_rar.file.eof()  == 1  {
+    if safe_rar.file.eof() == 1 {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
     ret = do_unpack(a, rar, buff, size, offset);
     if ret != ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
         return ret;
     }
-    if safe_rar.file.bytes_remaining == 0 
+    if safe_rar.file.bytes_remaining == 0
         && safe_rar.cstate.last_write_ptr == safe_rar.file.unpacked_size
     {
         /* If all bytes of current file were processed, run
@@ -3843,7 +3813,7 @@ fn rar5_read_data_skip(a: *mut archive_read) -> i32 {
          * needed to be able to extract the selected file. */
         let mut ret: i32 = 0;
         /* Make sure to process all blocks in the compressed stream. */
-        while safe_rar.file.bytes_remaining > 0  {
+        while safe_rar.file.bytes_remaining > 0 {
             /* Setting the "skip mode" will allow us to skip
              * checksum checks during data skipping. Checking the
              * checksum of skipped data isn't really necessary and
@@ -3858,7 +3828,7 @@ fn rar5_read_data_skip(a: *mut archive_read) -> i32 {
             ret = rar5_read_data(a, 0 as *mut *const (), 0 as *mut size_t, 0 as *mut int64_t);
             /* Turn off "skip mode". */
             safe_rar.skip_mode -= 1;
-            if ret < 0  || ret == ARCHIVE_RAR5_DEFINED_PARAM.archive_eof {
+            if ret < 0 || ret == ARCHIVE_RAR5_DEFINED_PARAM.archive_eof {
                 /* Propagate any potential error conditions
                  * to the caller. */
                 return ret;
@@ -3871,16 +3841,12 @@ fn rar5_read_data_skip(a: *mut archive_read) -> i32 {
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, safe_rar.file.bytes_remaining) {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
-        safe_rar.file.bytes_remaining = 0 
+        safe_rar.file.bytes_remaining = 0
     }
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
-fn rar5_seek_data(
-    a: *mut archive_read,
-    offset: int64_t,
-    whence: i32,
-) -> int64_t {
+fn rar5_seek_data(a: *mut archive_read, offset: int64_t, whence: i32) -> int64_t {
     /* We're a streaming unpacker, and we don't support seeking. */
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal as int64_t;
 }
@@ -3888,20 +3854,22 @@ fn rar5_seek_data(
 fn rar5_cleanup(mut a: *mut archive_read) -> i32 {
     let mut rar: *mut rar5 = get_context(a);
     let safe_rar = unsafe { &mut *rar };
-    unsafe{
-    free_safe(safe_rar.cstate.window_buf as *mut ());
-    free_safe(safe_rar.cstate.filtered_buf as *mut ());
-    free_safe(safe_rar.vol.push_buf as *mut ());
+    unsafe {
+        free_safe(safe_rar.cstate.window_buf as *mut ());
+        free_safe(safe_rar.cstate.filtered_buf as *mut ());
+        free_safe(safe_rar.vol.push_buf as *mut ());
     }
     free_filters(rar);
     cdeque_free(&mut safe_rar.cstate.filters);
-    unsafe{free_safe(rar as *mut ());}
+    unsafe {
+        free_safe(rar as *mut ());
+    }
     unsafe { (*(*a).format).data = 0 as *mut () };
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
 }
 
 fn rar5_capabilities(a: *mut archive_read) -> i32 {
-    return 0 ;
+    return 0;
 }
 
 fn rar5_has_encrypted_entries(mut _a: *mut archive_read) -> i32 {
@@ -3911,13 +3879,9 @@ fn rar5_has_encrypted_entries(mut _a: *mut archive_read) -> i32 {
 
 fn rar5_init(rar: *mut rar5) -> i32 {
     let safe_rar = unsafe { &mut *rar };
-    unsafe{
-    memset_safe(
-        rar as *mut (),
-        0 ,
-        ::std::mem::size_of::<rar5>() as u64,
-    );
-}
+    unsafe {
+        memset_safe(rar as *mut (), 0, ::std::mem::size_of::<rar5>() as u64);
+    }
     if CDE_OK as i32 != cdeque_init(&mut safe_rar.cstate.filters, 8192 as i32) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -3933,7 +3897,7 @@ pub fn archive_read_support_format_rar5(mut _a: *mut archive) -> i32 {
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != ret {
         return ret;
     }
-    rar = unsafe{malloc_safe(::std::mem::size_of::<rar5>() as u64) as *mut rar5};
+    rar = unsafe { malloc_safe(::std::mem::size_of::<rar5>() as u64) as *mut rar5 };
     if rar.is_null() {
         archive_set_error_safe!(
             &mut (*ar).archive as *mut archive,
@@ -3948,31 +3912,35 @@ pub fn archive_read_support_format_rar5(mut _a: *mut archive) -> i32 {
             ARCHIVE_RAR5_DEFINED_PARAM.enomem,
             b"Can\'t allocate rar5 filter buffer\x00" as *const u8 as *const i8
         );
-        unsafe{free_safe(rar as *mut ())};
+        unsafe { free_safe(rar as *mut ()) };
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
-    ret =unsafe{__archive_read_register_format_safe(
-        ar,
-        rar as *mut (),
-        b"rar5\x00" as *const u8 as *const i8,
-        Some(rar5_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
-        Some(rar5_options as unsafe fn(_: *mut archive_read, _: *const i8, _: *const i8) -> i32),
-        Some(rar5_read_header as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32),
-        Some(
-            rar5_read_data
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *mut *const (),
-                    _: *mut size_t,
-                    _: *mut int64_t,
-                ) -> i32,
-        ),
-        Some(rar5_read_data_skip as unsafe fn(_: *mut archive_read) -> i32),
-        Some(rar5_seek_data as unsafe fn(_: *mut archive_read, _: int64_t, _: i32) -> int64_t),
-        Some(rar5_cleanup as unsafe fn(_: *mut archive_read) -> i32),
-        Some(rar5_capabilities as unsafe fn(_: *mut archive_read) -> i32),
-        Some(rar5_has_encrypted_entries as unsafe fn(_: *mut archive_read) -> i32),
-    )};
+    ret = unsafe {
+        __archive_read_register_format_safe(
+            ar,
+            rar as *mut (),
+            b"rar5\x00" as *const u8 as *const i8,
+            Some(rar5_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
+            Some(
+                rar5_options as unsafe fn(_: *mut archive_read, _: *const i8, _: *const i8) -> i32,
+            ),
+            Some(rar5_read_header as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32),
+            Some(
+                rar5_read_data
+                    as unsafe fn(
+                        _: *mut archive_read,
+                        _: *mut *const (),
+                        _: *mut size_t,
+                        _: *mut int64_t,
+                    ) -> i32,
+            ),
+            Some(rar5_read_data_skip as unsafe fn(_: *mut archive_read) -> i32),
+            Some(rar5_seek_data as unsafe fn(_: *mut archive_read, _: int64_t, _: i32) -> int64_t),
+            Some(rar5_cleanup as unsafe fn(_: *mut archive_read) -> i32),
+            Some(rar5_capabilities as unsafe fn(_: *mut archive_read) -> i32),
+            Some(rar5_has_encrypted_entries as unsafe fn(_: *mut archive_read) -> i32),
+        )
+    };
     if ret != ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {
         rar5_cleanup(ar);
     }
@@ -4011,29 +3979,28 @@ pub fn archive_test_rar5_read_data(
     let mut rar5: *mut rar5 = 0 as *mut rar5;
     rar5 =
         unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
-    unsafe{
+    unsafe {
         if flag as i32 != 0 as i32 {
-        (*rar5).skip_mode = 0;
-        (*rar5).cstate.last_write_ptr = 1;
-        (*rar5).file.unpacked_size = 0;
-    };
-    (*(*a).format).data = rar5 as *mut ();
-}
+            (*rar5).skip_mode = 0;
+            (*rar5).cstate.last_write_ptr = 1;
+            (*rar5).file.unpacked_size = 0;
+        };
+        (*(*a).format).data = rar5 as *mut ();
+    }
     return rar5_read_data(a, buff, size, offset);
 }
 
 #[no_mangle]
 pub fn archive_test_do_unpack(
     _a: *mut archive,
-     buff: *mut *const (),
+    buff: *mut *const (),
     size: *mut size_t,
     offset: *mut int64_t,
 ) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar5: *mut rar5 = 0 as *mut rar5;
-    rar5 =
-        unsafe { calloc_safe(1 , ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
-    unsafe{(*rar5).cstate.method = 6};
+    rar5 = unsafe { calloc_safe(1, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
+    unsafe { (*rar5).cstate.method = 6 };
     return do_unpack(a, rar5, buff, size, offset);
 }
 
@@ -4046,7 +4013,7 @@ pub fn archive_test_run_filter(mut _a: *mut archive, mut flag: i32) -> i32 {
     let mut flt: *mut filter_info = 0 as *mut filter_info;
     flt = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<filter_info>() as u64) }
         as *mut filter_info;
-    unsafe{(*(*a).format).data = rar5 as *mut ()};
+    unsafe { (*(*a).format).data = rar5 as *mut () };
     return run_filter(a, flt);
 }
 
@@ -4061,12 +4028,12 @@ pub fn archive_test_push_data(
     let mut rar5: *mut rar5 = 0 as *mut rar5;
     rar5 =
         unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
-    unsafe{
-    (*rar5).cstate.window_mask = 1;
-    (*rar5).cstate.solid_offset = 0;
-    (*rar5).cstate.last_write_ptr = 0;
-    (*rar5).cstate.solid_offset = 0;
-    (*rar5).cstate.window_size = 1;
+    unsafe {
+        (*rar5).cstate.window_mask = 1;
+        (*rar5).cstate.solid_offset = 0;
+        (*rar5).cstate.last_write_ptr = 0;
+        (*rar5).cstate.solid_offset = 0;
+        (*rar5).cstate.window_size = 1;
     }
     return push_data(a, rar5, buf, idx_begin, idx_end);
 }
@@ -4099,7 +4066,7 @@ pub fn archive_test_parse_htime_item(
             ::std::mem::size_of::<archive_read_filter>() as u64,
         )
     } as *mut archive_read_filter;
-    unsafe{(*archive_read_filter).fatal = 'a' as i8};
+    unsafe { (*archive_read_filter).fatal = 'a' as i8 };
     return parse_htime_item(a, unix_time, where_0, extra_data_size);
 }
 
@@ -4108,7 +4075,7 @@ pub fn archive_test_init_unpack() {
     let mut rar5: *mut rar5 = 0 as *mut rar5;
     rar5 =
         unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
-    unsafe{(*rar5).cstate.window_size = 0};
+    unsafe { (*rar5).cstate.window_size = 0 };
     init_unpack(rar5);
 }
 
@@ -4124,7 +4091,7 @@ pub fn archive_test_do_unstore_file(
     let mut rar5: *mut rar5 = 0 as *mut rar5;
     rar5 =
         unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
-    unsafe{(*rar5).file.bytes_remaining = bytes_remaining as ssize_t};
+    unsafe { (*rar5).file.bytes_remaining = bytes_remaining as ssize_t };
     return do_unstore_file(a, rar5, buf, size, offset);
 }
 
@@ -4139,9 +4106,9 @@ pub fn archive_test_merge_block(
     let mut rar5: *mut rar5 = 0 as *mut rar5;
     rar5 =
         unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
-    unsafe{
-    (*rar5).merge_mode = merge_mode;
-    (*(*a).format).data = rar5 as *mut ();
+    unsafe {
+        (*rar5).merge_mode = merge_mode;
+        (*(*a).format).data = rar5 as *mut ();
     }
     return merge_block(a, block_size, p);
 }
@@ -4152,7 +4119,7 @@ pub fn archive_test_parse_tables(mut _a: *mut archive, mut p: *const uint8_t) ->
     let mut rar5: *mut rar5 = 0 as *mut rar5;
     rar5 =
         unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
-    unsafe{(*rar5).cstate.cur_block_size = 0};
+    unsafe { (*rar5).cstate.cur_block_size = 0 };
     return parse_tables(a, rar5, p);
 }
 
@@ -4170,6 +4137,6 @@ pub fn archive_test_parse_block_header(
             ::std::mem::size_of::<compressed_block_header>() as u64,
         )
     } as *mut compressed_block_header;
-    unsafe{(*hdr).block_flags_u8 = 56};
+    unsafe { (*hdr).block_flags_u8 = 56 };
     return parse_block_header(a, p, block_size, hdr);
 }
