@@ -907,7 +907,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
         /* Make sure we have no converter. */
         safe_sc.nconverter = 0
     };
-} 
+}
 /*
 * Return canonicalized charset-name but this supports just UTF-8, UTF-16BE
 * and CP932 which are referenced in create_sconv_object().
