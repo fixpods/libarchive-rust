@@ -21,7 +21,7 @@ pub extern "C" fn archive_read_support_format_by_code(a: *mut archive, format_co
             a,
             ARCHIVE_BY_CODE_DEFINED_PARAM.archive_read_magic,
             ARCHIVE_BY_CODE_DEFINED_PARAM.archive_state_new,
-            b"archive_read_support_format_by_code\x00" as *const u8 as *const i8,
+            b"archive_read_support_format_by_code\x00" as *const u8,
         )
     };
     if magic_test == -30 {
@@ -62,7 +62,7 @@ pub extern "C" fn archive_read_support_format_by_code(a: *mut archive, format_co
     archive_set_error_safe!(
         a,
         ARCHIVE_BY_CODE_DEFINED_PARAM.archive_errno_programmer,
-        b"Invalid format code specified\x00" as *const u8 as *const i8
+        b"Invalid format code specified\x00" as *const u8
     );
     return ARCHIVE_BY_CODE_DEFINED_PARAM.archive_fatal;
 }

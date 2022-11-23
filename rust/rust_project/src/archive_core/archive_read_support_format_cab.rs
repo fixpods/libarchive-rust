@@ -41,11 +41,11 @@ pub struct cab {
     pub cab_offset: int64_t,
     pub cfheader: cfheader,
     pub ws: archive_wstring,
-    pub found_header: i8,
-    pub end_of_archive: i8,
-    pub end_of_entry: i8,
-    pub end_of_entry_cleanup: i8,
-    pub read_data_invoked: i8,
+    pub found_header: u8,
+    pub end_of_archive: u8,
+    pub end_of_entry: u8,
+    pub end_of_entry_cleanup: u8,
+    pub read_data_invoked: u8,
     pub bytes_skipped: int64_t,
     pub uncompressed_buffer: *mut u8,
     pub uncompressed_buffer_size: size_t,
@@ -53,11 +53,11 @@ pub struct cab {
     pub sconv: *mut archive_string_conv,
     pub sconv_default: *mut archive_string_conv,
     pub sconv_utf8: *mut archive_string_conv,
-    pub format_name: [i8; 64],
+    pub format_name: [u8; 64],
     pub xstrm: lzx_stream,
     #[cfg(HAVE_ZLIB_H)]
     pub stream: z_stream,
-    pub stream_valid: i8,
+    pub stream_valid: u8,
 }
 
 #[derive(Copy, Clone)]
@@ -83,8 +83,8 @@ pub struct lzx_dec {
     pub copy_pos: i32,
     pub copy_len: i32,
     pub translation_size: uint32_t,
-    pub translation: i8,
-    pub block_type: i8,
+    pub translation: u8,
+    pub block_type: u8,
     pub block_size: size_t,
     pub block_bytes_avail: size_t,
     pub r0: i32,
@@ -122,7 +122,7 @@ pub struct lzx_br {
     pub cache_buffer: uint64_t,
     pub cache_avail: i32,
     pub odd: u8,
-    pub have_odd: i8,
+    pub have_odd: u8,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -166,10 +166,10 @@ pub struct cffolder {
     pub cfdata_count: uint16_t,
     pub comptype: uint16_t,
     pub compdata: uint16_t,
-    pub compname: *const i8,
+    pub compname: *const u8,
     pub cfdata: cfdata,
     pub cfdata_index: i32,
-    pub decompress_init: i8,
+    pub decompress_init: u8,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -199,7 +199,7 @@ pub struct z_stream_s {
     pub next_out: *mut Bytef,
     pub avail_out: uInt,
     pub total_out: uLong,
-    pub msg: *mut i8,
+    pub msg: *mut u8,
     pub state: *mut internal_state,
     pub zalloc: alloc_func,
     pub zfree: free_func,
@@ -218,11 +218,11 @@ static mut slots: [i32; 11] = [
     30 as i32, 32 as i32, 34 as i32, 36 as i32, 38 as i32, 42 as i32, 50 as i32, 66 as i32,
     98 as i32, 162 as i32, 290 as i32,
 ];
-static mut compression_name: [*const i8; 4] = [
-    b"NONE\x00" as *const u8 as *const i8,
-    b"MSZIP\x00" as *const u8 as *const i8,
-    b"Quantum\x00" as *const u8 as *const i8,
-    b"LZX\x00" as *const u8 as *const i8,
+static mut compression_name: [*const u8; 4] = [
+    b"NONE\x00" as *const u8,
+    b"MSZIP\x00" as *const u8,
+    b"Quantum\x00" as *const u8,
+    b"LZX\x00" as *const u8,
 ];
 #[no_mangle]
 pub unsafe extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -> i32 {
@@ -233,7 +233,7 @@ pub unsafe extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -
         _a,
         0xdeb0c5 as u32,
         1 as u32,
-        b"archive_read_support_format_cab\x00" as *const u8 as *const i8,
+        b"archive_read_support_format_cab\x00" as *const u8,
     );
     if magic_test == -(30 as i32) {
         return -(30 as i32);
@@ -244,7 +244,7 @@ pub unsafe extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
             ARCHIVE_CAB_DEFINED_PARAM.enomem,
-            b"Can\'t allocate CAB data\x00" as *const u8 as *const i8
+            b"Can\'t allocate CAB data\x00" as *const u8
         );
         return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
     }
@@ -256,7 +256,7 @@ pub unsafe extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -
     r = __archive_read_register_format_safe(
         a,
         cab as *mut (),
-        b"cab\x00" as *const u8 as *const i8,
+        b"cab\x00" as *const u8,
         Some(archive_read_format_cab_bid),
         Some(archive_read_format_cab_options),
         Some(archive_read_format_cab_read_header),
@@ -272,7 +272,7 @@ pub unsafe extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -
     }
     return ARCHIVE_CAB_DEFINED_PARAM.archive_ok;
 }
-unsafe fn find_cab_magic(mut p: *const i8) -> i32 {
+unsafe fn find_cab_magic(mut p: *const u8) -> i32 {
     match unsafe { *p.offset(4 as i32 as isize) as i32 } {
         0 => {
             /*
@@ -284,7 +284,7 @@ unsafe fn find_cab_magic(mut p: *const i8) -> i32 {
              */
             if memcmp_safe(
                 p as *const (),
-                b"MSCF\x00\x00\x00\x00\x00" as *const u8 as *const i8 as *const (),
+                b"MSCF\x00\x00\x00\x00\x00" as *const u8 as *const (),
                 8 as i32 as u64,
             ) == 0 as i32
             {
@@ -300,7 +300,7 @@ unsafe fn find_cab_magic(mut p: *const i8) -> i32 {
     };
 }
 unsafe fn archive_read_format_cab_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
-    let mut p: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
     let mut bytes_avail: ssize_t = 0;
     let mut offset: ssize_t = 0;
     let mut window: ssize_t = 0;
@@ -309,13 +309,13 @@ unsafe fn archive_read_format_cab_bid(mut a: *mut archive_read, mut best_bid: i3
     if best_bid > 64 as i32 {
         return -(1 as i32);
     }
-    p = __archive_read_ahead_safe(a, 8 as i32 as size_t, 0 as *mut ssize_t) as *const i8;
+    p = __archive_read_ahead_safe(a, 8 as i32 as size_t, 0 as *mut ssize_t) as *const u8;
     if p.is_null() {
         return -(1 as i32);
     }
     if memcmp_safe(
         p as *const (),
-        b"MSCF\x00\x00\x00\x00\x00" as *const u8 as *const i8 as *const (),
+        b"MSCF\x00\x00\x00\x00\x00" as *const u8 as *const (),
         8 as i32 as u64,
     ) == 0 as i32
     {
@@ -333,9 +333,9 @@ unsafe fn archive_read_format_cab_bid(mut a: *mut archive_read, mut best_bid: i3
         offset = 0 as i32 as ssize_t;
         window = 4096 as i32 as ssize_t;
         while offset < (1024 as i32 * 128 as i32) as i64 {
-            let mut h: *const i8 =
+            let mut h: *const u8 =
                 __archive_read_ahead_safe(a, (offset + window) as size_t, &mut bytes_avail)
-                    as *const i8;
+                    as *const u8;
             if h.is_null() {
                 /* Remaining bytes are less than window. */
                 window >>= 1 as i32;
@@ -360,8 +360,8 @@ unsafe fn archive_read_format_cab_bid(mut a: *mut archive_read, mut best_bid: i3
 }
 unsafe fn archive_read_format_cab_options(
     mut a: *mut archive_read,
-    mut key: *const i8,
-    mut val: *const i8,
+    mut key: *const u8,
+    mut val: *const u8,
 ) -> i32 {
     let mut cab: *mut cab = 0 as *mut cab;
     let mut ret: i32 = -(25 as i32);
@@ -372,12 +372,12 @@ unsafe fn archive_read_format_cab_options(
         a_safe = &mut *a;
         cab_safe = &mut *cab;
     }
-    if strcmp_safe(key, b"hdrcharset\x00" as *const u8 as *const i8) == 0 as i32 {
+    if strcmp_safe(key, b"hdrcharset\x00" as *const u8) == 0 as i32 {
         if unsafe { val.is_null() || *val.offset(0 as i32 as isize) as i32 == 0 as i32 } {
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.archive_errno_misc,
-                b"cab: hdrcharset option needs a character-set name\x00" as *const u8 as *const i8
+                b"cab: hdrcharset option needs a character-set name\x00" as *const u8
             );
         } else {
             cab_safe.sconv =
@@ -396,15 +396,15 @@ unsafe fn archive_read_format_cab_options(
     return ARCHIVE_CAB_DEFINED_PARAM.archive_warn;
 }
 unsafe fn cab_skip_sfx(mut a: *mut archive_read) -> i32 {
-    let mut p: *const i8 = 0 as *const i8;
-    let mut q: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
+    let mut q: *const u8 = 0 as *const u8;
     let mut skip: size_t = 0;
     let mut bytes: ssize_t = 0;
     let mut window: ssize_t = 0;
     window = 4096 as i32 as ssize_t;
     loop {
-        let mut h: *const i8 =
-            __archive_read_ahead_safe(a, window as size_t, &mut bytes) as *const i8;
+        let mut h: *const u8 =
+            __archive_read_ahead_safe(a, window as size_t, &mut bytes) as *const u8;
         if h.is_null() {
             /* Remaining size are less than window. */
             window >>= 1 as i32;
@@ -413,7 +413,7 @@ unsafe fn cab_skip_sfx(mut a: *mut archive_read) -> i32 {
                 archive_set_error_safe!(
                     &mut a_safe.archive as *mut archive,
                     ARCHIVE_CAB_DEFINED_PARAM.archive_errno_file_format,
-                    b"Couldn\'t find out CAB header\x00" as *const u8 as *const i8
+                    b"Couldn\'t find out CAB header\x00" as *const u8
                 );
                 return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
             }
@@ -444,7 +444,7 @@ unsafe fn truncated_error(mut a: *mut archive_read) -> i32 {
     archive_set_error_safe!(
         &mut a_safe.archive as *mut archive,
         ARCHIVE_CAB_DEFINED_PARAM.archive_errno_file_format,
-        b"Truncated CAB header\x00" as *const u8 as *const i8
+        b"Truncated CAB header\x00" as *const u8
     );
     return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
 }
@@ -491,7 +491,7 @@ unsafe fn cab_convert_path_separator_1(mut fn_0: *mut archive_string, mut attr: 
             if mb != 0 {
                 break;
             }
-            unsafe { *(*fn_0).s.offset(i as isize) = '/' as i32 as i8 };
+            unsafe { *(*fn_0).s.offset(i as isize) = '/' as i32 as u8 };
             mb = 0 as i32
         } else if unsafe {
             *(*fn_0).s.offset(i as isize) as i32 & 0x80 as i32 != 0
@@ -560,7 +560,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
     let a_safe = unsafe { &mut *a };
     a_safe.archive.archive_format = ARCHIVE_CAB_DEFINED_PARAM.archive_format_cab;
     if a_safe.archive.archive_format_name.is_null() {
-        a_safe.archive.archive_format_name = b"CAB\x00" as *const u8 as *const i8
+        a_safe.archive.archive_format_name = b"CAB\x00" as *const u8
     }
     p = __archive_read_ahead_safe(a, 42 as i32 as size_t, 0 as *mut ssize_t) as *const u8;
     if p.is_null() {
@@ -602,7 +602,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
             84 as i32,
-            b"Couldn\'t find out CAB header\x00" as *const u8 as *const i8
+            b"Couldn\'t find out CAB header\x00" as *const u8
         );
         return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
     }
@@ -837,10 +837,10 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
 
                                                 /* Get a compression name. */
                                                 if ((*folder).comptype as u64)
-                                                    < (::std::mem::size_of::<[*const i8; 4]>()
+                                                    < (::std::mem::size_of::<[*const u8; 4]>()
                                                         as u64)
                                                         .wrapping_div(
-                                                            ::std::mem::size_of::<*const i8>()
+                                                            ::std::mem::size_of::<*const u8>()
                                                                 as u64,
                                                         )
                                                 {
@@ -849,8 +849,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                                             [(*folder).comptype as usize]
                                                     }
                                                 } else {
-                                                    (*folder).compname =
-                                                        b"UNKNOWN\x00" as *const u8 as *const i8
+                                                    (*folder).compname = b"UNKNOWN\x00" as *const u8
                                                 } /* abReserve */
                                             }
                                             p = unsafe { p.offset(8 as i32 as isize) };
@@ -880,7 +879,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                             offset32 = folder_safe.cfdata_offset_in_cab;
                                             /* Set a request to initialize zlib for the CFDATA of
                                              * this folder. */
-                                            folder_safe.decompress_init = 0 as i32 as i8;
+                                            folder_safe.decompress_init = 0 as i32 as u8;
                                             i += 1
                                         }
                                         match current_block {
@@ -904,7 +903,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                                             .archive_errno_misc,
                                                         b"Invalid offset of CFFILE %jd < %jd\x00"
                                                             as *const u8
-                                                            as *const i8,
+                                                            as *const u8,
                                                         (*hd).files_offset as intmax_t,
                                                         (*cab).cab_offset
                                                     );
@@ -1015,7 +1014,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                                         }
                                                         /* Copy a pathname.  */
                                                         let file_safe = unsafe { &mut *file };
-                                                        file_safe.pathname.s = 0 as *mut i8;
+                                                        file_safe.pathname.s = 0 as *mut u8;
                                                         file_safe.pathname.length =
                                                             0 as i32 as size_t;
                                                         file_safe.pathname.buffer_length =
@@ -1166,7 +1165,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                                                                       as
                                                                                       *const u8
                                                                                       as
-                                                                                      *const i8);
+                                                                                      *const u8);
                                                                 return ARCHIVE_CAB_DEFINED_PARAM
                                                                     .archive_warn;
                                                             }
@@ -1185,7 +1184,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                                 ARCHIVE_CAB_DEFINED_PARAM.enomem,
                                                 b"Can\'t allocate memory for CAB data\x00"
                                                     as *const u8
-                                                    as *const i8
+                                                    as *const u8
                                             );
                                             return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
                                         }
@@ -1201,7 +1200,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
     archive_set_error_safe!(
         &mut a_safe.archive as *mut archive,
         ARCHIVE_CAB_DEFINED_PARAM.archive_errno_file_format,
-        b"Invalid CAB header\x00" as *const u8 as *const i8
+        b"Invalid CAB header\x00" as *const u8
     );
     return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
 }
@@ -1224,19 +1223,19 @@ unsafe fn archive_read_format_cab_read_header(
             return err;
         }
         /* We've found the header. */
-        cab_safe.found_header = 1 as i32 as i8
+        cab_safe.found_header = 1 as i32 as u8
     }
     hd = &mut cab_safe.cfheader;
     let hd_safe = unsafe { &mut *hd };
     if hd_safe.file_index >= hd_safe.file_count as i32 {
-        cab_safe.end_of_archive = 1 as i32 as i8;
+        cab_safe.end_of_archive = 1 as i32 as u8;
         return ARCHIVE_CAB_DEFINED_PARAM.archive_eof;
     }
     let fresh0 = hd_safe.file_index;
     hd_safe.file_index = hd_safe.file_index + 1;
     file = unsafe { &mut *(*hd).file_array.offset(fresh0 as isize) as *mut cffile };
-    cab_safe.end_of_entry = 0 as i32 as i8;
-    cab_safe.end_of_entry_cleanup = 0 as i32 as i8;
+    cab_safe.end_of_entry = 0 as i32 as u8;
+    cab_safe.end_of_entry_cleanup = 0 as i32 as u8;
     cab_safe.entry_compressed_bytes_read = 0 as i32 as int64_t;
     cab_safe.entry_uncompressed_bytes_read = 0 as i32 as int64_t;
     cab_safe.entry_unconsumed = 0 as i32 as int64_t;
@@ -1276,7 +1275,7 @@ unsafe fn archive_read_format_cab_read_header(
         if cab_safe.sconv_utf8.is_null() {
             cab_safe.sconv_utf8 = archive_string_conversion_from_charset_safe(
                 &mut a_safe.archive,
-                b"UTF-8\x00" as *const u8 as *const i8,
+                b"UTF-8\x00" as *const u8,
                 1 as i32,
             );
             if cab_safe.sconv_utf8.is_null() {
@@ -1311,7 +1310,7 @@ unsafe fn archive_read_format_cab_read_header(
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.enomem,
-                b"Can\'t allocate memory for Pathname\x00" as *const u8 as *const i8
+                b"Can\'t allocate memory for Pathname\x00" as *const u8
             );
             return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
         }
@@ -1319,7 +1318,7 @@ unsafe fn archive_read_format_cab_read_header(
             &mut (*a).archive as *mut archive,
             ARCHIVE_CAB_DEFINED_PARAM.archive_errno_file_format,
             b"Pathname cannot be converted from %s to current locale.\x00" as *const u8
-                as *const i8,
+                as *const u8,
             archive_string_conversion_charset_name(sconv)
         );
         err = ARCHIVE_CAB_DEFINED_PARAM.archive_warn
@@ -1345,14 +1344,14 @@ unsafe fn archive_read_format_cab_read_header(
     cab_safe.entry_offset = 0 as i32 as int64_t;
     /* We don't need compress data. */
     if file_safe.uncompressed_size == 0 as i32 as u32 {
-        cab_safe.end_of_entry = 1 as i32 as i8;
+        cab_safe.end_of_entry = 1 as i32 as u8;
         cab_safe.end_of_entry_cleanup = cab_safe.end_of_entry
     }
     /* Set up a more descriptive format name. */
     unsafe {
         sprintf(
             (*cab).format_name.as_mut_ptr(),
-            b"CAB %d.%d (%s)\x00" as *const u8 as *const i8,
+            b"CAB %d.%d (%s)\x00" as *const u8,
             (*hd).major as i32,
             (*hd).minor as i32,
             (*(*cab).entry_cffolder).compname,
@@ -1388,7 +1387,7 @@ unsafe fn archive_read_format_cab_read_data(
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.archive_errno_file_format,
-                b"Cannot restore this file split in multivolume.\x00" as *const u8 as *const i8
+                b"Cannot restore this file split in multivolume.\x00" as *const u8
             );
             return ARCHIVE_CAB_DEFINED_PARAM.archive_failed;
         }
@@ -1408,7 +1407,7 @@ unsafe fn archive_read_format_cab_read_data(
             }
             cab_safe.bytes_skipped = 0 as i32 as int64_t
         }
-        cab_safe.read_data_invoked = 1 as i32 as i8
+        cab_safe.read_data_invoked = 1 as i32 as u8
     }
     if cab_safe.entry_unconsumed != 0 {
         /* Consume as much as the compressor actually used. */
@@ -1421,7 +1420,7 @@ unsafe fn archive_read_format_cab_read_data(
     if cab_safe.end_of_archive as i32 != 0 || cab_safe.end_of_entry as i32 != 0 {
         if cab_safe.end_of_entry_cleanup == 0 {
             /* End-of-entry cleanup done. */
-            cab_safe.end_of_entry_cleanup = 1 as i32 as i8
+            cab_safe.end_of_entry_cleanup = 1 as i32 as u8
         }
         *offset_safe = cab_safe.entry_offset;
         *size_safe = 0 as i32 as size_t;
@@ -1593,7 +1592,7 @@ unsafe fn cab_checksum_finish(mut a: *mut archive_read) -> i32 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_CAB_DEFINED_PARAM.archive_errno_file_format,
-            b"Checksum error CFDATA[%d] %x:%x in %d bytes\x00" as *const u8 as *const i8,
+            b"Checksum error CFDATA[%d] %x:%x in %d bytes\x00" as *const u8,
             (*(*cab).entry_cffolder).cfdata_index - 1 as i32,
             (*cfdata).sum,
             (*cfdata).sum_calculated,
@@ -1633,7 +1632,7 @@ unsafe fn cab_next_cfdata(mut a: *mut archive_read) -> i32 {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.archive_errno_misc,
-                b"Invalid offset of CFDATA in folder(%d) %jd < %jd\x00" as *const u8 as *const i8,
+                b"Invalid offset of CFDATA in folder(%d) %jd < %jd\x00" as *const u8,
                 folder_index,
                 (*(*cab).entry_cffolder).cfdata_offset_in_cab as intmax_t,
                 (*cab).cab_offset
@@ -1734,7 +1733,7 @@ unsafe fn cab_next_cfdata(mut a: *mut archive_read) -> i32 {
                                     &mut a_safe.archive as *mut archive,
                                     ARCHIVE_CAB_DEFINED_PARAM.enomem,
                                     b"Can\'t allocate memory for CAB data\x00" as *const u8
-                                        as *const i8
+                                        as *const u8
                                 );
                                 return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
                             }
@@ -1755,7 +1754,7 @@ unsafe fn cab_next_cfdata(mut a: *mut archive_read) -> i32 {
                 archive_set_error_safe!(
                     &mut a_safe.archive as *mut archive,
                     ARCHIVE_CAB_DEFINED_PARAM.archive_errno_file_format,
-                    b"Invalid CFDATA\x00" as *const u8 as *const i8
+                    b"Invalid CFDATA\x00" as *const u8
                 );
                 return ARCHIVE_CAB_DEFINED_PARAM.archive_fatal;
             }
@@ -1800,7 +1799,7 @@ unsafe fn cab_read_ahead_cfdata(mut a: *mut archive_read, mut avail: *mut ssize_
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.archive_errno_file_format,
-                b"Unsupported CAB compression : %s\x00" as *const u8 as *const i8,
+                b"Unsupported CAB compression : %s\x00" as *const u8,
                 cab_cffolder_safe.compname
             );
             *avail_safe = ARCHIVE_CAB_DEFINED_PARAM.archive_failed as ssize_t;
@@ -1856,7 +1855,7 @@ unsafe fn cab_read_ahead_cfdata_deflate(
     archive_set_error_safe!(
         &mut a_safe.archive as *mut archive,
         ARCHIVE_CAB_DEFINED_PARAM.archive_errno_misc,
-        b"libarchive compiled without deflate support (no libz)\x00" as *const u8 as *const i8
+        b"libarchive compiled without deflate support (no libz)\x00" as *const u8
     );
     return 0 as *const ();
 }
@@ -1875,7 +1874,7 @@ unsafe fn cab_read_ahead_cfdata_deflate(
     let mut r: i32 = 0;
     let mut mszip: i32 = 0;
     let mut uavail: uint16_t = 0;
-    let mut eod: i8 = 0 as i32 as i8;
+    let mut eod: u8 = 0 as i32 as u8;
     let cab_safe = unsafe { &mut *cab };
     cfdata = cab_safe.entry_cfdata;
     /* If the buffer hasn't been allocated, allocate it now. */
@@ -1888,7 +1887,7 @@ unsafe fn cab_read_ahead_cfdata_deflate(
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.enomem,
-                b"No memory for CAB reader\x00" as *const u8 as *const i8
+                b"No memory for CAB reader\x00" as *const u8
             );
             *avail_safe = ARCHIVE_CAB_DEFINED_PARAM.archive_fatal as ssize_t;
             return 0 as *const ();
@@ -1920,7 +1919,7 @@ unsafe fn cab_read_ahead_cfdata_deflate(
             r = inflateInit2__safe(
                 &mut cab_safe.stream,
                 -(15 as i32),
-                b"1.2.3\x00" as *const u8 as *const i8,
+                b"1.2.3\x00" as *const u8,
                 ::std::mem::size_of::<z_stream>() as u64 as i32,
             )
         }
@@ -1929,22 +1928,22 @@ unsafe fn cab_read_ahead_cfdata_deflate(
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.archive_errno_misc,
-                b"Can\'t initialize deflate decompression.\x00" as *const u8 as *const i8
+                b"Can\'t initialize deflate decompression.\x00" as *const u8
             );
             *avail_safe = ARCHIVE_CAB_DEFINED_PARAM.archive_fatal as ssize_t;
             return 0 as *const ();
         }
         /* Stream structure has been set up. */
-        cab_safe.stream_valid = 1 as i32 as i8;
+        cab_safe.stream_valid = 1 as i32 as u8;
         /* We've initialized decompression for this stream. */
-        cab_cffolder_safe.decompress_init = 1 as i32 as i8
+        cab_cffolder_safe.decompress_init = 1 as i32 as u8
     }
     if cfdata_safe.compressed_bytes_remaining as i32 == cfdata_safe.compressed_size as i32 {
         mszip = 2 as i32
     } else {
         mszip = 0 as i32
     }
-    eod = 0 as i32 as i8;
+    eod = 0 as i32 as u8;
     cab_safe.stream.total_out = uavail as uLong;
     loop
     /*
@@ -2044,7 +2043,7 @@ unsafe fn cab_read_ahead_cfdata_deflate(
         r = inflate_cab_safe(&mut cab_safe.stream, 0 as i32);
         match r {
             0 => {}
-            1 => eod = 1 as i32 as i8,
+            1 => eod = 1 as i32 as u8,
             _ => {
                 current_block = 12144037074258575129;
                 break;
@@ -2064,7 +2063,7 @@ unsafe fn cab_read_ahead_cfdata_deflate(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     -(1 as i32),
-                    b"Invalid uncompressed size (%d < %d)\x00" as *const u8 as *const i8,
+                    b"Invalid uncompressed size (%d < %d)\x00" as *const u8,
                     uavail as i32,
                     (*cfdata).uncompressed_size as i32
                 );
@@ -2140,7 +2139,7 @@ unsafe fn cab_read_ahead_cfdata_deflate(
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.archive_errno_misc,
-                b"CFDATA incorrect(no MSZIP signature)\x00" as *const u8 as *const i8
+                b"CFDATA incorrect(no MSZIP signature)\x00" as *const u8
             );
             *avail_safe = ARCHIVE_CAB_DEFINED_PARAM.archive_fatal as ssize_t;
             return 0 as *const ();
@@ -2152,14 +2151,14 @@ unsafe fn cab_read_ahead_cfdata_deflate(
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.enomem,
-                b"Out of memory for deflate decompression\x00" as *const u8 as *const i8
+                b"Out of memory for deflate decompression\x00" as *const u8
             );
         }
         _ => {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.archive_errno_misc,
-                b"Deflate decompression failed (%d)\x00" as *const u8 as *const i8,
+                b"Deflate decompression failed (%d)\x00" as *const u8,
                 r
             );
         }
@@ -2189,7 +2188,7 @@ unsafe fn cab_read_ahead_cfdata_lzx(
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 12 as i32,
-                b"No memory for CAB reader\x00" as *const u8 as *const i8
+                b"No memory for CAB reader\x00" as *const u8
             );
             *avail_safe = -(30 as i32) as ssize_t;
             return 0 as *const ();
@@ -2213,13 +2212,13 @@ unsafe fn cab_read_ahead_cfdata_lzx(
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 -(1 as i32),
-                b"Can\'t initialize LZX decompression.\x00" as *const u8 as *const i8
+                b"Can\'t initialize LZX decompression.\x00" as *const u8
             );
             *avail_safe = -(30 as i32) as ssize_t;
             return 0 as *const ();
         }
         /* We've initialized decompression for this stream. */
-        cab_cffolder_safe.decompress_init = 1 as i32 as i8
+        cab_cffolder_safe.decompress_init = 1 as i32 as u8
     }
     /* Clean up remaining bits of previous CFDATA. */
     lzx_cleanup_bitstream(&mut cab_safe.xstrm);
@@ -2237,7 +2236,7 @@ unsafe fn cab_read_ahead_cfdata_lzx(
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 84 as i32,
-                b"Truncated CAB file data\x00" as *const u8 as *const i8
+                b"Truncated CAB file data\x00" as *const u8
             );
             *avail_safe = -(30 as i32) as ssize_t;
             return 0 as *const ();
@@ -2258,7 +2257,7 @@ unsafe fn cab_read_ahead_cfdata_lzx(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     -(1 as i32),
-                    b"LZX decompression failed (%d)\x00" as *const u8 as *const i8,
+                    b"LZX decompression failed (%d)\x00" as *const u8,
                     r
                 );
                 *avail_safe = -(30 as i32) as ssize_t;
@@ -2343,7 +2342,7 @@ unsafe fn cab_consume_cfdata(mut a: *mut archive_read, mut consumed_bytes: int64
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 84 as i32,
-                b"Invalid CFDATA\x00" as *const u8 as *const i8
+                b"Invalid CFDATA\x00" as *const u8
             );
             return -(30 as i32) as int64_t;
         }
@@ -2505,7 +2504,7 @@ unsafe fn cab_read_data(
         *buff_safe = 0 as *const ();
         *size_safe = 0 as i32 as size_t;
         *offset_safe = cab_safe.entry_offset;
-        cab_safe.end_of_entry = 1 as i32 as i8;
+        cab_safe.end_of_entry = 1 as i32 as u8;
         return 0 as i32;
     }
     *buff_safe = cab_read_ahead_cfdata(a, &mut bytes_avail);
@@ -2520,7 +2519,7 @@ unsafe fn cab_read_data(
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 84 as i32,
-                b"Invalid CFDATA\x00" as *const u8 as *const i8
+                b"Invalid CFDATA\x00" as *const u8
             );
             return -(30 as i32);
         } else {
@@ -2535,7 +2534,7 @@ unsafe fn cab_read_data(
     cab_safe.entry_offset += bytes_avail;
     cab_safe.entry_bytes_remaining -= bytes_avail;
     if cab_safe.entry_bytes_remaining == 0 as i32 as i64 {
-        cab_safe.end_of_entry = 1 as i32 as i8
+        cab_safe.end_of_entry = 1 as i32 as u8
     }
     cab_safe.entry_unconsumed = bytes_avail;
     if unsafe { (*(*cab).entry_cffolder).comptype as i32 == 0 as i32 } {
@@ -2559,7 +2558,7 @@ unsafe fn archive_read_format_cab_read_data_skip(mut a: *mut archive_read) -> i3
         cab_safe.bytes_skipped += cab_safe.entry_bytes_remaining;
         cab_safe.entry_bytes_remaining = 0 as i32 as int64_t;
         /* This entry is finished and done. */
-        cab_safe.end_of_entry = 1 as i32 as i8;
+        cab_safe.end_of_entry = 1 as i32 as u8;
         cab_safe.end_of_entry_cleanup = cab_safe.end_of_entry;
         return 0 as i32;
     }
@@ -2596,7 +2595,7 @@ unsafe fn archive_read_format_cab_read_data_skip(mut a: *mut archive_read) -> i3
         }
     }
     /* This entry is finished and done. */
-    cab_safe.end_of_entry = 1 as i32 as i8;
+    cab_safe.end_of_entry = 1 as i32 as u8;
     cab_safe.end_of_entry_cleanup = cab_safe.end_of_entry;
     return 0 as i32;
 }
@@ -2659,7 +2658,7 @@ unsafe fn cab_dos_time(mut p: *const u8) -> time_t {
         tm_yday: 0,
         tm_isdst: 0,
         tm_gmtoff: 0,
-        tm_zone: 0 as *const i8,
+        tm_zone: 0 as *const u8,
     }; /* Day of month.     */
     msDate = archive_le16dec(p as *const ()) as i32;
     msTime = unsafe { archive_le16dec(p.offset(2 as i32 as isize) as *const ()) as i32 };
@@ -2985,7 +2984,7 @@ unsafe fn lzx_br_fillup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) -> i32 {
                     (*br).odd = *fresh5;
                 }
                 strm_safe.avail_in -= 1;
-                br_safe.have_odd = 1 as i32 as i8
+                br_safe.have_odd = 1 as i32 as u8
             }
             return 0 as i32;
         }
@@ -3012,13 +3011,13 @@ unsafe fn lzx_br_fixup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) {
         strm_safe.next_in = unsafe { strm_safe.next_in.offset(1) };
         strm_safe.avail_in -= 1;
         br_safe.cache_avail += 16 as i32;
-        br_safe.have_odd = 0 as i32 as i8
+        br_safe.have_odd = 0 as i32 as u8
     };
 }
 unsafe fn lzx_cleanup_bitstream(mut strm: *mut lzx_stream) {
     let strm_ds_safe = unsafe { &mut (*(*strm).ds) };
     strm_ds_safe.br.cache_avail = 0 as i32;
-    strm_ds_safe.br.have_odd = 0 as i32 as i8;
+    strm_ds_safe.br.have_odd = 0 as i32 as u8;
 }
 unsafe fn lzx_decode(mut strm: *mut lzx_stream, mut last: i32) -> i32 {
     let strm_safe = unsafe { &mut *strm };
@@ -3077,7 +3076,7 @@ unsafe fn lzx_read_blocks(mut strm: *mut lzx_stream, mut last: i32) -> i32 {
                 } else {
                     ds_safe.translation = unsafe {
                         ((br_safe.cache_buffer >> br_safe.cache_avail - 1 as i32) as uint32_t
-                            & cache_masks[1 as i32 as usize]) as i8
+                            & cache_masks[1 as i32 as usize]) as u8
                     };
                     br_safe.cache_avail -= 1 as i32
                 }
@@ -3243,7 +3242,7 @@ unsafe fn lzx_read_blocks(mut strm: *mut lzx_stream, mut last: i32) -> i32 {
                 } else {
                     ds_safe.block_type = unsafe {
                         ((br_safe.cache_buffer >> br_safe.cache_avail - 3 as i32) as uint32_t
-                            & cache_masks[3 as i32 as usize]) as i8
+                            & cache_masks[3 as i32 as usize]) as u8
                     };
                     br_safe.cache_avail -= 3 as i32;
                     /* Check a block type. */
@@ -3412,7 +3411,7 @@ unsafe fn lzx_read_blocks(mut strm: *mut lzx_stream, mut last: i32) -> i32 {
                         let fresh6 = ds_safe.rbytes_avail;
                         ds_safe.rbytes_avail = ds_safe.rbytes_avail + 1;
                         ds_safe.rbytes[fresh6 as usize] = ds_safe.br.odd;
-                        ds_safe.br.have_odd = 0 as i32 as i8
+                        ds_safe.br.have_odd = 0 as i32 as u8
                     }
                     while ds_safe.rbytes_avail < 4 as i32 {
                         if strm_safe.avail_in <= 0 as i32 as i64 {
@@ -3648,7 +3647,7 @@ unsafe fn lzx_decode_blocks(mut strm: *mut lzx_stream, mut last: i32) -> i32 {
     let mut r1: i32 = ds_safe.r1;
     let mut r2: i32 = ds_safe.r2;
     let mut state: i32 = ds_safe.state;
-    let mut block_type: i8 = ds_safe.block_type;
+    let mut block_type: u8 = ds_safe.block_type;
     's_73: loop {
         match state {
             18 => {
@@ -4403,7 +4402,7 @@ pub unsafe fn archive_test_cab_skip_sfx(mut _a: *mut archive) {
             ::std::mem::size_of::<archive_read_filter>() as u64,
         )
     } as *mut archive_read_filter;
-    (*archive_read_filter).fatal = 'a' as i8;
+    (*archive_read_filter).fatal = 'a' as u8;
     (*a).filter = archive_read_filter as *mut archive_read_filter;
     cab_skip_sfx(a);
 }
@@ -4417,7 +4416,7 @@ pub unsafe fn archive_test_lzx_br_fixup() {
     lzx_br = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzx_br>() as u64) }
         as *mut lzx_br;
     (*lzx_stream).avail_in = 1 as int64_t;
-    (*lzx_br).have_odd = '1' as i8;
+    (*lzx_br).have_odd = '1' as u8;
     (*lzx_br).cache_avail = 1 as i32;
     lzx_br_fixup(lzx_stream, lzx_br);
 }
@@ -4487,7 +4486,7 @@ pub unsafe fn archive_test_lzx_read_blocks() {
     lzx_read_blocks(strm, 1);
     (*lzx_dec).br.cache_avail = 15 as i32;
     (*lzx_dec).rbytes_avail = 2 as i32;
-    (*lzx_dec).br.have_odd = 'a' as i8;
+    (*lzx_dec).br.have_odd = 'a' as u8;
     (*strm).ds = lzx_dec as *mut lzx_dec;
     lzx_read_blocks(strm, 1);
     (*lzx_dec).state = ARCHIVE_CAB_DEFINED_PARAM.st_rd_r0;
@@ -4531,11 +4530,7 @@ pub unsafe fn archive_test_archive_read_format_cab_options(mut _a: *mut archive)
     let mut cab: *mut cab = 0 as *mut cab;
     cab = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cab>() as u64) } as *mut cab;
     (*(*a).format).data = cab as *mut ();
-    archive_read_format_cab_options(
-        a,
-        b"hdrcharset\x00" as *const u8 as *const i8,
-        b"h\x00" as *const u8 as *const i8,
-    );
+    archive_read_format_cab_options(a, b"hdrcharset\x00" as *const u8, b"h\x00" as *const u8);
 }
 
 #[no_mangle]
@@ -4641,7 +4636,7 @@ pub unsafe fn archive_test_cab_checksum_update(mut _a: *mut archive) {
     (*cffolder).cfdata_count = 1;
     (*cab).entry_cffolder = cffolder;
     cab_next_cfdata(a);
-    let mut p: *mut i8 = b"hdrcharset\x00" as *const u8 as *mut i8;
+    let mut p: *mut u8 = b"hdrcharset\x00" as *const u8 as *mut u8;
     (*cfdata).sum_ptr = p as *mut ();
     (*cfdata).sum_extra_avail = 3;
     cab_checksum_update(a, 4);
@@ -4685,7 +4680,7 @@ pub unsafe fn archive_test_cab_read_ahead_cfdata_none(mut _a: *mut archive) {
             ::std::mem::size_of::<archive_read_filter>() as u64,
         )
     } as *mut archive_read_filter;
-    (*archive_read_filter).fatal = 'a' as i8;
+    (*archive_read_filter).fatal = 'a' as u8;
     (*a).filter = archive_read_filter as *mut archive_read_filter;
     let mut availp: ssize_t = 1;
     let mut avail: *mut ssize_t = &availp as *const ssize_t as *mut ssize_t;

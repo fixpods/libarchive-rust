@@ -19,7 +19,7 @@ pub extern "C" fn archive_read_support_format_all(a: *mut archive) -> i32 {
             a,
             ARCHIVE_ALL_DEFINED_PARAM.archive_read_magic,
             ARCHIVE_ALL_DEFINED_PARAM.archive_state_new,
-            b"archive_read_support_format_all\x00" as *const u8 as *const i8,
+            b"archive_read_support_format_all\x00" as *const u8,
         )
     };
     if magic_test == -30 {

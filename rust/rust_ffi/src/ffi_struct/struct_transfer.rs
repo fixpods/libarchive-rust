@@ -16,7 +16,7 @@ pub type archive_switch_callback =
     unsafe extern "C" fn(_: *mut archive, _: *mut (), _: *mut ()) -> i32;
 
 pub type archive_passphrase_callback =
-    unsafe extern "C" fn(_: *mut archive, _: *mut ()) -> *const i8;
+    unsafe extern "C" fn(_: *mut archive, _: *mut ()) -> *const u8;
 
 pub type archive_write_callback =
     unsafe extern "C" fn(_: *mut archive, _: *mut (), _: *const (), _: size_t) -> la_ssize_t;
@@ -29,29 +29,29 @@ pub struct archive {
     pub state: u32,
     pub vtable: *mut archive_vtable,
     pub archive_format: i32,
-    pub archive_format_name: *const i8,
+    pub archive_format_name: *const u8,
     pub compression_code: i32,
-    pub compression_name: *const i8,
+    pub compression_name: *const u8,
     pub file_count: i32,
     pub archive_error_number: i32,
-    pub error: *const i8,
+    pub error: *const u8,
     pub error_string: archive_string,
-    pub current_code: *mut i8,
+    pub current_code: *mut u8,
     pub current_codepage: u32,
     pub current_oemcp: u32,
     pub sconv: *mut archive_string_conv,
-    pub read_data_block: *const i8,
+    pub read_data_block: *const u8,
     pub read_data_offset: int64_t,
     pub read_data_output_offset: int64_t,
     pub read_data_remaining: size_t,
-    pub read_data_is_posix_read: i8,
+    pub read_data_is_posix_read: u8,
     pub read_data_requested: size_t,
 }
 
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive_string {
-    pub s: *mut i8,
+    pub s: *mut u8,
     pub length: size_t,
     pub buffer_length: size_t,
 }
@@ -84,7 +84,7 @@ pub struct archive_vtable {
     pub archive_filter_count: Option<unsafe extern "C" fn(_: *mut archive) -> i32>,
     pub archive_filter_bytes: Option<unsafe extern "C" fn(_: *mut archive, _: i32) -> int64_t>,
     pub archive_filter_code: Option<unsafe extern "C" fn(_: *mut archive, _: i32) -> i32>,
-    pub archive_filter_name: Option<unsafe extern "C" fn(_: *mut archive, _: i32) -> *const i8>,
+    pub archive_filter_name: Option<unsafe extern "C" fn(_: *mut archive, _: i32) -> *const u8>,
 }
 
 #[derive(Copy, Clone)]
@@ -122,7 +122,7 @@ pub struct archive_passphrases {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive_read_passphrase {
-    pub passphrase: *mut i8,
+    pub passphrase: *mut u8,
     pub next: *mut archive_read_passphrase,
 }
 
@@ -138,10 +138,10 @@ pub struct archive_read_extract {
 #[repr(C)]
 pub struct archive_format_descriptor {
     pub data: *mut (),
-    pub name: *const i8,
+    pub name: *const u8,
     pub bid: Option<unsafe extern "C" fn(_: *mut archive_read, _: i32) -> i32>,
     pub options:
-        Option<unsafe extern "C" fn(_: *mut archive_read, _: *const i8, _: *const i8) -> i32>,
+        Option<unsafe extern "C" fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32>,
     pub read_header:
         Option<unsafe extern "C" fn(_: *mut archive_read, _: *mut archive_entry) -> i32>,
     pub read_data: Option<
@@ -178,26 +178,26 @@ pub struct archive_read_filter {
     pub read_header:
         Option<unsafe extern "C" fn(_: *mut archive_read_filter, _: *mut archive_entry) -> i32>,
     pub data: *mut (),
-    pub name: *const i8,
+    pub name: *const u8,
     pub code: i32,
-    pub buffer: *mut i8,
+    pub buffer: *mut u8,
     pub buffer_size: size_t,
-    pub next: *mut i8,
+    pub next: *mut u8,
     pub avail: size_t,
     pub client_buff: *const (),
     pub client_total: size_t,
-    pub client_next: *const i8,
+    pub client_next: *const u8,
     pub client_avail: size_t,
-    pub end_of_file: i8,
-    pub closed: i8,
-    pub fatal: i8,
+    pub end_of_file: u8,
+    pub closed: u8,
+    pub fatal: u8,
 }
 
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive_read_filter_bidder {
     pub data: *mut (),
-    pub name: *const i8,
+    pub name: *const u8,
     pub bid: Option<
         unsafe extern "C" fn(
             _: *mut archive_read_filter_bidder,
@@ -206,7 +206,7 @@ pub struct archive_read_filter_bidder {
     >,
     pub init: Option<unsafe extern "C" fn(_: *mut archive_read_filter) -> i32>,
     pub options: Option<
-        unsafe extern "C" fn(_: *mut archive_read_filter_bidder, _: *const i8, _: *const i8) -> i32,
+        unsafe extern "C" fn(_: *mut archive_read_filter_bidder, _: *const u8, _: *const u8) -> i32,
     >,
     pub free: Option<unsafe extern "C" fn(_: *mut archive_read_filter_bidder) -> i32>,
 }
@@ -238,8 +238,8 @@ pub struct archive_read_data_node {
 #[repr(C)]
 pub struct archive_string_conv {
     pub next: *mut archive_string_conv,
-    pub from_charset: *mut i8,
-    pub to_charset: *mut i8,
+    pub from_charset: *mut u8,
+    pub to_charset: *mut u8,
     pub from_cp: u32,
     pub to_cp: u32,
     pub same: i32,
@@ -275,7 +275,7 @@ pub struct archive_entry {
     pub ae_symlink: archive_mstring,
     pub ae_uname: archive_mstring,
     pub ae_sourcepath: archive_mstring,
-    pub encryption: i8,
+    pub encryption: u8,
     pub mac_metadata: *mut (),
     pub mac_metadata_size: size_t,
     pub digest: ae_digest,
@@ -285,7 +285,7 @@ pub struct archive_entry {
     pub sparse_head: *mut ae_sparse,
     pub sparse_tail: *mut ae_sparse,
     pub sparse_p: *mut ae_sparse,
-    pub strmode: [i8; 12],
+    pub strmode: [u8; 12],
     pub ae_symlink_type: i32,
 }
 
@@ -293,7 +293,7 @@ pub struct archive_entry {
 #[repr(C)]
 pub struct ae_xattr {
     pub next: *mut ae_xattr,
-    pub name: *mut i8,
+    pub name: *mut u8,
     pub value: *mut (),
     pub size: size_t,
 }
@@ -306,7 +306,7 @@ pub struct archive_acl {
     pub acl_p: *mut archive_acl_entry,
     pub acl_state: i32,
     pub acl_text_w: *mut wchar_t,
-    pub acl_text: *mut i8,
+    pub acl_text: *mut u8,
     pub acl_types: i32,
 }
 
@@ -397,7 +397,7 @@ pub struct tm {
     pub tm_yday: i32,
     pub tm_isdst: i32,
     pub tm_gmtoff: i64,
-    pub tm_zone: *const i8,
+    pub tm_zone: *const u8,
 }
 
 #[derive(Copy, Clone)]
@@ -405,21 +405,21 @@ pub struct tm {
 pub struct rar {
     pub main_flags: u32,
     pub file_crc: u64,
-    pub reserved1: [i8; 2],
-    pub reserved2: [i8; 4],
-    pub encryptver: i8,
-    pub compression_method: i8,
+    pub reserved1: [u8; 2],
+    pub reserved2: [u8; 4],
+    pub encryptver: u8,
+    pub compression_method: u8,
     pub file_flags: u32,
     pub packed_size: int64_t,
     pub unp_size: int64_t,
     pub mtime: time_t,
     pub mnsec: i64,
     pub mode: mode_t,
-    pub filename: *mut i8,
-    pub filename_save: *mut i8,
+    pub filename: *mut u8,
+    pub filename_save: *mut u8,
     pub filename_save_size: size_t,
     pub filename_allocated: size_t,
-    pub salt: [i8; 8],
+    pub salt: [u8; 8],
     pub atime: time_t,
     pub ansec: i64,
     pub ctime: time_t,
@@ -432,37 +432,37 @@ pub struct rar {
     pub offset: int64_t,
     pub offset_outgoing: int64_t,
     pub offset_seek: int64_t,
-    pub valid: i8,
+    pub valid: u8,
     pub unp_offset: u32,
     pub unp_buffer_size: u32,
     pub unp_buffer: *mut u8,
     pub dictionary_size: u32,
-    pub start_new_block: i8,
-    pub entry_eof: i8,
+    pub start_new_block: u8,
+    pub entry_eof: u8,
     pub crc_calculated: u64,
     pub found_first_header: i32,
-    pub has_endarc_header: i8,
+    pub has_endarc_header: u8,
     pub dbo: *mut data_block_offsets,
     pub cursor: u32,
     pub nodes: u32,
-    pub filename_must_match: i8,
+    pub filename_must_match: u8,
     pub maincode: huffman_code,
     pub offsetcode: huffman_code,
     pub lowoffsetcode: huffman_code,
     pub lengthcode: huffman_code,
     pub lengthtable: [u8; 404],
     pub lzss: lzss,
-    pub output_last_match: i8,
+    pub output_last_match: u8,
     pub lastlength: u32,
     pub lastoffset: u32,
     pub oldoffset: [u32; 4],
     pub lastlowoffset: u32,
     pub numlowoffsetrepeats: u32,
     pub filterstart: int64_t,
-    pub start_new_table: i8,
-    pub ppmd_valid: i8,
-    pub ppmd_eod: i8,
-    pub is_ppmd_block: i8,
+    pub start_new_table: u8,
+    pub ppmd_valid: u8,
+    pub ppmd_eod: u8,
+    pub is_ppmd_block: u8,
     pub ppmd_escape: i32,
     pub ppmd7_context: CPpmd7,
     pub range_dec: CPpmd7z_RangeDec,
@@ -659,25 +659,25 @@ pub struct IByteOut {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct rar_file_header {
-    pub pack_size: [i8; 4],
-    pub unp_size: [i8; 4],
-    pub host_os: i8,
-    pub file_crc: [i8; 4],
-    pub file_time: [i8; 4],
-    pub unp_ver: i8,
-    pub method: i8,
-    pub name_size: [i8; 2],
-    pub file_attr: [i8; 4],
+    pub pack_size: [u8; 4],
+    pub unp_size: [u8; 4],
+    pub host_os: u8,
+    pub file_crc: [u8; 4],
+    pub file_time: [u8; 4],
+    pub unp_ver: u8,
+    pub method: u8,
+    pub name_size: [u8; 2],
+    pub file_attr: [u8; 4],
 }
 
 /* Fields common to all headers */
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct rar_header {
-    pub crc: [i8; 2],
-    pub type_0: i8,
-    pub flags: [i8; 2],
-    pub size: [i8; 2],
+    pub crc: [u8; 2],
+    pub type_0: u8,
+    pub flags: [u8; 2],
+    pub size: [u8; 2],
 }
 
 #[derive(Copy, Clone)]
@@ -699,10 +699,10 @@ pub struct archive_write {
     pub filter_first: *mut archive_write_filter,
     pub filter_last: *mut archive_write_filter,
     pub format_data: *mut (),
-    pub format_name: *const i8,
+    pub format_name: *const u8,
     pub format_init: Option<unsafe extern "C" fn(_: *mut archive_write) -> i32>,
     pub format_options:
-        Option<unsafe extern "C" fn(_: *mut archive_write, _: *const i8, _: *const i8) -> i32>,
+        Option<unsafe extern "C" fn(_: *mut archive_write, _: *const u8, _: *const u8) -> i32>,
     pub format_finish_entry: Option<unsafe extern "C" fn(_: *mut archive_write) -> i32>,
     pub format_write_header:
         Option<unsafe extern "C" fn(_: *mut archive_write, _: *mut archive_entry) -> i32>,
@@ -710,7 +710,7 @@ pub struct archive_write {
         Option<unsafe extern "C" fn(_: *mut archive_write, _: *const (), _: size_t) -> ssize_t>,
     pub format_close: Option<unsafe extern "C" fn(_: *mut archive_write) -> i32>,
     pub format_free: Option<unsafe extern "C" fn(_: *mut archive_write) -> i32>,
-    pub passphrase: *mut i8,
+    pub passphrase: *mut u8,
     pub passphrase_callback: Option<archive_passphrase_callback>,
     pub passphrase_client_data: *mut (),
 }
@@ -720,7 +720,7 @@ pub struct archive_write_filter {
     pub archive: *mut archive,
     pub next_filter: *mut archive_write_filter,
     pub options: Option<
-        unsafe extern "C" fn(_: *mut archive_write_filter, _: *const i8, _: *const i8) -> i32,
+        unsafe extern "C" fn(_: *mut archive_write_filter, _: *const u8, _: *const u8) -> i32,
     >,
     pub open: Option<unsafe extern "C" fn(_: *mut archive_write_filter) -> i32>,
     pub write:
@@ -728,7 +728,7 @@ pub struct archive_write_filter {
     pub close: Option<unsafe extern "C" fn(_: *mut archive_write_filter) -> i32>,
     pub free: Option<unsafe extern "C" fn(_: *mut archive_write_filter) -> i32>,
     pub data: *mut (),
-    pub name: *const i8,
+    pub name: *const u8,
     pub code: i32,
     pub bytes_per_block: i32,
     pub bytes_in_last_block: i32,
@@ -800,7 +800,7 @@ pub struct file_header {
     pub calculated_crc32: uint32_t,
     pub blake2sp: [uint8_t; 32],
     pub b2state: blake2sp_state,
-    pub has_blake2: i8,
+    pub has_blake2: u8,
     pub redir_type: uint64_t,
     pub redir_flags: uint64_t,
     pub solid_window_size: ssize_t,
@@ -867,7 +867,7 @@ pub struct comp_state {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct data_ready {
-    pub used: i8,
+    pub used: u8,
     pub buf: *const uint8_t,
     pub size: size_t,
     pub offset: int64_t,
@@ -939,14 +939,14 @@ pub struct __mbstate_t {
 #[repr(C)]
 pub union archive_string_shift_state {
     pub __wch: u32,
-    pub __wchb: [i8; 4],
+    pub __wchb: [u8; 4],
 }
 
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct nfsv4_acl_perm_map_struct {
     pub perm: i32,
-    pub c: i8,
+    pub c: u8,
     pub wc: wchar_t,
 }
 
@@ -954,7 +954,7 @@ pub struct nfsv4_acl_perm_map_struct {
 #[repr(C)]
 pub struct nfsv4_acl_flag_map_struct {
     pub perm: i32,
-    pub c: i8,
+    pub c: u8,
     pub wc: wchar_t,
 }
 #[derive(Copy, Clone)]
@@ -966,8 +966,8 @@ pub struct archive_string_temporary_field_1 {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive_string_temporary_field_2 {
-    pub start: *const i8,
-    pub end: *const i8,
+    pub start: *const u8,
+    pub end: *const u8,
 }
 
 #[derive(Copy, Clone)]
@@ -998,9 +998,9 @@ pub struct ar {
     pub entry_bytes_unconsumed: size_t,
     pub entry_offset: int64_t,
     pub entry_padding: int64_t,
-    pub strtab: *mut i8,
+    pub strtab: *mut u8,
     pub strtab_size: size_t,
-    pub read_global_header: i8,
+    pub read_global_header: u8,
 }
 
 #[derive(Copy, Clone)]
@@ -1017,14 +1017,14 @@ pub struct warc_s {
 #[repr(C)]
 pub struct warc_strbuf_t {
     pub len: size_t,
-    pub str_0: *mut i8,
+    pub str_0: *mut u8,
 }
 
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct warc_string_t {
     pub len: size_t,
-    pub str_0: *const i8,
+    pub str_0: *const u8,
 }
 
 #[repr(C)]
@@ -1053,7 +1053,7 @@ pub struct z_stream_s {
     pub next_out: *mut Bytef,
     pub avail_out: uInt,
     pub total_out: uLong,
-    pub msg: *mut i8,
+    pub msg: *mut u8,
     pub state: *mut internal_state,
     pub zalloc: alloc_func,
     pub zfree: free_func,
@@ -1203,15 +1203,15 @@ pub struct xmlattr_list {
 #[repr(C)]
 pub struct xmlattr {
     pub next: *mut xmlattr,
-    pub name: *mut i8,
-    pub value: *mut i8,
+    pub name: *mut u8,
+    pub value: *mut u8,
 }
 pub type xmlTextReader = _xmlTextReader;
 pub type xmlTextReaderPtr = *mut xmlTextReader;
 pub type xmlTextReaderLocatorPtr = *mut ();
 
 pub type xmlTextReaderErrorFunc = Option<
-    unsafe fn(_: *mut (), _: *const i8, _: xmlParserSeverities, _: xmlTextReaderLocatorPtr) -> (),
+    unsafe fn(_: *mut (), _: *const u8, _: xmlParserSeverities, _: xmlTextReaderLocatorPtr) -> (),
 >;
 
 #[derive(Copy, Clone)]
@@ -1242,7 +1242,7 @@ pub struct tar {
     pub sparse_numbytes: int64_t,
     pub sparse_gnu_major: i32,
     pub sparse_gnu_minor: i32,
-    pub sparse_gnu_pending: i8,
+    pub sparse_gnu_pending: u8,
     pub localname: archive_string,
     pub opt_sconv: *mut archive_string_conv,
     pub sconv: *mut archive_string_conv,
@@ -1273,48 +1273,48 @@ pub struct sparse_block {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive_entry_header_ustar {
-    pub name: [i8; 100],
-    pub mode: [i8; 8],
-    pub uid: [i8; 8],
-    pub gid: [i8; 8],
-    pub size: [i8; 12],
-    pub mtime: [i8; 12],
-    pub checksum: [i8; 8],
-    pub typeflag: [i8; 1],
-    pub linkname: [i8; 100],
-    pub magic: [i8; 6],
-    pub version: [i8; 2],
-    pub uname: [i8; 32],
-    pub gname: [i8; 32],
-    pub rdevmajor: [i8; 8],
-    pub rdevminor: [i8; 8],
-    pub prefix: [i8; 155],
+    pub name: [u8; 100],
+    pub mode: [u8; 8],
+    pub uid: [u8; 8],
+    pub gid: [u8; 8],
+    pub size: [u8; 12],
+    pub mtime: [u8; 12],
+    pub checksum: [u8; 8],
+    pub typeflag: [u8; 1],
+    pub linkname: [u8; 100],
+    pub magic: [u8; 6],
+    pub version: [u8; 2],
+    pub uname: [u8; 32],
+    pub gname: [u8; 32],
+    pub rdevmajor: [u8; 8],
+    pub rdevminor: [u8; 8],
+    pub prefix: [u8; 155],
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct archive_entry_header_gnutar {
-    pub name: [i8; 100],
-    pub mode: [i8; 8],
-    pub uid: [i8; 8],
-    pub gid: [i8; 8],
-    pub size: [i8; 12],
-    pub mtime: [i8; 12],
-    pub checksum: [i8; 8],
-    pub typeflag: [i8; 1],
-    pub linkname: [i8; 100],
-    pub magic: [i8; 8],
-    pub uname: [i8; 32],
-    pub gname: [i8; 32],
-    pub rdevmajor: [i8; 8],
-    pub rdevminor: [i8; 8],
-    pub atime: [i8; 12],
-    pub ctime: [i8; 12],
-    pub offset: [i8; 12],
-    pub longnames: [i8; 4],
-    pub unused: [i8; 1],
+    pub name: [u8; 100],
+    pub mode: [u8; 8],
+    pub uid: [u8; 8],
+    pub gid: [u8; 8],
+    pub size: [u8; 12],
+    pub mtime: [u8; 12],
+    pub checksum: [u8; 8],
+    pub typeflag: [u8; 1],
+    pub linkname: [u8; 100],
+    pub magic: [u8; 8],
+    pub uname: [u8; 32],
+    pub gname: [u8; 32],
+    pub rdevmajor: [u8; 8],
+    pub rdevminor: [u8; 8],
+    pub atime: [u8; 12],
+    pub ctime: [u8; 12],
+    pub offset: [u8; 12],
+    pub longnames: [u8; 4],
+    pub unused: [u8; 1],
     pub sparse: [gnu_sparse; 4],
-    pub isextended: [i8; 1],
-    pub realsize: [i8; 12],
+    pub isextended: [u8; 1],
+    pub realsize: [u8; 12],
 }
 /*
  * Structure of GNU tar header
@@ -1322,15 +1322,15 @@ pub struct archive_entry_header_gnutar {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct gnu_sparse {
-    pub offset: [i8; 12],
-    pub numbytes: [i8; 12],
+    pub offset: [u8; 12],
+    pub numbytes: [u8; 12],
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct extended {
     pub sparse: [gnu_sparse; 21],
-    pub isextended: [i8; 1],
-    pub padding: [i8; 7],
+    pub isextended: [u8; 1],
+    pub padding: [u8; 7],
 }
 
 #[derive(Copy, Clone)]
@@ -1362,16 +1362,16 @@ pub struct archive_rb_tree {
     pub rbt_ops: *const archive_rb_tree_ops,
 }
 
-pub type pack_t = unsafe extern "C" fn(_: i32, _: *mut u64, _: *mut *const i8) -> dev_t;
+pub type pack_t = unsafe extern "C" fn(_: i32, _: *mut u64, _: *mut *const u8) -> dev_t;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct bz_stream {
-    pub next_in: *mut i8,
+    pub next_in: *mut u8,
     pub avail_in: u32,
     pub total_in_lo32: u32,
     pub total_in_hi32: u32,
-    pub next_out: *mut i8,
+    pub next_out: *mut u8,
     pub avail_out: u32,
     pub total_out_lo32: u32,
     pub total_out_hi32: u32,
@@ -1440,7 +1440,7 @@ pub struct IPpmd8 {
 pub struct archive_cryptor {
     pub pbkdf2sha1: Option<
         unsafe extern "C" fn(
-            _: *const i8,
+            _: *const u8,
             _: size_t,
             _: *const uint8_t,
             _: size_t,

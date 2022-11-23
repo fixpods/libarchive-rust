@@ -22,7 +22,7 @@ pub struct _7zip {
     pub entry_offset: int64_t,
     pub entry_bytes_remaining: uint64_t,
     pub entry_crc32: u64,
-    pub end_of_entry: i8,
+    pub end_of_entry: u8,
     pub uncompressed_buffer: *mut u8,
     pub uncompressed_buffer_pointer: *mut u8,
     pub uncompressed_buffer_size: size_t,
@@ -74,7 +74,7 @@ pub struct _7zip {
     pub bcj2_code: uint32_t,
     pub bcj2_outPos: uint64_t,
     pub sconv: *mut archive_string_conv,
-    pub format_name: [i8; 64],
+    pub format_name: [u8; 64],
     pub has_encrypted_entries: i32,
 }
 
@@ -215,7 +215,7 @@ pub unsafe fn archive_read_support_format_7zip(mut _a: *mut archive) -> i32 {
         _a,
         0xdeb0c5 as u32,
         1 as u32,
-        b"archive_read_support_format_7zip\x00" as *const u8 as *const i8,
+        b"archive_read_support_format_7zip\x00" as *const u8,
     );
     if magic_test == -(30 as i32) {
         return -(30 as i32);
@@ -229,7 +229,7 @@ pub unsafe fn archive_read_support_format_7zip(mut _a: *mut archive) -> i32 {
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
                 12 as i32,
-                b"Can\'t allocate 7zip data\x00" as *const u8 as *const i8,
+                b"Can\'t allocate 7zip data\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -242,7 +242,7 @@ pub unsafe fn archive_read_support_format_7zip(mut _a: *mut archive) -> i32 {
     r = __archive_read_register_format_safe(
         a,
         zip as *mut (),
-        b"7zip\x00" as *const u8 as *const i8,
+        b"7zip\x00" as *const u8,
         Some(archive_read_format_7zip_bid),
         None,
         Some(archive_read_format_7zip_read_header),
@@ -277,13 +277,13 @@ unsafe fn archive_read_format_7zip_has_encrypted_entries(mut _a: *mut archive_re
     return -(1 as i32);
 }
 unsafe fn archive_read_format_7zip_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
-    let mut p: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
     /* If someone has already bid more than 32, then avoid
     trashing the look-ahead buffers with a seek. */
     if best_bid > 32 as i32 {
         return -(1 as i32);
     }
-    p = __archive_read_ahead_safe(a, 6 as i32 as size_t, 0 as *mut ssize_t) as *const i8;
+    p = __archive_read_ahead_safe(a, 6 as i32 as size_t, 0 as *mut ssize_t) as *const u8;
     if p.is_null() {
         return 0 as i32;
     }
@@ -291,7 +291,7 @@ unsafe fn archive_read_format_7zip_bid(mut a: *mut archive_read, mut best_bid: i
      * return the bid right now. */
     if memcmp_safe(
         p as *const (),
-        b"7z\xbc\xaf\'\x1c\x00" as *const u8 as *const i8 as *const (),
+        b"7z\xbc\xaf\'\x1c\x00" as *const u8 as *const (),
         6 as i32 as u64,
     ) == 0 as i32
     {
@@ -310,7 +310,7 @@ unsafe fn archive_read_format_7zip_bid(mut a: *mut archive_read, mut best_bid: i
             && *p.offset(1 as i32 as isize) as i32 == 'Z' as i32
             || memcmp_safe(
                 p as *const (),
-                b"\x7fELF\x00" as *const u8 as *const i8 as *const (),
+                b"\x7fELF\x00" as *const u8 as *const (),
                 4 as i32 as u64,
             ) == 0 as i32
     } {
@@ -318,9 +318,9 @@ unsafe fn archive_read_format_7zip_bid(mut a: *mut archive_read, mut best_bid: i
         let mut window: ssize_t = 4096 as i32 as ssize_t;
         let mut bytes_avail: ssize_t = 0;
         while offset + window <= 0x60000 as i32 as i64 {
-            let mut buff: *const i8 =
+            let mut buff: *const u8 =
                 __archive_read_ahead_safe(a, (offset + window) as size_t, &mut bytes_avail)
-                    as *const i8;
+                    as *const u8;
             if buff.is_null() {
                 /* Remaining bytes are less than window. */
                 window >>= 1 as i32;
@@ -344,12 +344,12 @@ unsafe fn archive_read_format_7zip_bid(mut a: *mut archive_read, mut best_bid: i
     }
     return 0 as i32;
 }
-unsafe fn check_7zip_header_in_sfx(mut p: *const i8) -> i32 {
+unsafe fn check_7zip_header_in_sfx(mut p: *const u8) -> i32 {
     match unsafe { *p.offset(5 as i32 as isize) as u8 as i32 } {
         28 => {
             if memcmp_safe(
                 p as *const (),
-                b"7z\xbc\xaf\'\x1c\x00" as *const u8 as *const i8 as *const (),
+                b"7z\xbc\xaf\'\x1c\x00" as *const u8 as *const (),
                 6 as i32 as u64,
             ) != 0 as i32
             {
@@ -382,8 +382,8 @@ unsafe fn check_7zip_header_in_sfx(mut p: *const i8) -> i32 {
 }
 unsafe fn skip_sfx(mut a: *mut archive_read, mut bytes_avail: ssize_t) -> i32 {
     let mut h: *const () = 0 as *const ();
-    let mut p: *const i8 = 0 as *const i8;
-    let mut q: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
+    let mut q: *const u8 = 0 as *const u8;
     let mut skip: size_t = 0;
     let mut offset: size_t = 0;
     let mut bytes: ssize_t = 0;
@@ -413,7 +413,7 @@ unsafe fn skip_sfx(mut a: *mut archive_read, mut bytes_avail: ssize_t) -> i32 {
             /* This case might happen when window == 1. */
             window = 4096 as i32 as ssize_t
         } else {
-            p = h as *const i8;
+            p = h as *const u8;
             q = unsafe { p.offset(bytes as isize) };
             /*
              * Scan ahead until we find something that looks
@@ -424,7 +424,7 @@ unsafe fn skip_sfx(mut a: *mut archive_read, mut bytes_avail: ssize_t) -> i32 {
                     let mut step: i32 = check_7zip_header_in_sfx(p);
                     if step == 0 as i32 {
                         let mut zip: *mut _7zip = (*(*a).format).data as *mut _7zip;
-                        skip = p.offset_from(h as *const i8) as i64 as size_t;
+                        skip = p.offset_from(h as *const u8) as i64 as size_t;
                         __archive_read_consume(a, skip as int64_t);
                         (*zip).seek_base = (0x27000 as i32 as u64)
                             .wrapping_add(offset)
@@ -434,7 +434,7 @@ unsafe fn skip_sfx(mut a: *mut archive_read, mut bytes_avail: ssize_t) -> i32 {
                     p = p.offset(step as isize)
                 }
             }
-            skip = unsafe { p.offset_from(h as *const i8) as i64 as size_t };
+            skip = unsafe { p.offset_from(h as *const u8) as i64 as size_t };
             __archive_read_consume_safe(a, skip as int64_t);
             offset = (offset as u64).wrapping_add(skip) as size_t as size_t;
             if window == 1 as i32 as i64 {
@@ -446,7 +446,7 @@ unsafe fn skip_sfx(mut a: *mut archive_read, mut bytes_avail: ssize_t) -> i32 {
         archive_set_error(
             &mut (safe_a).archive as *mut archive,
             84 as i32,
-            b"Couldn\'t find out 7-Zip header\x00" as *const u8 as *const i8,
+            b"Couldn\'t find out 7-Zip header\x00" as *const u8,
         )
     };
     return -(30 as i32);
@@ -469,7 +469,7 @@ unsafe fn archive_read_format_7zip_read_header(
     }
     safe_a.archive.archive_format = 0xe0000 as i32;
     if safe_a.archive.archive_format_name.is_null() {
-        safe_a.archive.archive_format_name = b"7-Zip\x00" as *const u8 as *const i8
+        safe_a.archive.archive_format_name = b"7-Zip\x00" as *const u8
     }
     if safe_zip.entries.is_null() {
         let mut header: _7z_header_info = _7z_header_info {
@@ -501,13 +501,13 @@ unsafe fn archive_read_format_7zip_read_header(
     }
     (safe_zip).entries_remaining = (safe_zip).entries_remaining.wrapping_sub(1);
     (safe_zip).entry_offset = 0 as i32 as int64_t;
-    (safe_zip).end_of_entry = 0 as i32 as i8;
+    (safe_zip).end_of_entry = 0 as i32 as u8;
     (safe_zip).entry_crc32 = crc32_safe(0 as i32 as uLong, 0 as *const Bytef, 0 as i32 as uInt);
     /* Setup a string conversion for a filename. */
     if (safe_zip).sconv.is_null() {
         (safe_zip).sconv = archive_string_conversion_from_charset_safe(
             &mut (safe_a).archive,
-            b"UTF-16LE\x00" as *const u8 as *const i8,
+            b"UTF-16LE\x00" as *const u8,
             1 as i32,
         );
         if (safe_zip).sconv.is_null() {
@@ -528,7 +528,7 @@ unsafe fn archive_read_format_7zip_read_header(
             while !folder.is_null() && fidx < (*folder).numCoders {
                 match (*(*folder).coders.offset(fidx as isize)).codec {
                     116457729 | 116458243 | 116459265 => {
-                        archive_entry_set_is_data_encrypted(entry, 1 as i32 as i8);
+                        archive_entry_set_is_data_encrypted(entry, 1 as i32 as u8);
                         (safe_zip).has_encrypted_entries = 1 as i32
                     }
                     _ => {}
@@ -543,7 +543,7 @@ unsafe fn archive_read_format_7zip_read_header(
     }
     if _archive_entry_copy_pathname_l_safe(
         entry,
-        (safe_zip_entry).utf16name as *const i8,
+        (safe_zip_entry).utf16name as *const u8,
         (safe_zip_entry).name_len,
         (safe_zip).sconv,
     ) != 0 as i32
@@ -553,7 +553,7 @@ unsafe fn archive_read_format_7zip_read_header(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     12 as i32,
-                    b"Can\'t allocate memory for Pathname\x00" as *const u8 as *const i8,
+                    b"Can\'t allocate memory for Pathname\x00" as *const u8,
                 )
             };
             return -(30 as i32);
@@ -563,7 +563,7 @@ unsafe fn archive_read_format_7zip_read_header(
                 &mut (safe_a).archive as *mut archive,
                 84 as i32,
                 b"Pathname cannot be converted from %s to current locale.\x00" as *const u8
-                    as *const i8,
+                    as *const u8,
                 archive_string_conversion_charset_name((safe_zip).sconv),
             )
         };
@@ -595,7 +595,7 @@ unsafe fn archive_read_format_7zip_read_header(
     }
     /* If there's no body, force read_data() to return EOF immediately. */
     if (safe_zip).entry_bytes_remaining < 1 as i32 as u64 {
-        (safe_zip).end_of_entry = 1 as i32 as i8
+        (safe_zip).end_of_entry = 1 as i32 as u8
     }
     if (safe_zip_entry).mode & 0o170000 as i32 as mode_t == 0o120000 as i32 as mode_t {
         let mut symname: *mut u8 = 0 as *mut u8;
@@ -621,7 +621,7 @@ unsafe fn archive_read_format_7zip_read_header(
                     archive_set_error(
                         &mut (*a).archive as *mut archive,
                         12 as i32,
-                        b"Can\'t allocate memory for Symname\x00" as *const u8 as *const i8,
+                        b"Can\'t allocate memory for Symname\x00" as *const u8,
                     )
                 };
                 return -(30 as i32);
@@ -643,7 +643,7 @@ unsafe fn archive_read_format_7zip_read_header(
             archive_entry_set_mode_safe(entry, (safe_zip_entry).mode);
         } else {
             unsafe { *symname.offset(symsize as isize) = '\u{0}' as i32 as u8 };
-            archive_entry_copy_symlink_safe(entry, symname as *const i8);
+            archive_entry_copy_symlink_safe(entry, symname as *const u8);
         }
         free_safe(symname as *mut ());
         archive_entry_set_size_safe(entry, 0 as i32 as la_int64_t);
@@ -652,7 +652,7 @@ unsafe fn archive_read_format_7zip_read_header(
     unsafe {
         sprintf(
             (safe_zip).format_name.as_mut_ptr(),
-            b"7-Zip\x00" as *const u8 as *const i8,
+            b"7-Zip\x00" as *const u8,
         )
     };
     (safe_a).archive.archive_format_name = (safe_zip).format_name.as_mut_ptr();
@@ -699,7 +699,7 @@ unsafe fn archive_read_format_7zip_read_data(
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
                 84 as i32,
-                b"Truncated 7-Zip file body\x00" as *const u8 as *const i8,
+                b"Truncated 7-Zip file body\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -707,7 +707,7 @@ unsafe fn archive_read_format_7zip_read_data(
     (safe_zip).entry_bytes_remaining =
         (safe_zip.entry_bytes_remaining as u64).wrapping_sub(bytes as u64) as uint64_t as uint64_t;
     if safe_zip.entry_bytes_remaining == 0 as i32 as u64 {
-        safe_zip.end_of_entry = 1 as i32 as i8
+        safe_zip.end_of_entry = 1 as i32 as u8
     }
     /* Update checksum */
     if unsafe { (*safe_zip.entry).flg & ((1 as i32) << 3 as i32) as u32 != 0 && bytes != 0 } {
@@ -733,7 +733,7 @@ unsafe fn archive_read_format_7zip_read_data(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"7-Zip bad CRC: 0x%lx should be 0x%lx\x00" as *const u8 as *const i8,
+                    b"7-Zip bad CRC: 0x%lx should be 0x%lx\x00" as *const u8,
                     safe_zip.entry_crc32,
                     *safe_zip
                         .si
@@ -775,7 +775,7 @@ unsafe fn archive_read_format_7zip_read_data_skip(mut a: *mut archive_read) -> i
     }
     safe_zip.entry_bytes_remaining = 0 as i32 as uint64_t;
     /* This entry is finished and done. */
-    safe_zip.end_of_entry = 1 as i32 as i8;
+    safe_zip.end_of_entry = 1 as i32 as u8;
     return 0 as i32;
 }
 unsafe fn archive_read_format_7zip_cleanup(mut a: *mut archive_read) -> i32 {
@@ -820,42 +820,42 @@ unsafe fn set_error(mut a: *mut archive_read, mut ret: i32) {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     12 as i32,
-                    b"Lzma library error: Cannot allocate memory\x00" as *const u8 as *const i8,
+                    b"Lzma library error: Cannot allocate memory\x00" as *const u8,
                 );
             }
             6 => {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     12 as i32,
-                    b"Lzma library error: Out of memory\x00" as *const u8 as *const i8,
+                    b"Lzma library error: Out of memory\x00" as *const u8,
                 );
             }
             7 => {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     -(1 as i32),
-                    b"Lzma library error: format not recognized\x00" as *const u8 as *const i8,
+                    b"Lzma library error: format not recognized\x00" as *const u8,
                 );
             }
             8 => {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     -(1 as i32),
-                    b"Lzma library error: Invalid options\x00" as *const u8 as *const i8,
+                    b"Lzma library error: Invalid options\x00" as *const u8,
                 );
             }
             9 => {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     -(1 as i32),
-                    b"Lzma library error: Corrupted input data\x00" as *const u8 as *const i8,
+                    b"Lzma library error: Corrupted input data\x00" as *const u8,
                 );
             }
             10 => {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     -(1 as i32),
-                    b"Lzma library error:  No progress is possible\x00" as *const u8 as *const i8,
+                    b"Lzma library error:  No progress is possible\x00" as *const u8,
                 );
             }
             _ => {
@@ -863,7 +863,7 @@ unsafe fn set_error(mut a: *mut archive_read, mut ret: i32) {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
                     -(1 as i32),
-                    b"Lzma decompression failed:  Unknown error\x00" as *const u8 as *const i8,
+                    b"Lzma decompression failed:  Unknown error\x00" as *const u8,
                 );
             }
         };
@@ -891,7 +891,7 @@ unsafe fn ppmd_read(mut p: *mut ()) -> Byte {
             archive_set_error(
                 &mut safe_a.archive as *mut archive,
                 84 as i32,
-                b"Truncated RAR file data\x00" as *const u8 as *const i8,
+                b"Truncated RAR file data\x00" as *const u8,
             )
         };
         safe_zip.ppstream.overconsumed = 1 as i32;
@@ -927,7 +927,7 @@ unsafe fn init_decompression(
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
                             -(1 as i32),
-                            b"Unsupported filter %lx for %lx\x00" as *const u8 as *const i8,
+                            b"Unsupported filter %lx for %lx\x00" as *const u8,
                             safe_coder2.codec,
                             safe_coder1.codec,
                         )
@@ -997,7 +997,7 @@ unsafe fn init_decompression(
                                                 &mut (safe_a).archive as *mut archive,
                                                 -(1 as i32),
                                                 b"Invalid Delta parameter\x00" as *const u8
-                                                    as *const i8,
+                                                    as *const u8,
                                             )
                                         };
                                         return -(25 as i32);
@@ -1045,7 +1045,7 @@ unsafe fn init_decompression(
                                             &mut (safe_a).archive as *mut archive,
                                             -(1 as i32),
                                             b"Unexpected codec ID: %lX\x00" as *const u8
-                                                as *const i8,
+                                                as *const u8,
                                             (safe_zip).codec2,
                                         )
                                     };
@@ -1094,7 +1094,7 @@ unsafe fn init_decompression(
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
                             -(1 as i32),
-                            b"LZMA codec is unsupported.\x00" as *const u8 as *const i8,
+                            b"LZMA codec is unsupported.\x00" as *const u8,
                         )
                     };
                     return -25;
@@ -1115,14 +1115,14 @@ unsafe fn init_decompression(
                 }
                 if r != 0 as i32 {
                     let mut err: i32 = -(1 as i32);
-                    let mut detail: *const i8 = 0 as *const i8;
+                    let mut detail: *const u8 = 0 as *const u8;
                     match r {
-                        -2 => detail = b"invalid setup parameter\x00" as *const u8 as *const i8,
+                        -2 => detail = b"invalid setup parameter\x00" as *const u8,
                         -3 => {
                             err = 12 as i32;
-                            detail = b"out of memory\x00" as *const u8 as *const i8
+                            detail = b"out of memory\x00" as *const u8
                         }
-                        -9 => detail = b"mis-compiled library\x00" as *const u8 as *const i8,
+                        -9 => detail = b"mis-compiled library\x00" as *const u8,
                         _ => {}
                     }
                     unsafe {
@@ -1130,11 +1130,11 @@ unsafe fn init_decompression(
                             &mut (safe_a).archive as *mut archive,
                             err,
                             b"Internal error initializing decompressor: %s\x00" as *const u8
-                                as *const i8,
+                                as *const u8,
                             if !detail.is_null() {
                                 detail
                             } else {
-                                b"??\x00" as *const u8 as *const i8
+                                b"??\x00" as *const u8
                             },
                         )
                     };
@@ -1154,7 +1154,7 @@ unsafe fn init_decompression(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         -(1 as i32),
-                        b"BZ2 codec is unsupported\x00" as *const u8 as *const i8,
+                        b"BZ2 codec is unsupported\x00" as *const u8,
                     )
                 };
                 return -25;
@@ -1172,7 +1172,7 @@ unsafe fn init_decompression(
                             r = inflateInit2__safe(
                                 &mut (safe_zip).stream,
                                 -(15 as i32),
-                                b"1.2.11\x00" as *const u8 as *const i8,
+                                b"1.2.11\x00" as *const u8,
                                 ::std::mem::size_of::<z_stream>() as u64 as i32,
                             )
                         }
@@ -1183,7 +1183,7 @@ unsafe fn init_decompression(
                                     &mut (safe_a).archive as *mut archive,
                                     -(1 as i32),
                                     b"Couldn\'t initialize zlib stream.\x00" as *const u8
-                                        as *const i8,
+                                        as *const u8,
                                 )
                             };
                             return -(25 as i32);
@@ -1200,7 +1200,7 @@ unsafe fn init_decompression(
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
                             -(1 as i32),
-                            b"DEFLATE codec is unsupported\x00" as *const u8 as *const i8,
+                            b"DEFLATE codec is unsupported\x00" as *const u8,
                         )
                     };
                     return -25;
@@ -1226,7 +1226,7 @@ unsafe fn init_decompression(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         -(1 as i32),
-                        b"Malformed PPMd parameter\x00" as *const u8 as *const i8,
+                        b"Malformed PPMd parameter\x00" as *const u8,
                     )
                 };
                 return -(25 as i32);
@@ -1244,7 +1244,7 @@ unsafe fn init_decompression(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         -(1 as i32),
-                        b"Malformed PPMd parameter\x00" as *const u8 as *const i8,
+                        b"Malformed PPMd parameter\x00" as *const u8,
                     )
                 };
                 return -(25 as i32);
@@ -1266,7 +1266,7 @@ unsafe fn init_decompression(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         12 as i32,
-                        b"Coludn\'t allocate memory for PPMd\x00" as *const u8 as *const i8,
+                        b"Coludn\'t allocate memory for PPMd\x00" as *const u8,
                     )
                 };
                 return -(30 as i32);
@@ -1294,7 +1294,7 @@ unsafe fn init_decompression(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Unexpected codec ID: %lX\x00" as *const u8 as *const i8,
+                    b"Unexpected codec ID: %lX\x00" as *const u8,
                     (safe_zip).codec,
                 )
             };
@@ -1302,15 +1302,15 @@ unsafe fn init_decompression(
         }
         116457729 | 116458243 | 116459265 => {
             if !(safe_a).entry.is_null() {
-                archive_entry_set_is_metadata_encrypted_safe((safe_a).entry, 1 as i32 as i8);
-                archive_entry_set_is_data_encrypted_safe((safe_a).entry, 1 as i32 as i8);
+                archive_entry_set_is_metadata_encrypted_safe((safe_a).entry, 1 as i32 as u8);
+                archive_entry_set_is_data_encrypted_safe((safe_a).entry, 1 as i32 as u8);
                 (safe_zip).has_encrypted_entries = 1 as i32
             }
             unsafe {
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Crypto codec not supported yet (ID: 0x%lX)\x00" as *const u8 as *const i8,
+                    b"Crypto codec not supported yet (ID: 0x%lX)\x00" as *const u8,
                     (safe_zip).codec,
                 )
             };
@@ -1321,7 +1321,7 @@ unsafe fn init_decompression(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Unknown codec ID: %lX\x00" as *const u8 as *const i8,
+                    b"Unknown codec ID: %lX\x00" as *const u8,
                     (safe_zip).codec,
                 )
             };
@@ -1405,7 +1405,7 @@ unsafe fn decompress(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         -(1 as i32),
-                        b"BCJ2 conversion Failed\x00" as *const u8 as *const i8,
+                        b"BCJ2 conversion Failed\x00" as *const u8,
                     )
                 };
                 return -(25 as i32);
@@ -1466,7 +1466,7 @@ unsafe fn decompress(
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
                             -(1 as i32),
-                            b"Decompression failed(%d)\x00" as *const u8 as *const i8,
+                            b"Decompression failed(%d)\x00" as *const u8,
                             r,
                         )
                     };
@@ -1479,9 +1479,9 @@ unsafe fn decompress(
 
         #[cfg(all(HAVE_BZLIB_H, BZ_CONFIG_ERROR))]
         262658 => {
-            (safe_zip).bzstream.next_in = t_next_in as uintptr_t as *mut i8;
+            (safe_zip).bzstream.next_in = t_next_in as uintptr_t as *mut u8;
             (safe_zip).bzstream.avail_in = t_avail_in as u32;
-            (safe_zip).bzstream.next_out = t_next_out as uintptr_t as *mut i8;
+            (safe_zip).bzstream.next_out = t_next_out as uintptr_t as *mut u8;
             (safe_zip).bzstream.avail_out = t_avail_out as u32;
             r = BZ2_bzDecompress_safe(&mut (safe_zip).bzstream);
             match r {
@@ -1495,7 +1495,7 @@ unsafe fn decompress(
                                     &mut (safe_a).archive as *mut archive,
                                     -(1 as i32),
                                     b"Failed to clean up decompressor\x00" as *const u8
-                                        as *const i8,
+                                        as *const u8,
                                 )
                             };
                             return -(25 as i32);
@@ -1510,7 +1510,7 @@ unsafe fn decompress(
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
                             -(1 as i32),
-                            b"bzip decompression failed\x00" as *const u8 as *const i8,
+                            b"bzip decompression failed\x00" as *const u8,
                         )
                     };
                     return -(25 as i32);
@@ -1538,7 +1538,7 @@ unsafe fn decompress(
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
                             -(1 as i32),
-                            b"File decompression failed (%d)\x00" as *const u8 as *const i8,
+                            b"File decompression failed (%d)\x00" as *const u8,
                             r,
                         )
                     };
@@ -1558,7 +1558,7 @@ unsafe fn decompress(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         -(1 as i32),
-                        b"Decompression internal error\x00" as *const u8 as *const i8,
+                        b"Decompression internal error\x00" as *const u8,
                     )
                 };
                 return -(25 as i32);
@@ -1585,7 +1585,7 @@ unsafe fn decompress(
                             &mut (safe_a).archive as *mut archive,
                             -(1 as i32),
                             b"Failed to initialize PPMd range decoder\x00" as *const u8
-                                as *const i8,
+                                as *const u8,
                         )
                     };
                     return -(25 as i32);
@@ -1618,7 +1618,7 @@ unsafe fn decompress(
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
                             84 as i32,
-                            b"Failed to decode PPMd\x00" as *const u8 as *const i8,
+                            b"Failed to decode PPMd\x00" as *const u8,
                         )
                     };
                     return -(25 as i32);
@@ -1649,7 +1649,7 @@ unsafe fn decompress(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Decompression internal error\x00" as *const u8 as *const i8,
+                    b"Decompression internal error\x00" as *const u8,
                 )
             };
             return -(25 as i32);
@@ -1701,7 +1701,7 @@ unsafe fn decompress(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"BCJ2 conversion Failed\x00" as *const u8 as *const i8,
+                    b"BCJ2 conversion Failed\x00" as *const u8,
                 )
             };
             return -(25 as i32);
@@ -1735,7 +1735,7 @@ unsafe fn free_decompression(mut a: *mut archive_read, mut zip: *mut _7zip) -> i
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Failed to clean up bzip2 decompressor\x00" as *const u8 as *const i8,
+                    b"Failed to clean up bzip2 decompressor\x00" as *const u8,
                 )
             };
             r = -(30 as i32)
@@ -1750,7 +1750,7 @@ unsafe fn free_decompression(mut a: *mut archive_read, mut zip: *mut _7zip) -> i
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Failed to clean up zlib decompressor\x00" as *const u8 as *const i8,
+                    b"Failed to clean up zlib decompressor\x00" as *const u8,
                 )
             };
             r = -(30 as i32)
@@ -2279,7 +2279,7 @@ unsafe fn read_CodersInfo(mut a: *mut archive_read, mut ci: *mut _7z_coders_info
                                     archive_set_error(
                                         &mut (safe_a).archive as *mut archive,
                                         -(1 as i32),
-                                        b"Malformed 7-Zip archive\x00" as *const u8 as *const i8,
+                                        b"Malformed 7-Zip archive\x00" as *const u8,
                                     )
                                 };
                                 current_block = 14585062455194940643;
@@ -2292,7 +2292,7 @@ unsafe fn read_CodersInfo(mut a: *mut archive_read, mut ci: *mut _7z_coders_info
                                 archive_set_error(
                                     &mut (*a).archive as *mut archive,
                                     -(1 as i32),
-                                    b"Malformed 7-Zip archive\x00" as *const u8 as *const i8,
+                                    b"Malformed 7-Zip archive\x00" as *const u8,
                                 )
                             };
                             current_block = 14585062455194940643;
@@ -3330,7 +3330,7 @@ unsafe fn decode_encoded_header_info(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Couldn\'t allocate memory\x00" as *const u8 as *const i8,
+                    b"Couldn\'t allocate memory\x00" as *const u8,
                 )
             };
         } else {
@@ -3338,7 +3338,7 @@ unsafe fn decode_encoded_header_info(
                 archive_set_error(
                     &mut (*a).archive as *mut archive,
                     -(1 as i32),
-                    b"Malformed 7-Zip archive\x00" as *const u8 as *const i8,
+                    b"Malformed 7-Zip archive\x00" as *const u8,
                 )
             };
         }
@@ -3350,7 +3350,7 @@ unsafe fn decode_encoded_header_info(
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
                 -(1 as i32),
-                b"Malformed 7-Zip archive\x00" as *const u8 as *const i8,
+                b"Malformed 7-Zip archive\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -3374,7 +3374,7 @@ unsafe fn decode_encoded_header_info(
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
                 -(1 as i32),
-                b"Malformed Header offset\x00" as *const u8 as *const i8,
+                b"Malformed Header offset\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -3438,7 +3438,7 @@ unsafe fn slurp_central_directory(
             && *p.offset(1 as i32 as isize) as i32 == 'Z' as i32
             || memcmp(
                 p as *const (),
-                b"\x7fELF\x00" as *const u8 as *const i8 as *const (),
+                b"\x7fELF\x00" as *const u8 as *const (),
                 4 as i32 as u64,
             ) == 0 as i32
     } {
@@ -3456,7 +3456,7 @@ unsafe fn slurp_central_directory(
         ((safe_zip).seek_base as u64).wrapping_add(32 as i32 as u64) as uint64_t as uint64_t;
     if memcmp_safe(
         p as *const (),
-        b"7z\xbc\xaf\'\x1c\x00" as *const u8 as *const i8 as *const (),
+        b"7z\xbc\xaf\'\x1c\x00" as *const u8 as *const (),
         6 as i32 as u64,
     ) != 0 as i32
     {
@@ -3464,7 +3464,7 @@ unsafe fn slurp_central_directory(
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
                 -(1 as i32),
-                b"Not 7-Zip archive file\x00" as *const u8 as *const i8,
+                b"Not 7-Zip archive file\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -3480,7 +3480,7 @@ unsafe fn slurp_central_directory(
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
                 -(1 as i32),
-                b"Header CRC error\x00" as *const u8 as *const i8,
+                b"Header CRC error\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -3497,7 +3497,7 @@ unsafe fn slurp_central_directory(
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
                 -(1 as i32),
-                b"Malformed 7-Zip archive\x00" as *const u8 as *const i8,
+                b"Malformed 7-Zip archive\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -3529,7 +3529,7 @@ unsafe fn slurp_central_directory(
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
                 84 as i32,
-                b"Truncated 7-Zip file body\x00" as *const u8 as *const i8,
+                b"Truncated 7-Zip file body\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -3548,7 +3548,7 @@ unsafe fn slurp_central_directory(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         -(1 as i32),
-                        b"Damaged 7-Zip archive\x00" as *const u8 as *const i8,
+                        b"Damaged 7-Zip archive\x00" as *const u8,
                     )
                 };
                 r = -(1 as i32)
@@ -3590,7 +3590,7 @@ unsafe fn slurp_central_directory(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Unexpected Property ID = %X\x00" as *const u8 as *const i8,
+                    b"Unexpected Property ID = %X\x00" as *const u8,
                     *p.offset(0 as i32 as isize) as i32,
                 )
             };
@@ -3609,7 +3609,7 @@ unsafe fn slurp_central_directory(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Couldn\'t allocate memory\x00" as *const u8 as *const i8,
+                    b"Couldn\'t allocate memory\x00" as *const u8,
                 )
             };
         } else {
@@ -3617,7 +3617,7 @@ unsafe fn slurp_central_directory(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Damaged 7-Zip archive\x00" as *const u8 as *const i8,
+                    b"Damaged 7-Zip archive\x00" as *const u8,
                 )
             };
         }
@@ -3629,7 +3629,7 @@ unsafe fn slurp_central_directory(
             archive_set_error(
                 &mut (*a).archive as *mut archive,
                 -(1 as i32),
-                b"Malformed 7-Zip archive\x00" as *const u8 as *const i8,
+                b"Malformed 7-Zip archive\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -3639,7 +3639,7 @@ unsafe fn slurp_central_directory(
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
                 -(1 as i32),
-                b"Malformed 7-Zip archive\x00" as *const u8 as *const i8,
+                b"Malformed 7-Zip archive\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -3675,7 +3675,7 @@ unsafe fn get_uncompressed_data(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     84 as i32,
-                    b"Truncated 7-Zip file data\x00" as *const u8 as *const i8,
+                    b"Truncated 7-Zip file data\x00" as *const u8,
                 )
             };
             return -(30 as i32) as ssize_t;
@@ -3693,7 +3693,7 @@ unsafe fn get_uncompressed_data(
             archive_set_error(
                 &mut (*a).archive as *mut archive,
                 -(1 as i32),
-                b"Damaged 7-Zip archive\x00" as *const u8 as *const i8,
+                b"Damaged 7-Zip archive\x00" as *const u8,
             )
         };
         return -(30 as i32) as ssize_t;
@@ -3743,7 +3743,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     84 as i32,
-                    b"Truncated 7-Zip file body\x00" as *const u8 as *const i8,
+                    b"Truncated 7-Zip file body\x00" as *const u8,
                 )
             };
             return -(30 as i32) as ssize_t;
@@ -3777,7 +3777,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     12 as i32,
-                    b"No memory for 7-Zip decompression\x00" as *const u8 as *const i8,
+                    b"No memory for 7-Zip decompression\x00" as *const u8,
                 )
             };
             return -(30 as i32) as ssize_t;
@@ -3816,7 +3816,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         12 as i32,
-                        b"No memory for 7-Zip decompression\x00" as *const u8 as *const i8,
+                        b"No memory for 7-Zip decompression\x00" as *const u8,
                     )
                 };
                 return -(30 as i32) as ssize_t;
@@ -3856,7 +3856,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     84 as i32,
-                    b"Truncated 7-Zip file body\x00" as *const u8 as *const i8,
+                    b"Truncated 7-Zip file body\x00" as *const u8,
                 )
             };
             return -(30 as i32) as ssize_t;
@@ -3925,7 +3925,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Damaged 7-Zip archive\x00" as *const u8 as *const i8,
+                    b"Damaged 7-Zip archive\x00" as *const u8,
                 )
             };
             return -(30 as i32) as ssize_t;
@@ -3937,7 +3937,7 @@ unsafe fn extract_pack_stream(mut a: *mut archive_read, mut minimum: size_t) -> 
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
                 -(1 as i32),
-                b"Damaged 7-Zip archive\x00" as *const u8 as *const i8,
+                b"Damaged 7-Zip archive\x00" as *const u8,
             )
         };
         return -(30 as i32) as ssize_t;
@@ -3954,7 +3954,7 @@ unsafe fn seek_pack(mut a: *mut archive_read) -> i32 {
             archive_set_error(
                 &mut (*a).archive as *mut archive,
                 -(1 as i32),
-                b"Damaged 7-Zip archive\x00" as *const u8 as *const i8,
+                b"Damaged 7-Zip archive\x00" as *const u8,
             )
         };
         return -(30 as i32);
@@ -4031,7 +4031,7 @@ unsafe fn read_stream(
                 archive_set_error(
                     &mut (*a).archive as *mut archive,
                     -(1 as i32),
-                    b"Malformed 7-Zip archive\x00" as *const u8 as *const i8,
+                    b"Malformed 7-Zip archive\x00" as *const u8,
                 )
             };
             return -(30 as i32) as ssize_t;
@@ -4115,7 +4115,7 @@ unsafe fn read_stream(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         84 as i32,
-                        b"Truncated 7-Zip file body\x00" as *const u8 as *const i8,
+                        b"Truncated 7-Zip file body\x00" as *const u8,
                     )
                 };
                 return -(30 as i32) as ssize_t;
@@ -4140,10 +4140,10 @@ unsafe fn setup_decode_folder(
     let mut zip: *mut _7zip = unsafe { (*(*a).format).data as *mut _7zip };
     let mut coder1: *const _7z_coder = 0 as *const _7z_coder;
     let mut coder2: *const _7z_coder = 0 as *const _7z_coder;
-    let mut cname: *const i8 = if header != 0 {
-        b"archive header\x00" as *const u8 as *const i8
+    let mut cname: *const u8 = if header != 0 {
+        b"archive header\x00" as *const u8
     } else {
-        b"file content\x00" as *const u8 as *const i8
+        b"file content\x00" as *const u8
     };
     let mut i: u32 = 0;
     let mut r: i32 = 0;
@@ -4178,15 +4178,15 @@ unsafe fn setup_decode_folder(
                 it as encrypted (data+metadata). */
                 (safe_zip).has_encrypted_entries = 1 as i32;
                 if !(safe_a).entry.is_null() {
-                    archive_entry_set_is_data_encrypted_safe((safe_a).entry, 1 as i32 as i8);
-                    archive_entry_set_is_metadata_encrypted_safe((safe_a).entry, 1 as i32 as i8);
+                    archive_entry_set_is_data_encrypted_safe((safe_a).entry, 1 as i32 as u8);
+                    archive_entry_set_is_metadata_encrypted_safe((safe_a).entry, 1 as i32 as u8);
                 }
                 unsafe {
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         -(1 as i32),
                         b"The %s is encrypted, but currently not supported\x00" as *const u8
-                            as *const i8,
+                            as *const u8,
                         cname,
                     )
                 };
@@ -4209,7 +4209,7 @@ unsafe fn setup_decode_folder(
                 &mut (safe_a).archive as *mut archive,
                 -(1 as i32),
                 b"The %s is encoded with many filters, but currently not supported\x00" as *const u8
-                    as *const i8,
+                    as *const u8,
                 cname,
             )
         };
@@ -4294,7 +4294,7 @@ unsafe fn setup_decode_folder(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         -(1 as i32),
-                        b"Unsupported form of BCJ2 streams\x00" as *const u8 as *const i8,
+                        b"Unsupported form of BCJ2 streams\x00" as *const u8,
                     )
                 };
                 return -(30 as i32);
@@ -4336,7 +4336,7 @@ unsafe fn setup_decode_folder(
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Unsupported form of BCJ2 streams\x00" as *const u8 as *const i8,
+                    b"Unsupported form of BCJ2 streams\x00" as *const u8,
                 )
             };
             return -(30 as i32);
@@ -4382,7 +4382,7 @@ unsafe fn setup_decode_folder(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         12 as i32,
-                        b"No memory for 7-Zip decompression\x00" as *const u8 as *const i8,
+                        b"No memory for 7-Zip decompression\x00" as *const u8,
                     )
                 };
                 return -(30 as i32);
@@ -4439,7 +4439,7 @@ unsafe fn setup_decode_folder(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         12 as i32,
-                        b"No memory for 7-Zip decompression\x00" as *const u8 as *const i8,
+                        b"No memory for 7-Zip decompression\x00" as *const u8,
                     )
                 };
                 return -(30 as i32);
@@ -4497,7 +4497,7 @@ unsafe fn skip_stream(mut a: *mut archive_read, mut skip_bytes: size_t) -> int64
                 archive_set_error(
                     &mut (*a).archive as *mut archive,
                     84 as i32,
-                    b"Truncated 7-Zip file body\x00" as *const u8 as *const i8,
+                    b"Truncated 7-Zip file body\x00" as *const u8,
                 );
                 return -(30 as i32) as int64_t;
             }
@@ -4877,7 +4877,7 @@ unsafe fn Bcj2_Decode(
 }
 
 #[no_mangle]
-pub unsafe fn archive_test_check_7zip_header_in_sfx(mut p: *const i8) {
+pub unsafe fn archive_test_check_7zip_header_in_sfx(mut p: *const u8) {
     check_7zip_header_in_sfx(p);
 }
 
@@ -5084,7 +5084,7 @@ pub unsafe fn archive_test_get_uncompressed_data(mut _a: *mut archive) {
         1 as i32 as u64,
         ::std::mem::size_of::<archive_read_filter>() as u64,
     ) as *mut archive_read_filter;
-    (*archive_read_filter).fatal = 'a' as i8;
+    (*archive_read_filter).fatal = 'a' as u8;
     (*a).filter = archive_read_filter;
     get_uncompressed_data(a, buff2, 1, 1);
 }

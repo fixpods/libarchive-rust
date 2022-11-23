@@ -13,7 +13,7 @@ pub unsafe extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) ->
         _a,
         ARCHIVE_AR_DEFINED_PARAM.archive_read_magic,
         ARCHIVE_AR_DEFINED_PARAM.archive_state_new,
-        b"archive_read_support_format_ar\x00" as *const u8 as *const i8,
+        b"archive_read_support_format_ar\x00" as *const u8,
     );
     if magic_test == ARCHIVE_AR_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
@@ -23,16 +23,16 @@ pub unsafe extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) ->
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             12 as i32,
-            b"Can\'t allocate ar data\x00" as *const u8 as *const i8
+            b"Can\'t allocate ar data\x00" as *const u8
         );
         return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
     }
     unsafe {
-        (*ar).strtab = 0 as *mut i8;
+        (*ar).strtab = 0 as *mut u8;
         r = __archive_read_register_format(
             a,
             ar as *mut (),
-            b"ar\x00" as *const u8 as *const i8,
+            b"ar\x00" as *const u8,
             Some(archive_read_format_ar_bid),
             None,
             Some(archive_read_format_ar_read_header),
@@ -76,7 +76,7 @@ unsafe fn archive_read_format_ar_bid(mut a: *mut archive_read, mut best_bid: i32
     if unsafe {
         memcmp(
             h,
-            b"!<arch>\n\x00" as *const u8 as *const i8 as *const (),
+            b"!<arch>\n\x00" as *const u8 as *const (),
             8 as i32 as u64,
         )
     } == 0 as i32
@@ -89,15 +89,15 @@ unsafe fn _ar_read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
     mut ar: *mut ar,
-    mut h: *const i8,
+    mut h: *const u8,
     mut unconsumed: *mut size_t,
 ) -> i32 {
-    let mut filename: [i8; 17] = [0; 17];
+    let mut filename: [u8; 17] = [0; 17];
     let mut number: uint64_t = 0;
     let mut bsd_name_length: size_t = 0;
     let mut entry_size: size_t = 0;
-    let mut p: *mut i8 = 0 as *mut i8;
-    let mut st: *mut i8 = 0 as *mut i8;
+    let mut p: *mut u8 = 0 as *mut u8;
+    let mut st: *mut u8 = 0 as *mut u8;
     let mut b: *const () = 0 as *const ();
     let mut r: i32 = 0;
     let safe_a = unsafe { &mut *a };
@@ -107,7 +107,7 @@ unsafe fn _ar_read_header(
     if unsafe {
         strncmp(
             h.offset(58 as i32 as isize),
-            b"`\n\x00" as *const u8 as *const i8,
+            b"`\n\x00" as *const u8,
             2 as i32 as u64,
         )
     } != 0 as i32
@@ -115,7 +115,7 @@ unsafe fn _ar_read_header(
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_AR_DEFINED_PARAM.einval,
-            b"Incorrect file header signature\x00" as *const u8 as *const i8
+            b"Incorrect file header signature\x00" as *const u8
         );
         return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
     }
@@ -127,7 +127,7 @@ unsafe fn _ar_read_header(
             ARCHIVE_AR_DEFINED_PARAM.ar_name_size as u64,
         )
     };
-    filename[ARCHIVE_AR_DEFINED_PARAM.ar_name_size as usize] = '\u{0}' as i32 as i8;
+    filename[ARCHIVE_AR_DEFINED_PARAM.ar_name_size as usize] = '\u{0}' as i32 as u8;
     /*
      * Guess the format variant based on the filename.
      */
@@ -142,7 +142,7 @@ unsafe fn _ar_read_header(
         if unsafe {
             strncmp(
                 filename.as_mut_ptr(),
-                b"#1/\x00" as *const u8 as *const i8,
+                b"#1/\x00" as *const u8,
                 3 as i32 as u64,
             )
         } == 0 as i32
@@ -153,7 +153,7 @@ unsafe fn _ar_read_header(
         } else if unsafe {
             strncmp(
                 filename.as_mut_ptr(),
-                b"__.SYMDEF\x00" as *const u8 as *const i8,
+                b"__.SYMDEF\x00" as *const u8,
                 9 as i32 as u64,
             )
         } == 0 as i32
@@ -168,11 +168,11 @@ unsafe fn _ar_read_header(
     }
     /* Update format name from the code. */
     if safe_a.archive.archive_format == ARCHIVE_AR_DEFINED_PARAM.archive_format_ar_gnu {
-        safe_a.archive.archive_format_name = b"ar (GNU/SVR4)\x00" as *const u8 as *const i8
+        safe_a.archive.archive_format_name = b"ar (GNU/SVR4)\x00" as *const u8
     } else if safe_a.archive.archive_format == ARCHIVE_AR_DEFINED_PARAM.archive_format_ar_bsd {
-        safe_a.archive.archive_format_name = b"ar (BSD)\x00" as *const u8 as *const i8
+        safe_a.archive.archive_format_name = b"ar (BSD)\x00" as *const u8
     } else {
-        safe_a.archive.archive_format_name = b"ar\x00" as *const u8 as *const i8
+        safe_a.archive.archive_format_name = b"ar\x00" as *const u8
     }
     /*
      * Remove trailing spaces from the filename.  GNU and BSD
@@ -187,7 +187,7 @@ unsafe fn _ar_read_header(
             .offset(16 as i32 as isize)
             .offset(-(1 as i32 as isize));
         while p >= filename.as_mut_ptr() && *p as i32 == ' ' as i32 {
-            *p = '\u{0}' as i32 as i8;
+            *p = '\u{0}' as i32 as u8;
             p = p.offset(-1)
         }
     }
@@ -202,13 +202,13 @@ unsafe fn _ar_read_header(
         && p > filename.as_mut_ptr()
         && unsafe { *p as i32 } == '/' as i32
     {
-        unsafe { *p = '\u{0}' as i32 as i8 }
+        unsafe { *p = '\u{0}' as i32 as u8 }
     }
     if p < filename.as_mut_ptr() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_AR_DEFINED_PARAM.archive_errno_misc,
-            b"Found entry with empty filename\x00" as *const u8 as *const i8
+            b"Found entry with empty filename\x00" as *const u8
         );
         return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
     }
@@ -216,7 +216,7 @@ unsafe fn _ar_read_header(
      * '//' is the GNU filename table.
      * Later entries can refer to names in this table.
      */
-    if unsafe { strcmp(filename.as_mut_ptr(), b"//\x00" as *const u8 as *const i8) } == 0 as i32 {
+    if unsafe { strcmp(filename.as_mut_ptr(), b"//\x00" as *const u8) } == 0 as i32 {
         /* This must come before any call to _read_ahead. */
         ar_parse_common_header(ar, entry, h);
         unsafe {
@@ -233,7 +233,7 @@ unsafe fn _ar_read_header(
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_AR_DEFINED_PARAM.archive_errno_misc,
-                b"Filename table too large\x00" as *const u8 as *const i8
+                b"Filename table too large\x00" as *const u8
             );
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
         }
@@ -242,7 +242,7 @@ unsafe fn _ar_read_header(
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_AR_DEFINED_PARAM.einval,
-                b"Invalid string table\x00" as *const u8 as *const i8
+                b"Invalid string table\x00" as *const u8
             );
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
         }
@@ -250,17 +250,17 @@ unsafe fn _ar_read_header(
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_AR_DEFINED_PARAM.einval,
-                b"More than one string tables exist\x00" as *const u8 as *const i8
+                b"More than one string tables exist\x00" as *const u8
             );
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
         }
         /* Read the filename table into memory. */
-        st = unsafe { malloc(entry_size) } as *mut i8;
+        st = unsafe { malloc(entry_size) } as *mut u8;
         if st.is_null() {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_AR_DEFINED_PARAM.enomem,
-                b"Can\'t allocate filename table buffer\x00" as *const u8 as *const i8
+                b"Can\'t allocate filename table buffer\x00" as *const u8
             );
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
         }
@@ -311,7 +311,7 @@ unsafe fn _ar_read_header(
                     &mut safe_a.archive as *mut archive,
                     ARCHIVE_AR_DEFINED_PARAM.einval,
                     b"Can\'t find long filename for GNU/SVR4 archive entry\x00" as *const u8
-                        as *const i8
+                        as *const u8
                 );
                 archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr())
             };
@@ -333,7 +333,7 @@ unsafe fn _ar_read_header(
     if unsafe {
         strncmp(
             filename.as_mut_ptr(),
-            b"#1/\x00" as *const u8 as *const i8,
+            b"#1/\x00" as *const u8,
             3 as i32 as u64,
         )
     } == 0 as i32
@@ -361,7 +361,7 @@ unsafe fn _ar_read_header(
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_AR_DEFINED_PARAM.archive_errno_misc,
-                b"Bad input file size\x00" as *const u8 as *const i8
+                b"Bad input file size\x00" as *const u8
             );
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
         }
@@ -381,23 +381,23 @@ unsafe fn _ar_read_header(
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_AR_DEFINED_PARAM.archive_errno_misc,
-                b"Truncated input file\x00" as *const u8 as *const i8
+                b"Truncated input file\x00" as *const u8
             );
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
         }
         /* Store it in the entry. */
-        p = unsafe { malloc(bsd_name_length.wrapping_add(1 as i32 as u64)) } as *mut i8;
+        p = unsafe { malloc(bsd_name_length.wrapping_add(1 as i32 as u64)) } as *mut u8;
         if p.is_null() {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_AR_DEFINED_PARAM.archive_errno_misc,
-                b"Can\'t allocate fname buffer\x00" as *const u8 as *const i8
+                b"Can\'t allocate fname buffer\x00" as *const u8
             );
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
         }
         unsafe {
-            strncpy(p, b as *const i8, bsd_name_length);
-            *p.offset(bsd_name_length as isize) = '\u{0}' as i32 as i8;
+            strncpy(p, b as *const u8, bsd_name_length);
+            *p.offset(bsd_name_length as isize) = '\u{0}' as i32 as u8;
             __archive_read_consume(a, bsd_name_length as int64_t);
             archive_entry_copy_pathname_safe(entry, p);
             free(p as *mut ())
@@ -408,13 +408,8 @@ unsafe fn _ar_read_header(
      * "/" is the SVR4/GNU archive symbol table.
      * "/SYM64/" is the SVR4/GNU 64-bit variant archive symbol table.
      */
-    if unsafe { strcmp(filename.as_mut_ptr(), b"/\x00" as *const u8 as *const i8) } == 0 as i32
-        || unsafe {
-            strcmp(
-                filename.as_mut_ptr(),
-                b"/SYM64/\x00" as *const u8 as *const i8,
-            )
-        } == 0 as i32
+    if unsafe { strcmp(filename.as_mut_ptr(), b"/\x00" as *const u8) } == 0 as i32
+        || unsafe { strcmp(filename.as_mut_ptr(), b"/SYM64/\x00" as *const u8) } == 0 as i32
     {
         unsafe { archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr()) };
         /* Parse the time, owner, mode, size fields. */
@@ -428,13 +423,7 @@ unsafe fn _ar_read_header(
     /*
      * "__.SYMDEF" is a BSD archive symbol table.
      */
-    if unsafe {
-        strcmp(
-            filename.as_mut_ptr(),
-            b"__.SYMDEF\x00" as *const u8 as *const i8,
-        )
-    } == 0 as i32
-    {
+    if unsafe { strcmp(filename.as_mut_ptr(), b"__.SYMDEF\x00" as *const u8) } == 0 as i32 {
         unsafe { archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr()) };
         /* Parse the time, owner, mode, size fields. */
         return ar_parse_common_header(ar, entry, h);
@@ -463,7 +452,7 @@ unsafe fn archive_read_format_ar_read_header(
          * so we need first consume the ar global header.
          */
         unsafe { __archive_read_consume(a, 8 as i32 as int64_t) };
-        safe_ar.read_global_header = 1 as i32 as i8;
+        safe_ar.read_global_header = 1 as i32 as u8;
         /* Set a default format code for now. */
         safe_a.archive.archive_format = ARCHIVE_AR_DEFINED_PARAM.archive_format_ar
     }
@@ -474,7 +463,7 @@ unsafe fn archive_read_format_ar_read_header(
         return ARCHIVE_AR_DEFINED_PARAM.archive_eof;
     }
     unconsumed = 60 as i32 as size_t;
-    ret = unsafe { _ar_read_header(a, entry, ar, header_data as *const i8, &mut unconsumed) };
+    ret = unsafe { _ar_read_header(a, entry, ar, header_data as *const u8, &mut unconsumed) };
     if unconsumed != 0 {
         unsafe { __archive_read_consume(a, unconsumed as int64_t) };
     }
@@ -483,7 +472,7 @@ unsafe fn archive_read_format_ar_read_header(
 unsafe fn ar_parse_common_header(
     mut ar: *mut ar,
     mut entry: *mut archive_entry,
-    mut h: *const i8,
+    mut h: *const u8,
 ) -> i32 {
     let mut n: uint64_t = 0;
     let safe_ar = unsafe { &mut *ar };
@@ -554,7 +543,7 @@ unsafe fn archive_read_format_ar_read_data(
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 -(1 as i32),
-                b"Truncated ar archive\x00" as *const u8 as *const i8
+                b"Truncated ar archive\x00" as *const u8
             );
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
         }
@@ -580,7 +569,7 @@ unsafe fn archive_read_format_ar_read_data(
                 archive_set_error_safe!(
                     &mut safe_a.archive as *mut archive,
                     ARCHIVE_AR_DEFINED_PARAM.archive_errno_misc,
-                    b"Truncated ar archive- failed consuming padding\x00" as *const u8 as *const i8
+                    b"Truncated ar archive- failed consuming padding\x00" as *const u8
                 );
             }
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
@@ -614,7 +603,7 @@ unsafe fn archive_read_format_ar_skip(mut a: *mut archive_read) -> i32 {
 unsafe fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> i32 {
     let mut current_block: u64;
     let mut ar: *mut ar = 0 as *mut ar;
-    let mut p: *mut i8 = 0 as *mut i8;
+    let mut p: *mut u8 = 0 as *mut u8;
     let mut size: size_t = 0;
     ar = unsafe { (*(*a).format).data as *mut ar };
     let ar_safe = unsafe { &mut *ar };
@@ -634,12 +623,12 @@ unsafe fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> i32 {
         if unsafe { *p } as i32 == '/' as i32 {
             let fresh0 = p;
             unsafe { p = p.offset(1) };
-            unsafe { *fresh0 = '\u{0}' as i32 as i8 };
+            unsafe { *fresh0 = '\u{0}' as i32 as u8 };
             if unsafe { *p } as i32 != '\n' as i32 {
                 current_block = 17886206266124083048;
                 break;
             }
-            unsafe { *p = '\u{0}' as i32 as i8 }
+            unsafe { *p = '\u{0}' as i32 as u8 }
         }
         unsafe { p = p.offset(1) };
     }
@@ -658,7 +647,7 @@ unsafe fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> i32 {
                 unsafe {
                     *(ar_safe)
                         .strtab
-                        .offset(size.wrapping_sub(1 as i32 as u64) as isize) = '\u{0}' as i32 as i8
+                        .offset(size.wrapping_sub(1 as i32 as u64) as isize) = '\u{0}' as i32 as u8
                 }; /* Truncate on overflow. */
                 return ARCHIVE_AR_DEFINED_PARAM.archive_ok;
             }
@@ -668,13 +657,13 @@ unsafe fn ar_parse_gnu_filename_table(mut a: *mut archive_read) -> i32 {
     archive_set_error_safe!(
         &mut safe_a.archive as *mut archive,
         ARCHIVE_AR_DEFINED_PARAM.einval,
-        b"Invalid string table\x00" as *const u8 as *const i8
+        b"Invalid string table\x00" as *const u8
     );
     unsafe { free(ar_safe.strtab as *mut ()) };
-    ar_safe.strtab = 0 as *mut i8;
+    ar_safe.strtab = 0 as *mut u8;
     return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
 }
-unsafe fn ar_atol8(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
+unsafe fn ar_atol8(mut p: *const u8, mut char_cnt: u32) -> uint64_t {
     let mut l: uint64_t = 0;
     let mut limit: uint64_t = 0;
     let mut last_digit_limit: uint64_t = 0;
@@ -710,7 +699,7 @@ unsafe fn ar_atol8(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
     return l;
 }
 
-unsafe fn ar_atol10(mut p: *const i8, mut char_cnt: u32) -> uint64_t {
+unsafe fn ar_atol10(mut p: *const u8, mut char_cnt: u32) -> uint64_t {
     let mut l: uint64_t = 0;
     let mut limit: uint64_t = 0;
     let mut last_digit_limit: uint64_t = 0;
@@ -769,7 +758,7 @@ pub unsafe fn archive_test_archive_read_format_ar_read_data(
         )
     } as *mut archive_read_filter;
     (*archive_read_filter).client_avail = 10000 as size_t;
-    (*archive_read_filter).end_of_file = 'a' as i8;
+    (*archive_read_filter).end_of_file = 'a' as u8;
     archive_read_format_ar_read_data(a, buff, size, offset);
 }
 
@@ -791,7 +780,7 @@ pub unsafe fn archive_test_archive_read_support_format_ar() {
 pub unsafe fn archive_test__ar_read_header(
     mut _a: *mut archive,
     mut entry: *mut archive_entry,
-    mut h: *const i8,
+    mut h: *const u8,
     mut unconsumed: *mut size_t,
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;

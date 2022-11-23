@@ -12,7 +12,7 @@ pub fn archive_read_support_format_empty(_a: *mut archive) -> i32 {
             _a,
             ARCHIVE_EMPTY_DEFINED_PARAM.archive_read_magic,
             ARCHIVE_EMPTY_DEFINED_PARAM.archive_state_new,
-            b"archive_read_support_format_empty\x00" as *const u8 as *const i8,
+            b"archive_read_support_format_empty\x00" as *const u8,
         )
     };
     if magic_test == -30 {
@@ -22,7 +22,7 @@ pub fn archive_read_support_format_empty(_a: *mut archive) -> i32 {
         __archive_read_register_format_safe(
             a,
             0 as *mut (),
-            b"empty\x00" as *const u8 as *const i8,
+            b"empty\x00" as *const u8,
             Some(archive_read_format_empty_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
             None,
             Some(
@@ -61,7 +61,7 @@ fn archive_read_format_empty_read_header(a: *mut archive_read, entry: *mut archi
     /* UNUSED */
     let safe_a = unsafe { &mut *a };
     safe_a.archive.archive_format = ARCHIVE_EMPTY_DEFINED_PARAM.archive_format_empty;
-    safe_a.archive.archive_format_name = b"Empty file\x00" as *const u8 as *const i8;
+    safe_a.archive.archive_format_name = b"Empty file\x00" as *const u8;
     return ARCHIVE_EMPTY_DEFINED_PARAM.archive_eof;
 }
 

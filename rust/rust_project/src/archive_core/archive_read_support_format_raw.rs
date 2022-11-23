@@ -22,7 +22,7 @@ pub fn archive_read_support_format_raw(_a: *mut archive) -> i32 {
             _a,
             ARCHIVE_RAW_DEFINED_PARAM.archive_read_magic,
             ARCHIVE_RAW_DEFINED_PARAM.archive_state_new,
-            b"archive_read_support_format_raw\x00" as *const u8 as *const i8,
+            b"archive_read_support_format_raw\x00" as *const u8,
         )
     };
     if magic_test == ARCHIVE_RAW_DEFINED_PARAM.archive_fatal {
@@ -36,7 +36,7 @@ pub fn archive_read_support_format_raw(_a: *mut archive) -> i32 {
         archive_set_error_safe!(
             &mut (*a).archive,
             ARCHIVE_RAW_DEFINED_PARAM.enomem,
-            b"Can\'t allocate raw_info data\x00" as *const u8 as *const i8
+            b"Can\'t allocate raw_info data\x00" as *const u8
         );
         return ARCHIVE_RAW_DEFINED_PARAM.archive_fatal;
     }
@@ -45,7 +45,7 @@ pub fn archive_read_support_format_raw(_a: *mut archive) -> i32 {
         __archive_read_register_format_safe(
             a,
             info as *mut raw_info as *mut (),
-            b"raw\x00" as *const u8 as *const i8,
+            b"raw\x00" as *const u8,
             Some(archive_read_format_raw_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
             None,
             Some(
@@ -91,9 +91,9 @@ fn archive_read_format_raw_read_header(a: *mut archive_read, entry: *mut archive
         return ARCHIVE_RAW_DEFINED_PARAM.archive_eof;
     }
     safe_a.archive.archive_format = ARCHIVE_RAW_DEFINED_PARAM.archive_format_raw;
-    safe_a.archive.archive_format_name = b"raw\x00" as *const u8 as *const i8;
+    safe_a.archive.archive_format_name = b"raw\x00" as *const u8;
     unsafe {
-        archive_entry_set_pathname_safe(entry, b"data\x00" as *const u8 as *const i8);
+        archive_entry_set_pathname_safe(entry, b"data\x00" as *const u8);
         archive_entry_set_filetype_safe(entry, ARCHIVE_RAW_DEFINED_PARAM.ae_ifreg);
         archive_entry_set_perm_safe(entry, 0o644);
         /* I'm deliberately leaving most fields unset here. */

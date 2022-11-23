@@ -37,7 +37,7 @@ pub struct links_entry {
     pub links: u32,
     pub dev: dev_t,
     pub ino: int64_t,
-    pub name: *mut i8,
+    pub name: *mut u8,
 }
 
 #[no_mangle]
@@ -50,7 +50,7 @@ pub fn archive_read_support_format_cpio(_a: *mut archive) -> i32 {
             _a,
             ARCHIVE_CPIO_DEFINED_PARAM.archive_read_magic,
             ARCHIVE_CPIO_DEFINED_PARAM.archive_state_new,
-            b"archive_read_support_format_cpio\x00" as *const u8 as *const i8,
+            b"archive_read_support_format_cpio\x00" as *const u8,
         )
     };
     if magic_test == ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal {
@@ -61,7 +61,7 @@ pub fn archive_read_support_format_cpio(_a: *mut archive) -> i32 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_CPIO_DEFINED_PARAM.enomem,
-            b"Can\'t allocate cpio data\x00" as *const u8 as *const i8
+            b"Can\'t allocate cpio data\x00" as *const u8
         );
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
@@ -72,11 +72,11 @@ pub fn archive_read_support_format_cpio(_a: *mut archive) -> i32 {
         __archive_read_register_format_safe(
             a,
             cpio as *mut (),
-            b"cpio\x00" as *const u8 as *const i8,
+            b"cpio\x00" as *const u8,
             Some(archive_read_format_cpio_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
             Some(
                 archive_read_format_cpio_options
-                    as unsafe fn(_: *mut archive_read, _: *const i8, _: *const i8) -> i32,
+                    as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
             ),
             Some(
                 archive_read_format_cpio_read_header
@@ -116,14 +116,7 @@ fn archive_read_format_cpio_bid(a: *mut archive_read, best_bid: i32) -> i32 {
     }
     bid = 0;
     let cpio_safe = unsafe { &mut *cpio };
-    if unsafe {
-        memcmp_safe(
-            p as *const (),
-            b"070707\x00" as *const u8 as *const i8 as *const (),
-            6,
-        )
-    } == 0
-    {
+    if unsafe { memcmp_safe(p as *const (), b"070707\x00" as *const u8 as *const (), 6) } == 0 {
         /* ASCII cpio archive (odc, POSIX.1) */
         cpio_safe.read_header = Some(
             header_odc
@@ -140,13 +133,8 @@ fn archive_read_format_cpio_bid(a: *mut archive_read, best_bid: i32) -> i32 {
          * XXX TODO:  More verification; Could check that only octal
          * digits appear in appropriate header locations. XXX
          */
-    } else if unsafe {
-        memcmp_safe(
-            p as *const (),
-            b"070727\x00" as *const u8 as *const i8 as *const (),
-            6,
-        )
-    } == 0
+    } else if unsafe { memcmp_safe(p as *const (), b"070727\x00" as *const u8 as *const (), 6) }
+        == 0
     {
         /* afio large ASCII cpio archive */
         cpio_safe.read_header = Some(
@@ -164,13 +152,8 @@ fn archive_read_format_cpio_bid(a: *mut archive_read, best_bid: i32) -> i32 {
          * XXX TODO:  More verification; Could check that almost hex
          * digits appear in appropriate header locations. XXX
          */
-    } else if unsafe {
-        memcmp_safe(
-            p as *const (),
-            b"070701\x00" as *const u8 as *const i8 as *const (),
-            6,
-        )
-    } == 0
+    } else if unsafe { memcmp_safe(p as *const (), b"070701\x00" as *const u8 as *const (), 6) }
+        == 0
     {
         /* ASCII cpio archive (SVR4 without CRC) */
         cpio_safe.read_header = Some(
@@ -188,13 +171,8 @@ fn archive_read_format_cpio_bid(a: *mut archive_read, best_bid: i32) -> i32 {
          * XXX TODO:  More verification; Could check that only hex
          * digits appear in appropriate header locations. XXX
          */
-    } else if unsafe {
-        memcmp_safe(
-            p as *const (),
-            b"070702\x00" as *const u8 as *const i8 as *const (),
-            6,
-        )
-    } == 0
+    } else if unsafe { memcmp_safe(p as *const (), b"070702\x00" as *const u8 as *const (), 6) }
+        == 0
     {
         /* ASCII cpio archive (SVR4 with CRC) */
         /* XXX TODO: Flag that we should check the CRC. XXX */
@@ -247,7 +225,7 @@ fn archive_read_format_cpio_bid(a: *mut archive_read, best_bid: i32) -> i32 {
     return bid;
 }
 
-fn archive_read_format_cpio_options(a: *mut archive_read, key: *const i8, val: *const i8) -> i32 {
+fn archive_read_format_cpio_options(a: *mut archive_read, key: *const u8, val: *const u8) -> i32 {
     let mut cpio: *mut cpio;
     let mut ret: i32 = ARCHIVE_CPIO_DEFINED_PARAM.archive_failed;
     let cpio_safe;
@@ -257,18 +235,18 @@ fn archive_read_format_cpio_options(a: *mut archive_read, key: *const i8, val: *
         cpio_safe = &mut *cpio;
         a_safe = &mut *a;
     }
-    if unsafe { strcmp_safe(key, b"compat-2x\x00" as *const u8 as *const i8) } == 0 {
+    if unsafe { strcmp_safe(key, b"compat-2x\x00" as *const u8) } == 0 {
         /* Handle filenames as libarchive 2.x */
         cpio_safe.init_default_conversion = if !val.is_null() { 1 } else { 0 };
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
     } else {
-        if unsafe { strcmp_safe(key, b"hdrcharset\x00" as *const u8 as *const i8) } == 0 {
+        if unsafe { strcmp_safe(key, b"hdrcharset\x00" as *const u8) } == 0 {
             if unsafe { val.is_null() || *val.offset(0) as i32 == 0 } {
                 archive_set_error_safe!(
                     &mut a_safe.archive as *mut archive,
                     ARCHIVE_CPIO_DEFINED_PARAM.archive_errno_misc,
                     b"cpio: hdrcharset option needs a character-set name\x00" as *const u8
-                        as *const i8
+                        as *const u8
                 );
             } else {
                 cpio_safe.opt_sconv = unsafe {
@@ -282,7 +260,7 @@ fn archive_read_format_cpio_options(a: *mut archive_read, key: *const i8, val: *
             }
             return ret;
         } else {
-            if unsafe { strcmp_safe(key, b"pwb\x00" as *const u8 as *const i8) } == 0 {
+            if unsafe { strcmp_safe(key, b"pwb\x00" as *const u8) } == 0 {
                 if unsafe { !val.is_null() && *val.offset(0) as i32 != 0 } {
                     cpio_safe.option_pwb = 1
                 }
@@ -340,13 +318,13 @@ fn archive_read_format_cpio_read_header(a: *mut archive_read, entry: *mut archiv
     if h == 0 as *mut () {
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
-    if unsafe { _archive_entry_copy_pathname_l_safe(entry, h as *const i8, namelength, sconv) } != 0
+    if unsafe { _archive_entry_copy_pathname_l_safe(entry, h as *const u8, namelength, sconv) } != 0
     {
         if err_loc_safe == ARCHIVE_CPIO_DEFINED_PARAM.enomem {
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CPIO_DEFINED_PARAM.enomem,
-                b"Can\'t allocate memory for Pathname\x00" as *const u8 as *const i8
+                b"Can\'t allocate memory for Pathname\x00" as *const u8
             );
             return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
         }
@@ -354,7 +332,7 @@ fn archive_read_format_cpio_read_header(a: *mut archive_read, entry: *mut archiv
             &mut a_safe.archive as *mut archive,
             ARCHIVE_CPIO_DEFINED_PARAM.archive_errno_file_format,
             b"Pathname can\'t be converted from %s to current locale.\x00" as *const u8
-                as *const i8,
+                as *const u8,
             archive_string_conversion_charset_name_safe(sconv)
         );
         r = ARCHIVE_CPIO_DEFINED_PARAM.archive_warn
@@ -368,7 +346,7 @@ fn archive_read_format_cpio_read_header(a: *mut archive_read, entry: *mut archiv
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CPIO_DEFINED_PARAM.enomem,
                 b"Rejecting malformed cpio archive: symlink contents exceed 1 megabyte\x00"
-                    as *const u8 as *const i8
+                    as *const u8
             );
             return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
         }
@@ -385,7 +363,7 @@ fn archive_read_format_cpio_read_header(a: *mut archive_read, entry: *mut archiv
         if unsafe {
             _archive_entry_copy_symlink_l_safe(
                 entry,
-                hl as *const i8,
+                hl as *const u8,
                 cpio_safe.entry_bytes_remaining as size_t,
                 sconv,
             )
@@ -395,7 +373,7 @@ fn archive_read_format_cpio_read_header(a: *mut archive_read, entry: *mut archiv
                 archive_set_error_safe!(
                     &mut a_safe.archive as *mut archive,
                     ARCHIVE_CPIO_DEFINED_PARAM.enomem,
-                    b"Can\'t allocate memory for Linkname\x00" as *const u8 as *const i8
+                    b"Can\'t allocate memory for Linkname\x00" as *const u8
                 );
                 return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
             }
@@ -403,7 +381,7 @@ fn archive_read_format_cpio_read_header(a: *mut archive_read, entry: *mut archiv
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CPIO_DEFINED_PARAM.archive_errno_file_format,
                 b"Linkname can\'t be converted from %s to current locale.\x00" as *const u8
-                    as *const i8,
+                    as *const u8,
                 archive_string_conversion_charset_name_safe(sconv)
             );
             r = ARCHIVE_CPIO_DEFINED_PARAM.archive_warn
@@ -417,13 +395,7 @@ fn archive_read_format_cpio_read_header(a: *mut archive_read, entry: *mut archiv
      * header.  XXX */
     /* Compare name to "TRAILER!!!" to test for end-of-archive. */
     if namelength == 11
-        && unsafe {
-            strncmp_safe(
-                h as *const i8,
-                b"TRAILER!!!\x00" as *const u8 as *const i8,
-                11,
-            )
-        } == 0
+        && unsafe { strncmp_safe(h as *const u8, b"TRAILER!!!\x00" as *const u8, 11) } == 0
     {
         /* TODO: Store file location of start of block. */
         unsafe { archive_clear_error_safe(&mut a_safe.archive) };
@@ -506,7 +478,7 @@ fn archive_read_format_cpio_skip(a: *mut archive_read) -> i32 {
  * 07070[12] string.  This should be generalized and merged with
  * find_odc_header below.
  */
-fn is_hex(mut p: *const i8, mut len: size_t) -> i32 {
+fn is_hex(mut p: *const u8, mut len: size_t) -> i32 {
     let safe_p = unsafe { &*p };
     loop {
         let fresh0 = len;
@@ -527,8 +499,8 @@ fn is_hex(mut p: *const i8, mut len: size_t) -> i32 {
 }
 fn find_newc_header(a: *mut archive_read) -> i32 {
     let mut h: *const () = 0 as *const ();
-    let mut p: *const i8 = 0 as *const i8;
-    let mut q: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
+    let mut q: *const u8 = 0 as *const u8;
     let mut skip: size_t = 0;
     let mut skipped: size_t = 0;
     let mut bytes: ssize_t = 0;
@@ -539,16 +511,10 @@ fn find_newc_header(a: *mut archive_read) -> i32 {
         if h == 0 as *mut () {
             return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
         }
-        p = h as *const i8;
+        p = h as *const u8;
         q = unsafe { p.offset(bytes as isize) };
         /* Try the typical case first, then go into the slow search.*/
-        if unsafe {
-            memcmp_safe(
-                b"07070\x00" as *const u8 as *const i8 as *const (),
-                p as *const (),
-                5,
-            )
-        } == 0
+        if unsafe { memcmp_safe(b"07070\x00" as *const u8 as *const (), p as *const (), 5) } == 0
             && unsafe { (*p.offset(5) as i32 == '1' as i32 || *p.offset(5) as i32 == '2' as i32) }
             && is_hex(p, ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE) != 0
         {
@@ -562,14 +528,11 @@ fn find_newc_header(a: *mut archive_read) -> i32 {
             while p.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE as isize) <= q {
                 match *p.offset(5) as i32 {
                     49 | 50 => {
-                        if memcmp_safe(
-                            b"07070\x00" as *const u8 as *const i8 as *const (),
-                            p as *const (),
-                            5,
-                        ) == 0
+                        if memcmp_safe(b"07070\x00" as *const u8 as *const (), p as *const (), 5)
+                            == 0
                             && is_hex(p, ARCHIVE_CPIO_DEFINED_PARAM.NEWC_HEADER_SIZE) != 0
                         {
-                            skip = p.offset_from(h as *const i8) as size_t;
+                            skip = p.offset_from(h as *const u8) as size_t;
                             __archive_read_consume_safe(a, skip as int64_t);
                             skipped = ((skipped as u64) + skip) as size_t;
                             if skipped > 0 {
@@ -577,7 +540,7 @@ fn find_newc_header(a: *mut archive_read) -> i32 {
                                     &mut (*a).archive as *mut archive,
                                     0,
                                     b"Skipped %d bytes before finding valid header\x00" as *const u8
-                                        as *const i8,
+                                        as *const u8,
                                     skipped as i32
                                 );
                                 return ARCHIVE_CPIO_DEFINED_PARAM.archive_warn;
@@ -591,7 +554,7 @@ fn find_newc_header(a: *mut archive_read) -> i32 {
                 }
             }
         }
-        skip = unsafe { p.offset_from(h as *const i8) as size_t };
+        skip = unsafe { p.offset_from(h as *const u8) as size_t };
         unsafe { __archive_read_consume_safe(a, skip as int64_t) };
         skipped = ((skipped as u64) + skip) as size_t
     }
@@ -605,7 +568,7 @@ fn header_newc(
     name_pad: *mut size_t,
 ) -> i32 {
     let mut h: *const () = 0 as *const ();
-    let mut header: *const i8 = 0 as *const i8;
+    let mut header: *const u8 = 0 as *const u8;
     let mut r: i32;
     r = find_newc_header(a);
     if r < ARCHIVE_CPIO_DEFINED_PARAM.archive_warn {
@@ -623,34 +586,32 @@ fn header_newc(
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
     /* Parse out hex fields. */
-    header = h as *const i8;
+    header = h as *const u8;
     let a_safe = unsafe { &mut *a };
     if unsafe {
         memcmp_safe(
             unsafe {
                 header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_MAGIC_OFFSET as isize) as *const ()
             },
-            b"070701\x00" as *const u8 as *const i8 as *const (),
+            b"070701\x00" as *const u8 as *const (),
             6,
         )
     } == 0
     {
         a_safe.archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_svr4_nocrc;
-        a_safe.archive.archive_format_name =
-            b"ASCII cpio (SVR4 with no CRC)\x00" as *const u8 as *const i8
+        a_safe.archive.archive_format_name = b"ASCII cpio (SVR4 with no CRC)\x00" as *const u8
     } else if unsafe {
         memcmp_safe(
             unsafe {
                 header.offset(ARCHIVE_CPIO_DEFINED_PARAM.NEWC_MAGIC_OFFSET as isize) as *const ()
             },
-            b"070702\x00" as *const u8 as *const i8 as *const (),
+            b"070702\x00" as *const u8 as *const (),
             6,
         )
     } == 0
     {
         a_safe.archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_svr4_crc;
-        a_safe.archive.archive_format_name =
-            b"ASCII cpio (SVR4 with CRC)\x00" as *const u8 as *const i8
+        a_safe.archive.archive_format_name = b"ASCII cpio (SVR4 with CRC)\x00" as *const u8
     }
     unsafe {
         archive_entry_set_devmajor(
@@ -735,7 +696,7 @@ fn header_newc(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_CPIO_DEFINED_PARAM.archive_errno_file_format,
-                b"cpio archive has invalid namelength\x00" as *const u8 as *const i8
+                b"cpio archive has invalid namelength\x00" as *const u8
             );
             return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
         }
@@ -764,7 +725,7 @@ fn header_newc(
  * probably be easily generalized to handle all character-based
  * cpio variants.
  */
-fn is_octal(mut p: *const i8, mut len: size_t) -> i32 {
+fn is_octal(mut p: *const u8, mut len: size_t) -> i32 {
     loop {
         let fresh1 = len;
         len = len - 1;
@@ -779,7 +740,7 @@ fn is_octal(mut p: *const i8, mut len: size_t) -> i32 {
     }
     return 1;
 }
-fn is_afio_large(h: *const i8, len: size_t) -> i32 {
+fn is_afio_large(h: *const u8, len: size_t) -> i32 {
     if len < ARCHIVE_CPIO_DEFINED_PARAM.AFIOL_HEADER_SIZE as u64 {
         return 0;
     }
@@ -830,8 +791,8 @@ fn is_afio_large(h: *const i8, len: size_t) -> i32 {
 }
 fn find_odc_header(a: *mut archive_read) -> i32 {
     let mut h: *const () = 0 as *const ();
-    let mut p: *const i8 = 0 as *const i8;
-    let mut q: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
+    let mut q: *const u8 = 0 as *const u8;
     let mut skip: size_t = 0;
     let mut skipped: size_t = 0;
     let mut bytes: ssize_t = 0;
@@ -840,30 +801,18 @@ fn find_odc_header(a: *mut archive_read) -> i32 {
         if h == 0 as *mut () {
             return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
         }
-        p = h as *const i8;
+        p = h as *const u8;
         unsafe {
             q = p.offset(bytes as isize);
         }
         /* Try the typical case first, then go into the slow search.*/
-        if unsafe {
-            memcmp_safe(
-                b"070707\x00" as *const u8 as *const i8 as *const (),
-                p as *const (),
-                6,
-            )
-        } == 0
+        if unsafe { memcmp_safe(b"070707\x00" as *const u8 as *const (), p as *const (), 6) } == 0
             && is_octal(p, ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as size_t) != 0
         {
             return ARCHIVE_CPIO_DEFINED_PARAM.archive_ok;
         }
         let a_safe = unsafe { &mut *a };
-        if unsafe {
-            memcmp_safe(
-                b"070727\x00" as *const u8 as *const i8 as *const (),
-                p as *const (),
-                6,
-            )
-        } == 0
+        if unsafe { memcmp_safe(b"070727\x00" as *const u8 as *const (), p as *const (), 6) } == 0
             && is_afio_large(p, bytes as size_t) != 0
         {
             a_safe.archive.archive_format =
@@ -878,21 +827,18 @@ fn find_odc_header(a: *mut archive_read) -> i32 {
             while p.offset(ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as isize) <= q {
                 match *p.offset(5) as i32 {
                     55 => {
-                        if memcmp_safe(
-                            b"070707\x00" as *const u8 as *const i8 as *const (),
-                            p as *const (),
-                            6,
-                        ) == 0
+                        if memcmp_safe(b"070707\x00" as *const u8 as *const (), p as *const (), 6)
+                            == 0
                             && is_octal(p, ARCHIVE_CPIO_DEFINED_PARAM.ODC_HEADER_SIZE as size_t)
                                 != 0
                             || memcmp_safe(
-                                b"070727\x00" as *const u8 as *const i8 as *const (),
+                                b"070727\x00" as *const u8 as *const (),
                                 p as *const (),
                                 6,
                             ) == 0
                                 && is_afio_large(p, q.offset_from(p) as size_t) != 0
                         {
-                            skip = p.offset_from(h as *const i8) as size_t;
+                            skip = p.offset_from(h as *const u8) as size_t;
                             __archive_read_consume_safe(a, skip as int64_t);
                             skipped = ((skipped as u64) + skip) as size_t;
                             if *p.offset(4) as i32 == '2' as i32 {
@@ -904,7 +850,7 @@ fn find_odc_header(a: *mut archive_read) -> i32 {
                                     &mut (*a).archive as *mut archive,
                                     0,
                                     b"Skipped %d bytes before finding valid header\x00" as *const u8
-                                        as *const i8,
+                                        as *const u8,
                                     skipped as i32
                                 );
                                 return ARCHIVE_CPIO_DEFINED_PARAM.archive_warn;
@@ -917,7 +863,7 @@ fn find_odc_header(a: *mut archive_read) -> i32 {
                     _ => p = p.offset(6),
                 }
             }
-            skip = p.offset_from(h as *const i8) as size_t;
+            skip = p.offset_from(h as *const u8) as size_t;
         }
         unsafe { __archive_read_consume_safe(a, skip as int64_t) };
         skipped = ((skipped as u64) + skip) as size_t
@@ -932,10 +878,10 @@ fn header_odc(
 ) -> i32 {
     let mut h: *const () = 0 as *const ();
     let mut r: i32;
-    let mut header: *const i8 = 0 as *const i8;
+    let mut header: *const u8 = 0 as *const u8;
     let a_safe = unsafe { &mut *a };
     a_safe.archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_posix;
-    a_safe.archive.archive_format_name = b"POSIX octet-oriented cpio\x00" as *const u8 as *const i8;
+    a_safe.archive.archive_format_name = b"POSIX octet-oriented cpio\x00" as *const u8;
     /* Find the start of the next header. */
     r = find_odc_header(a);
     if r < ARCHIVE_CPIO_DEFINED_PARAM.archive_warn {
@@ -961,7 +907,7 @@ fn header_odc(
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
     /* Parse out octal fields. */
-    header = h as *const i8; /* No padding of filename. */
+    header = h as *const u8; /* No padding of filename. */
     unsafe {
         archive_entry_set_dev(
             entry,
@@ -1058,10 +1004,10 @@ fn header_afiol(
     name_pad: *mut size_t,
 ) -> i32 {
     let mut h: *const () = 0 as *const ();
-    let mut header: *const i8 = 0 as *const i8;
+    let mut header: *const u8 = 0 as *const u8;
     let a_safe = unsafe { &mut *a };
     a_safe.archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_afio_large;
-    a_safe.archive.archive_format_name = b"afio large ASCII\x00" as *const u8 as *const i8;
+    a_safe.archive.archive_format_name = b"afio large ASCII\x00" as *const u8;
     /* Read fixed-size portion of header. */
     h = unsafe {
         __archive_read_ahead_safe(
@@ -1074,7 +1020,7 @@ fn header_afiol(
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
     /* Parse out octal fields. */
-    header = h as *const i8; /* No padding of filename. */
+    header = h as *const u8; /* No padding of filename. */
     unsafe {
         archive_entry_set_dev(
             entry,
@@ -1162,8 +1108,7 @@ fn header_bin_le(
     let mut header: *const u8 = 0 as *const u8;
     let a_safe = unsafe { &mut *a };
     a_safe.archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_bin_le;
-    a_safe.archive.archive_format_name =
-        b"cpio (little-endian binary)\x00" as *const u8 as *const i8;
+    a_safe.archive.archive_format_name = b"cpio (little-endian binary)\x00" as *const u8;
     /* Read fixed-size portion of header. */
     h = unsafe {
         __archive_read_ahead_safe(
@@ -1176,7 +1121,7 @@ fn header_bin_le(
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
             0,
-            b"End of file trying to read next cpio header\x00" as *const u8 as *const i8
+            b"End of file trying to read next cpio header\x00" as *const u8
         );
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
@@ -1275,7 +1220,7 @@ fn header_bin_be(
     let mut header: *const u8 = 0 as *const u8;
     let a_safe = unsafe { &mut *a };
     a_safe.archive.archive_format = ARCHIVE_CPIO_DEFINED_PARAM.archive_format_cpio_bin_be;
-    a_safe.archive.archive_format_name = b"cpio (big-endian binary)\x00" as *const u8 as *const i8;
+    a_safe.archive.archive_format_name = b"cpio (big-endian binary)\x00" as *const u8;
     /* Read fixed-size portion of header. */
     h = unsafe {
         __archive_read_ahead_safe(
@@ -1288,7 +1233,7 @@ fn header_bin_be(
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
             0,
-            b"End of file trying to read next cpio header\x00" as *const u8 as *const i8
+            b"End of file trying to read next cpio header\x00" as *const u8
         );
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
@@ -1414,7 +1359,7 @@ fn be4(mut p: *const u8) -> int64_t {
  * locale settings; you cannot simply substitute strtol here, since
  * it does obey locale.
  */
-fn atol8(mut p: *const i8, mut char_cnt: u32) -> int64_t {
+fn atol8(mut p: *const u8, mut char_cnt: u32) -> int64_t {
     let mut l: int64_t;
     let mut digit: i32;
     l = 0;
@@ -1438,7 +1383,7 @@ fn atol8(mut p: *const i8, mut char_cnt: u32) -> int64_t {
     }
     return l;
 }
-fn atol16(mut p: *const i8, mut char_cnt: u32) -> int64_t {
+fn atol16(mut p: *const u8, mut char_cnt: u32) -> int64_t {
     let mut l: int64_t;
     let mut digit: i32;
     l = 0;
@@ -1520,7 +1465,7 @@ fn record_hardlink(a: *mut archive_read, cpio: *mut cpio, entry: *mut archive_en
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
             ARCHIVE_CPIO_DEFINED_PARAM.enomem,
-            b"Out of memory adding file to list\x00" as *const u8 as *const i8
+            b"Out of memory adding file to list\x00" as *const u8
         );
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
@@ -1545,7 +1490,7 @@ fn record_hardlink(a: *mut archive_read, cpio: *mut cpio, entry: *mut archive_en
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
             ARCHIVE_CPIO_DEFINED_PARAM.enomem,
-            b"Out of memory adding file to list\x00" as *const u8 as *const i8
+            b"Out of memory adding file to list\x00" as *const u8
         );
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
