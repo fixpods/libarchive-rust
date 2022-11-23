@@ -13,31 +13,33 @@ use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 
 #[no_mangle]
-pub unsafe extern "C" fn archive_read_support_format_all(mut a: *mut archive) -> i32 {
-    let mut magic_test: i32 = __archive_check_magic_safe(
-        a,
-        0xdeb0c5 as u32,
-        1 as u32,
-        b"archive_read_support_format_all\x00" as *const u8 as *const i8,
-    );
-    if magic_test == -(30 as i32) {
-        return -(30 as i32);
+pub extern "C" fn archive_read_support_format_all(a: *mut archive) -> i32 {
+    let magic_test: i32 = unsafe {
+        __archive_check_magic_safe(
+            a,
+            ARCHIVE_ALL_DEFINED_PARAM.archive_read_magic,
+            ARCHIVE_ALL_DEFINED_PARAM.archive_state_new,
+            b"archive_read_support_format_all\x00" as *const u8 as *const i8,
+        )
+    };
+    if magic_test == -30 {
+        return -30;
     }
 
-    archive_read_support_format_ar(a);
-    archive_read_support_format_cpio(a);
-    archive_read_support_format_empty(a);
-    archive_read_support_format_lha(a);
-    archive_read_support_format_mtree(a);
-    archive_read_support_format_tar(a);
-    archive_read_support_format_xar(a);
-    archive_read_support_format_warc(a);
-    archive_read_support_format_7zip(a);
-    archive_read_support_format_cab(a);
-    archive_read_support_format_rar(a);
-    archive_read_support_format_rar5(a);
-    archive_read_support_format_iso9660(a);
-    archive_read_support_format_zip(a);
-    archive_clear_error_safe(a);
-    return 0 as i32;
+    unsafe { archive_read_support_format_ar(a) };
+    unsafe { archive_read_support_format_cpio(a) };
+    unsafe { archive_read_support_format_empty(a) };
+    unsafe { archive_read_support_format_lha(a) };
+    unsafe { archive_read_support_format_mtree(a) };
+    unsafe { archive_read_support_format_tar(a) };
+    unsafe { archive_read_support_format_xar(a) };
+    unsafe { archive_read_support_format_warc(a) };
+    unsafe { archive_read_support_format_7zip(a) };
+    unsafe { archive_read_support_format_cab(a) };
+    unsafe { archive_read_support_format_rar(a) };
+    unsafe { archive_read_support_format_rar5(a) };
+    unsafe { archive_read_support_format_iso9660(a) };
+    unsafe { archive_read_support_format_zip(a) };
+    unsafe { archive_clear_error_safe(a) };
+    return 0;
 }
