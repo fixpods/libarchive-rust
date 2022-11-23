@@ -1878,6 +1878,8 @@ unsafe fn read_exttime(mut p: *const i8, mut rar: *mut rar, mut endp: *const i8)
                 _ => {
                     tm = localtime_r_safe(&mut t, &mut tmbuf);
                 }
+                #[cfg(not(HAVE_LOCALTIME_R))]
+                _ => {}
 
                 #[cfg(HAVE__LOCALTIME64_S)]
                 _ => {
@@ -1889,6 +1891,8 @@ unsafe fn read_exttime(mut p: *const i8, mut rar: *mut rar, mut endp: *const i8)
                         tm = &mut tmbuf;
                     }
                 }
+                #[cfg(not(HAVE__LOCALTIME64_S))]
+                _ => {}
             }
             unsafe {
                 nsec = ((*tm).tm_sec as u32)

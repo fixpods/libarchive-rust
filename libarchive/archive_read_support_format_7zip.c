@@ -108,18 +108,172 @@ __FBSDID("$FreeBSD$");
 #define kEncodedHeader 0x17
 #define kDummy 0x19
 
+#define MTIME_IS_SET	(1<<0)
+#define ATIME_IS_SET	(1<<1)
+#define CTIME_IS_SET	(1<<2)
+#define CRC32_IS_SET	(1<<3)
+#define HAS_STREAM	(1<<4)
+
+#define UBUFF_SIZE	(64 * 1024)
+
 /* Maximum entry size. This limitation prevents reading intentional
  * corrupted 7-zip files on assuming there are not so many entries in
  * the files. */
 #define UMAX_ENTRY ARCHIVE_LITERAL_ULL(100000000)
+#define SZ_ERROR_DATA	 ARCHIVE_FAILED
+
+#define kNumTopBits 24
+
+#define kNumBitModelTotalBits 11
+#define kBitModelTotal (1 << kNumBitModelTotalBits)
+#define kNumMoveBits 5
+
+
 
 #ifndef COMPILE_WITH_RUST
 // 编译时使用
+struct archive_7zip_defined_param
+{
+  unsigned int archive_read_magic;
+  unsigned int archive_state_new;
+  int enomem;
+  int archive_ok;
+  int archive_fatal;
+  int archive_errno_misc;
+  int ae_ifreg;
+  int archive_eof;
+  int archive_errno_file_format;
+  int archive_warn;
+  int sfx_min_addr;
+  int sfx_max_addr;
+  int _7z_copy;
+  int _7z_lzma;
+  int _7z_lzma2;
+  int _7z_deflate;
+  int _7z_bz2;
+  int _7z_ppmd;
+  int _7z_delta;
+  int _7z_crypto_main_zip;
+  int _7z_crypto_rar_29;
+  int _7z_crypto_aes_256_sha_256;
+  int _7z_x86;
+  int _7z_x86_bcj2;
+  int _7z_powerpc;
+  int _7z_ia64;
+  int _7z_arm;
+  int _7z_armthumb;
+  int _7z_sparc;
+  int kend;
+  int kheader;
+  int karchiveproperties;
+  int kadditionalstreamsinfo;
+  int kmainstreamsinfo;
+  int kfilesinfo;
+  int kpackinfo;
+  int kunpackinfo;
+  int ksubstreamsinfo;
+  int ksize;
+  int kcrc;
+  int kfolder;
+  int kcodersunpacksize;
+  int knumunpackstream;
+  int kemptystream;
+  int kemptyfile;
+  int kanti;
+  int kname;
+  int kctime;
+  int katime;
+  int kmtime;
+  int kattributes;
+  int kencodedheader;
+  int kdummy;
+  int mtime_is_set;
+  int atime_is_set;
+  int ctime_is_set;
+  int crc32_is_set;
+  int has_stream;
+  int ubuff_size;
+  int sz_error_data;
+  int knumtopbits;
+  int knumbitmodeltotalbits;
+  int kbitmodeltotal;
+  int knummovebits;
+};
+
+struct archive_7zip_defined_param get_archive_7zip_defined_param();
+
+struct archive_7zip_defined_param get_archive_7zip_defined_param(){
+  struct archive_7zip_defined_param param;
+  unsigned int archive_read_magic = ARCHIVE_READ_MAGIC;
+  unsigned int archive_state_new = ARCHIVE_STATE_NEW;
+  param.enomem = ENOMEM;
+  param.archive_ok = ARCHIVE_OK;
+  param.archive_fatal = ARCHIVE_FATAL;
+  param.archive_errno_misc = ARCHIVE_ERRNO_MISC;
+  param.ae_ifreg = AE_IFREG;
+  param.archive_eof = ARCHIVE_EOF;
+  param.archive_errno_file_format = ARCHIVE_ERRNO_FILE_FORMAT;
+  param.archive_warn = ARCHIVE_WARN;
+  param.sfx_min_addr = SFX_MIN_ADDR;
+  param.sfx_max_addr = SFX_MAX_ADDR;
+  param._7z_copy = _7Z_COPY;
+  param._7z_lzma = _7Z_LZMA;
+  param._7z_lzma2 = _7Z_LZMA2;
+  param._7z_deflate = _7Z_DEFLATE;
+  param._7z_bz2 = _7Z_BZ2;
+  param._7z_ppmd = _7Z_PPMD;
+  param._7z_delta = _7Z_DELTA;
+  param._7z_crypto_main_zip = _7Z_CRYPTO_MAIN_ZIP;
+  param._7z_crypto_rar_29 = _7Z_CRYPTO_RAR_29;
+  param._7z_crypto_aes_256_sha_256 = _7Z_CRYPTO_AES_256_SHA_256;
+  param._7z_x86 = _7Z_X86;
+  param._7z_x86_bcj2 = _7Z_X86_BCJ2;
+  param._7z_powerpc = _7Z_POWERPC;
+  param._7z_ia64 = _7Z_IA64;
+  param._7z_arm = _7Z_ARM;
+  param._7z_armthumb = _7Z_ARMTHUMB;
+  param._7z_sparc = _7Z_SPARC;
+  param.kend = kEnd;
+  param.kheader = kHeader;
+  param.karchiveproperties = kArchiveProperties;
+  param.kadditionalstreamsinfo = kAdditionalStreamsInfo;
+  param.kmainstreamsinfo = kMainStreamsInfo;
+  param.kfilesinfo = kFilesInfo;
+  param.kpackinfo = kPackInfo;
+  param.kunpackinfo = kUnPackInfo;
+  param.ksubstreamsinfo = kSubStreamsInfo;
+  param.ksize = kSize;
+  param.kcrc = kCRC;
+  param.kfolder = kFolder;
+  param.kcodersunpacksize = kCodersUnPackSize;
+  param.knumunpackstream = kNumUnPackStream;
+  param.kemptystream = kEmptyStream;
+  param.kemptyfile = kEmptyFile;
+  param.kanti = kAnti;
+  param.kname = kName;
+  param.kctime = kCTime;
+  param.katime = kATime;
+  param.kmtime = kMTime;
+  param.kattributes = kAttributes;
+  param.kencodedheader = kEncodedHeader;
+  param.kdummy = kDummy;
+  param.mtime_is_set = MTIME_IS_SET;
+  param.atime_is_set = ATIME_IS_SET;
+  param.ctime_is_set = CTIME_IS_SET;
+  param.crc32_is_set = CRC32_IS_SET;
+  param.has_stream = HAS_STREAM;
+  param.ubuff_size = UBUFF_SIZE;
+  param.sz_error_data = SZ_ERROR_DATA;
+  param.knumtopbits = kNumTopBits;
+  param.knumbitmodeltotalbits = kNumBitModelTotalBits;
+  param.kbitmodeltotal = kBitModelTotal;
+  param.knummovebits = kNumMoveBits;
+  return param;
+}
 
 int archive_read_support_format_7zip(struct archive *_a)
 {
-
-	return 0;
+  return 0;
 }
 
 #endif
