@@ -57,7 +57,7 @@ pub extern "C" fn archive_read_support_format_by_code(a: *mut archive, format_co
     } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_xar {
         return unsafe { archive_read_support_format_xar(a) };
     } else if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_zip {
-        return unsafe { archive_read_support_format_zip(a) }
+        return unsafe { archive_read_support_format_zip(a) };
     }
     archive_set_error_safe!(
         a,
