@@ -13,6 +13,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
+use std::mem::size_of;
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_format_by_code(a: *mut archive, format_code: i32) -> i32 {

@@ -1,11 +1,11 @@
+use super::archive_string::archive_string_default_conversion_for_read;
 use archive_core::archive_endian::*;
 use rust_ffi::archive_set_error_safe;
 use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
-
-use super::archive_string::archive_string_default_conversion_for_read;
+use std::mem::size_of;
 
 /* Notify how many bits we consumed. */
 static mut cache_masks: [uint32_t; 36] = [
@@ -327,7 +327,7 @@ pub unsafe fn archive_read_support_format_rar(mut _a: *mut archive) -> i32 {
     if magic_test == -(30 as i32) {
         return -(30 as i32);
     }
-    rar = calloc_safe(::std::mem::size_of::<rar>() as u64, 1 as i32 as u64) as *mut rar;
+    rar = calloc_safe(size_of::<rar>() as u64, 1 as i32 as u64) as *mut rar;
     if rar.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -639,8 +639,8 @@ unsafe fn archive_read_format_rar_read_header(
             skip = archive_le16dec(unsafe { p.offset(5 as i32 as isize) as *const () }) as size_t;
             if skip
                 < (7 as i32 as u64)
-                    .wrapping_add(::std::mem::size_of::<[u8; 2]>() as u64)
-                    .wrapping_add(::std::mem::size_of::<[u8; 4]>() as u64)
+                    .wrapping_add(size_of::<[u8; 2]>() as u64)
+                    .wrapping_add(size_of::<[u8; 4]>() as u64)
             {
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
@@ -657,22 +657,22 @@ unsafe fn archive_read_format_rar_read_header(
             memcpy_safe(
                 safe_rar.reserved1.as_mut_ptr() as *mut (),
                 unsafe { p.offset(7 as i32 as isize) as *const () },
-                ::std::mem::size_of::<[u8; 2]>() as u64,
+                size_of::<[u8; 2]>() as u64,
             );
             memcpy_safe(
                 safe_rar.reserved2.as_mut_ptr() as *mut (),
                 unsafe {
                     p.offset(7 as i32 as isize)
-                        .offset(::std::mem::size_of::<[u8; 2]>() as u64 as isize)
+                        .offset(size_of::<[u8; 2]>() as u64 as isize)
                         as *const ()
                 },
-                ::std::mem::size_of::<[u8; 4]>() as u64,
+                size_of::<[u8; 4]>() as u64,
             );
             if safe_rar.main_flags & ARCHIVE_RAR_DEFINED_PARAM.mhd_encryptver as u32 != 0 {
                 if skip
                     < (7 as i32 as u64)
-                        .wrapping_add(::std::mem::size_of::<[u8; 2]>() as u64)
-                        .wrapping_add(::std::mem::size_of::<[u8; 4]>() as u64)
+                        .wrapping_add(size_of::<[u8; 2]>() as u64)
+                        .wrapping_add(size_of::<[u8; 4]>() as u64)
                         .wrapping_add(1 as i32 as u64)
                 {
                     archive_set_error_safe!(
@@ -685,8 +685,8 @@ unsafe fn archive_read_format_rar_read_header(
                 unsafe {
                     (*rar).encryptver = *p
                         .offset(7 as i32 as isize)
-                        .offset(::std::mem::size_of::<[u8; 2]>() as u64 as isize)
-                        .offset(::std::mem::size_of::<[u8; 4]>() as u64 as isize)
+                        .offset(size_of::<[u8; 2]>() as u64 as isize)
+                        .offset(size_of::<[u8; 4]>() as u64 as isize)
                 }
             }
             /* Main header is password encrypted, so we cannot read any
@@ -1188,11 +1188,11 @@ unsafe fn read_header(
     memcpy_safe(
         &mut rar_header as *mut rar_header as *mut (),
         p as *const (),
-        ::std::mem::size_of::<rar_header>() as u64,
+        size_of::<rar_header>() as u64,
     );
     safe_rar.file_flags = archive_le16dec(rar_header.flags.as_mut_ptr() as *const ()) as u32;
     header_size = archive_le16dec(rar_header.size.as_mut_ptr() as *const ()) as int64_t;
-    if header_size < ::std::mem::size_of::<rar_file_header>() as u64 as int64_t + 7 as i32 as i64 {
+    if header_size < size_of::<rar_file_header>() as u64 as int64_t + 7 as i32 as i64 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
@@ -1218,7 +1218,7 @@ unsafe fn read_header(
         memset_safe(
             &mut safe_rar.salt as *mut [u8; 8] as *mut (),
             0 as i32,
-            ::std::mem::size_of::<[u8; 8]>() as u64,
+            size_of::<[u8; 8]>() as u64,
         );
         safe_rar.atime = 0 as i32 as time_t;
         safe_rar.ansec = 0 as i32 as i64;
@@ -1266,9 +1266,9 @@ unsafe fn read_header(
     memcpy_safe(
         &mut file_header as *mut rar_file_header as *mut (),
         p as *const (),
-        ::std::mem::size_of::<rar_file_header>() as u64,
+        size_of::<rar_file_header>() as u64,
     );
-    unsafe { p = p.offset(::std::mem::size_of::<rar_file_header>() as u64 as isize) };
+    unsafe { p = p.offset(size_of::<rar_file_header>() as u64 as isize) };
     safe_rar.compression_method = file_header.method;
     ttime = archive_le32dec(file_header.file_time.as_mut_ptr() as *const ()) as i32;
     safe_rar.mtime = get_time(ttime);
@@ -1570,8 +1570,7 @@ unsafe fn read_header(
             safe_rar.nodes = safe_rar.nodes.wrapping_add(1);
             safe_rar.dbo = realloc_safe(
                 safe_rar.dbo as *mut (),
-                (::std::mem::size_of::<data_block_offsets>() as u64)
-                    .wrapping_mul(safe_rar.nodes as u64),
+                (size_of::<data_block_offsets>() as u64).wrapping_mul(safe_rar.nodes as u64),
             ) as *mut data_block_offsets;
             if safe_rar.dbo.is_null() {
                 archive_set_error_safe!(
@@ -1618,10 +1617,8 @@ unsafe fn read_header(
     safe_rar.filename_save_size = filename_size as size_t;
     /* Set info for seeking */
     free_safe(safe_rar.dbo as *mut ());
-    safe_rar.dbo = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<data_block_offsets>() as u64,
-    ) as *mut data_block_offsets;
+    safe_rar.dbo = calloc_safe(1 as i32 as u64, size_of::<data_block_offsets>() as u64)
+        as *mut data_block_offsets;
     if safe_rar.dbo.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -1721,7 +1718,7 @@ unsafe fn read_header(
     memset_safe(
         safe_rar.lengthtable.as_mut_ptr() as *mut (),
         0 as i32,
-        ::std::mem::size_of::<[u8; 404]>() as u64,
+        size_of::<[u8; 404]>() as u64,
     );
     unsafe {
         __archive_ppmd7_functions
@@ -2566,14 +2563,14 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                     memset_safe(
                         safe_rar.lengthtable.as_mut_ptr() as *mut (),
                         0 as i32,
-                        ::std::mem::size_of::<[u8; 404]>() as u64,
+                        size_of::<[u8; 404]>() as u64,
                     );
                 }
                 safe_br.cache_avail -= 1 as i32;
                 memset_safe(
                     &mut bitlengths as *mut [u8; 20] as *mut (),
                     0 as i32,
-                    ::std::mem::size_of::<[u8; 20]>() as u64,
+                    size_of::<[u8; 20]>() as u64,
                 );
                 i = 0 as i32;
                 loop {
@@ -2631,7 +2628,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                         memset_safe(
                             &mut precode as *mut huffman_code as *mut (),
                             0 as i32,
-                            ::std::mem::size_of::<huffman_code>() as u64,
+                            size_of::<huffman_code>() as u64,
                         );
                         r = create_code(
                             a,
@@ -2913,22 +2910,22 @@ unsafe fn free_codes(mut a: *mut archive_read) {
     memset_safe(
         &mut safe_rar.maincode as *mut huffman_code as *mut (),
         0 as i32,
-        ::std::mem::size_of::<huffman_code>() as u64,
+        size_of::<huffman_code>() as u64,
     );
     memset_safe(
         &mut safe_rar.offsetcode as *mut huffman_code as *mut (),
         0 as i32,
-        ::std::mem::size_of::<huffman_code>() as u64,
+        size_of::<huffman_code>() as u64,
     );
     memset_safe(
         &mut safe_rar.lowoffsetcode as *mut huffman_code as *mut (),
         0 as i32,
-        ::std::mem::size_of::<huffman_code>() as u64,
+        size_of::<huffman_code>() as u64,
     );
     memset_safe(
         &mut safe_rar.lengthcode as *mut huffman_code as *mut (),
         0 as i32,
-        ::std::mem::size_of::<huffman_code>() as u64,
+        size_of::<huffman_code>() as u64,
     );
 }
 
@@ -3204,8 +3201,7 @@ unsafe fn new_node(mut code: *mut huffman_code) -> i32 {
         }
         new_tree = realloc_safe(
             safe_code.tree as *mut (),
-            (new_num_entries as u64)
-                .wrapping_mul(::std::mem::size_of::<huffman_tree_node>() as u64),
+            (new_num_entries as u64).wrapping_mul(size_of::<huffman_tree_node>() as u64),
         );
         if new_tree.is_null() {
             return -(1 as i32);
@@ -3231,7 +3227,7 @@ unsafe fn make_table(mut a: *mut archive_read, mut code: *mut huffman_code) -> i
     }
     safe_code.table = calloc_safe(
         1 as i32 as u64,
-        (::std::mem::size_of::<huffman_table_entry>() as u64)
+        (size_of::<huffman_table_entry>() as u64)
             .wrapping_mul((1 as i32 as size_t) << safe_code.tablesize),
     ) as *mut huffman_table_entry;
     return make_table_recurse(
@@ -3968,20 +3964,16 @@ unsafe fn rar_read_ahead(
 
 unsafe fn run_static_initializers() {
     unsafe {
-        lengthb_min = (::std::mem::size_of::<[u8; 28]>() as u64)
-            .wrapping_div(::std::mem::size_of::<u8>() as u64) as i32
+        lengthb_min = (size_of::<[u8; 28]>() as u64).wrapping_div(size_of::<u8>() as u64) as i32
     }
     unsafe {
-        offsetb_min = if ((::std::mem::size_of::<[u32; 60]>() as u64)
-            .wrapping_div(::std::mem::size_of::<u32>() as u64) as i32)
-            < (::std::mem::size_of::<[u8; 60]>() as u64)
-                .wrapping_div(::std::mem::size_of::<u8>() as u64) as i32
+        offsetb_min = if ((size_of::<[u32; 60]>() as u64).wrapping_div(size_of::<u32>() as u64)
+            as i32)
+            < (size_of::<[u8; 60]>() as u64).wrapping_div(size_of::<u8>() as u64) as i32
         {
-            (::std::mem::size_of::<[u32; 60]>() as u64)
-                .wrapping_div(::std::mem::size_of::<u32>() as u64) as i32
+            (size_of::<[u32; 60]>() as u64).wrapping_div(size_of::<u32>() as u64) as i32
         } else {
-            (::std::mem::size_of::<[u8; 60]>() as u64)
-                .wrapping_div(::std::mem::size_of::<u8>() as u64) as i32
+            (size_of::<[u8; 60]>() as u64).wrapping_div(size_of::<u8>() as u64) as i32
         }
     }
 }
@@ -3996,19 +3988,12 @@ static INIT_ARRAY: [unsafe fn(); 1] = [run_static_initializers];
 unsafe fn archive_test_make_table_recurse(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut huffman_code: *mut huffman_code = 0 as *mut huffman_code;
-    huffman_code = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<huffman_code>() as u64,
-        )
-    } as *mut huffman_code;
+    huffman_code = unsafe { calloc_safe(1 as i32 as u64, size_of::<huffman_code>() as u64) }
+        as *mut huffman_code;
     let mut huffman_table_entry: *mut huffman_table_entry = 0 as *mut huffman_table_entry;
-    huffman_table_entry = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<huffman_table_entry>() as u64,
-        )
-    } as *mut huffman_table_entry;
+    huffman_table_entry =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<huffman_table_entry>() as u64) }
+            as *mut huffman_table_entry;
     make_table_recurse(a, huffman_code, 0, huffman_table_entry, 0, 0);
 }
 
@@ -4016,11 +4001,10 @@ unsafe fn archive_test_make_table_recurse(mut _a: *mut archive) {
 unsafe fn archive_test_rar_br_preparation(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
-    rar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar>() as u64) } as *mut rar;
+    rar = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar>() as u64) } as *mut rar;
     (*rar).bytes_remaining = 1;
     let mut rar_br: *mut rar_br = 0 as *mut rar_br;
-    rar_br = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar_br>() as u64) }
-        as *mut rar_br;
+    rar_br = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar_br>() as u64) } as *mut rar_br;
     (*rar_br).avail_in = -1;
     (*(*a).format).data = rar as *mut ();
     rar_br_preparation(a, rar_br);
@@ -4030,12 +4014,9 @@ unsafe fn archive_test_rar_br_preparation(mut _a: *mut archive) {
 unsafe fn archive_test_rar_skip_sfx(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
-    archive_read_filter = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read_filter>() as u64,
-        )
-    } as *mut archive_read_filter;
+    archive_read_filter =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read_filter>() as u64) }
+            as *mut archive_read_filter;
     (*archive_read_filter).fatal = 'a' as u8;
     (*a).filter = archive_read_filter as *mut archive_read_filter;
     skip_sfx(a);
@@ -4060,7 +4041,7 @@ unsafe fn archive_test_archive_read_format_rar_read_data(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
-    rar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar>() as u64) } as *mut rar;
+    rar = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar>() as u64) } as *mut rar;
     (*(*a).format).data = rar as *mut ();
     archive_read_format_rar_read_data(a, buff, size, offset);
     (*rar).offset_seek = 1;
@@ -4073,7 +4054,7 @@ unsafe fn archive_test_archive_read_format_rar_read_data(
 unsafe fn archive_test_archive_read_format_rar_seek_data(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
-    rar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar>() as u64) } as *mut rar;
+    rar = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar>() as u64) } as *mut rar;
     (*rar).compression_method = 0x31;
     (*(*a).format).data = rar as *mut ();
     archive_read_format_rar_seek_data(a, 1, 1);
@@ -4088,7 +4069,7 @@ unsafe fn archive_test_read_data_stored(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
-    rar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar>() as u64) } as *mut rar;
+    rar = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar>() as u64) } as *mut rar;
     (*rar).bytes_remaining = 0;
     (*rar).main_flags = 1;
     (*(*a).format).data = rar as *mut ();
@@ -4108,7 +4089,7 @@ unsafe fn archive_test_copy_from_lzss_window(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
-    rar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar>() as u64) } as *mut rar;
+    rar = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar>() as u64) } as *mut rar;
     (*rar).lzss.mask = 1;
     copy_from_lzss_window(a, buffer, startpos, length);
 }

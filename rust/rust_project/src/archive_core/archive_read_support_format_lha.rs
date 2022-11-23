@@ -4,6 +4,7 @@ use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use rust_ffi::{archive_set_error_safe, archive_string_sprintf_safe, sprintf_safe};
+use std::mem::size_of;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -134,9 +135,8 @@ pub unsafe fn archive_read_support_format_lha(mut _a: *mut archive) -> i32 {
     if magic_test == -(30 as i32) {
         return -(30 as i32);
     }
-    let mut lha = unsafe {
-        &mut *(calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lha>() as u64) as *mut lha)
-    };
+    let mut lha =
+        unsafe { &mut *(calloc_safe(1 as i32 as u64, size_of::<lha>() as u64) as *mut lha) };
     if (lha as *mut lha).is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -514,8 +514,7 @@ unsafe fn archive_read_format_lha_read_header(
          * the mark of the end of the archive.
          */
         signature =
-            __archive_read_ahead_safe(a, ::std::mem::size_of::<u8>() as u64, 0 as *mut ssize_t)
-                as *const u8;
+            __archive_read_ahead_safe(a, size_of::<u8>() as u64, 0 as *mut ssize_t) as *const u8;
         if signature.is_null() || unsafe { *signature.offset(0 as i32 as isize) } as i32 == 0 as i32
         {
             return ARCHIVE_LHA_DEFINED_PARAM.archive_eof;
@@ -532,8 +531,7 @@ unsafe fn archive_read_format_lha_read_header(
         if err < ARCHIVE_LHA_DEFINED_PARAM.archive_warn {
             return err;
         }
-        p = __archive_read_ahead_safe(a, ::std::mem::size_of::<u8>() as u64, 0 as *mut ssize_t)
-            as *const u8;
+        p = __archive_read_ahead_safe(a, size_of::<u8>() as u64, 0 as *mut ssize_t) as *const u8;
         if p.is_null() {
             return truncated_error(a);
         }
@@ -1327,7 +1325,7 @@ unsafe fn lha_read_file_extended_header(
         }
         /* Check if the size is the zero indicates the end of the
          * extended header. */
-        if sizefield_length as u64 == ::std::mem::size_of::<uint16_t>() as u64 {
+        if sizefield_length as u64 == size_of::<uint16_t>() as u64 {
             extdsize = archive_le16dec(h) as size_t
         } else {
             extdsize = archive_le32dec(h) as size_t
@@ -1514,20 +1512,17 @@ unsafe fn lha_read_file_extended_header(
                 lha.dos_attr = (archive_le16dec(extdheader as *const ()) as i32 & 0xff as i32) as u8
             }
         } else if extdtype as i32 == ARCHIVE_LHA_DEFINED_PARAM.ext_timestamp {
-            if datasize == (::std::mem::size_of::<uint64_t>() as u64).wrapping_mul(3 as i32 as u64)
-            {
+            if datasize == (size_of::<uint64_t>() as u64).wrapping_mul(3 as i32 as u64) {
                 lha.birthtime = lha_win_time(
                     archive_le64dec(extdheader as *const ()),
                     &mut lha.birthtime_tv_nsec,
                 );
-                extdheader =
-                    unsafe { extdheader.offset(::std::mem::size_of::<uint64_t>() as u64 as isize) };
+                extdheader = unsafe { extdheader.offset(size_of::<uint64_t>() as u64 as isize) };
                 lha.mtime = lha_win_time(
                     archive_le64dec(extdheader as *const ()),
                     &mut lha.mtime_tv_nsec,
                 );
-                extdheader =
-                    unsafe { extdheader.offset(::std::mem::size_of::<uint64_t>() as u64 as isize) };
+                extdheader = unsafe { extdheader.offset(size_of::<uint64_t>() as u64 as isize) };
                 lha.atime = lha_win_time(
                     archive_le64dec(extdheader as *const ()),
                     &mut lha.atime_tv_nsec,
@@ -1536,18 +1531,16 @@ unsafe fn lha_read_file_extended_header(
                     | ARCHIVE_LHA_DEFINED_PARAM.atime_is_set
             }
         } else if extdtype as i32 == ARCHIVE_LHA_DEFINED_PARAM.ext_filesize {
-            if datasize == (::std::mem::size_of::<uint64_t>() as u64).wrapping_mul(2 as i32 as u64)
-            {
+            if datasize == (size_of::<uint64_t>() as u64).wrapping_mul(2 as i32 as u64) {
                 lha.compsize = archive_le64dec(extdheader as *const ()) as int64_t;
-                extdheader =
-                    unsafe { extdheader.offset(::std::mem::size_of::<uint64_t>() as u64 as isize) };
+                extdheader = unsafe { extdheader.offset(size_of::<uint64_t>() as u64 as isize) };
                 lha.origsize = archive_le64dec(extdheader as *const ()) as int64_t
             }
         } else if extdtype as i32 == ARCHIVE_LHA_DEFINED_PARAM.ext_codepage {
             /* Get an archived filename charset from codepage.
              * This overwrites the charset specified by
              * hdrcharset option. */
-            if datasize == ::std::mem::size_of::<uint32_t>() as u64 {
+            if datasize == size_of::<uint32_t>() as u64 {
                 let mut cp: archive_string = archive_string {
                     s: 0 as *mut u8,
                     length: 0,
@@ -1590,13 +1583,12 @@ unsafe fn lha_read_file_extended_header(
                 }
             }
         } else if extdtype as i32 == ARCHIVE_LHA_DEFINED_PARAM.ext_unix_mode {
-            if datasize == ::std::mem::size_of::<uint16_t>() as u64 {
+            if datasize == size_of::<uint16_t>() as u64 {
                 lha.mode = archive_le16dec(extdheader as *const ()) as mode_t;
                 lha.setflag |= ARCHIVE_LHA_DEFINED_PARAM.unix_mode_is_set
             }
         } else if extdtype as i32 == ARCHIVE_LHA_DEFINED_PARAM.ext_unix_gid_uid {
-            if datasize == (::std::mem::size_of::<uint16_t>() as u64).wrapping_mul(2 as i32 as u64)
-            {
+            if datasize == (size_of::<uint16_t>() as u64).wrapping_mul(2 as i32 as u64) {
                 lha.gid = archive_le16dec(extdheader as *const ()) as int64_t;
                 lha.uid =
                     archive_le16dec(unsafe { extdheader.offset(2 as i32 as isize) } as *const ())
@@ -1621,7 +1613,7 @@ unsafe fn lha_read_file_extended_header(
                 );
             }
         } else if extdtype as i32 == ARCHIVE_LHA_DEFINED_PARAM.ext_unix_mtime {
-            if datasize == ::std::mem::size_of::<uint32_t>() as u64 {
+            if datasize == size_of::<uint32_t>() as u64 {
                 lha.mtime = archive_le32dec(extdheader as *const ()) as time_t
             }
         } else if extdtype as i32 == ARCHIVE_LHA_DEFINED_PARAM.ext_os2_new_attr {
@@ -1989,7 +1981,7 @@ unsafe fn lha_dos_time(mut p: *const u8) -> time_t {
     memset_safe(
         &mut ts as *mut tm as *mut (),
         0 as i32,
-        ::std::mem::size_of::<tm>() as u64,
+        size_of::<tm>() as u64,
     );
     ts.tm_year = (msDate >> 9 as i32 & 0x7f as i32) + 80 as i32;
     ts.tm_mon = (msDate >> 5 as i32 & 0xf as i32) - 1 as i32;
@@ -2179,8 +2171,7 @@ unsafe fn lzh_decode_init(mut strm: &mut lzh_stream, mut method: *const u8) -> i
     let mut w_bits: i32 = 0;
     let mut w_size: i32 = 0;
     if strm.ds.is_null() {
-        strm.ds =
-            calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzh_dec>() as u64) as *mut lzh_dec;
+        strm.ds = calloc_safe(1 as i32 as u64, size_of::<lzh_dec>() as u64) as *mut lzh_dec;
         if strm.ds.is_null() {
             return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
         }
@@ -2598,7 +2589,7 @@ unsafe fn lzh_read_blocks(mut strm: *mut lzh_stream, mut last: i32) -> i32 {
                     memset_safe(
                         ds.pt.freq.as_mut_ptr() as *mut (),
                         0 as i32,
-                        ::std::mem::size_of::<[i32; 17]>() as u64,
+                        size_of::<[i32; 17]>() as u64,
                     );
                     if ds.pt.len_avail < 3 as i32 || ds.pt.len_size == ds.pos_pt_len_size {
                         ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_4;
@@ -2742,7 +2733,7 @@ unsafe fn lzh_read_blocks(mut strm: *mut lzh_stream, mut last: i32) -> i32 {
                     memset_safe(
                         ds.lt.freq.as_mut_ptr() as *mut (),
                         0 as i32,
-                        ::std::mem::size_of::<[i32; 17]>() as u64,
+                        size_of::<[i32; 17]>() as u64,
                     );
                 }
                 current_block = 4937514680701116003;
@@ -3125,8 +3116,7 @@ unsafe fn lzh_decode_blocks(mut strm: *mut lzh_stream, mut last: i32) -> i32 {
 unsafe fn lzh_huffman_init(mut hf: &mut huffman, mut len_size: size_t, mut tbl_bits: i32) -> i32 {
     let mut bits: i32 = 0;
     if hf.bitlen.is_null() {
-        hf.bitlen =
-            malloc_safe(len_size.wrapping_mul(::std::mem::size_of::<u8>() as u64)) as *mut u8;
+        hf.bitlen = malloc_safe(len_size.wrapping_mul(size_of::<u8>() as u64)) as *mut u8;
         if hf.bitlen.is_null() {
             return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
         }
@@ -3137,18 +3127,17 @@ unsafe fn lzh_huffman_init(mut hf: &mut huffman, mut len_size: size_t, mut tbl_b
         } else {
             bits = ARCHIVE_LHA_DEFINED_PARAM.htbl_bits
         }
-        hf.tbl = malloc_safe(
-            ((1 as i32 as size_t) << bits).wrapping_mul(::std::mem::size_of::<uint16_t>() as u64),
-        ) as *mut uint16_t;
+        hf.tbl =
+            malloc_safe(((1 as i32 as size_t) << bits).wrapping_mul(size_of::<uint16_t>() as u64))
+                as *mut uint16_t;
         if hf.tbl.is_null() {
             return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
         }
     }
     if hf.tree.is_null() && tbl_bits > ARCHIVE_LHA_DEFINED_PARAM.htbl_bits {
         hf.tree_avail = (1 as i32) << tbl_bits - ARCHIVE_LHA_DEFINED_PARAM.htbl_bits + 4 as i32;
-        hf.tree = malloc_safe(
-            (hf.tree_avail as u64).wrapping_mul(::std::mem::size_of::<htree_t>() as u64),
-        ) as *mut htree_t;
+        hf.tree = malloc_safe((hf.tree_avail as u64).wrapping_mul(size_of::<htree_t>() as u64))
+            as *mut htree_t;
         if hf.tree.is_null() {
             return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
         }
@@ -3397,8 +3386,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
                         memcpy_safe(
                             unsafe { &mut *p_0.offset(cnt as isize) } as *mut uint16_t as *mut (),
                             pc as *const (),
-                            (8 as i32 as u64)
-                                .wrapping_mul(::std::mem::size_of::<uint16_t>() as u64),
+                            (8 as i32 as u64).wrapping_mul(size_of::<uint16_t>() as u64),
                         );
                         pc = unsafe { &mut *p_0.offset(cnt as isize) } as *mut uint16_t;
                         while cnt > 15 as i32 {
@@ -3407,8 +3395,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
                                 unsafe { &mut *p_0.offset(cnt as isize) } as *mut uint16_t
                                     as *mut (),
                                 pc as *const (),
-                                (16 as i32 as u64)
-                                    .wrapping_mul(::std::mem::size_of::<uint16_t>() as u64),
+                                (16 as i32 as u64).wrapping_mul(size_of::<uint16_t>() as u64),
                             );
                         }
                     }
@@ -3416,7 +3403,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
                         memcpy_safe(
                             p_0 as *mut (),
                             pc as *const (),
-                            (cnt as u64).wrapping_mul(::std::mem::size_of::<uint16_t>() as u64),
+                            (cnt as u64).wrapping_mul(size_of::<uint16_t>() as u64),
                         );
                     }
                 } else {
@@ -3565,12 +3552,8 @@ unsafe fn lzh_decode_huffman(mut hf: &mut huffman, mut rbits: u32) -> i32 {
 #[no_mangle]
 pub unsafe fn archive_test_archive_read_support_format_lha() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
-    archive_read = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read>() as u64,
-        )
-    } as *mut archive_read;
+    archive_read = unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read>() as u64) }
+        as *mut archive_read;
     (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
     (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
     archive_read_support_format_lha(&mut (*archive_read).archive as *mut archive);
@@ -3596,12 +3579,9 @@ unsafe fn archive_test_lha_skip_sfx(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     lha_skip_sfx(a);
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
-    archive_read_filter = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read_filter>() as u64,
-        )
-    } as *mut archive_read_filter;
+    archive_read_filter =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read_filter>() as u64) }
+            as *mut archive_read_filter;
     (*a).filter = archive_read_filter as *mut archive_read_filter;
     (*archive_read_filter).fatal = 'a' as u8;
     lha_skip_sfx(a);
@@ -3618,7 +3598,7 @@ unsafe fn archive_test_lha_read_data_none(mut _a: *mut archive) {
         unsafe { &buff as *const *mut () as *mut *mut () as *mut *const () };
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut lha: *mut lha = 0 as *mut lha;
-    lha = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lha>() as u64) } as *mut lha;
+    lha = unsafe { calloc_safe(1 as i32 as u64, size_of::<lha>() as u64) } as *mut lha;
     (*lha).entry_bytes_remaining = 0;
     (*(*a).format).data = lha as *mut ();
     lha_read_data_none(a, buff2, size2, offset2);
@@ -3635,7 +3615,7 @@ unsafe fn archive_test_lha_read_data_lzh(mut _a: *mut archive) {
         unsafe { &buff as *const *mut () as *mut *mut () as *mut *const () };
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut lha: *mut lha = 0 as *mut lha;
-    lha = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lha>() as u64) } as *mut lha;
+    lha = unsafe { calloc_safe(1 as i32 as u64, size_of::<lha>() as u64) } as *mut lha;
     (*lha).decompress_init = 0;
     (*lha).method[0] = 'a' as u8;
     (*(*a).format).data = lha as *mut ();
@@ -3645,11 +3625,10 @@ unsafe fn archive_test_lha_read_data_lzh(mut _a: *mut archive) {
 #[no_mangle]
 pub unsafe fn archive_test_lzh_emit_window() {
     let mut lzh_stream: *mut lzh_stream = 0 as *mut lzh_stream;
-    lzh_stream = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzh_stream>() as u64) }
-        as *mut lzh_stream;
+    lzh_stream =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<lzh_stream>() as u64) } as *mut lzh_stream;
     let mut lzh_dec: *mut lzh_dec = 0 as *mut lzh_dec;
-    lzh_dec = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzh_dec>() as u64) }
-        as *mut lzh_dec;
+    lzh_dec = unsafe { calloc_safe(1 as i32 as u64, size_of::<lzh_dec>() as u64) } as *mut lzh_dec;
     (*lzh_stream).ds = lzh_dec as *mut lzh_dec;
     (*lzh_dec).w_buff = 1 as *mut u8;
     lzh_emit_window(lzh_stream, 1);
@@ -3658,11 +3637,9 @@ pub unsafe fn archive_test_lzh_emit_window() {
 #[no_mangle]
 pub unsafe fn archive_test_lzh_decode_huffman_tree() {
     let mut huffman: *mut huffman = 0 as *mut huffman;
-    huffman = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<huffman>() as u64) }
-        as *mut huffman;
+    huffman = unsafe { calloc_safe(1 as i32 as u64, size_of::<huffman>() as u64) } as *mut huffman;
     let mut htree_t: *mut htree_t = 0 as *mut htree_t;
-    htree_t = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<htree_t>() as u64) }
-        as *mut htree_t;
+    htree_t = unsafe { calloc_safe(1 as i32 as u64, size_of::<htree_t>() as u64) } as *mut htree_t;
     (*huffman).tree = htree_t as *mut htree_t;
     (*huffman).shift_bits = 1;
     (*huffman).len_avail = 1;
@@ -3679,11 +3656,10 @@ unsafe fn archive_test_truncated_error(mut _a: *mut archive) {
 #[no_mangle]
 unsafe fn archive_test_lzh_decode_blocks() {
     let mut strm: *mut lzh_stream = 0 as *mut lzh_stream;
-    strm = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzh_stream>() as u64) }
-        as *mut lzh_stream;
+    strm =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<lzh_stream>() as u64) } as *mut lzh_stream;
     let mut lzh_dec: *mut lzh_dec = 0 as *mut lzh_dec;
-    lzh_dec = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzh_dec>() as u64) }
-        as *mut lzh_dec;
+    lzh_dec = unsafe { calloc_safe(1 as i32 as u64, size_of::<lzh_dec>() as u64) } as *mut lzh_dec;
     (*strm).ds = lzh_dec as *mut lzh_dec;
     (*lzh_dec).state = 10;
     (*lzh_dec).br.cache_avail = -20;
@@ -3697,11 +3673,10 @@ unsafe fn archive_test_lzh_decode_blocks() {
 #[no_mangle]
 unsafe fn archive_test_lzh_read_blocks() {
     let mut strm: *mut lzh_stream = 0 as *mut lzh_stream;
-    strm = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzh_stream>() as u64) }
-        as *mut lzh_stream;
+    strm =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<lzh_stream>() as u64) } as *mut lzh_stream;
     let mut lzh_dec: *mut lzh_dec = 0 as *mut lzh_dec;
-    lzh_dec = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzh_dec>() as u64) }
-        as *mut lzh_dec;
+    lzh_dec = unsafe { calloc_safe(1 as i32 as u64, size_of::<lzh_dec>() as u64) } as *mut lzh_dec;
     (*strm).ds = lzh_dec as *mut lzh_dec;
     (*lzh_dec).pt.len_bits = 1;
     (*lzh_dec).lt.len_bits = 1;

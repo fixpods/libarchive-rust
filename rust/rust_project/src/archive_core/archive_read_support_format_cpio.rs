@@ -3,6 +3,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
+use std::mem::size_of;
 
 use super::archive_string::archive_string_default_conversion_for_read;
 #[derive(Copy, Clone)]
@@ -56,7 +57,7 @@ pub fn archive_read_support_format_cpio(_a: *mut archive) -> i32 {
     if magic_test == ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_CPIO_DEFINED_PARAM.archive_fatal;
     }
-    cpio = unsafe { calloc_safe(1, ::std::mem::size_of::<cpio>() as u64) } as *mut cpio;
+    cpio = unsafe { calloc_safe(1, size_of::<cpio>() as u64) } as *mut cpio;
     if cpio.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -1459,7 +1460,7 @@ fn record_hardlink(a: *mut archive_read, cpio: *mut cpio, entry: *mut archive_en
         }
         le = le_safe.next
     }
-    le = unsafe { malloc_safe(::std::mem::size_of::<links_entry>() as u64) } as *mut links_entry;
+    le = unsafe { malloc_safe(size_of::<links_entry>() as u64) } as *mut links_entry;
     let a_safe = unsafe { &mut *a };
     if le.is_null() {
         archive_set_error_safe!(

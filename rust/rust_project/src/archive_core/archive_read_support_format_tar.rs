@@ -1,11 +1,11 @@
+use super::archive_string::archive_string_default_conversion_for_read;
 use rust_ffi::archive_set_error_safe;
 use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
-
-use super::archive_string::archive_string_default_conversion_for_read;
+use std::mem::size_of;
 //hj 2022 11 17
 #[no_mangle]
 pub fn archive_read_support_format_gnutar(a: *mut archive) -> i32 {
@@ -40,7 +40,7 @@ pub fn archive_read_support_format_tar(_a: *mut archive) -> i32 {
     if magic_test == ARCHIVE_TAR_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_TAR_DEFINED_PARAM.archive_fatal;
     }
-    tar = unsafe { calloc_safe(1, ::std::mem::size_of::<tar>() as u64) as *mut tar };
+    tar = unsafe { calloc_safe(1, size_of::<tar>() as u64) as *mut tar };
     let mut safe_tar = unsafe { &mut *tar };
     if tar.is_null() {
         archive_set_error_safe!(
@@ -245,34 +245,15 @@ fn archive_read_format_tar_bid(a: *mut archive_read, best_bid: i32) -> i32 {
      * Check format of mode/uid/gid/mtime/size/rdevmajor/rdevminor fields.
      */
     if bid > 0
-        && (validate_number_field(
-            safe_header.mode.as_ptr(),
-            ::std::mem::size_of::<[u8; 8]>() as u64,
-        ) == 0
-            || validate_number_field(
-                safe_header.uid.as_ptr(),
-                ::std::mem::size_of::<[u8; 8]>() as u64,
-            ) == 0
-            || validate_number_field(
-                safe_header.gid.as_ptr(),
-                ::std::mem::size_of::<[u8; 8]>() as u64,
-            ) == 0
-            || validate_number_field(
-                safe_header.mtime.as_ptr(),
-                ::std::mem::size_of::<[u8; 12]>() as u64,
-            ) == 0
-            || validate_number_field(
-                safe_header.size.as_ptr(),
-                ::std::mem::size_of::<[u8; 12]>() as u64,
-            ) == 0
-            || validate_number_field(
-                safe_header.rdevmajor.as_ptr(),
-                ::std::mem::size_of::<[u8; 8]>() as u64,
-            ) == 0
-            || validate_number_field(
-                safe_header.rdevminor.as_ptr(),
-                ::std::mem::size_of::<[u8; 8]>() as u64,
-            ) == 0)
+        && (validate_number_field(safe_header.mode.as_ptr(), size_of::<[u8; 8]>() as u64) == 0
+            || validate_number_field(safe_header.uid.as_ptr(), size_of::<[u8; 8]>() as u64) == 0
+            || validate_number_field(safe_header.gid.as_ptr(), size_of::<[u8; 8]>() as u64) == 0
+            || validate_number_field(safe_header.mtime.as_ptr(), size_of::<[u8; 12]>() as u64) == 0
+            || validate_number_field(safe_header.size.as_ptr(), size_of::<[u8; 12]>() as u64) == 0
+            || validate_number_field(safe_header.rdevmajor.as_ptr(), size_of::<[u8; 8]>() as u64)
+                == 0
+            || validate_number_field(safe_header.rdevminor.as_ptr(), size_of::<[u8; 8]>() as u64)
+                == 0)
     {
         bid = 0
     }
@@ -833,7 +814,7 @@ fn checksum(mut a: *mut archive_read, mut h: *const ()) -> i32 {
     header = h as *const archive_entry_header_ustar;
     /* Checksum field must hold an octal number */
     i = 0;
-    while i < ::std::mem::size_of::<[u8; 8]>() as u64 {
+    while i < size_of::<[u8; 8]>() as u64 {
         let c: u8 = unsafe { *header }.checksum[i as usize];
         if c as i32 != ' ' as i32
             && c as i32 != '\u{0}' as i32
@@ -849,7 +830,7 @@ fn checksum(mut a: *mut archive_read, mut h: *const ()) -> i32 {
      */
     sum = tar_atol(
         unsafe { *header }.checksum.as_ptr(),
-        ::std::mem::size_of::<[u8; 8]>() as u64,
+        size_of::<[u8; 8]>() as u64,
     ) as i32;
     check = 0;
     i = 0;
@@ -934,7 +915,7 @@ fn header_Solaris_ACL(
     header = h as *const archive_entry_header_ustar;
     size = tar_atol(
         unsafe { *header }.size.as_ptr(),
-        ::std::mem::size_of::<[u8; 12]>() as u64,
+        size_of::<[u8; 12]>() as u64,
     ) as size_t;
     err = read_body_to_string(a, tar, &mut safe_tar.acl_text, h, unconsumed);
     if err != ARCHIVE_TAR_DEFINED_PARAM.archive_ok {
@@ -1172,7 +1153,7 @@ fn read_body_to_string(
     header = h as *const archive_entry_header_ustar;
     size = tar_atol(
         unsafe { *header }.size.as_ptr(),
-        ::std::mem::size_of::<[u8; 12]>() as u64,
+        size_of::<[u8; 12]>() as u64,
     );
     if size > 1048576 || size < 0 {
         archive_set_error_safe!(
@@ -1232,7 +1213,7 @@ fn header_common(
             archive_strncat_safe(
                 &mut safe_tar.entry_linkpath,
                 unsafe { *header }.linkname.as_ptr() as *const (),
-                ::std::mem::size_of::<[u8; 100]>() as u64,
+                size_of::<[u8; 100]>() as u64,
             )
         };
     } else {
@@ -1244,27 +1225,21 @@ fn header_common(
             entry,
             tar_atol(
                 unsafe { *header }.mode.as_ptr(),
-                ::std::mem::size_of::<[u8; 8]>() as u64,
+                size_of::<[u8; 8]>() as u64,
             ) as mode_t,
         );
         archive_entry_set_uid_safe(
             entry,
-            tar_atol(
-                unsafe { *header }.uid.as_ptr(),
-                ::std::mem::size_of::<[u8; 8]>() as u64,
-            ),
+            tar_atol(unsafe { *header }.uid.as_ptr(), size_of::<[u8; 8]>() as u64),
         );
         archive_entry_set_gid_safe(
             entry,
-            tar_atol(
-                unsafe { *header }.gid.as_ptr(),
-                ::std::mem::size_of::<[u8; 8]>() as u64,
-            ),
+            tar_atol(unsafe { *header }.gid.as_ptr(), size_of::<[u8; 8]>() as u64),
         );
     }
     safe_tar.entry_bytes_remaining = tar_atol(
         unsafe { *header }.size.as_ptr(),
-        ::std::mem::size_of::<[u8; 12]>() as u64,
+        size_of::<[u8; 12]>() as u64,
     );
     if safe_tar.entry_bytes_remaining < 0 {
         safe_tar.entry_bytes_remaining = 0;
@@ -1292,7 +1267,7 @@ fn header_common(
             entry,
             tar_atol(
                 unsafe { *header }.mtime.as_ptr(),
-                ::std::mem::size_of::<[u8; 12]>() as u64,
+                size_of::<[u8; 12]>() as u64,
             ),
             0,
         );
@@ -1506,7 +1481,7 @@ fn header_old_tar(
         _archive_entry_copy_pathname_l_safe(
             entry,
             unsafe { *header }.name.as_ptr(),
-            ::std::mem::size_of::<[u8; 100]>() as u64,
+            size_of::<[u8; 100]>() as u64,
             safe_tar.sconv,
         )
     } != 0
@@ -1693,7 +1668,7 @@ fn header_ustar(
             archive_strncat_safe(
                 as_0,
                 unsafe { *header }.prefix.as_ptr() as *const (),
-                ::std::mem::size_of::<[u8; 155]>() as u64,
+                size_of::<[u8; 155]>() as u64,
             )
         };
         if unsafe {
@@ -1708,7 +1683,7 @@ fn header_ustar(
             archive_strncat_safe(
                 as_0,
                 unsafe { *header }.name.as_ptr() as *const (),
-                ::std::mem::size_of::<[u8; 100]>() as u64,
+                size_of::<[u8; 100]>() as u64,
             )
         };
     } else {
@@ -1717,7 +1692,7 @@ fn header_ustar(
             archive_strncat_safe(
                 as_0,
                 unsafe { *header }.name.as_ptr() as *const (),
-                ::std::mem::size_of::<[u8; 100]>() as u64,
+                size_of::<[u8; 100]>() as u64,
             )
         };
     }
@@ -1743,7 +1718,7 @@ fn header_ustar(
         _archive_entry_copy_uname_l_safe(
             entry,
             unsafe { *header }.uname.as_ptr(),
-            ::std::mem::size_of::<[u8; 32]>() as u64,
+            size_of::<[u8; 32]>() as u64,
             safe_tar.sconv,
         )
     } != 0
@@ -1757,7 +1732,7 @@ fn header_ustar(
         _archive_entry_copy_gname_l_safe(
             entry,
             unsafe { *header }.gname.as_ptr(),
-            ::std::mem::size_of::<[u8; 32]>() as u64,
+            size_of::<[u8; 32]>() as u64,
             safe_tar.sconv,
         )
     } != 0
@@ -1776,14 +1751,14 @@ fn header_ustar(
                 entry,
                 tar_atol(
                     unsafe { *header }.rdevmajor.as_ptr(),
-                    ::std::mem::size_of::<[u8; 8]>() as u64,
+                    size_of::<[u8; 8]>() as u64,
                 ) as dev_t,
             );
             archive_entry_set_rdevminor_safe(
                 entry,
                 tar_atol(
                     unsafe { *header }.rdevminor.as_ptr(),
-                    ::std::mem::size_of::<[u8; 8]>() as u64,
+                    size_of::<[u8; 8]>() as u64,
                 ) as dev_t,
             );
         }
@@ -2632,7 +2607,7 @@ fn header_gnutar(
         _archive_entry_copy_pathname_l_safe(
             entry,
             unsafe { *header }.name.as_ptr(),
-            ::std::mem::size_of::<[u8; 100]>() as u64,
+            size_of::<[u8; 100]>() as u64,
             safe_tar.sconv,
         )
     } != 0
@@ -2650,7 +2625,7 @@ fn header_gnutar(
         _archive_entry_copy_uname_l_safe(
             entry,
             unsafe { *header }.uname.as_ptr(),
-            ::std::mem::size_of::<[u8; 32]>() as u64,
+            size_of::<[u8; 32]>() as u64,
             safe_tar.sconv,
         )
     } != 0
@@ -2664,7 +2639,7 @@ fn header_gnutar(
         _archive_entry_copy_gname_l_safe(
             entry,
             unsafe { *header }.gname.as_ptr(),
-            ::std::mem::size_of::<[u8; 32]>() as u64,
+            size_of::<[u8; 32]>() as u64,
             safe_tar.sconv,
         )
     } != 0
@@ -2683,14 +2658,14 @@ fn header_gnutar(
                 entry,
                 tar_atol(
                     unsafe { *header }.rdevmajor.as_ptr(),
-                    ::std::mem::size_of::<[u8; 8]>() as u64,
+                    size_of::<[u8; 8]>() as u64,
                 ) as dev_t,
             );
             archive_entry_set_rdevminor_safe(
                 entry,
                 tar_atol(
                     unsafe { *header }.rdevminor.as_ptr(),
-                    ::std::mem::size_of::<[u8; 8]>() as u64,
+                    size_of::<[u8; 8]>() as u64,
                 ) as dev_t,
             );
         }
@@ -2701,14 +2676,14 @@ fn header_gnutar(
     /* Grab GNU-specific fields. */
     t = tar_atol(
         unsafe { *header }.atime.as_ptr(),
-        ::std::mem::size_of::<[u8; 12]>() as u64,
+        size_of::<[u8; 12]>() as u64,
     );
     if t > 0 {
         unsafe { archive_entry_set_atime_safe(entry, t, 0 as i32 as i64) };
     }
     t = tar_atol(
         unsafe { *header }.ctime.as_ptr(),
-        ::std::mem::size_of::<[u8; 12]>() as u64,
+        size_of::<[u8; 12]>() as u64,
     );
     if t > 0 {
         unsafe {
@@ -2718,7 +2693,7 @@ fn header_gnutar(
     if unsafe { *header }.realsize[0 as i32 as usize] as i32 != 0 {
         safe_tar.realsize = tar_atol(
             unsafe { *header }.realsize.as_ptr(),
-            ::std::mem::size_of::<[u8; 12]>() as u64,
+            size_of::<[u8; 12]>() as u64,
         );
         unsafe {
             archive_entry_set_size_safe(entry, safe_tar.realsize);
@@ -2743,9 +2718,7 @@ fn gnu_add_sparse_entry(
     let mut p: *mut sparse_block;
     let mut safe_a = unsafe { &mut *a };
     let mut safe_tar = unsafe { &mut *tar };
-    p = unsafe {
-        calloc_safe(1, ::std::mem::size_of::<sparse_block>() as u64) as *mut sparse_block
-    };
+    p = unsafe { calloc_safe(1, size_of::<sparse_block>() as u64) as *mut sparse_block };
     if p.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
@@ -2860,11 +2833,11 @@ fn gnu_sparse_old_parse(
             tar,
             tar_atol(
                 unsafe { (*sparse).offset.as_ptr() },
-                ::std::mem::size_of::<[u8; 12]>() as u64,
+                size_of::<[u8; 12]>() as u64,
             ),
             tar_atol(
                 unsafe { (*sparse).numbytes.as_ptr() },
-                ::std::mem::size_of::<[u8; 12]>() as u64,
+                size_of::<[u8; 12]>() as u64,
             ),
         ) != ARCHIVE_TAR_DEFINED_PARAM.archive_ok
         {
@@ -3237,7 +3210,7 @@ fn tar_atol256(mut _p: *const u8, mut char_cnt: size_t) -> int64_t {
     }
     /* If more than 8 bytes, check that we can ignore
      * high-order bits without overflow. */
-    while char_cnt > ::std::mem::size_of::<int64_t>() as u64 {
+    while char_cnt > size_of::<int64_t>() as u64 {
         char_cnt = char_cnt.wrapping_sub(1);
         if c as i32 != neg as i32 {
             return if neg as i32 != 0 { i64::MIN } else { i64::MAX };
@@ -3390,11 +3363,11 @@ fn base64_decode(s: *const u8, mut len: size_t, out_len: *mut size_t) -> *mut u8
             memset_safe(
                 unsafe { decode_table.as_mut_ptr() } as *mut (),
                 0xff as i32,
-                unsafe { ::std::mem::size_of::<[u8; 128]>() as u64 },
+                unsafe { size_of::<[u8; 128]>() as u64 },
             )
         };
         i = 0;
-        while (i as u64) < unsafe { ::std::mem::size_of::<[u8; 64]>() as u64 } {
+        while (i as u64) < unsafe { size_of::<[u8; 64]>() as u64 } {
             unsafe { decode_table[digits[i as usize] as usize] = i as u8 };
             i = i + 1
         }
@@ -3541,6 +3514,6 @@ pub fn archive_test_pax_attribute(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut tar: *mut tar;
-    tar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<tar>() as u64) as *mut tar };
+    tar = unsafe { calloc_safe(1 as i32 as u64, size_of::<tar>() as u64) as *mut tar };
     pax_attribute(a, tar, entry, key, value, value_length);
 }

@@ -3,6 +3,8 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
+use std::mem::size_of;
+
 #[no_mangle]
 pub unsafe extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
@@ -18,7 +20,7 @@ pub unsafe extern "C" fn archive_read_support_format_ar(mut _a: *mut archive) ->
     if magic_test == ARCHIVE_AR_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
     }
-    ar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<ar>() as u64) } as *mut ar;
+    ar = unsafe { calloc_safe(1 as i32 as u64, size_of::<ar>() as u64) } as *mut ar;
     if ar.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
@@ -744,19 +746,16 @@ pub unsafe fn archive_test_archive_read_format_ar_read_data(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut ar: *mut ar = 0 as *mut ar;
-    ar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<ar>() as u64) } as *mut ar;
+    ar = unsafe { calloc_safe(1 as i32 as u64, size_of::<ar>() as u64) } as *mut ar;
     (*ar).entry_bytes_remaining = 0 as int64_t;
     (*ar).entry_padding = 2147483647 as int64_t;
     (*(*a).format).data = ar as *mut ();
     archive_read_format_ar_read_data(a, buff, size, offset);
     (*ar).entry_bytes_remaining = 1 as int64_t;
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
-    archive_read_filter = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read_filter>() as u64,
-        )
-    } as *mut archive_read_filter;
+    archive_read_filter =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read_filter>() as u64) }
+            as *mut archive_read_filter;
     (*archive_read_filter).client_avail = 10000 as size_t;
     (*archive_read_filter).end_of_file = 'a' as u8;
     archive_read_format_ar_read_data(a, buff, size, offset);
@@ -765,12 +764,8 @@ pub unsafe fn archive_test_archive_read_format_ar_read_data(
 #[no_mangle]
 pub unsafe fn archive_test_archive_read_support_format_ar() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
-    archive_read = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read>() as u64,
-        )
-    } as *mut archive_read;
+    archive_read = unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read>() as u64) }
+        as *mut archive_read;
     (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
     (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
     archive_read_support_format_ar(&mut (*archive_read).archive as *mut archive);
@@ -786,6 +781,6 @@ pub unsafe fn archive_test__ar_read_header(
     let mut a: *mut archive_read = _a as *mut archive_read;
     (*a).archive.archive_format = ARCHIVE_AR_DEFINED_PARAM.archive_format_ar;
     let mut ar: *mut ar = 0 as *mut ar;
-    ar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<ar>() as u64) } as *mut ar;
+    ar = unsafe { calloc_safe(1 as i32 as u64, size_of::<ar>() as u64) } as *mut ar;
     _ar_read_header(a, entry, ar, h, unconsumed);
 }

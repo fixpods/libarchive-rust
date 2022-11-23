@@ -3,6 +3,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
+use std::mem::size_of;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct mtree {
@@ -56,9 +57,7 @@ unsafe fn get_time_t_max() -> int64_t {
             if (0 as i32 as time_t) < -(1 as i32) as time_t {
                 /* Time_t is unsigned */
                 return !(0 as i32 as time_t);
-            } else if ::std::mem::size_of::<time_t>() as u64
-                == ::std::mem::size_of::<int64_t>() as u64
-            {
+            } else if size_of::<time_t>() as u64 == size_of::<int64_t>() as u64 {
                 return ARCHIVE_MTREE_DEFINED_PARAM.int64_max as time_t;
             } else {
                 return ARCHIVE_MTREE_DEFINED_PARAM.int32_max as time_t;
@@ -79,9 +78,7 @@ unsafe fn get_time_t_min() -> int64_t {
                 /* Assume it's the same as int64_t or int32_t */
                 /* Time_t is unsigned */
                 return 0 as i32 as time_t;
-            } else if ::std::mem::size_of::<time_t>() as u64
-                == ::std::mem::size_of::<int64_t>() as u64
-            {
+            } else if size_of::<time_t>() as u64 == size_of::<int64_t>() as u64 {
                 return ARCHIVE_MTREE_DEFINED_PARAM.int64_min as time_t;
             } else {
                 return ARCHIVE_MTREE_DEFINED_PARAM.int32_min as time_t;
@@ -185,7 +182,7 @@ pub unsafe fn archive_read_support_format_mtree(mut _a: *mut archive) -> i32 {
     if magic_test == ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
-    mtree = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<mtree>() as u64) as *mut mtree;
+    mtree = calloc_safe(1 as i32 as u64, size_of::<mtree>() as u64) as *mut mtree;
     let a_safe = unsafe { &mut *a };
     if mtree.is_null() {
         archive_set_error_safe!(
@@ -1154,7 +1151,7 @@ unsafe fn add_option(
     mut len: size_t,
 ) -> i32 {
     let mut opt: *mut mtree_option = 0 as *mut mtree_option;
-    opt = malloc_safe(::std::mem::size_of::<mtree_option>() as u64) as *mut mtree_option;
+    opt = malloc_safe(size_of::<mtree_option>() as u64) as *mut mtree_option;
     if opt.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -1311,7 +1308,7 @@ unsafe fn process_add_entry(
     let mut len: size_t = 0;
     let mut r: i32 = 0;
     let mut i: i32 = 0;
-    entry = malloc_safe(::std::mem::size_of::<mtree_entry>() as u64) as *mut mtree_entry;
+    entry = malloc_safe(size_of::<mtree_entry>() as u64) as *mut mtree_entry;
     if entry.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -2083,11 +2080,7 @@ unsafe fn parse_device(mut pdev: *mut dev_t, mut a: *mut archive, mut val: *mut 
     let mut pack: Option<pack_t> = None;
     let mut result: dev_t = 0;
     let mut error: *const u8 = 0 as *const u8;
-    memset_safe(
-        pdev as *mut (),
-        0 as i32,
-        ::std::mem::size_of::<dev_t>() as u64,
-    );
+    memset_safe(pdev as *mut (), 0 as i32, size_of::<dev_t>() as u64);
     dev = strchr_safe(val, ',' as i32);
     if !dev.is_null() {
         /*
@@ -2191,12 +2184,12 @@ unsafe fn parse_digest(
     let mut len: size_t = 0;
     let a_safe = unsafe { &mut *a };
     match type_0 {
-        1 => len = ::std::mem::size_of::<[u8; 16]>() as u64,
-        2 => len = ::std::mem::size_of::<[u8; 20]>() as u64,
-        3 => len = ::std::mem::size_of::<[u8; 20]>() as u64,
-        4 => len = ::std::mem::size_of::<[u8; 32]>() as u64,
-        5 => len = ::std::mem::size_of::<[u8; 48]>() as u64,
-        6 => len = ::std::mem::size_of::<[u8; 64]>() as u64,
+        1 => len = size_of::<[u8; 16]>() as u64,
+        2 => len = size_of::<[u8; 20]>() as u64,
+        3 => len = size_of::<[u8; 20]>() as u64,
+        4 => len = size_of::<[u8; 32]>() as u64,
+        5 => len = size_of::<[u8; 48]>() as u64,
+        6 => len = size_of::<[u8; 64]>() as u64,
         _ => {
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
@@ -2206,7 +2199,7 @@ unsafe fn parse_digest(
             return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
         }
     }
-    if len > ::std::mem::size_of::<[u8; 64]>() as u64 {
+    if len > size_of::<[u8; 64]>() as u64 {
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
             ARCHIVE_MTREE_DEFINED_PARAM.archive_errno_programmer,
@@ -3115,15 +3108,12 @@ pub unsafe fn archive_test_parse_keyword(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut mtree: *mut mtree = 0 as *mut mtree;
-    mtree = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<mtree>() as u64) as *mut mtree;
+    mtree = calloc_safe(1 as i32 as u64, size_of::<mtree>() as u64) as *mut mtree;
     let mut mtree_option: *mut mtree_option = 0 as *mut mtree_option;
-    mtree_option = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<mtree_option>() as u64,
-    ) as *mut mtree_option;
+    mtree_option =
+        calloc_safe(1 as i32 as u64, size_of::<mtree_option>() as u64) as *mut mtree_option;
     let mut mtree_entry: *mut mtree_entry = 0 as *mut mtree_entry;
-    mtree_entry = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<mtree_entry>() as u64)
-        as *mut mtree_entry;
+    mtree_entry = calloc_safe(1 as i32 as u64, size_of::<mtree_entry>() as u64) as *mut mtree_entry;
     (*(mtree_option)).value = b"optional" as *const u8 as *mut u8;
     parse_keyword(a, mtree, entry, mtree_option, parsed_kws);
 }
@@ -3132,10 +3122,8 @@ pub unsafe fn archive_test_parse_keyword(
 pub unsafe fn archive_test_process_global_unset(mut _a: *mut archive, mut line: *const u8) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut mtree_option: *mut mtree_option = 0 as *mut mtree_option;
-    mtree_option = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<mtree_option>() as u64,
-    ) as *mut mtree_option;
+    mtree_option =
+        calloc_safe(1 as i32 as u64, size_of::<mtree_option>() as u64) as *mut mtree_option;
     let mut mtree_option2: *mut *mut mtree_option = mtree_option as *mut *mut mtree_option;
     process_global_unset(a, mtree_option2, line);
 }
@@ -3159,12 +3147,8 @@ pub unsafe fn archive_test_parse_digest(
 #[no_mangle]
 pub unsafe fn archive_test_archive_read_support_format_mtree() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
-    archive_read = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read>() as u64,
-        )
-    } as *mut archive_read;
+    archive_read = unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read>() as u64) }
+        as *mut archive_read;
     (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
     (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
     archive_read_support_format_mtree(&mut (*archive_read).archive as *mut archive);
@@ -3174,8 +3158,7 @@ pub unsafe fn archive_test_archive_read_support_format_mtree() {
 pub unsafe fn archive_test_read_header(mut _a: *mut archive, mut entry: *mut archive_entry) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut mtree: *mut mtree = 0 as *mut mtree;
-    mtree = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<mtree>() as u64) }
-        as *mut mtree;
+    mtree = unsafe { calloc_safe(1 as i32 as u64, size_of::<mtree>() as u64) } as *mut mtree;
     (*mtree).fd = 1;
     (*(*a).format).data = mtree as *mut ();
     read_header(a, entry);
@@ -3213,8 +3196,7 @@ unsafe fn archive_test_parse_device(mut a: *mut archive) {
 unsafe fn archive_test_archive_read_format_mtree_options(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut mtree: *mut mtree = 0 as *mut mtree;
-    mtree = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<mtree>() as u64) }
-        as *mut mtree;
+    mtree = unsafe { calloc_safe(1 as i32 as u64, size_of::<mtree>() as u64) } as *mut mtree;
     (*(*a).format).data = mtree as *mut ();
     archive_read_format_mtree_options(a, b"checkfs\x00" as *const u8, b"None\x00" as *const u8);
 }

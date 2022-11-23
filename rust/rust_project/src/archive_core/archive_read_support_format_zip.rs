@@ -1,10 +1,10 @@
+use super::archive_string::archive_string_default_conversion_for_read;
 use archive_core::archive_endian::*;
 use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
-
-use super::archive_string::archive_string_default_conversion_for_read;
+use std::mem::size_of;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -350,13 +350,7 @@ fn zip_time(p: *const u8) -> time_t {
         msDate = ((0xff & *p.offset(2 as isize) as u32)
             + 256 * (0xff & *p.offset(3 as isize) as u32)) as i32;
     }
-    unsafe {
-        memset_safe(
-            &mut ts as *mut tm as *mut (),
-            0,
-            ::std::mem::size_of::<tm>() as u64,
-        )
-    };
+    unsafe { memset_safe(&mut ts as *mut tm as *mut (), 0, size_of::<tm>() as u64) };
     ts.tm_year = (msDate >> 9 & 0x7f) + 80;
     ts.tm_mon = (msDate >> 5 & 0xf) - 1;
     ts.tm_mday = msDate & 0x1f;
@@ -1771,7 +1765,7 @@ fn zipx_xz_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         memset_safe(
             &mut safe_zip.zipx_lzma_stream as *mut lzma_stream as *mut (),
             0,
-            ::std::mem::size_of::<lzma_stream>() as u64,
+            size_of::<lzma_stream>() as u64,
         )
     };
     r = unsafe {
@@ -1829,7 +1823,7 @@ fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         memset_safe(
             &mut safe_zip.zipx_lzma_stream as *mut lzma_stream as *mut (),
             0,
-            ::std::mem::size_of::<lzma_stream>() as u64,
+            size_of::<lzma_stream>() as u64,
         );
         r = lzma_alone_decoder_safe(&mut safe_zip.zipx_lzma_stream, 18446744073709551615);
         if r as u32 != LZMA_OK as u32 {
@@ -1894,7 +1888,7 @@ fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         }
         safe_zip.zipx_lzma_stream.next_in =
             &mut alone_header as *mut _alone_header as *mut () as *const uint8_t;
-        safe_zip.zipx_lzma_stream.avail_in = ::std::mem::size_of::<_alone_header>() as u64;
+        safe_zip.zipx_lzma_stream.avail_in = size_of::<_alone_header>() as u64;
         safe_zip.zipx_lzma_stream.total_in = 0;
         safe_zip.zipx_lzma_stream.next_out = safe_zip.uncompressed_buffer;
         safe_zip.zipx_lzma_stream.avail_out = safe_zip.uncompressed_buffer_size;
@@ -2397,7 +2391,7 @@ fn zipx_bzip2_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         memset_safe(
             &mut safe_zip.bzstream as *mut bz_stream as *mut (),
             0,
-            ::std::mem::size_of::<bz_stream>() as u64,
+            size_of::<bz_stream>() as u64,
         )
     };
     r = unsafe { BZ2_bzDecompressInit_safe(&mut (safe_zip).bzstream, 0, 1) };
@@ -2567,7 +2561,7 @@ fn zip_deflate_init(a: *mut archive_read, zip: *mut zip) -> i32 {
                     &mut safe_zip.stream,
                     -15,
                     b"1.2.11\x00" as *const u8,
-                    ::std::mem::size_of::<z_stream>() as u64 as i32,
+                    size_of::<z_stream>() as u64 as i32,
                 )
             }
         }
@@ -3469,7 +3463,7 @@ fn init_WinZip_AES_decryption(a: *mut archive_read) -> i32 {
                         memset_safe(
                             derived_key.as_mut_ptr() as *mut (),
                             0,
-                            ::std::mem::size_of::<[uint8_t; 66]>() as u64,
+                            size_of::<[uint8_t; 66]>() as u64,
                         )
                     };
                     r = unsafe {
@@ -3973,7 +3967,7 @@ fn archive_read_format_zip_streamable_read_header(
     /* Make sure we have a zip_entry structure to use. */
     if (safe_zip).zip_entries.is_null() {
         (safe_zip).zip_entries =
-            unsafe { malloc_safe(::std::mem::size_of::<zip_entry>() as u64) as *mut zip_entry };
+            unsafe { malloc_safe(size_of::<zip_entry>() as u64) as *mut zip_entry };
         if (safe_zip).zip_entries.is_null() {
             unsafe {
                 archive_set_error(
@@ -3990,7 +3984,7 @@ fn archive_read_format_zip_streamable_read_header(
         memset_safe(
             (safe_zip).entry as *mut (),
             0,
-            ::std::mem::size_of::<zip_entry>() as u64,
+            size_of::<zip_entry>() as u64,
         )
     };
     if (safe_zip).cctx_valid != 0 {
@@ -4204,7 +4198,7 @@ pub fn archive_read_support_format_zip_streamable(_a: *mut archive) -> i32 {
     if magic_test == -30 {
         return -30;
     }
-    zip = unsafe { calloc_safe(1, ::std::mem::size_of::<zip>() as u64) as *mut zip };
+    zip = unsafe { calloc_safe(1, size_of::<zip>() as u64) as *mut zip };
 
     let safe_zip = unsafe { &mut *zip };
 
@@ -4711,8 +4705,8 @@ fn slurp_central_directory(a: *mut archive_read, entry: *mut archive_entry, zip:
         if p.is_null() {
             return -30;
         }
-        zip_entry = unsafe { calloc_safe(1 as u64, ::std::mem::size_of::<zip_entry>() as u64) }
-            as *mut zip_entry;
+        zip_entry =
+            unsafe { calloc_safe(1 as u64, size_of::<zip_entry>() as u64) } as *mut zip_entry;
         let safe_zip_entry = unsafe { &mut *zip_entry };
         if zip_entry.is_null() {
             unsafe {
@@ -5284,7 +5278,7 @@ pub fn archive_read_support_format_zip_seekable(_a: *mut archive) -> i32 {
     if magic_test == -30 {
         return -30;
     }
-    zip = unsafe { calloc_safe(1, ::std::mem::size_of::<zip>() as u64) } as *mut zip;
+    zip = unsafe { calloc_safe(1, size_of::<zip>() as u64) } as *mut zip;
 
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
@@ -5364,8 +5358,8 @@ pub fn archive_read_support_format_zip_seekable(_a: *mut archive) -> i32 {
 }
 fn run_static_initializers() {
     unsafe {
-        num_compression_methods = ((::std::mem::size_of::<[obj2; 25]>() as u64)
-            / (::std::mem::size_of::<obj2>() as u64)) as i32
+        num_compression_methods =
+            ((size_of::<[obj2; 25]>() as u64) / (size_of::<obj2>() as u64)) as i32
     }
 }
 #[used]
@@ -5379,8 +5373,7 @@ static INIT_ARRAY: [unsafe fn(); 1] = [run_static_initializers];
 pub fn archive_test_trad_enc_init(_a: *mut archive, key: *const uint8_t, crcchk: *mut uint8_t) {
     let a: *mut archive_read = _a as *mut archive_read;
     let mut trad_enc_ctx: *mut trad_enc_ctx = 0 as *mut trad_enc_ctx;
-    trad_enc_ctx = unsafe { calloc_safe(1, ::std::mem::size_of::<trad_enc_ctx>() as u64) }
-        as *mut trad_enc_ctx;
+    trad_enc_ctx = unsafe { calloc_safe(1, size_of::<trad_enc_ctx>() as u64) } as *mut trad_enc_ctx;
     trad_enc_init(
         trad_enc_ctx,
         b"11" as *const u8,
@@ -5395,8 +5388,7 @@ pub fn archive_test_trad_enc_init(_a: *mut archive, key: *const uint8_t, crcchk:
 pub fn archive_test_zip_read_mac_metadata(_a: *mut archive, entry: *mut archive_entry) {
     let a: *mut archive_read = _a as *mut archive_read;
     let mut zip_entry: *mut zip_entry = 0 as *mut zip_entry;
-    zip_entry =
-        unsafe { calloc_safe(1, ::std::mem::size_of::<zip_entry>() as u64) } as *mut zip_entry;
+    zip_entry = unsafe { calloc_safe(1, size_of::<zip_entry>() as u64) } as *mut zip_entry;
     unsafe { (*(zip_entry)).uncompressed_size = (5 * 1024 * 1024) as int64_t };
     unsafe { (*(zip_entry)).compressed_size = (6 * 1024 * 1024) as int64_t };
     zip_read_mac_metadata(a, entry, zip_entry);
@@ -5416,7 +5408,7 @@ pub fn archive_test_expose_parent_dirs(_a: *mut archive, name: *const u8, name_l
 pub fn archive_test_check_authentication_code(_a: *mut archive, _p: *const ()) {
     let a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut zip = 0 as *mut zip;
-    zip = unsafe { calloc_safe(1, ::std::mem::size_of::<zip>() as u64) } as *mut zip;
+    zip = unsafe { calloc_safe(1, size_of::<zip>() as u64) } as *mut zip;
     unsafe { (*(*a).format).data = zip as *mut () };
     check_authentication_code(a, _p);
 }
@@ -5435,7 +5427,7 @@ pub fn archive_test_archive_read_format_zip_options(
 pub fn archive_test_zipx_ppmd8_init(mut _a: *mut archive) {
     let a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut zip = 0 as *mut zip;
-    zip = unsafe { calloc_safe(1, ::std::mem::size_of::<zip>() as u64) } as *mut zip;
+    zip = unsafe { calloc_safe(1, size_of::<zip>() as u64) } as *mut zip;
     unsafe { (*zip).ppmd8_valid = 'a' as u8 };
     zipx_ppmd8_init(a, zip);
 }
@@ -5443,8 +5435,8 @@ pub fn archive_test_zipx_ppmd8_init(mut _a: *mut archive) {
 #[no_mangle]
 pub fn archive_test_cmp_key(n: *const archive_rb_node, key: *const ()) {
     let mut archive_rb_node: *mut archive_rb_node = 0 as *mut archive_rb_node;
-    archive_rb_node = unsafe { calloc_safe(1, ::std::mem::size_of::<archive_rb_node>() as u64) }
-        as *mut archive_rb_node;
+    archive_rb_node =
+        unsafe { calloc_safe(1, size_of::<archive_rb_node>() as u64) } as *mut archive_rb_node;
     cmp_key(archive_rb_node, key);
 }
 
@@ -5452,7 +5444,7 @@ pub fn archive_test_cmp_key(n: *const archive_rb_node, key: *const ()) {
 pub fn archive_test_read_format_zip_read_data(_a: *mut archive) {
     let a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut zip = 0 as *mut zip;
-    zip = unsafe { calloc_safe(1, ::std::mem::size_of::<zip>() as u64) } as *mut zip;
+    zip = unsafe { calloc_safe(1, size_of::<zip>() as u64) } as *mut zip;
     unsafe { (*zip).has_encrypted_entries = -1 };
     unsafe { (*zip).entry_uncompressed_bytes_read = 0 };
     unsafe { (*zip).end_of_entry = 'a' as u8 };

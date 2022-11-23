@@ -4,7 +4,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
-
+use std::mem::size_of;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct xar {
@@ -235,7 +235,7 @@ pub unsafe fn archive_read_support_format_xar(mut _a: *mut archive) -> i32 {
     if magic_test == ARCHIVE_XAR_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
-    xar = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<xar>() as u64) as *mut xar;
+    xar = calloc_safe(1 as i32 as u64, size_of::<xar>() as u64) as *mut xar;
     let mut safe_a = unsafe { &mut *a };
     let mut safe_xar = unsafe { &mut *xar };
     if xar.is_null() {
@@ -1159,7 +1159,7 @@ unsafe fn parse_time(mut p: *const u8, mut n: size_t) -> time_t {
     memset_safe(
         &mut tm as *mut tm as *mut (),
         0 as i32,
-        ::std::mem::size_of::<tm>() as u64,
+        size_of::<tm>() as u64,
     );
     if n != 20 as i32 as u64 {
         return t;
@@ -1258,9 +1258,9 @@ unsafe fn heap_add_entry(
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
-        new_pending_files = malloc_safe(
-            (new_size as u64).wrapping_mul(::std::mem::size_of::<*mut xar_file>() as u64),
-        ) as *mut *mut xar_file;
+        new_pending_files =
+            malloc_safe((new_size as u64).wrapping_mul(size_of::<*mut xar_file>() as u64))
+                as *mut *mut xar_file;
         if new_pending_files.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
@@ -1273,8 +1273,7 @@ unsafe fn heap_add_entry(
             memcpy_safe(
                 new_pending_files as *mut (),
                 safe_heap.files as *const (),
-                (safe_heap.allocated as u64)
-                    .wrapping_mul(::std::mem::size_of::<*mut xar_file>() as u64),
+                (safe_heap.allocated as u64).wrapping_mul(size_of::<*mut xar_file>() as u64),
             );
             free_safe(safe_heap.files as *mut ());
         }
@@ -1388,7 +1387,7 @@ unsafe fn add_link(mut a: *mut archive_read, mut xar: *mut xar, mut file: *mut x
         hdlink = safe_hdlink.next;
         safe_hdlink = unsafe { &mut *hdlink };
     }
-    hdlink = malloc_safe(::std::mem::size_of::<hdlink>() as u64) as *mut hdlink;
+    hdlink = malloc_safe(size_of::<hdlink>() as u64) as *mut hdlink;
     safe_hdlink = unsafe { &mut *hdlink };
     if hdlink.is_null() {
         archive_set_error_safe!(
@@ -1556,7 +1555,7 @@ unsafe fn decompression_init(mut a: *mut archive_read, mut encoding: enctype) ->
                 r = inflateInit__safe(
                     &mut safe_xar.stream,
                     b"1.2.11\x00" as *const u8,
-                    ::std::mem::size_of::<z_stream_s>() as u64 as i32,
+                    size_of::<z_stream_s>() as u64 as i32,
                 )
             }
             if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
@@ -1946,7 +1945,7 @@ unsafe fn file_new(
     let mut file: *mut xar_file = 0 as *mut xar_file;
     let mut attr: *mut xmlattr = 0 as *mut xmlattr;
     let mut safe_a = unsafe { &mut *a };
-    file = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<xar_file>() as u64) as *mut xar_file;
+    file = calloc_safe(1 as i32 as u64, size_of::<xar_file>() as u64) as *mut xar_file;
     if file.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
@@ -2005,7 +2004,7 @@ unsafe fn xattr_new(
     let mut attr: *mut xmlattr = 0 as *mut xmlattr;
     let mut safe_a = unsafe { &mut *a };
     let mut safe_xar = unsafe { &mut *xar };
-    xattr = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<xattr>() as u64) as *mut xattr;
+    xattr = calloc_safe(1 as i32 as u64, size_of::<xattr>() as u64) as *mut xattr;
     if xattr.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
@@ -2125,7 +2124,7 @@ unsafe fn unknowntag_start(
     mut name: *const u8,
 ) -> i32 {
     let mut tag: *mut unknown_tag = 0 as *mut unknown_tag;
-    tag = malloc_safe(::std::mem::size_of::<unknown_tag>() as u64) as *mut unknown_tag;
+    tag = malloc_safe(size_of::<unknown_tag>() as u64) as *mut unknown_tag;
     let mut safe_tag = unsafe { &mut *tag };
     let mut safe_a = unsafe { &mut *a };
     let mut safe_xar = unsafe { &mut *xar };
@@ -3190,7 +3189,7 @@ unsafe fn strappend_base64(
             len = len.wrapping_add(1);
             l = l.wrapping_sub(1)
         }
-        if len.wrapping_add(3 as i32 as u64) >= ::std::mem::size_of::<[u8; 256]>() as u64 {
+        if len.wrapping_add(3 as i32 as u64) >= size_of::<[u8; 256]>() as u64 {
             archive_strncat_safe(as_0, buff.as_mut_ptr() as *const u8 as *const (), len);
             len = 0 as i32 as size_t;
             out = buff.as_mut_ptr()
@@ -3346,7 +3345,7 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const u8, mut len: i32) {
         FILE_DATA_A_CHECKSUM => {
             safe_file.a_sum.len = atohex(
                 safe_file.a_sum.val.as_mut_ptr(),
-                ::std::mem::size_of::<[u8; 20]>() as u64,
+                size_of::<[u8; 20]>() as u64,
                 s,
                 len as size_t,
             )
@@ -3354,7 +3353,7 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const u8, mut len: i32) {
         FILE_DATA_E_CHECKSUM => {
             safe_file.e_sum.len = atohex(
                 safe_file.e_sum.val.as_mut_ptr(),
-                ::std::mem::size_of::<[u8; 20]>() as u64,
+                size_of::<[u8; 20]>() as u64,
                 s,
                 len as size_t,
             )
@@ -3375,7 +3374,7 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const u8, mut len: i32) {
             safe_file.has |= HAS_XATTR as u32;
             safe_xattr.a_sum.len = atohex(
                 safe_xattr.a_sum.val.as_mut_ptr(),
-                ::std::mem::size_of::<[u8; 20]>() as u64,
+                size_of::<[u8; 20]>() as u64,
                 s,
                 len as size_t,
             )
@@ -3384,7 +3383,7 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const u8, mut len: i32) {
             safe_file.has |= HAS_XATTR as u32;
             safe_xattr.e_sum.len = atohex(
                 safe_xattr.e_sum.val.as_mut_ptr(),
-                ::std::mem::size_of::<[u8; 20]>() as u64,
+                size_of::<[u8; 20]>() as u64,
                 s,
                 len as size_t,
             )
@@ -3599,7 +3598,7 @@ unsafe fn xml2_xmlattr_setup(
     let mut safe_a = unsafe { &mut *a };
     r = xmlTextReaderMoveToFirstAttribute_safe(reader);
     while r == 1 as i32 {
-        attr = malloc_safe(::std::mem::size_of::<xmlattr>() as u64) as *mut xmlattr;
+        attr = malloc_safe(size_of::<xmlattr>() as u64) as *mut xmlattr;
         if attr.is_null() {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
@@ -3816,7 +3815,7 @@ unsafe fn expat_xmlattr_setup(
     while unsafe {
         !(*atts.offset(0 as i32 as isize)).is_null() && !(*atts.offset(1 as i32 as isize)).is_null()
     } {
-        attr = malloc_safe(::std::mem::size_of::<xmlattr>() as u64) as *mut xmlattr;
+        attr = malloc_safe(size_of::<xmlattr>() as u64) as *mut xmlattr;
         name = strdup_safe(unsafe { *atts.offset(0 as i32 as isize) });
         value = strdup_safe(unsafe { *atts.offset(1 as i32 as isize) });
         if attr.is_null() || name.is_null() || value.is_null() {

@@ -2,6 +2,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
+use std::mem::size_of;
 
 static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
     {
@@ -421,10 +422,7 @@ unsafe fn acl_new_entry(
         ap = (*ap).next
     }
     /* Add a new entry to the end of the list. */
-    ap = calloc(
-        1 as i32 as u64,
-        ::std::mem::size_of::<archive_acl_entry>() as u64,
-    ) as *mut archive_acl_entry;
+    ap = calloc(1 as i32 as u64, size_of::<archive_acl_entry>() as u64) as *mut archive_acl_entry;
     if ap.is_null() {
         return 0 as *mut archive_acl_entry;
     }
@@ -714,7 +712,7 @@ unsafe fn archive_acl_text_len(
                             return 0 as i32 as ssize_t;
                         } else {
                             length = (length as u64).wrapping_add(
-                                (::std::mem::size_of::<uid_t>() as u64)
+                                (size_of::<uid_t>() as u64)
                                     .wrapping_mul(3 as i32 as u64)
                                     .wrapping_add(1 as i32 as u64),
                             ) as ssize_t as ssize_t
@@ -734,7 +732,7 @@ unsafe fn archive_acl_text_len(
                             length = (length as u64).wrapping_add(len) as ssize_t as ssize_t
                         } else {
                             length = (length as u64).wrapping_add(
-                                (::std::mem::size_of::<uid_t>() as u64)
+                                (size_of::<uid_t>() as u64)
                                     .wrapping_mul(3 as i32 as u64)
                                     .wrapping_add(1 as i32 as u64),
                             ) as ssize_t as ssize_t
@@ -850,8 +848,7 @@ pub unsafe extern "C" fn archive_acl_to_text_w(
         separator = '\n' as wchar_t
     }
     /* Now, allocate the string and actually populate it. */
-    ws = malloc_safe((length as u64).wrapping_mul(::std::mem::size_of::<wchar_t>() as u64))
-        as *mut wchar_t;
+    ws = malloc_safe((length as u64).wrapping_mul(size_of::<wchar_t>() as u64)) as *mut wchar_t;
     wp = ws;
     if wp.is_null() {
         if *__errno_location_safe() == ARCHIVE_ACL_DEFINED_PARAM.enomem {
@@ -1208,7 +1205,7 @@ pub unsafe extern "C" fn archive_acl_to_text_l(
         separator = '\n' as i32 as u8
     }
     /* Now, allocate the string and actually populate it. */
-    s = malloc_safe((length as u64).wrapping_mul(::std::mem::size_of::<u8>() as u64)) as *mut u8;
+    s = malloc_safe((length as u64).wrapping_mul(size_of::<u8>() as u64)) as *mut u8;
     p = s;
     if p.is_null() {
         if *__errno_location_safe() == ARCHIVE_ACL_DEFINED_PARAM.enomem {
@@ -2707,11 +2704,11 @@ unsafe extern "C" fn next_field(
     };
 }
 unsafe extern "C" fn run_static_initializers() {
-    nfsv4_acl_perm_map_size = (::std::mem::size_of::<[nfsv4_acl_perm_map_struct; 14]>() as u64)
-        .wrapping_div(::std::mem::size_of::<nfsv4_acl_perm_map_struct>() as u64)
+    nfsv4_acl_perm_map_size = (size_of::<[nfsv4_acl_perm_map_struct; 14]>() as u64)
+        .wrapping_div(size_of::<nfsv4_acl_perm_map_struct>() as u64)
         as i32;
-    nfsv4_acl_flag_map_size = (::std::mem::size_of::<[nfsv4_acl_perm_map_struct; 7]>() as u64)
-        .wrapping_div(::std::mem::size_of::<nfsv4_acl_perm_map_struct>() as u64)
+    nfsv4_acl_flag_map_size = (size_of::<[nfsv4_acl_perm_map_struct; 7]>() as u64)
+        .wrapping_div(size_of::<nfsv4_acl_perm_map_struct>() as u64)
         as i32
 }
 #[used]

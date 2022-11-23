@@ -3,6 +3,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
+use std::mem::size_of;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -220,7 +221,7 @@ pub unsafe fn archive_read_support_format_7zip(mut _a: *mut archive) -> i32 {
     if magic_test == -(30 as i32) {
         return -(30 as i32);
     }
-    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, size_of::<_7zip>() as u64) as *mut _7zip;
     let safe_zip = unsafe { &mut *zip };
     let safe_a = unsafe { &mut *a };
 
@@ -482,7 +483,7 @@ unsafe fn archive_read_format_7zip_read_header(
         memset_safe(
             &mut header as *mut _7z_header_info as *mut (),
             0 as i32,
-            ::std::mem::size_of::<_7z_header_info>() as u64,
+            size_of::<_7z_header_info>() as u64,
         );
         r = slurp_central_directory(a, zip, &mut header);
         free_Header(&mut header);
@@ -1006,7 +1007,7 @@ unsafe fn init_decompression(
                                     memset_safe(
                                         &mut delta_opt as *mut lzma_options_delta as *mut (),
                                         0 as i32,
-                                        ::std::mem::size_of::<lzma_options_delta>() as u64,
+                                        size_of::<lzma_options_delta>() as u64,
                                     );
                                     delta_opt.type_0 = LZMA_DELTA_TYPE_BYTE;
                                     delta_opt.dist = unsafe {
@@ -1173,7 +1174,7 @@ unsafe fn init_decompression(
                                 &mut (safe_zip).stream,
                                 -(15 as i32),
                                 b"1.2.11\x00" as *const u8,
-                                ::std::mem::size_of::<z_stream>() as u64 as i32,
+                                size_of::<z_stream>() as u64 as i32,
                             )
                         }
                         /* Don't check for zlib header */
@@ -1840,11 +1841,7 @@ unsafe fn read_Digests(mut a: *mut archive_read, mut d: *mut _7z_digests, mut nu
     if num == 0 as i32 as u64 {
         return -(1 as i32);
     }
-    memset_safe(
-        d as *mut (),
-        0 as i32,
-        ::std::mem::size_of::<_7z_digests>() as u64,
-    );
+    memset_safe(d as *mut (), 0 as i32, size_of::<_7z_digests>() as u64);
     (safe_d).defineds = malloc_safe(num) as *mut u8;
     if (safe_d).defineds.is_null() {
         return -(1 as i32);
@@ -1864,7 +1861,7 @@ unsafe fn read_Digests(mut a: *mut archive_read, mut d: *mut _7z_digests, mut nu
         /* All are defined */
         memset_safe((safe_d).defineds as *mut (), 1 as i32, num);
     }
-    (safe_d).digests = calloc_safe(num, ::std::mem::size_of::<uint32_t>() as u64) as *mut uint32_t;
+    (safe_d).digests = calloc_safe(num, size_of::<uint32_t>() as u64) as *mut uint32_t;
     if (safe_d).digests.is_null() {
         return -(1 as i32);
     }
@@ -1893,11 +1890,7 @@ unsafe fn read_PackInfo(mut a: *mut archive_read, mut pi: *mut _7z_pack_info) ->
     let mut p: *const u8 = 0 as *const u8;
     let mut i: u32 = 0;
     let safe_pi = unsafe { &mut *pi };
-    memset_safe(
-        pi as *mut (),
-        0 as i32,
-        ::std::mem::size_of::<_7z_pack_info>() as u64,
-    );
+    memset_safe(pi as *mut (), 0 as i32, size_of::<_7z_pack_info>() as u64);
     /*
      * Read PackPos.
      */
@@ -1930,14 +1923,10 @@ unsafe fn read_PackInfo(mut a: *mut archive_read, mut pi: *mut _7z_pack_info) ->
     if unsafe { *p as i32 != 0x9 as i32 } {
         return -(1 as i32);
     }
-    (safe_pi).sizes = calloc_safe(
-        (safe_pi).numPackStreams,
-        ::std::mem::size_of::<uint64_t>() as u64,
-    ) as *mut uint64_t;
-    (safe_pi).positions = calloc_safe(
-        (safe_pi).numPackStreams,
-        ::std::mem::size_of::<uint64_t>() as u64,
-    ) as *mut uint64_t;
+    (safe_pi).sizes =
+        calloc_safe((safe_pi).numPackStreams, size_of::<uint64_t>() as u64) as *mut uint64_t;
+    (safe_pi).positions =
+        calloc_safe((safe_pi).numPackStreams, size_of::<uint64_t>() as u64) as *mut uint64_t;
     if (safe_pi).sizes.is_null() || (safe_pi).positions.is_null() {
         return -(1 as i32);
     }
@@ -1958,11 +1947,9 @@ unsafe fn read_PackInfo(mut a: *mut archive_read, mut pi: *mut _7z_pack_info) ->
     if unsafe { *p as i32 == 0 as i32 } {
         /* PackStreamDigests[num] are not present. */
         (safe_pi).digest.defineds =
-            calloc_safe((safe_pi).numPackStreams, ::std::mem::size_of::<u8>() as u64) as *mut u8;
-        (safe_pi).digest.digests = calloc_safe(
-            (safe_pi).numPackStreams,
-            ::std::mem::size_of::<uint32_t>() as u64,
-        ) as *mut uint32_t;
+            calloc_safe((safe_pi).numPackStreams, size_of::<u8>() as u64) as *mut u8;
+        (safe_pi).digest.digests =
+            calloc_safe((safe_pi).numPackStreams, size_of::<uint32_t>() as u64) as *mut uint32_t;
         if (safe_pi).digest.defineds.is_null() || (safe_pi).digest.digests.is_null() {
             return -(1 as i32);
         }
@@ -2021,11 +2008,7 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
         let mut numInStreamsTotal: uint64_t = 0 as i32 as uint64_t;
         let mut numOutStreamsTotal: uint64_t = 0 as i32 as uint64_t;
         let mut i: u32 = 0;
-        memset(
-            f as *mut (),
-            0 as i32,
-            ::std::mem::size_of::<_7z_folder>() as u64,
-        );
+        memset(f as *mut (), 0 as i32, size_of::<_7z_folder>() as u64);
         /*
          * Read NumCoders.
          */
@@ -2036,8 +2019,7 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
             /* Too many coders. */
             return -(1 as i32);
         }
-        (*f).coders =
-            calloc((*f).numCoders, ::std::mem::size_of::<_7z_coder>() as u64) as *mut _7z_coder;
+        (*f).coders = calloc((*f).numCoders, size_of::<_7z_coder>() as u64) as *mut _7z_coder;
         if (*f).coders.is_null() {
             return -(1 as i32);
         }
@@ -2136,8 +2118,7 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
             return -(1 as i32);
         }
         if (*f).numBindPairs > 0 as i32 as u64 {
-            (*f).bindPairs =
-                calloc((*f).numBindPairs, ::std::mem::size_of::<obj1>() as u64) as *mut obj1;
+            (*f).bindPairs = calloc((*f).numBindPairs, size_of::<obj1>() as u64) as *mut obj1;
             if (*f).bindPairs.is_null() {
                 return -(1 as i32);
             }
@@ -2161,10 +2142,8 @@ unsafe fn read_Folder(mut a: *mut archive_read, mut f: *mut _7z_folder) -> i32 {
             i = i.wrapping_add(1)
         }
         (*f).numPackedStreams = numInStreamsTotal.wrapping_sub((*f).numBindPairs);
-        (*f).packedStreams = calloc(
-            (*f).numPackedStreams,
-            ::std::mem::size_of::<uint64_t>() as u64,
-        ) as *mut uint64_t;
+        (*f).packedStreams =
+            calloc((*f).numPackedStreams, size_of::<uint64_t>() as u64) as *mut uint64_t;
         if (*f).packedStreams.is_null() {
             return -(1 as i32);
         }
@@ -2214,15 +2193,11 @@ unsafe fn read_CodersInfo(mut a: *mut archive_read, mut ci: *mut _7z_coders_info
         digests: 0 as *mut uint32_t,
     };
     let mut i: u32 = 0;
-    memset_safe(
-        ci as *mut (),
-        0 as i32,
-        ::std::mem::size_of::<_7z_coders_info>() as u64,
-    );
+    memset_safe(ci as *mut (), 0 as i32, size_of::<_7z_coders_info>() as u64);
     memset_safe(
         &mut digest as *mut _7z_digests as *mut (),
         0 as i32,
-        ::std::mem::size_of::<_7z_digests>() as u64,
+        size_of::<_7z_digests>() as u64,
     );
     let safe_a = unsafe { &mut *a };
     let safe_ci = unsafe { &mut *ci };
@@ -2244,10 +2219,9 @@ unsafe fn read_CodersInfo(mut a: *mut archive_read, mut ci: *mut _7z_coders_info
                 if !p.is_null() {
                     match unsafe { *p as i32 } {
                         0 => {
-                            (safe_ci).folders = calloc_safe(
-                                (safe_ci).numFolders,
-                                ::std::mem::size_of::<_7z_folder>() as u64,
-                            ) as *mut _7z_folder;
+                            (safe_ci).folders =
+                                calloc_safe((safe_ci).numFolders, size_of::<_7z_folder>() as u64)
+                                    as *mut _7z_folder;
                             if (safe_ci).folders.is_null() {
                                 return -(1 as i32);
                             }
@@ -2318,7 +2292,7 @@ unsafe fn read_CodersInfo(mut a: *mut archive_read, mut ci: *mut _7z_coders_info
                                         let mut j: u32 = 0;
                                         (safe_folder).unPackSize = calloc_safe(
                                             (safe_folder).numOutStreams,
-                                            ::std::mem::size_of::<uint64_t>() as u64,
+                                            size_of::<uint64_t>() as u64,
                                         )
                                             as *mut uint64_t;
                                         if (safe_folder).unPackSize.is_null() {
@@ -2449,7 +2423,7 @@ unsafe fn read_SubStreamsInfo(
     memset_safe(
         ss as *mut (),
         0 as i32,
-        ::std::mem::size_of::<_7z_substream_info>() as u64,
+        size_of::<_7z_substream_info>() as u64,
     );
     let safe_f = unsafe { &mut *f };
     let safe_ss = unsafe { &mut *ss };
@@ -2497,11 +2471,10 @@ unsafe fn read_SubStreamsInfo(
     (safe_ss).unpack_streams = unpack_streams;
     if unpack_streams != 0 {
         (safe_ss).unpackSizes =
-            calloc_safe(unpack_streams, ::std::mem::size_of::<uint64_t>() as u64) as *mut uint64_t;
-        (safe_ss).digestsDefined =
-            calloc_safe(unpack_streams, ::std::mem::size_of::<u8>() as u64) as *mut u8;
+            calloc_safe(unpack_streams, size_of::<uint64_t>() as u64) as *mut uint64_t;
+        (safe_ss).digestsDefined = calloc_safe(unpack_streams, size_of::<u8>() as u64) as *mut u8;
         (safe_ss).digests =
-            calloc_safe(unpack_streams, ::std::mem::size_of::<uint32_t>() as u64) as *mut uint32_t;
+            calloc_safe(unpack_streams, size_of::<uint32_t>() as u64) as *mut uint32_t;
         if (safe_ss).unpackSizes.is_null()
             || (safe_ss).digestsDefined.is_null()
             || (safe_ss).digests.is_null()
@@ -2575,7 +2548,7 @@ unsafe fn read_SubStreamsInfo(
         memset_safe(
             &mut tmpDigests as *mut _7z_digests as *mut (),
             0 as i32,
-            ::std::mem::size_of::<_7z_digests>() as u64,
+            size_of::<_7z_digests>() as u64,
         );
         if read_Digests(a, &mut tmpDigests, numDigests as size_t) < 0 as i32 {
             free_Digest(&mut tmpDigests);
@@ -2636,11 +2609,7 @@ unsafe fn read_StreamsInfo(mut a: *mut archive_read, mut si: *mut _7z_stream_inf
     let mut zip: *mut _7zip = unsafe { (*(*a).format).data as *mut _7zip };
     let mut p: *const u8 = 0 as *const u8;
     let mut i: u32 = 0;
-    memset_safe(
-        si as *mut (),
-        0 as i32,
-        ::std::mem::size_of::<_7z_stream_info>() as u64,
-    );
+    memset_safe(si as *mut (), 0 as i32, size_of::<_7z_stream_info>() as u64);
     let safe_si = unsafe { &mut *si };
     p = header_bytes(a, 1 as i32 as size_t);
     if p.is_null() {
@@ -2817,8 +2786,8 @@ unsafe fn read_Header(
         if (100000000 as u64) < (*zip).numFiles as u64 {
             return -(1 as i32);
         }
-        (*zip).entries = calloc((*zip).numFiles, ::std::mem::size_of::<_7zip_entry>() as u64)
-            as *mut _7zip_entry;
+        (*zip).entries =
+            calloc((*zip).numFiles, size_of::<_7zip_entry>() as u64) as *mut _7zip_entry;
         if (*zip).entries.is_null() {
             return -(1 as i32);
         }
@@ -2850,7 +2819,7 @@ unsafe fn read_Header(
                         return -(1 as i32);
                     }
                     (*h).emptyStreamBools =
-                        calloc((*zip).numFiles, ::std::mem::size_of::<u8>() as u64) as *mut u8;
+                        calloc((*zip).numFiles, size_of::<u8>() as u64) as *mut u8;
                     if (*h).emptyStreamBools.is_null() {
                         return -(1 as i32);
                     }
@@ -2878,8 +2847,7 @@ unsafe fn read_Header(
                             return -(1 as i32);
                         }
                         (*h).emptyFileBools =
-                            calloc(empty_streams as u64, ::std::mem::size_of::<u8>() as u64)
-                                as *mut u8;
+                            calloc(empty_streams as u64, size_of::<u8>() as u64) as *mut u8;
                         if (*h).emptyFileBools.is_null() {
                             return -(1 as i32);
                         }
@@ -2900,8 +2868,7 @@ unsafe fn read_Header(
                             return -(1 as i32);
                         }
                         (*h).antiBools =
-                            calloc(empty_streams as u64, ::std::mem::size_of::<u8>() as u64)
-                                as *mut u8;
+                            calloc(empty_streams as u64, size_of::<u8>() as u64) as *mut u8;
                         if (*h).antiBools.is_null() {
                             return -(1 as i32);
                         }
@@ -3009,8 +2976,7 @@ unsafe fn read_Header(
                     if !(*h).attrBools.is_null() {
                         return -(1 as i32);
                     }
-                    (*h).attrBools =
-                        calloc((*zip).numFiles, ::std::mem::size_of::<u8>() as u64) as *mut u8;
+                    (*h).attrBools = calloc((*zip).numFiles, size_of::<u8>() as u64) as *mut u8;
                     if (*h).attrBools.is_null() {
                         return -(1 as i32);
                     }
@@ -3213,7 +3179,7 @@ unsafe fn read_Times(
     let mut timeBools: *mut u8 = 0 as *mut u8;
     let mut allAreDefined: i32 = 0;
     let mut i: u32 = 0;
-    timeBools = calloc_safe((safe_zip).numFiles, ::std::mem::size_of::<u8>() as u64) as *mut u8;
+    timeBools = calloc_safe((safe_zip).numFiles, size_of::<u8>() as u64) as *mut u8;
     if timeBools.is_null() {
         return -(1 as i32);
     }
@@ -3576,7 +3542,7 @@ unsafe fn slurp_central_directory(
             memset_safe(
                 &mut (safe_zip).si as *mut _7z_stream_info as *mut (),
                 0 as i32,
-                ::std::mem::size_of::<_7z_stream_info>() as u64,
+                size_of::<_7z_stream_info>() as u64,
             );
             if r < 0 as i32 {
                 return -(30 as i32);
@@ -4687,8 +4653,7 @@ unsafe fn Bcj2_Decode(
             safe_zip.bcj2_prevByte = 0 as i32 as uint8_t;
             i = 0 as i32 as u32;
             while (i as u64)
-                < (::std::mem::size_of::<[uint16_t; 258]>() as u64)
-                    .wrapping_div(::std::mem::size_of::<uint16_t>() as u64)
+                < (size_of::<[uint16_t; 258]>() as u64).wrapping_div(size_of::<uint16_t>() as u64)
             {
                 safe_zip.bcj2_p[i as usize] = ((1 as i32) << 11 as i32 >> 1 as i32) as uint16_t;
                 i = i.wrapping_add(1)
@@ -4891,13 +4856,11 @@ pub unsafe fn archive_test_skip_sfx(mut _a: *mut archive, mut bytes_avail: ssize
 pub unsafe fn archive_test_init_decompression(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut _7zip: *mut _7zip = 0 as *mut _7zip;
-    _7zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
+    _7zip = calloc_safe(1 as i32 as u64, size_of::<_7zip>() as u64) as *mut _7zip;
     let mut coder1: *mut _7z_coder = 0 as *mut _7z_coder;
-    coder1 =
-        calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7z_coder>() as u64) as *mut _7z_coder;
+    coder1 = calloc_safe(1 as i32 as u64, size_of::<_7z_coder>() as u64) as *mut _7z_coder;
     let mut coder2: *mut _7z_coder = 0 as *mut _7z_coder;
-    coder2 =
-        calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7z_coder>() as u64) as *mut _7z_coder;
+    coder2 = calloc_safe(1 as i32 as u64, size_of::<_7z_coder>() as u64) as *mut _7z_coder;
     (*(coder1)).codec = 0x030401 as u64;
     (*(coder1)).propertiesSize = 4 as uint64_t;
     (*(_7zip)).ppmd7_valid = 1 as i32;
@@ -4929,12 +4892,8 @@ pub unsafe fn archive_test_init_decompression(mut _a: *mut archive) {
 #[no_mangle]
 pub unsafe fn archive_test_archive_read_support_format_7zip() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
-    archive_read = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read>() as u64,
-        )
-    } as *mut archive_read;
+    archive_read = unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read>() as u64) }
+        as *mut archive_read;
     (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
     (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
     archive_read_support_format_7zip(&mut (*archive_read).archive as *mut archive);
@@ -4944,10 +4903,10 @@ pub unsafe fn archive_test_archive_read_support_format_7zip() {
 pub unsafe fn archive_test_ppmd_read(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, size_of::<_7zip>() as u64) as *mut _7zip;
     (*zip).ppstream.avail_in = 0;
     let mut ibytein: *mut IByteIn = 0 as *mut IByteIn;
-    ibytein = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<IByteIn>() as u64) as *mut IByteIn;
+    ibytein = calloc_safe(1 as i32 as u64, size_of::<IByteIn>() as u64) as *mut IByteIn;
     (*ibytein).a = a as *mut archive_read;
     let mut p: *mut () = ibytein as *mut ();
     ppmd_read(p);
@@ -4957,7 +4916,7 @@ pub unsafe fn archive_test_ppmd_read(mut _a: *mut archive) {
 pub unsafe fn archive_test_decompress(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, size_of::<_7zip>() as u64) as *mut _7zip;
     (*zip).codec = 0x20;
     (*zip).codec2 = 0x03030103;
     (*zip).odd_bcj_size = 1;
@@ -4997,7 +4956,7 @@ pub unsafe fn archive_test_decompress(mut _a: *mut archive) {
 #[no_mangle]
 pub unsafe fn archive_test_Bcj2_Decode() {
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, size_of::<_7zip>() as u64) as *mut _7zip;
     (*zip).bcj_state = 1;
     (*zip).odd_bcj[0] = 'a' as u8;
     (*zip).odd_bcj[1] = 'b' as u8;
@@ -5010,7 +4969,7 @@ pub unsafe fn archive_test_Bcj2_Decode() {
 #[no_mangle]
 pub unsafe fn archive_test_x86_Convert() {
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, size_of::<_7zip>() as u64) as *mut _7zip;
     (*zip).bcj_prevMask = 0x7;
     (*zip).bcj_prevPosT = 2;
     (*zip).bcj_ip = 0;
@@ -5044,7 +5003,7 @@ pub unsafe fn archive_test_x86_Convert() {
 pub unsafe fn archive_test_seek_pack(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, size_of::<_7zip>() as u64) as *mut _7zip;
     (*(*a).format).data = zip as *mut ();
     (*zip).pack_stream_remaining = 0;
     seek_pack(a);
@@ -5054,7 +5013,7 @@ pub unsafe fn archive_test_seek_pack(mut _a: *mut archive) {
 pub unsafe fn archive_test_extract_pack_stream(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, size_of::<_7zip>() as u64) as *mut _7zip;
     (*(*a).format).data = zip as *mut ();
     extract_pack_stream(a, (64 * 1024) + 1);
     let mut p1: [u8; 2] = ['1' as u8, '2' as u8];
@@ -5074,16 +5033,14 @@ pub unsafe fn archive_test_get_uncompressed_data(mut _a: *mut archive) {
     let mut buff2: *mut *const () =
         unsafe { &buff as *const *mut () as *mut *mut () as *mut *const () };
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, size_of::<_7zip>() as u64) as *mut _7zip;
     (*(*a).format).data = zip as *mut ();
     get_uncompressed_data(a, buff2, 1, 1);
     (*zip).codec = 0;
     (*zip).codec2 = 1;
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
-    archive_read_filter = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<archive_read_filter>() as u64,
-    ) as *mut archive_read_filter;
+    archive_read_filter = calloc_safe(1 as i32 as u64, size_of::<archive_read_filter>() as u64)
+        as *mut archive_read_filter;
     (*archive_read_filter).fatal = 'a' as u8;
     (*a).filter = archive_read_filter;
     get_uncompressed_data(a, buff2, 1, 1);
@@ -5093,10 +5050,8 @@ pub unsafe fn archive_test_get_uncompressed_data(mut _a: *mut archive) {
 pub unsafe fn archive_test_decode_encoded_header_info(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut _7z_stream_info: *mut _7z_stream_info = 0 as *mut _7z_stream_info;
-    _7z_stream_info = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<_7z_stream_info>() as u64,
-    ) as *mut _7z_stream_info;
+    _7z_stream_info =
+        calloc_safe(1 as i32 as u64, size_of::<_7z_stream_info>() as u64) as *mut _7z_stream_info;
     (*_7z_stream_info).pi.numPackStreams = 0;
     decode_encoded_header_info(a, _7z_stream_info);
 }
@@ -5111,10 +5066,8 @@ pub unsafe fn archive_test_fileTimeToUtc() {
 pub unsafe fn archive_test_archive_read_format_7zip_bid(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
-    filter = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<archive_read_filter>() as u64,
-    ) as *mut archive_read_filter;
+    filter = calloc_safe(1 as i32 as u64, size_of::<archive_read_filter>() as u64)
+        as *mut archive_read_filter;
     (*filter).avail = 4096;
     (*filter).client_total = 0x27000 + 4096;
     (*filter).client_avail = 0x27000;
@@ -5128,13 +5081,11 @@ pub unsafe fn archive_test_read_stream(mut _a: *mut archive) {
     let mut buff2: *mut *const () =
         unsafe { &buff as *const *mut () as *mut *mut () as *mut *const () };
     let mut zip: *mut _7zip = 0 as *mut _7zip;
-    zip = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip>() as u64) as *mut _7zip;
+    zip = calloc_safe(1 as i32 as u64, size_of::<_7zip>() as u64) as *mut _7zip;
     let mut _7zip_entry: *mut _7zip_entry = 0 as *mut _7zip_entry;
-    _7zip_entry = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<_7zip_entry>() as u64)
-        as *mut _7zip_entry;
+    _7zip_entry = calloc_safe(1 as i32 as u64, size_of::<_7zip_entry>() as u64) as *mut _7zip_entry;
     let mut _7z_folder: *mut _7z_folder = 0 as *mut _7z_folder;
-    _7z_folder =
-        calloc_safe(2 as i32 as u64, ::std::mem::size_of::<_7z_folder>() as u64) as *mut _7z_folder;
+    _7z_folder = calloc_safe(2 as i32 as u64, size_of::<_7z_folder>() as u64) as *mut _7z_folder;
     (*(*a).format).data = zip as *mut ();
     (*zip).uncompressed_buffer_bytes_remaining = 0;
     (*zip).pack_stream_remaining = 0;

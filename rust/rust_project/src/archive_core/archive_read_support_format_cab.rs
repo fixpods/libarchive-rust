@@ -4,6 +4,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
+use std::mem::size_of;
 
 use super::archive_string::archive_string_default_conversion_for_read;
 
@@ -238,7 +239,7 @@ pub unsafe extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -
     if magic_test == -(30 as i32) {
         return -(30 as i32);
     }
-    cab = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cab>() as u64) as *mut cab;
+    cab = calloc_safe(1 as i32 as u64, size_of::<cab>() as u64) as *mut cab;
     let a_safe = unsafe { &mut *a };
     if cab.is_null() {
         archive_set_error_safe!(
@@ -768,7 +769,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                      */
                                     hd_safe.folder_array = calloc_safe(
                                         hd_safe.folder_count as u64,
-                                        ::std::mem::size_of::<cffolder>() as u64,
+                                        size_of::<cffolder>() as u64,
                                     )
                                         as *mut cffolder;
                                     if hd_safe.folder_array.is_null() {
@@ -837,12 +838,8 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
 
                                                 /* Get a compression name. */
                                                 if ((*folder).comptype as u64)
-                                                    < (::std::mem::size_of::<[*const u8; 4]>()
-                                                        as u64)
-                                                        .wrapping_div(
-                                                            ::std::mem::size_of::<*const u8>()
-                                                                as u64,
-                                                        )
+                                                    < (size_of::<[*const u8; 4]>() as u64)
+                                                        .wrapping_div(size_of::<*const u8>() as u64)
                                                 {
                                                     (*folder).compname = unsafe {
                                                         compression_name
@@ -916,7 +913,7 @@ unsafe fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                                 /* Allocate memory for CFDATA */
                                                 hd_safe.file_array = calloc_safe(
                                                     hd_safe.file_count as u64,
-                                                    ::std::mem::size_of::<cffile>() as u64,
+                                                    size_of::<cffile>() as u64,
                                                 )
                                                     as *mut cffile;
                                                 if hd_safe.file_array.is_null() {
@@ -1769,11 +1766,7 @@ unsafe fn cab_next_cfdata(mut a: *mut archive_read) -> i32 {
         /* Current folder does not have any CFDATA. */
         cfdata = &mut cab_cffolder_safe.cfdata;
         cab_safe.entry_cfdata = cfdata;
-        memset_safe(
-            cfdata as *mut (),
-            0 as i32,
-            ::std::mem::size_of::<cfdata>() as u64,
-        );
+        memset_safe(cfdata as *mut (), 0 as i32, size_of::<cfdata>() as u64);
     }
     return ARCHIVE_CAB_DEFINED_PARAM.archive_ok;
 }
@@ -1920,7 +1913,7 @@ unsafe fn cab_read_ahead_cfdata_deflate(
                 &mut cab_safe.stream,
                 -(15 as i32),
                 b"1.2.3\x00" as *const u8,
-                ::std::mem::size_of::<z_stream>() as u64 as i32,
+                size_of::<z_stream>() as u64 as i32,
             )
         }
         /* Don't check for zlib header */
@@ -2665,7 +2658,7 @@ unsafe fn cab_dos_time(mut p: *const u8) -> time_t {
     memset_safe(
         &mut ts as *mut tm as *mut (),
         0 as i32,
-        ::std::mem::size_of::<tm>() as u64,
+        size_of::<tm>() as u64,
     );
     ts.tm_year = (msDate >> 9 as i32 & 0x7f as i32) + 80 as i32;
     ts.tm_mon = (msDate >> 5 as i32 & 0xf as i32) - 1 as i32;
@@ -2699,8 +2692,7 @@ unsafe fn lzx_decode_init(mut strm: *mut lzx_stream, mut w_bits: i32) -> i32 {
     let mut base_inc: [i32; 18] = [0; 18];
     let strm_safe = unsafe { &mut *strm };
     if strm_safe.ds.is_null() {
-        strm_safe.ds =
-            calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzx_dec>() as u64) as *mut lzx_dec;
+        strm_safe.ds = calloc_safe(1 as i32 as u64, size_of::<lzx_dec>() as u64) as *mut lzx_dec;
         if strm_safe.ds.is_null() {
             return -(30 as i32);
         }
@@ -2727,9 +2719,8 @@ unsafe fn lzx_decode_init(mut strm: *mut lzx_stream, mut w_bits: i32) -> i32 {
             return -(30 as i32);
         }
         free_safe(ds_safe.pos_tbl as *mut ());
-        ds_safe.pos_tbl =
-            malloc_safe((::std::mem::size_of::<lzx_pos_tbl>() as u64).wrapping_mul(w_slot as u64))
-                as *mut lzx_pos_tbl;
+        ds_safe.pos_tbl = malloc_safe((size_of::<lzx_pos_tbl>() as u64).wrapping_mul(w_slot as u64))
+            as *mut lzx_pos_tbl;
         if ds_safe.pos_tbl.is_null() {
             return -(30 as i32);
         }
@@ -2919,7 +2910,7 @@ unsafe fn lzx_br_fillup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) -> i32 {
      */
     let br_safe = unsafe { &mut *br };
     let mut n: i32 = (8 as i32 as u64)
-        .wrapping_mul(::std::mem::size_of::<uint64_t>() as u64)
+        .wrapping_mul(size_of::<uint64_t>() as u64)
         .wrapping_sub(br_safe.cache_avail as u64) as i32;
     loop {
         let strm_safe = unsafe { &mut *strm };
@@ -2999,7 +2990,7 @@ unsafe fn lzx_br_fillup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) -> i32 {
 unsafe fn lzx_br_fixup(mut strm: *mut lzx_stream, mut br: *mut lzx_br) {
     let br_safe = unsafe { &mut *br };
     let mut n: i32 = (8 as i32 as u64)
-        .wrapping_mul(::std::mem::size_of::<uint64_t>() as u64)
+        .wrapping_mul(size_of::<uint64_t>() as u64)
         .wrapping_sub(br_safe.cache_avail as u64) as i32;
     let strm_safe = unsafe { &mut *strm };
     if br_safe.have_odd as i32 != 0 && n >= 16 as i32 && strm_safe.avail_in > 0 as i32 as i64 {
@@ -3120,7 +3111,7 @@ unsafe fn lzx_read_blocks(mut strm: *mut lzx_stream, mut last: i32) -> i32 {
                     memset_safe(
                         ds_safe.at.freq.as_mut_ptr() as *mut (),
                         0 as i32,
-                        ::std::mem::size_of::<[i32; 17]>() as u64,
+                        size_of::<[i32; 17]>() as u64,
                     );
                     i = 0 as i32;
                     while i < ds_safe.at.len_size {
@@ -4051,7 +4042,7 @@ unsafe fn lzx_read_pre_tree(mut strm: *mut lzx_stream) -> i32 {
         memset_safe(
             ds_safe.pt.freq.as_mut_ptr() as *mut (),
             0 as i32,
-            ::std::mem::size_of::<[i32; 17]>() as u64,
+            size_of::<[i32; 17]>() as u64,
         );
     }
     i = ds_safe.loop_0;
@@ -4097,7 +4088,7 @@ unsafe fn lzx_read_bitlen(mut strm: *mut lzx_stream, mut d: *mut huffman, mut en
         memset_safe(
             d_safe.freq.as_mut_ptr() as *mut (),
             0 as i32,
-            ::std::mem::size_of::<[i32; 17]>() as u64,
+            size_of::<[i32; 17]>() as u64,
         );
     }
     ret = 0 as i32;
@@ -4262,7 +4253,7 @@ unsafe fn lzx_huffman_init(mut hf: *mut huffman, mut len_size: size_t, mut tbl_b
     let hf_safe = unsafe { &mut *hf };
     if hf_safe.bitlen.is_null() || hf_safe.len_size != len_size as i32 {
         free_safe(hf_safe.bitlen as *mut ());
-        hf_safe.bitlen = calloc_safe(len_size, ::std::mem::size_of::<u8>() as u64) as *mut u8;
+        hf_safe.bitlen = calloc_safe(len_size, size_of::<u8>() as u64) as *mut u8;
         if hf_safe.bitlen.is_null() {
             return -(30 as i32);
         }
@@ -4271,13 +4262,12 @@ unsafe fn lzx_huffman_init(mut hf: *mut huffman, mut len_size: size_t, mut tbl_b
         memset_safe(
             hf_safe.bitlen as *mut (),
             0 as i32,
-            len_size.wrapping_mul(::std::mem::size_of::<u8>() as u64),
+            len_size.wrapping_mul(size_of::<u8>() as u64),
         );
     }
     if hf_safe.tbl.is_null() {
         hf_safe.tbl = malloc_safe(
-            ((1 as i32 as size_t) << tbl_bits)
-                .wrapping_mul(::std::mem::size_of::<uint16_t>() as u64),
+            ((1 as i32 as size_t) << tbl_bits).wrapping_mul(size_of::<uint16_t>() as u64),
         ) as *mut uint16_t;
         if hf_safe.tbl.is_null() {
             return -(30 as i32);
@@ -4396,12 +4386,9 @@ pub unsafe fn archive_test_cab_skip_sfx(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     cab_skip_sfx(a);
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
-    archive_read_filter = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read_filter>() as u64,
-        )
-    } as *mut archive_read_filter;
+    archive_read_filter =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read_filter>() as u64) }
+            as *mut archive_read_filter;
     (*archive_read_filter).fatal = 'a' as u8;
     (*a).filter = archive_read_filter as *mut archive_read_filter;
     cab_skip_sfx(a);
@@ -4410,11 +4397,10 @@ pub unsafe fn archive_test_cab_skip_sfx(mut _a: *mut archive) {
 #[no_mangle]
 pub unsafe fn archive_test_lzx_br_fixup() {
     let mut lzx_stream: *mut lzx_stream = 0 as *mut lzx_stream;
-    lzx_stream = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzx_stream>() as u64) }
-        as *mut lzx_stream;
+    lzx_stream =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<lzx_stream>() as u64) } as *mut lzx_stream;
     let mut lzx_br: *mut lzx_br = 0 as *mut lzx_br;
-    lzx_br = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzx_br>() as u64) }
-        as *mut lzx_br;
+    lzx_br = unsafe { calloc_safe(1 as i32 as u64, size_of::<lzx_br>() as u64) } as *mut lzx_br;
     (*lzx_stream).avail_in = 1 as int64_t;
     (*lzx_br).have_odd = '1' as u8;
     (*lzx_br).cache_avail = 1 as i32;
@@ -4424,11 +4410,10 @@ pub unsafe fn archive_test_lzx_br_fixup() {
 #[no_mangle]
 pub unsafe fn archive_test_lzx_read_blocks() {
     let mut strm: *mut lzx_stream = 0 as *mut lzx_stream;
-    strm = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzx_stream>() as u64) }
-        as *mut lzx_stream;
+    strm =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<lzx_stream>() as u64) } as *mut lzx_stream;
     let mut lzx_dec: *mut lzx_dec = 0 as *mut lzx_dec;
-    lzx_dec = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzx_dec>() as u64) }
-        as *mut lzx_dec;
+    lzx_dec = unsafe { calloc_safe(1 as i32 as u64, size_of::<lzx_dec>() as u64) } as *mut lzx_dec;
     (*lzx_dec).br.cache_avail = 0 as i32;
     (*lzx_dec).state = ARCHIVE_CAB_DEFINED_PARAM.st_copy_uncomp1;
     (*lzx_dec).block_bytes_avail = 20 as size_t;
@@ -4501,11 +4486,10 @@ pub unsafe fn archive_test_lzx_read_blocks() {
 #[no_mangle]
 pub unsafe fn archive_test_lzx_br_fillup() {
     let mut lzx_stream: *mut lzx_stream = 0 as *mut lzx_stream;
-    lzx_stream = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzx_stream>() as u64) }
-        as *mut lzx_stream;
+    lzx_stream =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<lzx_stream>() as u64) } as *mut lzx_stream;
     let mut lzx_br: *mut lzx_br = 0 as *mut lzx_br;
-    lzx_br = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<lzx_br>() as u64) }
-        as *mut lzx_br;
+    lzx_br = unsafe { calloc_safe(1 as i32 as u64, size_of::<lzx_br>() as u64) } as *mut lzx_br;
     (*lzx_br).cache_avail = 1 as i32;
     (*lzx_stream).avail_in = 1 as int64_t;
 }
@@ -4513,12 +4497,8 @@ pub unsafe fn archive_test_lzx_br_fillup() {
 #[no_mangle]
 pub unsafe fn archive_test_archive_read_support_format_cab() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
-    archive_read = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read>() as u64,
-        )
-    } as *mut archive_read;
+    archive_read = unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read>() as u64) }
+        as *mut archive_read;
     (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
     (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
     archive_read_support_format_cab(&mut (*archive_read).archive as *mut archive);
@@ -4528,7 +4508,7 @@ pub unsafe fn archive_test_archive_read_support_format_cab() {
 pub unsafe fn archive_test_archive_read_format_cab_options(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
-    cab = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cab>() as u64) } as *mut cab;
+    cab = unsafe { calloc_safe(1 as i32 as u64, size_of::<cab>() as u64) } as *mut cab;
     (*(*a).format).data = cab as *mut ();
     archive_read_format_cab_options(a, b"hdrcharset\x00" as *const u8, b"h\x00" as *const u8);
 }
@@ -4544,7 +4524,7 @@ pub unsafe fn archive_test_cab_read_data(mut _a: *mut archive) {
         unsafe { &buff as *const *mut () as *mut *mut () as *mut *const () };
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
-    cab = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cab>() as u64) } as *mut cab;
+    cab = unsafe { calloc_safe(1 as i32 as u64, size_of::<cab>() as u64) } as *mut cab;
     (*cab).entry_bytes_remaining = 0 as int64_t;
     (*(*a).format).data = cab as *mut ();
     cab_read_data(a, buff2, size2, offset2);
@@ -4554,20 +4534,18 @@ pub unsafe fn archive_test_cab_read_data(mut _a: *mut archive) {
 pub unsafe fn archive_test_cab_consume_cfdata(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
-    cab = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cab>() as u64) } as *mut cab;
+    cab = unsafe { calloc_safe(1 as i32 as u64, size_of::<cab>() as u64) } as *mut cab;
     let mut cffolder: *mut cffolder = 0 as *mut cffolder;
-    cffolder = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cffolder>() as u64) }
-        as *mut cffolder;
+    cffolder =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<cffolder>() as u64) } as *mut cffolder;
     let mut cffile: *mut cffile = 0 as *mut cffile;
-    cffile = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cffile>() as u64) }
-        as *mut cffile;
+    cffile = unsafe { calloc_safe(1 as i32 as u64, size_of::<cffile>() as u64) } as *mut cffile;
     (*cffile).folder = 0xFFFD;
     (*cab).entry_cffile = cffile;
     (*cffolder).comptype = 0x0000;
     (*cab).entry_cffolder = cffolder;
     let mut cfdata: *mut cfdata = 0 as *mut cfdata;
-    cfdata = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cfdata>() as u64) }
-        as *mut cfdata;
+    cfdata = unsafe { calloc_safe(1 as i32 as u64, size_of::<cfdata>() as u64) } as *mut cfdata;
     (*cab).entry_cfdata = cfdata;
     (*cfdata).unconsumed = 0;
     (*cfdata).compressed_size = 1;
@@ -4589,11 +4567,10 @@ pub unsafe fn archive_test_archive_read_format_cab_read_data(mut _a: *mut archiv
         unsafe { &buff as *const *mut () as *mut *mut () as *mut *const () };
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
-    cab = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cab>() as u64) } as *mut cab;
+    cab = unsafe { calloc_safe(1 as i32 as u64, size_of::<cab>() as u64) } as *mut cab;
     (*(*a).format).data = cab as *mut ();
     let mut cffile: *mut cffile = 0 as *mut cffile;
-    cffile = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cffile>() as u64) }
-        as *mut cffile;
+    cffile = unsafe { calloc_safe(1 as i32 as u64, size_of::<cffile>() as u64) } as *mut cffile;
     (*cffile).folder = 0xFFFF;
     (*cab).entry_cffile = cffile;
     archive_read_format_cab_read_data(a, buff2, size2, offset2);
@@ -4603,15 +4580,14 @@ pub unsafe fn archive_test_archive_read_format_cab_read_data(mut _a: *mut archiv
 pub unsafe fn archive_test_cab_next_cfdata(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
-    cab = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cab>() as u64) } as *mut cab;
+    cab = unsafe { calloc_safe(1 as i32 as u64, size_of::<cab>() as u64) } as *mut cab;
     (*(*a).format).data = cab as *mut ();
     let mut cfdata: *mut cfdata = 0 as *mut cfdata;
-    cfdata = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cfdata>() as u64) }
-        as *mut cfdata;
+    cfdata = unsafe { calloc_safe(1 as i32 as u64, size_of::<cfdata>() as u64) } as *mut cfdata;
     (*cab).entry_cfdata = cfdata;
     let mut cffolder: *mut cffolder = 0 as *mut cffolder;
-    cffolder = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cffolder>() as u64) }
-        as *mut cffolder;
+    cffolder =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<cffolder>() as u64) } as *mut cffolder;
     (*cffolder).cfdata_index = 1;
     (*cffolder).cfdata_count = 1;
     (*cab).entry_cffolder = cffolder;
@@ -4622,16 +4598,15 @@ pub unsafe fn archive_test_cab_next_cfdata(mut _a: *mut archive) {
 pub unsafe fn archive_test_cab_checksum_update(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
-    cab = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cab>() as u64) } as *mut cab;
+    cab = unsafe { calloc_safe(1 as i32 as u64, size_of::<cab>() as u64) } as *mut cab;
     (*(*a).format).data = cab as *mut ();
     let mut cfdata: *mut cfdata = 0 as *mut cfdata;
-    cfdata = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cfdata>() as u64) }
-        as *mut cfdata;
+    cfdata = unsafe { calloc_safe(1 as i32 as u64, size_of::<cfdata>() as u64) } as *mut cfdata;
     (*cab).entry_cfdata = cfdata;
     (*cfdata).sum = 1;
     let mut cffolder: *mut cffolder = 0 as *mut cffolder;
-    cffolder = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cffolder>() as u64) }
-        as *mut cffolder;
+    cffolder =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<cffolder>() as u64) } as *mut cffolder;
     (*cffolder).cfdata_index = 1;
     (*cffolder).cfdata_count = 1;
     (*cab).entry_cffolder = cffolder;
@@ -4654,8 +4629,7 @@ unsafe fn archive_test_cab_checksum_cfdata(
 #[no_mangle]
 unsafe fn archive_test_lzx_huffman_init(mut len_size: size_t, mut tbl_bits: i32) {
     let mut huffman: *mut huffman = 0 as *mut huffman;
-    huffman = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<huffman>() as u64) }
-        as *mut huffman;
+    huffman = unsafe { calloc_safe(1 as i32 as u64, size_of::<huffman>() as u64) } as *mut huffman;
     (*huffman).len_size = 1;
     let mut bitlen: *mut u8 = b"abc\x00" as *const u8 as *mut u8;
     (*huffman).bitlen = bitlen as *mut u8;
@@ -4666,20 +4640,16 @@ unsafe fn archive_test_lzx_huffman_init(mut len_size: size_t, mut tbl_bits: i32)
 pub unsafe fn archive_test_cab_read_ahead_cfdata_none(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab = 0 as *mut cab;
-    cab = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cab>() as u64) } as *mut cab;
+    cab = unsafe { calloc_safe(1 as i32 as u64, size_of::<cab>() as u64) } as *mut cab;
     (*(*a).format).data = cab as *mut ();
     let mut cfdata: *mut cfdata = 0 as *mut cfdata;
-    cfdata = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<cfdata>() as u64) }
-        as *mut cfdata;
+    cfdata = unsafe { calloc_safe(1 as i32 as u64, size_of::<cfdata>() as u64) } as *mut cfdata;
     (*cab).entry_cfdata = cfdata;
     (*(*a).format).data = cab as *mut ();
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
-    archive_read_filter = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read_filter>() as u64,
-        )
-    } as *mut archive_read_filter;
+    archive_read_filter =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read_filter>() as u64) }
+            as *mut archive_read_filter;
     (*archive_read_filter).fatal = 'a' as u8;
     (*a).filter = archive_read_filter as *mut archive_read_filter;
     let mut availp: ssize_t = 1;

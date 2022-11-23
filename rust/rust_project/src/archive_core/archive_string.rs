@@ -3,6 +3,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
+use std::mem::size_of;
 
 extern "C" {
     fn get_u_composition_table() -> *mut unicode_composition_table;
@@ -174,7 +175,7 @@ pub extern "C" fn archive_wstring_ensure(
     return unsafe {
         archive_string_ensure(
             as_0 as *mut archive_string,
-            s * (::std::mem::size_of::<wchar_t>() as u64),
+            s * (size_of::<wchar_t>() as u64),
         )
     } as *mut archive_wstring;
 }
@@ -382,7 +383,7 @@ pub extern "C" fn archive_wstring_append_from_mbs(
         memset_safe(
             &mut shift_state as *mut mbstate_t as *mut (),
             0 as i32,
-            ::std::mem::size_of::<mbstate_t>() as u64,
+            size_of::<mbstate_t>() as u64,
         )
     };
     /*
@@ -464,7 +465,7 @@ pub extern "C" fn archive_string_append_from_wcs(
         memset_safe(
             &mut shift_state as *mut mbstate_t as *mut (),
             0 as i32,
-            ::std::mem::size_of::<mbstate_t>() as u64,
+            size_of::<mbstate_t>() as u64,
         )
     };
     /*
@@ -973,10 +974,7 @@ extern "C" fn create_sconv_object(
 ) -> *mut archive_string_conv {
     let mut sc: *mut archive_string_conv = 0 as *mut archive_string_conv;
     sc = unsafe {
-        calloc_safe(
-            1 as u64,
-            ::std::mem::size_of::<archive_string_conv>() as u64,
-        ) as *mut archive_string_conv
+        calloc_safe(1 as u64, size_of::<archive_string_conv>() as u64) as *mut archive_string_conv
     };
     if sc.is_null() {
         return 0 as *mut archive_string_conv;
@@ -1526,7 +1524,7 @@ extern "C" fn iconv_strncat_in_locale(
             {
                 let mut rbytes: size_t = 0;
                 if safe_sc.flag & (1 as i32) << 8 as i32 != 0 {
-                    rbytes = ::std::mem::size_of::<[u8; 3]>() as u64
+                    rbytes = size_of::<[u8; 3]>() as u64
                 } else {
                     rbytes = 2 as size_t
                 }
@@ -1544,7 +1542,7 @@ extern "C" fn iconv_strncat_in_locale(
                         memcpy_safe(
                             outp as *mut (),
                             utf8_replacement_char.as_ptr() as *const (),
-                            ::std::mem::size_of::<[u8; 3]>() as u64,
+                            size_of::<[u8; 3]>() as u64,
                         )
                     };
                 } else if safe_sc.flag & (1) << 10 != 0 {
@@ -1603,7 +1601,7 @@ extern "C" fn invalid_mbs(
         memset_safe(
             &mut shift_state as *mut mbstate_t as *mut (),
             0,
-            ::std::mem::size_of::<mbstate_t>() as u64,
+            size_of::<mbstate_t>() as u64,
         )
     };
     while n != 0 {
@@ -1664,7 +1662,7 @@ extern "C" fn best_effort_strncat_in_locale(
                 if archive_string_append(
                     as_0,
                     unsafe { utf8_replacement_char.as_ptr() },
-                    ::std::mem::size_of::<[u8; 3]>() as u64,
+                    size_of::<[u8; 3]>() as u64,
                 )
                 .is_null()
                 {
@@ -2353,8 +2351,8 @@ extern "C" fn get_nfc(uc: uint32_t, uc2: uint32_t) -> uint32_t {
     let mut t: i32;
     let mut b: i32;
     t = 0;
-    b = ((::std::mem::size_of::<[unicode_composition_table; 931]>() as u64)
-        / (::std::mem::size_of::<unicode_composition_table>() as u64)
+    b = ((size_of::<[unicode_composition_table; 931]>() as u64)
+        / (size_of::<unicode_composition_table>() as u64)
         - 1) as i32;
     while b >= t {
         let mut m: i32 = (t + b) / 2;
@@ -3738,8 +3736,8 @@ extern "C" fn get_nfd(cp1: *mut uint32_t, cp2: *mut uint32_t, uc: uint32_t) -> i
         return 0;
     }
     t = 0;
-    b = ((::std::mem::size_of::<[unicode_decomposition_table; 931]>() as u64)
-        / (::std::mem::size_of::<unicode_decomposition_table>() as u64)
+    b = ((size_of::<[unicode_decomposition_table; 931]>() as u64)
+        / (size_of::<unicode_decomposition_table>() as u64)
         - 1) as i32;
     while b >= t {
         let mut m: i32 = (t + b) / 2 as i32;
@@ -4698,7 +4696,7 @@ extern "C" fn strncat_from_utf8_libarchive2(
         memset_safe(
             &mut shift_state as *mut mbstate_t as *mut (),
             0 as i32,
-            ::std::mem::size_of::<mbstate_t>() as u64,
+            size_of::<mbstate_t>() as u64,
         )
     };
     /* UNUSED */
@@ -5334,12 +5332,11 @@ pub extern "C" fn archive_mstring_update_utf8(
 #[no_mangle]
 pub extern "C" fn archive_test_best_effort_strncat_utf16(_p: *const (), bytes: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
-    archive_string = unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string>() as u64) }
-        as *mut archive_string;
+    archive_string =
+        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv =
-        unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string_conv>() as u64) }
-            as *mut archive_string_conv;
+    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
+        as *mut archive_string_conv;
     best_effort_strncat_from_utf16be(archive_string, _p, bytes, archive_string_conv);
     unsafe { best_effort_strncat_from_utf16le(archive_string, _p, bytes, archive_string_conv) };
     best_effort_strncat_to_utf16be(archive_string, _p, bytes, archive_string_conv);
@@ -5349,36 +5346,33 @@ pub extern "C" fn archive_test_best_effort_strncat_utf16(_p: *const (), bytes: s
 #[no_mangle]
 pub extern "C" fn archive_test_strncat_from_utf8_libarchive2(_p: *const (), bytes: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
-    archive_string = unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string>() as u64) }
-        as *mut archive_string;
+    archive_string =
+        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv =
-        unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string_conv>() as u64) }
-            as *mut archive_string_conv;
+    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
+        as *mut archive_string_conv;
     strncat_from_utf8_libarchive2(archive_string, _p, bytes, archive_string_conv);
 }
 
 #[no_mangle]
 pub extern "C" fn archive_test_archive_string_append_unicode(_p: *const (), bytes: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
-    archive_string = unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string>() as u64) }
-        as *mut archive_string;
+    archive_string =
+        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv =
-        unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string_conv>() as u64) }
-            as *mut archive_string_conv;
+    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
+        as *mut archive_string_conv;
     archive_string_append_unicode(archive_string, _p, bytes, archive_string_conv);
 }
 
 #[no_mangle]
 pub extern "C" fn archive_test_invalid_mbs(_p: *const (), bytes: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
-    archive_string = unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string>() as u64) }
-        as *mut archive_string;
+    archive_string =
+        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv =
-        unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string_conv>() as u64) }
-            as *mut archive_string_conv;
+    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
+        as *mut archive_string_conv;
     invalid_mbs(_p, bytes, archive_string_conv);
 }
 
@@ -5403,12 +5397,11 @@ pub extern "C" fn archive_test_unicode_to_utf16le(
 #[no_mangle]
 pub extern "C" fn archive_test_best_effort_strncat_in_locale(_p: *const (), length: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
-    archive_string = unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string>() as u64) }
-        as *mut archive_string;
+    archive_string =
+        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv =
-        unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string_conv>() as u64) }
-            as *mut archive_string_conv;
+    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
+        as *mut archive_string_conv;
     unsafe { (*archive_string_conv).same = 1 };
     best_effort_strncat_in_locale(archive_string, _p, length, archive_string_conv);
     unsafe { (*archive_string_conv).same = 0 };
@@ -5420,9 +5413,8 @@ pub extern "C" fn archive_test_best_effort_strncat_in_locale(_p: *const (), leng
 #[no_mangle]
 pub extern "C" fn archive_test_setup_converter() {
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv =
-        unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string_conv>() as u64) }
-            as *mut archive_string_conv;
+    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
+        as *mut archive_string_conv;
     unsafe { (*archive_string_conv).flag = (1 << 4) };
     setup_converter(archive_string_conv);
 }
@@ -5430,12 +5422,11 @@ pub extern "C" fn archive_test_setup_converter() {
 #[no_mangle]
 pub extern "C" fn archive_test_archive_string_normalize_D(_p: *const (), len: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
-    archive_string = unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string>() as u64) }
-        as *mut archive_string;
+    archive_string =
+        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv =
-        unsafe { calloc_safe(1, ::std::mem::size_of::<archive_string_conv>() as u64) }
-            as *mut archive_string_conv;
+    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
+        as *mut archive_string_conv;
     unsafe { (*archive_string_conv).flag = (1 << 10) | (1 << 11) };
     archive_string_normalize_D(archive_string, _p, len, archive_string_conv);
     unsafe { (*archive_string_conv).flag = (1 << 12) | (1 << 13) };

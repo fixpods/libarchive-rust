@@ -4,6 +4,7 @@ use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use rust_ffi::{archive_set_error_safe, archive_string_sprintf_safe, sprintf_safe};
+use std::mem::size_of;
 
 extern "C" {
     #[cfg(HAVE_TIMEGM)]
@@ -234,8 +235,7 @@ pub unsafe fn archive_read_support_format_iso9660(mut _a: *mut archive) -> i32 {
         return -(30 as i32);
     }
     let iso9660 = unsafe {
-        &mut *(calloc_safe(1 as i32 as u64, ::std::mem::size_of::<iso9660>() as u64)
-            as *mut iso9660)
+        &mut *(calloc_safe(1 as i32 as u64, size_of::<iso9660>() as u64) as *mut iso9660)
     };
     if (iso9660 as *mut iso9660).is_null() {
         archive_set_error_safe!(
@@ -419,19 +419,17 @@ unsafe fn isNull(
     mut bytes: u32,
 ) -> i32 {
     let iso9660 = unsafe { &mut *iso9660 };
-    while bytes as u64 >= ::std::mem::size_of::<[u8; 2048]>() as u64 {
+    while bytes as u64 >= size_of::<[u8; 2048]>() as u64 {
         if memcmp_safe(
             iso9660.null.as_mut_ptr() as *const (),
             unsafe { h.offset(offset as isize) } as *const (),
-            ::std::mem::size_of::<[u8; 2048]>() as u64,
+            size_of::<[u8; 2048]>() as u64,
         ) == 0
         {
             return 0 as i32;
         }
-        offset =
-            (offset as u64).wrapping_add(::std::mem::size_of::<[u8; 2048]>() as u64) as u32 as u32;
-        bytes =
-            (bytes as u64).wrapping_sub(::std::mem::size_of::<[u8; 2048]>() as u64) as u32 as u32
+        offset = (offset as u64).wrapping_add(size_of::<[u8; 2048]>() as u64) as u32 as u32;
+        bytes = (bytes as u64).wrapping_sub(size_of::<[u8; 2048]>() as u64) as u32 as u32
     }
     if bytes != 0 {
         return (memcmp_safe(
@@ -1030,7 +1028,7 @@ unsafe fn read_children(mut a: *mut archive_read, mut parent: *mut file_info) ->
                             safe_multi.contents.first = 0 as *mut content;
                             safe_multi.contents.last = &mut safe_multi.contents.first
                         }
-                        con = malloc_safe(::std::mem::size_of::<content>() as u64) as *mut content;
+                        con = malloc_safe(size_of::<content>() as u64) as *mut content;
                         if con.is_null() {
                             archive_set_error_safe!(
                                 &mut (*a).archive as *mut archive,
@@ -1569,8 +1567,8 @@ unsafe fn zisofs_read_data(
         /*
          * Read the file header, and check the magic code of zisofs.
          */
-        if zisofs.header_avail < ::std::mem::size_of::<[u8; 16]>() as u64 {
-            xsize = (::std::mem::size_of::<[u8; 16]>() as u64).wrapping_sub(zisofs.header_avail);
+        if zisofs.header_avail < size_of::<[u8; 16]>() as u64 {
+            xsize = (size_of::<[u8; 16]>() as u64).wrapping_sub(zisofs.header_avail);
             if avail < xsize {
                 xsize = avail
             }
@@ -1589,14 +1587,12 @@ unsafe fn zisofs_read_data(
             avail = (avail as u64).wrapping_sub(xsize) as size_t as size_t;
             unsafe { p = p.offset(xsize as isize) }
         }
-        if zisofs.header_passed == 0
-            && zisofs.header_avail == ::std::mem::size_of::<[u8; 16]>() as u64
-        {
+        if zisofs.header_passed == 0 && zisofs.header_avail == size_of::<[u8; 16]>() as u64 {
             let mut err: i32 = 0 as i32;
             if memcmp_safe(
                 zisofs.header.as_mut_ptr() as *const (),
                 unsafe { zisofs_magic.as_ptr() } as *const (),
-                ::std::mem::size_of::<[u8; 8]>() as u64,
+                size_of::<[u8; 8]>() as u64,
             ) != 0 as i32
             {
                 err = 1 as i32
@@ -1724,7 +1720,7 @@ unsafe fn zisofs_read_data(
                         libz_sys::inflateInit_(
                             &mut zisofs.stream,
                             b"1.2.7\x00" as *const u8 as *const libc::c_char,
-                            ::std::mem::size_of::<z_stream>() as u64 as i32,
+                            size_of::<z_stream>() as u64 as i32,
                         )
                     }
                 }
@@ -2046,8 +2042,7 @@ unsafe fn parse_file_info(
     }
     /* Create a new file entry and copy data from the ISO dir record. */
     file = unsafe {
-        &mut *(calloc_safe(1 as i32 as u64, ::std::mem::size_of::<file_info>() as u64)
-            as *mut file_info)
+        &mut *(calloc_safe(1 as i32 as u64, size_of::<file_info>() as u64) as *mut file_info)
     };
     if (file as *mut file_info).is_null() {
         archive_set_error_safe!(
@@ -2720,8 +2715,7 @@ unsafe fn register_CE(
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         }
-        p = calloc_safe(new_size as u64, ::std::mem::size_of::<read_ce_req>() as u64)
-            as *mut read_ce_req;
+        p = calloc_safe(new_size as u64, size_of::<read_ce_req>() as u64) as *mut read_ce_req;
         if p.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
@@ -2734,7 +2728,7 @@ unsafe fn register_CE(
             memcpy_safe(
                 p as *mut (),
                 heap.reqs as *const (),
-                (heap.cnt as u64).wrapping_mul(::std::mem::size_of::<read_ce_req>() as u64),
+                (heap.cnt as u64).wrapping_mul(size_of::<read_ce_req>() as u64),
             );
             free_safe(heap.reqs as *mut ());
         }
@@ -3602,9 +3596,9 @@ unsafe fn heap_add_entry(
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         }
-        new_pending_files = malloc_safe(
-            (new_size as u64).wrapping_mul(::std::mem::size_of::<*mut file_info>() as u64),
-        ) as *mut *mut file_info;
+        new_pending_files =
+            malloc_safe((new_size as u64).wrapping_mul(size_of::<*mut file_info>() as u64))
+                as *mut *mut file_info;
         if new_pending_files.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
@@ -3617,8 +3611,7 @@ unsafe fn heap_add_entry(
             memcpy_safe(
                 new_pending_files as *mut (),
                 heap.files as *const (),
-                (heap.allocated as u64)
-                    .wrapping_mul(::std::mem::size_of::<*mut file_info>() as u64),
+                (heap.allocated as u64).wrapping_mul(size_of::<*mut file_info>() as u64),
             );
         }
         free_safe(heap.files as *mut ());
@@ -3752,7 +3745,7 @@ unsafe fn isodate7(mut v: *const u8) -> time_t {
     memset_safe(
         &mut tm as *mut tm as *mut (),
         0 as i32,
-        ::std::mem::size_of::<tm>() as u64,
+        size_of::<tm>() as u64,
     );
     tm.tm_year = unsafe { *v.offset(0 as i32 as isize) } as i32;
     tm.tm_mon = unsafe { *v.offset(1 as i32 as isize) } as i32 - 1 as i32;
@@ -3792,7 +3785,7 @@ unsafe fn isodate17(mut v: *const u8) -> time_t {
     memset_safe(
         &mut tm as *mut tm as *mut (),
         0 as i32,
-        ::std::mem::size_of::<tm>() as u64,
+        size_of::<tm>() as u64,
     );
     tm.tm_year = (unsafe { *v.offset(0 as i32 as isize) } as i32 - '0' as i32) * 1000 as i32
         + (unsafe { *v.offset(1 as i32 as isize) } as i32 - '0' as i32) * 100 as i32
@@ -4028,16 +4021,14 @@ pub unsafe fn dump_isodirrec(mut isodirrec: *const u8) {
 #[no_mangle]
 unsafe fn archive_test_isNull(mut h: *const u8, mut offset: u32, mut bytes: u32) {
     let mut iso9660: *mut iso9660 = 0 as *mut iso9660;
-    iso9660 = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<iso9660>() as u64) }
-        as *mut iso9660;
+    iso9660 = unsafe { calloc_safe(1 as i32 as u64, size_of::<iso9660>() as u64) } as *mut iso9660;
     isNull(iso9660, h, offset, bytes);
 }
 
 #[no_mangle]
 unsafe fn archive_test_isVolumePartition(mut h: *const u8) {
     let mut iso9660: *mut iso9660 = 0 as *mut iso9660;
-    iso9660 = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<iso9660>() as u64) }
-        as *mut iso9660;
+    iso9660 = unsafe { calloc_safe(1 as i32 as u64, size_of::<iso9660>() as u64) } as *mut iso9660;
     isVolumePartition(iso9660, h);
 }
 
@@ -4049,24 +4040,24 @@ unsafe fn archive_test_isodate17(mut v: *const u8) {
 #[no_mangle]
 unsafe fn archive_test_parse_rockridge_SL1(mut data: *const u8, mut data_length: i32) {
     let mut file_info: *mut file_info = 0 as *mut file_info;
-    file_info = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<file_info>() as u64) }
-        as *mut file_info;
+    file_info =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<file_info>() as u64) } as *mut file_info;
     parse_rockridge_SL1(file_info, data, data_length);
 }
 
 #[no_mangle]
 unsafe fn archive_test_parse_rockridge_TF1(mut data: *const u8, mut data_length: i32) {
     let mut file_info: *mut file_info = 0 as *mut file_info;
-    file_info = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<file_info>() as u64) }
-        as *mut file_info;
+    file_info =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<file_info>() as u64) } as *mut file_info;
     parse_rockridge_TF1(file_info, data, data_length);
 }
 
 #[no_mangle]
 unsafe fn archive_test_parse_rockridge_NM1(mut data: *const u8, mut data_length: i32) {
     let mut file_info: *mut file_info = 0 as *mut file_info;
-    file_info = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<file_info>() as u64) }
-        as *mut file_info;
+    file_info =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<file_info>() as u64) } as *mut file_info;
     parse_rockridge_NM1(file_info, data, data_length);
 }
 
@@ -4074,20 +4065,16 @@ unsafe fn archive_test_parse_rockridge_NM1(mut data: *const u8, mut data_length:
 unsafe fn archive_test_parse_rockridge(mut _a: *mut archive, mut p: *const u8, mut end: *const u8) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut file_info: *mut file_info = 0 as *mut file_info;
-    file_info = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<file_info>() as u64) }
-        as *mut file_info;
+    file_info =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<file_info>() as u64) } as *mut file_info;
     parse_rockridge(a, file_info, p, end);
 }
 
 #[no_mangle]
 pub unsafe fn archive_test_archive_read_support_format_iso9660() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
-    archive_read = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read>() as u64,
-        )
-    } as *mut archive_read;
+    archive_read = unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read>() as u64) }
+        as *mut archive_read;
     (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
     (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
     archive_read_support_format_iso9660(&mut (*archive_read).archive as *mut archive);
@@ -4097,17 +4084,13 @@ pub unsafe fn archive_test_archive_read_support_format_iso9660() {
 pub unsafe fn archive_test_archive_read_format_iso9660_read_data(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut iso9660: *mut iso9660 = 0 as *mut iso9660;
-    iso9660 = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<iso9660>() as u64) }
-        as *mut iso9660;
+    iso9660 = unsafe { calloc_safe(1 as i32 as u64, size_of::<iso9660>() as u64) } as *mut iso9660;
     let mut content: *mut content = 0 as *mut content;
-    content = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<content>() as u64) }
-        as *mut content;
+    content = unsafe { calloc_safe(1 as i32 as u64, size_of::<content>() as u64) } as *mut content;
     let mut content2: *mut content = 0 as *mut content;
-    content2 = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<content>() as u64) }
-        as *mut content;
+    content2 = unsafe { calloc_safe(1 as i32 as u64, size_of::<content>() as u64) } as *mut content;
     let mut content3: *mut content = 0 as *mut content;
-    content3 = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<content>() as u64) }
-        as *mut content;
+    content3 = unsafe { calloc_safe(1 as i32 as u64, size_of::<content>() as u64) } as *mut content;
     (*iso9660).entry_bytes_remaining = 0;
     (*iso9660).entry_bytes_unconsumed = 0;
     (*iso9660).entry_content = content as *mut content;

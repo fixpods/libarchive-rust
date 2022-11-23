@@ -3,7 +3,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
-
+use std::mem::size_of;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct raw_info {
@@ -29,9 +29,7 @@ pub fn archive_read_support_format_raw(_a: *mut archive) -> i32 {
         return ARCHIVE_RAW_DEFINED_PARAM.archive_fatal;
     }
 
-    let info = unsafe {
-        &mut *(calloc_safe(1, ::std::mem::size_of::<raw_info>() as u64) as *mut raw_info)
-    };
+    let info = unsafe { &mut *(calloc_safe(1, size_of::<raw_info>() as u64) as *mut raw_info) };
     if (info as *mut raw_info).is_null() {
         archive_set_error_safe!(
             &mut (*a).archive,
@@ -170,7 +168,7 @@ fn archive_read_format_raw_cleanup(mut a: *mut archive_read) -> i32 {
 pub fn archive_test_archive_read_format_raw_read_data_skip(mut _a: *mut archive) {
     let a: *mut archive_read = _a as *mut archive_read;
     let raw_info: *mut raw_info =
-        unsafe { calloc_safe(1, ::std::mem::size_of::<raw_info>() as u64) } as *mut raw_info;
+        unsafe { calloc_safe(1, size_of::<raw_info>() as u64) } as *mut raw_info;
     let safe_raw_info: &mut raw_info = unsafe { &mut *raw_info };
     unsafe { (*(*a).format).data = raw_info as *mut () };
     safe_raw_info.unconsumed = 1;
