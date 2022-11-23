@@ -14,12 +14,14 @@ use rust_ffi::ffi_struct::struct_transfer::*;
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_format_all(a: *mut archive) -> i32 {
-    let magic_test: i32 = unsafe { __archive_check_magic_safe(
-        a,
-        ARCHIVE_ALL_DEFINED_PARAM.archive_read_magic,
-        ARCHIVE_ALL_DEFINED_PARAM.archive_state_new,
-        b"archive_read_support_format_all\x00" as *const u8 as *const i8,
-    ) };
+    let magic_test: i32 = unsafe {
+        __archive_check_magic_safe(
+            a,
+            ARCHIVE_ALL_DEFINED_PARAM.archive_read_magic,
+            ARCHIVE_ALL_DEFINED_PARAM.archive_state_new,
+            b"archive_read_support_format_all\x00" as *const u8 as *const i8,
+        )
+    };
     if magic_test == -30 {
         return -30;
     }
