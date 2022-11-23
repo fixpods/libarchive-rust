@@ -15,7 +15,7 @@ use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 
 #[no_mangle]
-+pub extern "C" fn archive_read_support_format_by_code(a: *mut archive, format_code: i32) -> i32 {
+pub extern "C" fn archive_read_support_format_by_code(a: *mut archive, format_code: i32) -> i32 {
     let magic_test: i32 = unsafe {
         __archive_check_magic_safe(
             a,
