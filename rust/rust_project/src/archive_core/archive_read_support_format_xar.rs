@@ -3416,7 +3416,7 @@ fn xml2_read_cb(context: *mut (), buffer: *mut u8, len: i32) -> i32 {
     a = context as *mut archive_read;
     xar = unsafe { (*(*a).format).data as *mut xar };
     let mut safe_xar = unsafe { &mut *xar };
-    if safe_xar.toc_remaining <= 0 {
+    if safe_xar.toc_remaining == 0 {
         return 0;
     }
     d = buffer as *const ();
