@@ -4,6 +4,7 @@ use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use rust_ffi::{archive_set_error_safe, archive_string_sprintf_safe, sprintf_safe};
+use std::mem::size_of;
 
 extern "C" {
     #[cfg(HAVE_TIMEGM)]
@@ -75,10 +76,10 @@ pub struct file_info {
     pub size: uint64_t,
     pub ce_offset: uint32_t,
     pub ce_size: uint32_t,
-    pub rr_moved: i8,
-    pub rr_moved_has_re_only: i8,
-    pub re: i8,
-    pub re_descendant: i8,
+    pub rr_moved: u8,
+    pub rr_moved_has_re_only: u8,
+    pub re: u8,
+    pub re_descendant: u8,
     pub cl_offset: uint64_t,
     pub birthtime_is_set: i32,
     pub birthtime: time_t,
@@ -94,9 +95,9 @@ pub struct file_info {
     pub name: archive_string,
     pub utf16be_name: *mut u8,
     pub utf16be_bytes: size_t,
-    pub name_continues: i8,
+    pub name_continues: u8,
     pub symlink: archive_string,
-    pub symlink_continues: i8,
+    pub symlink_continues: u8,
     pub pz: i32,
     pub pz_log2_bs: i32,
     pub pz_uncompressed_size: uint64_t,
@@ -134,9 +135,9 @@ pub struct iso9660 {
     pub opt_support_joliet: i32,
     pub opt_support_rockridge: i32,
     pub pathname: archive_string,
-    pub seenRockridge: i8,
-    pub seenSUSP: i8,
-    pub seenJoliet: i8,
+    pub seenRockridge: u8,
+    pub seenSUSP: u8,
+    pub seenJoliet: u8,
     pub suspOffset: u8,
     pub rr_moved: *mut file_info,
     pub read_ce_req: read_ce_queue,
@@ -228,20 +229,19 @@ pub unsafe fn archive_read_support_format_iso9660(mut _a: *mut archive) -> i32 {
         _a,
         ARCHIVE_ISO9660_DEFINED_PARAM.archive_read_magic,
         ARCHIVE_ISO9660_DEFINED_PARAM.archive_state_new,
-        b"archive_read_support_format_iso9660\x00" as *const u8 as *const i8,
+        b"archive_read_support_format_iso9660\x00" as *const u8,
     );
     if magic_test == -(30 as i32) {
         return -(30 as i32);
     }
     let iso9660 = unsafe {
-        &mut *(calloc_safe(1 as i32 as u64, ::std::mem::size_of::<iso9660>() as u64)
-            as *mut iso9660)
+        &mut *(calloc_safe(1 as i32 as u64, size_of::<iso9660>() as u64) as *mut iso9660)
     };
     if (iso9660 as *mut iso9660).is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-            b"Can\'t allocate iso9660 data\x00" as *const u8 as *const i8
+            b"Can\'t allocate iso9660 data\x00" as *const u8
         );
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
     }
@@ -257,11 +257,11 @@ pub unsafe fn archive_read_support_format_iso9660(mut _a: *mut archive) -> i32 {
     r = __archive_read_register_format_safe(
         a,
         iso9660 as *mut iso9660 as *mut (),
-        b"iso9660\x00" as *const u8 as *const i8,
+        b"iso9660\x00" as *const u8,
         Some(archive_read_format_iso9660_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
         Some(
             archive_read_format_iso9660_options
-                as unsafe fn(_: *mut archive_read, _: *const i8, _: *const i8) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
         ),
         Some(
             archive_read_format_iso9660_read_header
@@ -331,7 +331,7 @@ unsafe fn archive_read_format_iso9660_bid(mut a: *mut archive_read, mut best_bid
         /* Standard Identifier must be "CD001" */
         if memcmp_safe(
             unsafe { p.offset(1 as i32 as isize) } as *const (),
-            b"CD001\x00" as *const u8 as *const i8 as *const (),
+            b"CD001\x00" as *const u8 as *const (),
             5 as i32 as u64,
         ) != 0 as i32
         {
@@ -383,16 +383,16 @@ unsafe fn archive_read_format_iso9660_bid(mut a: *mut archive_read, mut best_bid
 
 unsafe fn archive_read_format_iso9660_options(
     mut a: *mut archive_read,
-    mut key: *const i8,
-    mut val: *const i8,
+    mut key: *const u8,
+    mut val: *const u8,
 ) -> i32 {
     let iso9660 = unsafe { &mut *((*(*a).format).data as *mut iso9660) };
-    if strcmp_safe(key, b"joliet\x00" as *const u8 as *const i8) == 0 as i32 {
+    if strcmp_safe(key, b"joliet\x00" as *const u8) == 0 as i32 {
         if val.is_null()
-            || strcmp_safe(val, b"off\x00" as *const u8 as *const i8) == 0 as i32
-            || strcmp_safe(val, b"ignore\x00" as *const u8 as *const i8) == 0 as i32
-            || strcmp_safe(val, b"disable\x00" as *const u8 as *const i8) == 0 as i32
-            || strcmp_safe(val, b"0\x00" as *const u8 as *const i8) == 0 as i32
+            || strcmp_safe(val, b"off\x00" as *const u8) == 0 as i32
+            || strcmp_safe(val, b"ignore\x00" as *const u8) == 0 as i32
+            || strcmp_safe(val, b"disable\x00" as *const u8) == 0 as i32
+            || strcmp_safe(val, b"0\x00" as *const u8) == 0 as i32
         {
             iso9660.opt_support_joliet = 0 as i32
         } else {
@@ -400,10 +400,10 @@ unsafe fn archive_read_format_iso9660_options(
         }
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
     }
-    if strcmp_safe(key, b"rockridge\x00" as *const u8 as *const i8) == 0 as i32
-        || strcmp_safe(key, b"Rockridge\x00" as *const u8 as *const i8) == 0 as i32
+    if strcmp_safe(key, b"rockridge\x00" as *const u8) == 0 as i32
+        || strcmp_safe(key, b"Rockridge\x00" as *const u8) == 0 as i32
     {
-        iso9660.opt_support_rockridge = (val != 0 as *mut () as *const i8) as i32;
+        iso9660.opt_support_rockridge = (val != 0 as *mut () as *const u8) as i32;
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
     }
     /* Note: The "warn" return is just to inform the options
@@ -419,19 +419,17 @@ unsafe fn isNull(
     mut bytes: u32,
 ) -> i32 {
     let iso9660 = unsafe { &mut *iso9660 };
-    while bytes as u64 >= ::std::mem::size_of::<[u8; 2048]>() as u64 {
+    while bytes as u64 >= size_of::<[u8; 2048]>() as u64 {
         if memcmp_safe(
             iso9660.null.as_mut_ptr() as *const (),
             unsafe { h.offset(offset as isize) } as *const (),
-            ::std::mem::size_of::<[u8; 2048]>() as u64,
+            size_of::<[u8; 2048]>() as u64,
         ) == 0
         {
             return 0 as i32;
         }
-        offset =
-            (offset as u64).wrapping_add(::std::mem::size_of::<[u8; 2048]>() as u64) as u32 as u32;
-        bytes =
-            (bytes as u64).wrapping_sub(::std::mem::size_of::<[u8; 2048]>() as u64) as u32 as u32
+        offset = (offset as u64).wrapping_add(size_of::<[u8; 2048]>() as u64) as u32 as u32;
+        bytes = (bytes as u64).wrapping_sub(size_of::<[u8; 2048]>() as u64) as u32 as u32
     }
     if bytes != 0 {
         return (memcmp_safe(
@@ -532,7 +530,7 @@ unsafe fn isJolietSVD(mut iso9660: *mut iso9660, mut h: *const u8) -> i32 {
             /* not joliet */
             return 0 as i32;
         }
-        iso9660.seenJoliet = level as i8
+        iso9660.seenJoliet = level as u8
     } else {
         return 0 as i32;
     }
@@ -937,7 +935,7 @@ unsafe fn read_children(mut a: *mut archive_read, mut parent: *mut file_info) ->
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-            b"Ignoring out-of-order directory (%s) %jd > %jd\x00" as *const u8 as *const i8,
+            b"Ignoring out-of-order directory (%s) %jd > %jd\x00" as *const u8,
             parent.name.s,
             iso9660.current_position as intmax_t,
             parent.offset as intmax_t
@@ -948,7 +946,7 @@ unsafe fn read_children(mut a: *mut archive_read, mut parent: *mut file_info) ->
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-            b"Directory is beyond end-of-media: %s\x00" as *const u8 as *const i8,
+            b"Directory is beyond end-of-media: %s\x00" as *const u8,
             parent.name.s
         );
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_warn;
@@ -974,7 +972,7 @@ unsafe fn read_children(mut a: *mut archive_read, mut parent: *mut file_info) ->
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
             b"Failed to read full block when scanning ISO9660 directory list\x00" as *const u8
-                as *const i8
+                as *const u8
         );
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
     }
@@ -1030,12 +1028,12 @@ unsafe fn read_children(mut a: *mut archive_read, mut parent: *mut file_info) ->
                             safe_multi.contents.first = 0 as *mut content;
                             safe_multi.contents.last = &mut safe_multi.contents.first
                         }
-                        con = malloc_safe(::std::mem::size_of::<content>() as u64) as *mut content;
+                        con = malloc_safe(size_of::<content>() as u64) as *mut content;
                         if con.is_null() {
                             archive_set_error_safe!(
                                 &mut (*a).archive as *mut archive,
                                 ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                                b"No memory for multi extent\x00" as *const u8 as *const i8
+                                b"No memory for multi extent\x00" as *const u8
                             );
                             __archive_read_consume_safe(a, skip_size as int64_t);
                             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
@@ -1095,11 +1093,11 @@ unsafe fn choose_volume(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> 
     let mut file: *mut file_info = 0 as *mut file_info;
     let mut skipsize: int64_t = 0;
     let mut block: *const () = 0 as *const ();
-    let mut seenJoliet: i8 = 0;
+    let mut seenJoliet: u8 = 0;
     let iso9660_primary_ptr = &mut iso9660.primary as *mut vd;
     let mut vd = unsafe { &mut *iso9660_primary_ptr };
     if iso9660.opt_support_joliet == 0 {
-        iso9660.seenJoliet = 0 as i32 as i8
+        iso9660.seenJoliet = 0 as i32 as u8
     }
     if iso9660.seenJoliet as i32 != 0 && vd.location > iso9660.joliet.location {
         /* This condition is unlikely; by way of caution. */
@@ -1117,7 +1115,7 @@ unsafe fn choose_volume(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> 
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
             b"Failed to read full block when scanning ISO9660 directory list\x00" as *const u8
-                as *const i8
+                as *const u8
         );
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
     }
@@ -1127,7 +1125,7 @@ unsafe fn choose_volume(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> 
      * next byte to UCS2.
      */
     seenJoliet = iso9660.seenJoliet; /* Save flag. */
-    iso9660.seenJoliet = 0 as i32 as i8;
+    iso9660.seenJoliet = 0 as i32 as u8;
     file = parse_file_info(
         a,
         0 as *mut file_info,
@@ -1146,7 +1144,7 @@ unsafe fn choose_volume(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> 
         && iso9660.seenRockridge as i32 != 0
         && iso9660.seenJoliet as i32 != 0
     {
-        iso9660.seenJoliet = 0 as i32 as i8
+        iso9660.seenJoliet = 0 as i32 as u8
     }
     if vd as *mut vd == iso9660_primary_ptr
         && iso9660.seenRockridge == 0
@@ -1168,11 +1166,11 @@ unsafe fn choose_volume(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> 
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
                 b"Failed to read full block when scanning ISO9660 directory list\x00" as *const u8
-                    as *const i8
+                    as *const u8
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         }
-        iso9660.seenJoliet = 0 as i32 as i8;
+        iso9660.seenJoliet = 0 as i32 as u8;
         file = parse_file_info(
             a,
             0 as *mut file_info,
@@ -1194,8 +1192,7 @@ unsafe fn choose_volume(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> 
     if iso9660.seenRockridge != 0 {
         safe_a.archive.archive_format =
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_format_iso9660_rockridge;
-        safe_a.archive.archive_format_name =
-            b"ISO9660 with Rockridge extensions\x00" as *const u8 as *const i8
+        safe_a.archive.archive_format_name = b"ISO9660 with Rockridge extensions\x00" as *const u8
     }
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
@@ -1211,7 +1208,7 @@ unsafe fn archive_read_format_iso9660_read_header(
     let iso9660 = unsafe { &mut *((*(*a).format).data as *mut iso9660) };
     if safe_a.archive.archive_format == 0 {
         safe_a.archive.archive_format = ARCHIVE_ISO9660_DEFINED_PARAM.archive_format_iso9660;
-        safe_a.archive.archive_format_name = b"ISO9660\x00" as *const u8 as *const i8
+        safe_a.archive.archive_format_name = b"ISO9660\x00" as *const u8
     }
     if iso9660.current_position == 0 as i32 as u64 {
         r = choose_volume(a, iso9660);
@@ -1234,7 +1231,7 @@ unsafe fn archive_read_format_iso9660_read_header(
         if iso9660.sconv_utf16be.is_null() {
             iso9660.sconv_utf16be = archive_string_conversion_from_charset_safe(
                 &mut safe_a.archive,
-                b"UTF-16BE\x00" as *const u8 as *const i8,
+                b"UTF-16BE\x00" as *const u8,
                 1 as i32,
             );
             if iso9660.sconv_utf16be.is_null() {
@@ -1249,7 +1246,7 @@ unsafe fn archive_read_format_iso9660_read_header(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                    b"No memory\x00" as *const u8 as *const i8
+                    b"No memory\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -1261,7 +1258,7 @@ unsafe fn archive_read_format_iso9660_read_header(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                    b"No memory\x00" as *const u8 as *const i8
+                    b"No memory\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -1277,13 +1274,13 @@ unsafe fn archive_read_format_iso9660_read_header(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                b"Pathname is too long\x00" as *const u8 as *const i8
+                b"Pathname is too long\x00" as *const u8
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         }
         r = _archive_entry_copy_pathname_l_safe(
             entry,
-            iso9660.utf16be_path as *const i8,
+            iso9660.utf16be_path as *const u8,
             iso9660.utf16be_path_len,
             iso9660.sconv_utf16be,
         );
@@ -1292,7 +1289,7 @@ unsafe fn archive_read_format_iso9660_read_header(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                    b"No memory for Pathname\x00" as *const u8 as *const i8
+                    b"No memory for Pathname\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -1300,18 +1297,18 @@ unsafe fn archive_read_format_iso9660_read_header(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
                 b"Pathname cannot be converted from %s to current locale.\x00" as *const u8
-                    as *const i8,
+                    as *const u8,
                 archive_string_conversion_charset_name(iso9660.sconv_utf16be)
             );
             rd_r = ARCHIVE_ISO9660_DEFINED_PARAM.archive_warn
         }
     } else {
-        let mut path: *const i8 = build_pathname(&mut iso9660.pathname, file, 0 as i32);
+        let mut path: *const u8 = build_pathname(&mut iso9660.pathname, file, 0 as i32);
         if path.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                b"Pathname is too long\x00" as *const u8 as *const i8
+                b"Pathname is too long\x00" as *const u8
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         } else {
@@ -1326,7 +1323,7 @@ unsafe fn archive_read_format_iso9660_read_header(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-            b"File is beyond end-of-media: %s\x00" as *const u8 as *const i8,
+            b"File is beyond end-of-media: %s\x00" as *const u8,
             archive_entry_pathname(entry)
         );
         iso9660.entry_bytes_remaining = 0 as i32 as int64_t;
@@ -1359,7 +1356,7 @@ unsafe fn archive_read_format_iso9660_read_header(
         if iso9660.seenJoliet != 0 {
             r = _archive_entry_copy_hardlink_l_safe(
                 entry,
-                iso9660.utf16be_previous_path as *const i8,
+                iso9660.utf16be_previous_path as *const u8,
                 iso9660.utf16be_previous_path_len,
                 iso9660.sconv_utf16be,
             );
@@ -1368,7 +1365,7 @@ unsafe fn archive_read_format_iso9660_read_header(
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                        b"No memory for Linkname\x00" as *const u8 as *const i8
+                        b"No memory for Linkname\x00" as *const u8
                     );
                     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
                 }
@@ -1376,7 +1373,7 @@ unsafe fn archive_read_format_iso9660_read_header(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
                     b"Linkname cannot be converted from %s to current locale.\x00" as *const u8
-                        as *const i8,
+                        as *const u8,
                     archive_string_conversion_charset_name(iso9660.sconv_utf16be)
                 );
                 rd_r = ARCHIVE_ISO9660_DEFINED_PARAM.archive_warn
@@ -1410,7 +1407,7 @@ unsafe fn archive_read_format_iso9660_read_header(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                b"Ignoring out-of-order file @%jx (%s) %jd < %jd\x00" as *const u8 as *const i8,
+                b"Ignoring out-of-order file @%jx (%s) %jd < %jd\x00" as *const u8,
                 file.number,
                 iso9660.pathname.s,
                 file.offset as intmax_t,
@@ -1510,7 +1507,7 @@ unsafe fn zisofs_read_data(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-            b"Truncated zisofs file body\x00" as *const u8 as *const i8
+            b"Truncated zisofs file body\x00" as *const u8
         );
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
     }
@@ -1543,7 +1540,7 @@ unsafe fn zisofs_read_data(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                    b"No memory for zisofs decompression\x00" as *const u8 as *const i8
+                    b"No memory for zisofs decompression\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -1561,7 +1558,7 @@ unsafe fn zisofs_read_data(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                    b"No memory for zisofs decompression\x00" as *const u8 as *const i8
+                    b"No memory for zisofs decompression\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -1570,8 +1567,8 @@ unsafe fn zisofs_read_data(
         /*
          * Read the file header, and check the magic code of zisofs.
          */
-        if zisofs.header_avail < ::std::mem::size_of::<[u8; 16]>() as u64 {
-            xsize = (::std::mem::size_of::<[u8; 16]>() as u64).wrapping_sub(zisofs.header_avail);
+        if zisofs.header_avail < size_of::<[u8; 16]>() as u64 {
+            xsize = (size_of::<[u8; 16]>() as u64).wrapping_sub(zisofs.header_avail);
             if avail < xsize {
                 xsize = avail
             }
@@ -1590,14 +1587,12 @@ unsafe fn zisofs_read_data(
             avail = (avail as u64).wrapping_sub(xsize) as size_t as size_t;
             unsafe { p = p.offset(xsize as isize) }
         }
-        if zisofs.header_passed == 0
-            && zisofs.header_avail == ::std::mem::size_of::<[u8; 16]>() as u64
-        {
+        if zisofs.header_passed == 0 && zisofs.header_avail == size_of::<[u8; 16]>() as u64 {
             let mut err: i32 = 0 as i32;
             if memcmp_safe(
                 zisofs.header.as_mut_ptr() as *const (),
                 unsafe { zisofs_magic.as_ptr() } as *const (),
-                ::std::mem::size_of::<[u8; 8]>() as u64,
+                size_of::<[u8; 8]>() as u64,
             ) != 0 as i32
             {
                 err = 1 as i32
@@ -1619,7 +1614,7 @@ unsafe fn zisofs_read_data(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                    b"Illegal zisofs file body\x00" as *const u8 as *const i8
+                    b"Illegal zisofs file body\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -1680,7 +1675,7 @@ unsafe fn zisofs_read_data(
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                        b"Illegal zisofs block pointers\x00" as *const u8 as *const i8
+                        b"Illegal zisofs block pointers\x00" as *const u8
                     );
                     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
                 }
@@ -1696,7 +1691,7 @@ unsafe fn zisofs_read_data(
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                        b"Illegal zisofs block pointers(cannot seek)\x00" as *const u8 as *const i8
+                        b"Illegal zisofs block pointers(cannot seek)\x00" as *const u8
                     );
                     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
                 }
@@ -1710,7 +1705,7 @@ unsafe fn zisofs_read_data(
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                        b"Illegal zisofs block pointers\x00" as *const u8 as *const i8
+                        b"Illegal zisofs block pointers\x00" as *const u8
                     );
                     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
                 }
@@ -1725,7 +1720,7 @@ unsafe fn zisofs_read_data(
                         libz_sys::inflateInit_(
                             &mut zisofs.stream,
                             b"1.2.7\x00" as *const u8 as *const libc::c_char,
-                            ::std::mem::size_of::<z_stream>() as u64 as i32,
+                            size_of::<z_stream>() as u64 as i32,
                         )
                     }
                 }
@@ -1733,7 +1728,7 @@ unsafe fn zisofs_read_data(
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                        b"Can\'t initialize zisofs decompression.\x00" as *const u8 as *const i8
+                        b"Can\'t initialize zisofs decompression.\x00" as *const u8
                     );
                     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
                 }
@@ -1766,7 +1761,7 @@ unsafe fn zisofs_read_data(
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                        b"zisofs decompression failed (%d)\x00" as *const u8 as *const i8,
+                        b"zisofs decompression failed (%d)\x00" as *const u8,
                         r
                     );
                     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
@@ -1813,7 +1808,7 @@ unsafe fn zisofs_read_data(
     archive_set_error_safe!(
         &mut (*a).archive as *mut archive,
         ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-        b"zisofs is not supported on this platform.\x00" as *const u8 as *const i8
+        b"zisofs is not supported on this platform.\x00" as *const u8
     );
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_failed;
 }
@@ -1861,7 +1856,7 @@ unsafe fn archive_read_format_iso9660_read_data(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                b"Ignoring out-of-order file (%s) %jd < %jd\x00" as *const u8 as *const i8,
+                b"Ignoring out-of-order file (%s) %jd < %jd\x00" as *const u8,
                 iso9660.pathname.s,
                 iso9660_entry_content.offset as intmax_t,
                 iso9660.current_position as intmax_t
@@ -1881,7 +1876,7 @@ unsafe fn archive_read_format_iso9660_read_data(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-            b"Truncated input file\x00" as *const u8 as *const i8
+            b"Truncated input file\x00" as *const u8
         );
     }
     if *safe_buff == 0 as *mut () {
@@ -1920,7 +1915,7 @@ unsafe fn archive_read_format_iso9660_cleanup(mut a: *mut archive_read) -> i32 {
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                        b"Failed to clean up zlib decompressor\x00" as *const u8 as *const i8
+                        b"Failed to clean up zlib decompressor\x00" as *const u8
                     );
                     r = ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
                 }
@@ -1975,7 +1970,7 @@ unsafe fn parse_file_info(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-            b"Invalid length of directory record\x00" as *const u8 as *const i8
+            b"Invalid length of directory record\x00" as *const u8
         );
         return 0 as *mut file_info;
     }
@@ -1995,7 +1990,7 @@ unsafe fn parse_file_info(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-            b"Invalid length of file identifier\x00" as *const u8 as *const i8
+            b"Invalid length of file identifier\x00" as *const u8
         );
         return 0 as *mut file_info;
     }
@@ -2016,7 +2011,7 @@ unsafe fn parse_file_info(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-            b"Invalid location of extent of file\x00" as *const u8 as *const i8
+            b"Invalid location of extent of file\x00" as *const u8
         );
         return 0 as *mut file_info;
     }
@@ -2026,7 +2021,7 @@ unsafe fn parse_file_info(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-            b"Invalid location of extent of file\x00" as *const u8 as *const i8
+            b"Invalid location of extent of file\x00" as *const u8
         );
         return 0 as *mut file_info;
     }
@@ -2039,7 +2034,7 @@ unsafe fn parse_file_info(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                b"Directory structure contains loop\x00" as *const u8 as *const i8
+                b"Directory structure contains loop\x00" as *const u8
             );
             return 0 as *mut file_info;
         }
@@ -2047,14 +2042,13 @@ unsafe fn parse_file_info(
     }
     /* Create a new file entry and copy data from the ISO dir record. */
     file = unsafe {
-        &mut *(calloc_safe(1 as i32 as u64, ::std::mem::size_of::<file_info>() as u64)
-            as *mut file_info)
+        &mut *(calloc_safe(1 as i32 as u64, size_of::<file_info>() as u64) as *mut file_info)
     };
     if (file as *mut file_info).is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-            b"No memory for file entry\x00" as *const u8 as *const i8
+            b"No memory for file entry\x00" as *const u8
         );
         return 0 as *mut file_info;
     }
@@ -2119,7 +2113,7 @@ unsafe fn parse_file_info(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                b"No memory for file name\x00" as *const u8 as *const i8
+                b"No memory for file name\x00" as *const u8
             );
             current_block = 9906378635038024695;
         } else {
@@ -2145,7 +2139,7 @@ unsafe fn parse_file_info(
             name_len = name_len.wrapping_sub(1)
         }
         file.name.length = 0 as i32 as size_t;
-        archive_strncat_safe(&mut file.name, p as *const i8 as *const (), name_len);
+        archive_strncat_safe(&mut file.name, p as *const u8 as *const (), name_len);
         current_block = 6528285054092551010;
     }
     match current_block {
@@ -2192,7 +2186,7 @@ unsafe fn parse_file_info(
                     p = rr_start;
                     if memcmp_safe(
                         p as *const (),
-                        b"SP\x07\x01\xbe\xef\x00" as *const u8 as *const i8 as *const (),
+                        b"SP\x07\x01\xbe\xef\x00" as *const u8 as *const (),
                         6 as i32 as u64,
                     ) == 0 as i32
                     {
@@ -2213,14 +2207,14 @@ unsafe fn parse_file_info(
                          * processing if not found.
                          */
                         unsafe { iso9660.suspOffset = *p.offset(6 as i32 as isize) };
-                        iso9660.seenSUSP = 1 as i32 as i8;
+                        iso9660.seenSUSP = 1 as i32 as u8;
                         unsafe { rr_start = rr_start.offset(7 as i32 as isize) }
                     }
                 }
                 if iso9660.seenSUSP != 0 {
                     let mut r: i32 = 0;
-                    file.name_continues = 0 as i32 as i8;
-                    file.symlink_continues = 0 as i32 as i8;
+                    file.name_continues = 0 as i32 as u8;
+                    file.symlink_continues = 0 as i32 as u8;
                     unsafe { rr_start = rr_start.offset(iso9660.suspOffset as i32 as isize) };
                     r = parse_rockridge(a, file, rr_start, rr_end);
                     if r != ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok {
@@ -2266,17 +2260,14 @@ unsafe fn parse_file_info(
                             && flags & 0x2 as i32 != 0
                             && iso9660.rr_moved.is_null()
                             && !file.name.s.is_null()
-                            && (strcmp_safe(file.name.s, b"rr_moved\x00" as *const u8 as *const i8)
-                                == 0 as i32
-                                || strcmp_safe(
-                                    file.name.s,
-                                    b".rr_moved\x00" as *const u8 as *const i8,
-                                ) == 0 as i32)
+                            && (strcmp_safe(file.name.s, b"rr_moved\x00" as *const u8) == 0 as i32
+                                || strcmp_safe(file.name.s, b".rr_moved\x00" as *const u8)
+                                    == 0 as i32)
                         {
                             iso9660.rr_moved = file;
-                            file.rr_moved = 1 as i32 as i8;
-                            file.rr_moved_has_re_only = 1 as i32 as i8;
-                            file.re = 0 as i32 as i8;
+                            file.rr_moved = 1 as i32 as u8;
+                            file.rr_moved_has_re_only = 1 as i32 as u8;
+                            file.re = 0 as i32 as u8;
                             safe_parent.subdirs -= 1;
                             current_block = 6733407218104445560;
                         } else if file.re != 0 {
@@ -2289,21 +2280,21 @@ unsafe fn parse_file_info(
                                 archive_set_error_safe!(
                                     &mut (*a).archive as *mut archive,
                                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                                    b"Invalid Rockridge RE\x00" as *const u8 as *const i8
+                                    b"Invalid Rockridge RE\x00" as *const u8
                                 );
                                 current_block = 9906378635038024695;
                             } else if file.cl_offset != 0 {
                                 archive_set_error_safe!(
                                     &mut (*a).archive as *mut archive,
                                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                                    b"Invalid Rockridge RE and CL\x00" as *const u8 as *const i8
+                                    b"Invalid Rockridge RE and CL\x00" as *const u8
                                 );
                                 current_block = 9906378635038024695;
                             } else if flags & 0x2 as i32 == 0 as i32 {
                                 archive_set_error_safe!(
                                     &mut (*a).archive as *mut archive,
                                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                                    b"Invalid Rockridge RE\x00" as *const u8 as *const i8
+                                    b"Invalid Rockridge RE\x00" as *const u8
                                 );
                                 current_block = 9906378635038024695;
                             } else {
@@ -2313,13 +2304,13 @@ unsafe fn parse_file_info(
                             if !(safe_parent as *mut file_info).is_null()
                                 && safe_parent.rr_moved as i32 != 0
                             {
-                                file.rr_moved_has_re_only = 0 as i32 as i8
+                                file.rr_moved_has_re_only = 0 as i32 as u8
                             } else if !(safe_parent as *mut file_info).is_null()
                                 && flags & 0x2 as i32 != 0
                                 && (safe_parent.re as i32 != 0
                                     || safe_parent.re_descendant as i32 != 0)
                             {
-                                file.re_descendant = 1 as i32 as i8
+                                file.re_descendant = 1 as i32 as u8
                             }
                             current_block = 6733407218104445560;
                         }
@@ -2335,7 +2326,7 @@ unsafe fn parse_file_info(
                                         archive_set_error_safe!(
                                             &mut (*a).archive as *mut archive,
                                             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                                            b"Invalid Rockridge CL\x00" as *const u8 as *const i8
+                                            b"Invalid Rockridge CL\x00" as *const u8
                                         );
                                         current_block = 9906378635038024695;
                                     } else {
@@ -2373,7 +2364,7 @@ unsafe fn parse_file_info(
                                                     ARCHIVE_ISO9660_DEFINED_PARAM
                                                         .archive_errno_misc,
                                                     b"Invalid Rockridge CL\x00" as *const u8
-                                                        as *const i8
+                                                        as *const u8
                                                 );
                                                 current_block = 9906378635038024695;
                                                 break;
@@ -2392,7 +2383,7 @@ unsafe fn parse_file_info(
                                                         ARCHIVE_ISO9660_DEFINED_PARAM
                                                             .archive_errno_misc,
                                                         b"Invalid Rockridge CL\x00" as *const u8
-                                                            as *const i8
+                                                            as *const u8
                                                     );
                                                     current_block = 9906378635038024695;
                                                 } else {
@@ -2533,7 +2524,7 @@ unsafe fn parse_rockridge(
                     if version == 1 as i32 && data_length == 8 as i32 {
                         file.cl_offset = (iso9660.logical_block_size as uint64_t)
                             .wrapping_mul(archive_le32dec(data as *const ()) as uint64_t);
-                        iso9660.seenRockridge = 1 as i32 as i8
+                        iso9660.seenRockridge = 1 as i32 as u8
                     }
                 }
             }
@@ -2541,7 +2532,7 @@ unsafe fn parse_rockridge(
                 if unsafe { *p.offset(1 as i32 as isize) } as i32 == 'M' as i32 {
                     if version == 1 as i32 {
                         parse_rockridge_NM1(file, data, data_length);
-                        iso9660.seenRockridge = 1 as i32 as i8
+                        iso9660.seenRockridge = 1 as i32 as u8
                     }
                 }
             }
@@ -2561,7 +2552,7 @@ unsafe fn parse_rockridge(
                             unsafe { data.offset(8 as i32 as isize) } as *const (),
                             4 as i32,
                         ) as u64;
-                        iso9660.seenRockridge = 1 as i32 as i8
+                        iso9660.seenRockridge = 1 as i32 as u8
                     }
                 } else if unsafe { *p.offset(1 as i32 as isize) } as i32 == 'X' as i32 {
                     /*
@@ -2600,7 +2591,7 @@ unsafe fn parse_rockridge(
                                 4 as i32,
                             ) as int64_t
                         }
-                        iso9660.seenRockridge = 1 as i32 as i8
+                        iso9660.seenRockridge = 1 as i32 as u8
                     }
                 }
             }
@@ -2608,8 +2599,8 @@ unsafe fn parse_rockridge(
                 if unsafe { *p.offset(1 as i32 as isize) } as i32 == 'E' as i32
                     && version == 1 as i32
                 {
-                    file.re = 1 as i32 as i8;
-                    iso9660.seenRockridge = 1 as i32 as i8
+                    file.re = 1 as i32 as u8;
+                    iso9660.seenRockridge = 1 as i32 as u8
                 } else {
                     (unsafe { *p.offset(1 as i32 as isize) } as i32 == 'R' as i32)
                         && version == 1 as i32;
@@ -2619,7 +2610,7 @@ unsafe fn parse_rockridge(
                 if unsafe { *p.offset(1 as i32 as isize) } as i32 == 'L' as i32 {
                     if version == 1 as i32 {
                         parse_rockridge_SL1(file, data, data_length);
-                        iso9660.seenRockridge = 1 as i32 as i8
+                        iso9660.seenRockridge = 1 as i32 as u8
                     }
                 } else if unsafe { *p.offset(1 as i32 as isize) } as i32 == 'T' as i32
                     && data_length == 0 as i32
@@ -2634,8 +2625,8 @@ unsafe fn parse_rockridge(
                      * Use Area by placing non-SUSP data
                      * after SUSP data.
                      */
-                    iso9660.seenSUSP = 0 as i32 as i8;
-                    iso9660.seenRockridge = 0 as i32 as i8;
+                    iso9660.seenSUSP = 0 as i32 as u8;
+                    iso9660.seenRockridge = 0 as i32 as u8;
                     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
                 }
             }
@@ -2643,7 +2634,7 @@ unsafe fn parse_rockridge(
                 if unsafe { *p.offset(1 as i32 as isize) } as i32 == 'F' as i32 {
                     if version == 1 as i32 {
                         parse_rockridge_TF1(file, data, data_length);
-                        iso9660.seenRockridge = 1 as i32 as i8
+                        iso9660.seenRockridge = 1 as i32 as u8
                     }
                 }
             }
@@ -2667,7 +2658,7 @@ unsafe fn parse_rockridge(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-            b"Tried to parse Rockridge extensions, but none found\x00" as *const u8 as *const i8
+            b"Tried to parse Rockridge extensions, but none found\x00" as *const u8
         );
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_warn;
     };
@@ -2702,7 +2693,7 @@ unsafe fn register_CE(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-            b"Invalid parameter in SUSP \"CE\" extension\x00" as *const u8 as *const i8
+            b"Invalid parameter in SUSP \"CE\" extension\x00" as *const u8
         );
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
     }
@@ -2720,17 +2711,16 @@ unsafe fn register_CE(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                b"Out of memory\x00" as *const u8 as *const i8
+                b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         }
-        p = calloc_safe(new_size as u64, ::std::mem::size_of::<read_ce_req>() as u64)
-            as *mut read_ce_req;
+        p = calloc_safe(new_size as u64, size_of::<read_ce_req>() as u64) as *mut read_ce_req;
         if p.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                b"Out of memory\x00" as *const u8 as *const i8
+                b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         }
@@ -2738,7 +2728,7 @@ unsafe fn register_CE(
             memcpy_safe(
                 p as *mut (),
                 heap.reqs as *const (),
-                (heap.cnt as u64).wrapping_mul(::std::mem::size_of::<read_ce_req>() as u64),
+                (heap.cnt as u64).wrapping_mul(size_of::<read_ce_req>() as u64),
             );
             free_safe(heap.reqs as *mut ());
         }
@@ -2847,7 +2837,7 @@ unsafe fn read_CE(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> i32 {
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
                 b"Failed to read full block when scanning ISO9660 directory list\x00" as *const u8
-                    as *const i8
+                    as *const u8
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         }
@@ -2857,7 +2847,7 @@ unsafe fn read_CE(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> i32 {
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                    b"Malformed CE information\x00" as *const u8 as *const i8
+                    b"Malformed CE information\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -2892,7 +2882,7 @@ unsafe fn parse_rockridge_NM1(mut file: *mut file_info, mut data: *const u8, mut
     if file.name_continues == 0 {
         file.name.length = 0 as i32 as size_t
     }
-    file.name_continues = 0 as i32 as i8;
+    file.name_continues = 0 as i32 as u8;
     if data_length < 1 as i32 {
         return;
     }
@@ -2913,7 +2903,7 @@ unsafe fn parse_rockridge_NM1(mut file: *mut file_info, mut data: *const u8, mut
             }
             archive_strncat_safe(
                 &mut file.name,
-                unsafe { (data as *const i8).offset(1 as i32 as isize) } as *const (),
+                unsafe { (data as *const u8).offset(1 as i32 as isize) } as *const (),
                 (data_length - 1 as i32) as size_t,
             );
         }
@@ -2923,22 +2913,16 @@ unsafe fn parse_rockridge_NM1(mut file: *mut file_info, mut data: *const u8, mut
             }
             archive_strncat_safe(
                 &mut file.name,
-                unsafe { (data as *const i8).offset(1 as i32 as isize) } as *const (),
+                unsafe { (data as *const u8).offset(1 as i32 as isize) } as *const (),
                 (data_length - 1 as i32) as size_t,
             );
-            file.name_continues = 1 as i32 as i8
+            file.name_continues = 1 as i32 as u8
         }
         2 => {
-            archive_strcat_safe(
-                &mut file.name,
-                b".\x00" as *const u8 as *const i8 as *const (),
-            );
+            archive_strcat_safe(&mut file.name, b".\x00" as *const u8 as *const ());
         }
         4 => {
-            archive_strcat_safe(
-                &mut file.name,
-                b"..\x00" as *const u8 as *const i8 as *const (),
-            );
+            archive_strcat_safe(&mut file.name, b"..\x00" as *const u8 as *const ());
         }
         _ => return,
     };
@@ -2946,7 +2930,7 @@ unsafe fn parse_rockridge_NM1(mut file: *mut file_info, mut data: *const u8, mut
 
 unsafe fn parse_rockridge_TF1(mut file: *mut file_info, mut data: *const u8, mut data_length: i32) {
     let mut file = unsafe { &mut *file };
-    let mut flag: i8 = 0;
+    let mut flag: u8 = 0;
     /*
      * TF extension comprises:
      *   one byte flag
@@ -2960,7 +2944,7 @@ unsafe fn parse_rockridge_TF1(mut file: *mut file_info, mut data: *const u8, mut
     if data_length < 1 as i32 {
         return;
     }
-    flag = unsafe { *data.offset(0 as i32 as isize) } as i8;
+    flag = unsafe { *data.offset(0 as i32 as isize) } as u8;
     unsafe {
         data = data.offset(1);
     }
@@ -3032,11 +3016,11 @@ unsafe fn parse_rockridge_TF1(mut file: *mut file_info, mut data: *const u8, mut
 
 unsafe fn parse_rockridge_SL1(mut file: *mut file_info, mut data: *const u8, mut data_length: i32) {
     let mut file = unsafe { &mut *file };
-    let mut separator: *const i8 = b"\x00" as *const u8 as *const i8;
+    let mut separator: *const u8 = b"\x00" as *const u8;
     if file.symlink_continues == 0 || file.symlink.length < 1 as i32 as u64 {
         file.symlink.length = 0 as i32 as size_t
     }
-    file.symlink_continues = 0 as i32 as i8;
+    file.symlink_continues = 0 as i32 as u8;
     /*
      * Defined flag values:
      *  0: This is the last SL record for this symbolic link
@@ -3048,7 +3032,7 @@ unsafe fn parse_rockridge_SL1(mut file: *mut file_info, mut data: *const u8, mut
     } /* Skip flag byte. */
     match unsafe { *data } as i32 {
         0 => {}
-        1 => file.symlink_continues = 1 as i32 as i8,
+        1 => file.symlink_continues = 1 as i32 as u8,
         _ => return,
     }
     unsafe {
@@ -3077,7 +3061,7 @@ unsafe fn parse_rockridge_SL1(mut file: *mut file_info, mut data: *const u8, mut
         let mut nlen: u8 = unsafe { *fresh4 };
         data_length -= 2 as i32;
         archive_strcat_safe(&mut file.symlink, separator as *const ());
-        separator = b"/\x00" as *const u8 as *const i8;
+        separator = b"/\x00" as *const u8;
         match flag as i32 {
             0 => {
                 /* Usual case, this is text. */
@@ -3086,7 +3070,7 @@ unsafe fn parse_rockridge_SL1(mut file: *mut file_info, mut data: *const u8, mut
                 }
                 archive_strncat_safe(
                     &mut file.symlink,
-                    data as *const i8 as *const (),
+                    data as *const u8 as *const (),
                     nlen as size_t,
                 );
             }
@@ -3097,47 +3081,32 @@ unsafe fn parse_rockridge_SL1(mut file: *mut file_info, mut data: *const u8, mut
                 }
                 archive_strncat_safe(
                     &mut file.symlink,
-                    data as *const i8 as *const (),
+                    data as *const u8 as *const (),
                     nlen as size_t,
                 );
-                separator = b"\x00" as *const u8 as *const i8
+                separator = b"\x00" as *const u8
             }
             2 => {
                 /* Current dir. */
-                archive_strcat_safe(
-                    &mut file.symlink,
-                    b".\x00" as *const u8 as *const i8 as *const (),
-                );
+                archive_strcat_safe(&mut file.symlink, b".\x00" as *const u8 as *const ());
             }
             4 => {
                 /* Parent dir. */
-                archive_strcat_safe(
-                    &mut file.symlink,
-                    b"..\x00" as *const u8 as *const i8 as *const (),
-                );
+                archive_strcat_safe(&mut file.symlink, b"..\x00" as *const u8 as *const ());
             }
             8 => {
                 /* Root of filesystem. */
-                archive_strcat_safe(
-                    &mut file.symlink,
-                    b"/\x00" as *const u8 as *const i8 as *const (),
-                );
-                separator = b"\x00" as *const u8 as *const i8
+                archive_strcat_safe(&mut file.symlink, b"/\x00" as *const u8 as *const ());
+                separator = b"\x00" as *const u8
             }
             16 => {
                 /* Undefined (historically "volume root" */
                 file.symlink.length = 0 as i32 as size_t;
-                archive_strcat_safe(
-                    &mut file.symlink,
-                    b"ROOT\x00" as *const u8 as *const i8 as *const (),
-                );
+                archive_strcat_safe(&mut file.symlink, b"ROOT\x00" as *const u8 as *const ());
             }
             32 => {
                 /* Undefined (historically "hostname") */
-                archive_strcat_safe(
-                    &mut file.symlink,
-                    b"hostname\x00" as *const u8 as *const i8 as *const (),
-                );
+                archive_strcat_safe(&mut file.symlink, b"hostname\x00" as *const u8 as *const ());
             }
             _ => {
                 /* TODO: issue a warning ? */
@@ -3317,10 +3286,10 @@ unsafe fn next_cache_entry(
                         (*safe_re.parent).subdirs -= 1;
                     }
                     safe_re.parent = safe_file.parent;
-                    safe_re.re = 0 as i32 as i8;
+                    safe_re.re = 0 as i32 as u8;
                     if unsafe { (*safe_re.parent).re_descendant } != 0 {
                         nexted_re = 1 as i32;
-                        safe_re.re_descendant = 1 as i32 as i8;
+                        safe_re.re_descendant = 1 as i32 as u8;
                         if rede_add_entry(re) < 0 as i32 {
                             current_block = 7530032455938532005;
                             break 's_39;
@@ -3424,7 +3393,7 @@ unsafe fn next_cache_entry(
             archive_set_error_safe!(&mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
                               b"Failed to connect \'CL\' pointer to \'RE\' rr_moved pointer of Rockridge extensions: current position = %jd, CL offset = %jd\x00"
-                                  as *const u8 as *const i8,
+                                  as *const u8,
                               iso9660.current_position as intmax_t,
                               safe_file.cl_offset as intmax_t);
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
@@ -3623,18 +3592,18 @@ unsafe fn heap_add_entry(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                b"Out of memory\x00" as *const u8 as *const i8
+                b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         }
-        new_pending_files = malloc_safe(
-            (new_size as u64).wrapping_mul(::std::mem::size_of::<*mut file_info>() as u64),
-        ) as *mut *mut file_info;
+        new_pending_files =
+            malloc_safe((new_size as u64).wrapping_mul(size_of::<*mut file_info>() as u64))
+                as *mut *mut file_info;
         if new_pending_files.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_ISO9660_DEFINED_PARAM.enomem,
-                b"Out of memory\x00" as *const u8 as *const i8
+                b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         }
@@ -3642,8 +3611,7 @@ unsafe fn heap_add_entry(
             memcpy_safe(
                 new_pending_files as *mut (),
                 heap.files as *const (),
-                (heap.allocated as u64)
-                    .wrapping_mul(::std::mem::size_of::<*mut file_info>() as u64),
+                (heap.allocated as u64).wrapping_mul(size_of::<*mut file_info>() as u64),
             );
         }
         free_safe(heap.files as *mut ());
@@ -3770,14 +3738,14 @@ unsafe fn isodate7(mut v: *const u8) -> time_t {
         tm_yday: 0,
         tm_isdst: 0,
         tm_gmtoff: 0,
-        tm_zone: 0 as *const i8,
+        tm_zone: 0 as *const u8,
     };
     let mut offset: i32 = 0;
     let mut t: time_t = 0;
     memset_safe(
         &mut tm as *mut tm as *mut (),
         0 as i32,
-        ::std::mem::size_of::<tm>() as u64,
+        size_of::<tm>() as u64,
     );
     tm.tm_year = unsafe { *v.offset(0 as i32 as isize) } as i32;
     tm.tm_mon = unsafe { *v.offset(1 as i32 as isize) } as i32 - 1 as i32;
@@ -3810,14 +3778,14 @@ unsafe fn isodate17(mut v: *const u8) -> time_t {
         tm_yday: 0,
         tm_isdst: 0,
         tm_gmtoff: 0,
-        tm_zone: 0 as *const i8,
+        tm_zone: 0 as *const u8,
     };
     let mut offset: i32 = 0;
     let mut t: time_t = 0;
     memset_safe(
         &mut tm as *mut tm as *mut (),
         0 as i32,
-        ::std::mem::size_of::<tm>() as u64,
+        size_of::<tm>() as u64,
     );
     tm.tm_year = (unsafe { *v.offset(0 as i32 as isize) } as i32 - '0' as i32) * 1000 as i32
         + (unsafe { *v.offset(1 as i32 as isize) } as i32 - '0' as i32) * 100 as i32
@@ -3872,21 +3840,21 @@ unsafe fn build_pathname(
     mut as_0: *mut archive_string,
     mut file: *mut file_info,
     mut depth: i32,
-) -> *const i8 {
+) -> *const u8 {
     let mut file = unsafe { &mut *file };
     // Plain ISO9660 only allows 8 dir levels; if we get
     // to 1000, then something is very, very wrong.
     if depth > 1000 as i32 {
-        return 0 as *const i8;
+        return 0 as *const u8;
     } /* Path is too long! */
     if !(*file).parent.is_null() && unsafe { (*(*file).parent).name.length } > 0 as i32 as u64 {
         if build_pathname(as_0, (*file).parent, depth + 1 as i32).is_null() {
-            return 0 as *const i8;
+            return 0 as *const u8;
         } /* Path is too long! */
-        archive_strcat_safe(as_0, b"/\x00" as *const u8 as *const i8 as *const ());
+        archive_strcat_safe(as_0, b"/\x00" as *const u8 as *const ());
     }
     if (*file).name.length == 0 as i32 as u64 {
-        archive_strcat_safe(as_0, b".\x00" as *const u8 as *const i8 as *const ());
+        archive_strcat_safe(as_0, b".\x00" as *const u8 as *const ());
     } else {
         archive_string_concat_safe(as_0, &mut (*file).name);
     }
@@ -4028,7 +3996,7 @@ pub unsafe fn dump_isodirrec(mut isodirrec: *const u8) {
             );
             let output_string = std::ffi::CStr::from_ptr(unsafe {
                 isodirrec.offset(ARCHIVE_ISO9660_DEFINED_PARAM.dr_name_offset as isize)
-            } as *const i8)
+            } as *const u8)
             .to_string_lossy()
             .into_owned();
             let format_length = toi(
@@ -4053,16 +4021,14 @@ pub unsafe fn dump_isodirrec(mut isodirrec: *const u8) {
 #[no_mangle]
 unsafe fn archive_test_isNull(mut h: *const u8, mut offset: u32, mut bytes: u32) {
     let mut iso9660: *mut iso9660 = 0 as *mut iso9660;
-    iso9660 = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<iso9660>() as u64) }
-        as *mut iso9660;
+    iso9660 = unsafe { calloc_safe(1 as i32 as u64, size_of::<iso9660>() as u64) } as *mut iso9660;
     isNull(iso9660, h, offset, bytes);
 }
 
 #[no_mangle]
 unsafe fn archive_test_isVolumePartition(mut h: *const u8) {
     let mut iso9660: *mut iso9660 = 0 as *mut iso9660;
-    iso9660 = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<iso9660>() as u64) }
-        as *mut iso9660;
+    iso9660 = unsafe { calloc_safe(1 as i32 as u64, size_of::<iso9660>() as u64) } as *mut iso9660;
     isVolumePartition(iso9660, h);
 }
 
@@ -4074,24 +4040,24 @@ unsafe fn archive_test_isodate17(mut v: *const u8) {
 #[no_mangle]
 unsafe fn archive_test_parse_rockridge_SL1(mut data: *const u8, mut data_length: i32) {
     let mut file_info: *mut file_info = 0 as *mut file_info;
-    file_info = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<file_info>() as u64) }
-        as *mut file_info;
+    file_info =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<file_info>() as u64) } as *mut file_info;
     parse_rockridge_SL1(file_info, data, data_length);
 }
 
 #[no_mangle]
 unsafe fn archive_test_parse_rockridge_TF1(mut data: *const u8, mut data_length: i32) {
     let mut file_info: *mut file_info = 0 as *mut file_info;
-    file_info = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<file_info>() as u64) }
-        as *mut file_info;
+    file_info =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<file_info>() as u64) } as *mut file_info;
     parse_rockridge_TF1(file_info, data, data_length);
 }
 
 #[no_mangle]
 unsafe fn archive_test_parse_rockridge_NM1(mut data: *const u8, mut data_length: i32) {
     let mut file_info: *mut file_info = 0 as *mut file_info;
-    file_info = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<file_info>() as u64) }
-        as *mut file_info;
+    file_info =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<file_info>() as u64) } as *mut file_info;
     parse_rockridge_NM1(file_info, data, data_length);
 }
 
@@ -4099,20 +4065,16 @@ unsafe fn archive_test_parse_rockridge_NM1(mut data: *const u8, mut data_length:
 unsafe fn archive_test_parse_rockridge(mut _a: *mut archive, mut p: *const u8, mut end: *const u8) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut file_info: *mut file_info = 0 as *mut file_info;
-    file_info = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<file_info>() as u64) }
-        as *mut file_info;
+    file_info =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<file_info>() as u64) } as *mut file_info;
     parse_rockridge(a, file_info, p, end);
 }
 
 #[no_mangle]
 pub unsafe fn archive_test_archive_read_support_format_iso9660() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
-    archive_read = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read>() as u64,
-        )
-    } as *mut archive_read;
+    archive_read = unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read>() as u64) }
+        as *mut archive_read;
     (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
     (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
     archive_read_support_format_iso9660(&mut (*archive_read).archive as *mut archive);
@@ -4122,17 +4084,13 @@ pub unsafe fn archive_test_archive_read_support_format_iso9660() {
 pub unsafe fn archive_test_archive_read_format_iso9660_read_data(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut iso9660: *mut iso9660 = 0 as *mut iso9660;
-    iso9660 = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<iso9660>() as u64) }
-        as *mut iso9660;
+    iso9660 = unsafe { calloc_safe(1 as i32 as u64, size_of::<iso9660>() as u64) } as *mut iso9660;
     let mut content: *mut content = 0 as *mut content;
-    content = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<content>() as u64) }
-        as *mut content;
+    content = unsafe { calloc_safe(1 as i32 as u64, size_of::<content>() as u64) } as *mut content;
     let mut content2: *mut content = 0 as *mut content;
-    content2 = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<content>() as u64) }
-        as *mut content;
+    content2 = unsafe { calloc_safe(1 as i32 as u64, size_of::<content>() as u64) } as *mut content;
     let mut content3: *mut content = 0 as *mut content;
-    content3 = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<content>() as u64) }
-        as *mut content;
+    content3 = unsafe { calloc_safe(1 as i32 as u64, size_of::<content>() as u64) } as *mut content;
     (*iso9660).entry_bytes_remaining = 0;
     (*iso9660).entry_bytes_unconsumed = 0;
     (*iso9660).entry_content = content as *mut content;

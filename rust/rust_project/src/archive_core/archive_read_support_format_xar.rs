@@ -4,7 +4,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
-
+use std::mem::size_of;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct xar {
@@ -105,7 +105,7 @@ extern "C" {
     fn XML_SetCharacterDataHandler(parser: XML_Parser, handler: XML_CharacterDataHandler);
 
     #[cfg(any(HAVE_EXPAT_H, HAVE_BSDXML_H))]
-    fn XML_Parse(parser: XML_Parser, s: *const i8, len: i32, isFinal: i32) -> XML_Status;
+    fn XML_Parse(parser: XML_Parser, s: *const u8, len: i32, isFinal: i32) -> XML_Status;
 
     #[cfg(any(HAVE_EXPAT_H, HAVE_BSDXML_H))]
     fn XML_SetUserData(parser: XML_Parser, userData: *mut ());
@@ -160,7 +160,7 @@ fn XML_SetCharacterDataHandler_safe(parser: XML_Parser, handler: XML_CharacterDa
 }
 
 #[cfg(any(HAVE_EXPAT_H, HAVE_BSDXML_H))]
-fn XML_Parse_safe(parser: XML_Parser, s: *const i8, len: i32, isFinal: i32) -> XML_Status {
+fn XML_Parse_safe(parser: XML_Parser, s: *const u8, len: i32, isFinal: i32) -> XML_Status {
     return unsafe { XML_Parse(parser, s, len, isFinal) };
 }
 
@@ -230,19 +230,19 @@ pub unsafe fn archive_read_support_format_xar(mut _a: *mut archive) -> i32 {
         _a,
         ARCHIVE_XAR_DEFINED_PARAM.archive_read_magic,
         ARCHIVE_XAR_DEFINED_PARAM.archive_state_new,
-        b"archive_read_support_format_xar\x00" as *const u8 as *const i8,
+        b"archive_read_support_format_xar\x00" as *const u8,
     );
     if magic_test == ARCHIVE_XAR_DEFINED_PARAM.archive_fatal {
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
-    xar = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<xar>() as u64) as *mut xar;
+    xar = calloc_safe(1 as i32 as u64, size_of::<xar>() as u64) as *mut xar;
     let mut safe_a = unsafe { &mut *a };
     let mut safe_xar = unsafe { &mut *xar };
     if xar.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.enomem,
-            b"Can\'t allocate xar data\x00" as *const u8 as *const i8
+            b"Can\'t allocate xar data\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
@@ -253,7 +253,7 @@ pub unsafe fn archive_read_support_format_xar(mut _a: *mut archive) -> i32 {
     r = __archive_read_register_format_safe(
         a,
         xar as *mut (),
-        b"xar\x00" as *const u8 as *const i8,
+        b"xar\x00" as *const u8,
         Some(xar_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
         None,
         Some(xar_read_header as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32),
@@ -357,7 +357,7 @@ unsafe fn read_toc(mut a: *mut archive_read) -> i32 {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Truncated archive header\x00" as *const u8 as *const i8
+            b"Truncated archive header\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
@@ -365,7 +365,7 @@ unsafe fn read_toc(mut a: *mut archive_read) -> i32 {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Invalid header magic\x00" as *const u8 as *const i8
+            b"Invalid header magic\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
@@ -374,7 +374,7 @@ unsafe fn read_toc(mut a: *mut archive_read) -> i32 {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Unsupported header version(%d)\x00" as *const u8 as *const i8,
+            b"Unsupported header version(%d)\x00" as *const u8,
             archive_be16dec(unsafe { b.offset(6 as i32 as isize) } as *const ()) as i32
         );
 
@@ -422,7 +422,7 @@ unsafe fn read_toc(mut a: *mut archive_read) -> i32 {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-            b"TOC uncompressed size error\x00" as *const u8 as *const i8
+            b"TOC uncompressed size error\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
@@ -442,7 +442,7 @@ unsafe fn read_toc(mut a: *mut archive_read) -> i32 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Truncated archive file\x00" as *const u8 as *const i8
+                b"Truncated archive file\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
@@ -495,7 +495,7 @@ unsafe fn read_toc(mut a: *mut archive_read) -> i32 {
     }
 
     safe_a.archive.archive_format = ARCHIVE_XAR_DEFINED_PARAM.archive_format_xar;
-    safe_a.archive.archive_format_name = b"xar\x00" as *const u8 as *const i8;
+    safe_a.archive.archive_format_name = b"xar\x00" as *const u8;
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
@@ -513,7 +513,7 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
         if safe_xar.sconv.is_null() {
             safe_xar.sconv = archive_string_conversion_from_charset_safe(
                 &mut safe_a.archive,
-                b"UTF-8\x00" as *const u8 as *const i8,
+                b"UTF-8\x00" as *const u8,
                 1 as i32,
             );
             if safe_xar.sconv.is_null() {
@@ -571,7 +571,7 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.enomem,
-                b"Can\'t allocate memory for Gname\x00" as *const u8 as *const i8
+                b"Can\'t allocate memory for Gname\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
@@ -579,7 +579,7 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Gname cannot be converted from %s to current locale.\x00" as *const u8 as *const i8,
+            b"Gname cannot be converted from %s to current locale.\x00" as *const u8,
             archive_string_conversion_charset_name_safe(safe_xar.sconv)
         );
 
@@ -598,14 +598,14 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.enomem,
-                b"Can\'t allocate memory for Uname\x00" as *const u8 as *const i8
+                b"Can\'t allocate memory for Uname\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Uname cannot be converted from %s to current locale.\x00" as *const u8 as *const i8,
+            b"Uname cannot be converted from %s to current locale.\x00" as *const u8,
             archive_string_conversion_charset_name(safe_xar.sconv)
         );
 
@@ -623,7 +623,7 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.enomem,
-                b"Can\'t allocate memory for Pathname\x00" as *const u8 as *const i8
+                b"Can\'t allocate memory for Pathname\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
@@ -632,7 +632,7 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_file_format,
             b"Pathname cannot be converted from %s to current locale.\x00" as *const u8
-                as *const i8,
+                as *const u8,
             archive_string_conversion_charset_name_safe(safe_xar.sconv)
         );
 
@@ -650,7 +650,7 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.enomem,
-                b"Can\'t allocate memory for Linkname\x00" as *const u8 as *const i8
+                b"Can\'t allocate memory for Linkname\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
@@ -659,7 +659,7 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_file_format,
             b"Linkname cannot be converted from %s to current locale.\x00" as *const u8
-                as *const i8,
+                as *const u8,
             archive_string_conversion_charset_name_safe(safe_xar.sconv)
         );
 
@@ -728,7 +728,7 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                b"Decompressed size error\x00" as *const u8 as *const i8
+                b"Decompressed size error\x00" as *const u8
             );
             r = ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
             break;
@@ -744,7 +744,7 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
                 archive_set_error_safe!(
                     &mut safe_a.archive as *mut archive,
                     ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                    b"Xattr checksum error\x00" as *const u8 as *const i8
+                    b"Xattr checksum error\x00" as *const u8
                 );
                 r = ARCHIVE_XAR_DEFINED_PARAM.archive_warn;
                 break;
@@ -752,7 +752,7 @@ unsafe fn xar_read_header(mut a: *mut archive_read, mut entry: *mut archive_entr
                 archive_set_error_safe!(
                     &mut safe_a.archive as *mut archive,
                     ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                    b"Xattr name error\x00" as *const u8 as *const i8
+                    b"Xattr name error\x00" as *const u8
                 );
                 r = ARCHIVE_XAR_DEFINED_PARAM.archive_warn;
                 break;
@@ -829,7 +829,7 @@ unsafe fn xar_read_data(
                     archive_set_error_safe!(
                         &mut safe_a.archive as *mut archive,
                         ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                        b"Decompressed size error\x00" as *const u8 as *const i8
+                        b"Decompressed size error\x00" as *const u8
                     );
                     r = ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
                     current_block = 1800826227261287704;
@@ -947,7 +947,7 @@ unsafe fn move_reading_point(mut a: *mut archive_read, mut offset: uint64_t) -> 
                 archive_set_error_safe!(
                     &mut safe_a.archive as *mut archive,
                     ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                    b"Cannot seek.\x00" as *const u8 as *const i8
+                    b"Cannot seek.\x00" as *const u8
                 );
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_failed;
             }
@@ -993,7 +993,7 @@ unsafe fn rd_contents(
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-            b"Truncated archive file\x00" as *const u8 as *const i8
+            b"Truncated archive file\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
@@ -1024,7 +1024,7 @@ unsafe fn rd_contents(
  * locale settings; you cannot simply substitute strtol here, since
  * it does obey locale.
  */
-unsafe fn atol10(mut p: *const i8, mut char_cnt: size_t) -> uint64_t {
+unsafe fn atol10(mut p: *const u8, mut char_cnt: size_t) -> uint64_t {
     let mut l: uint64_t = 0;
     let mut digit: i32 = 0;
     if char_cnt == 0 as i32 as u64 {
@@ -1046,7 +1046,7 @@ unsafe fn atol10(mut p: *const i8, mut char_cnt: size_t) -> uint64_t {
     return l;
 }
 
-unsafe fn atol8(mut p: *const i8, mut char_cnt: size_t) -> int64_t {
+unsafe fn atol8(mut p: *const u8, mut char_cnt: size_t) -> int64_t {
     let mut l: int64_t = 0;
     let mut digit: i32 = 0;
     if char_cnt == 0 as i32 as u64 {
@@ -1070,7 +1070,7 @@ unsafe fn atol8(mut p: *const i8, mut char_cnt: size_t) -> int64_t {
     return l;
 }
 
-unsafe fn atohex(mut b: *mut u8, mut bsize: size_t, mut p: *const i8, mut psize: size_t) -> size_t {
+unsafe fn atohex(mut b: *mut u8, mut bsize: size_t, mut p: *const u8, mut psize: size_t) -> size_t {
     let mut fbsize: size_t = bsize;
     while bsize != 0 && psize > 1 as i32 as u64 {
         let mut x: u8 = 0;
@@ -1140,7 +1140,7 @@ unsafe fn time_from_tm(mut t: *mut tm) -> time_t {
         + (safe_t.tm_year + 299 as i32) / 400 as i32 * 86400 as i32) as time_t;
 }
 
-unsafe fn parse_time(mut p: *const i8, mut n: size_t) -> time_t {
+unsafe fn parse_time(mut p: *const u8, mut n: size_t) -> time_t {
     let mut tm: tm = tm {
         tm_sec: 0,
         tm_min: 0,
@@ -1152,14 +1152,14 @@ unsafe fn parse_time(mut p: *const i8, mut n: size_t) -> time_t {
         tm_yday: 0,
         tm_isdst: 0,
         tm_gmtoff: 0,
-        tm_zone: 0 as *const i8,
+        tm_zone: 0 as *const u8,
     };
     let mut t: time_t = 0 as i32 as time_t;
     let mut data: int64_t = 0;
     memset_safe(
         &mut tm as *mut tm as *mut (),
         0 as i32,
-        ::std::mem::size_of::<tm>() as u64,
+        size_of::<tm>() as u64,
     );
     if n != 20 as i32 as u64 {
         return t;
@@ -1254,18 +1254,18 @@ unsafe fn heap_add_entry(
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 12 as i32,
-                b"Out of memory\x00" as *const u8 as *const i8
+                b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
-        new_pending_files = malloc_safe(
-            (new_size as u64).wrapping_mul(::std::mem::size_of::<*mut xar_file>() as u64),
-        ) as *mut *mut xar_file;
+        new_pending_files =
+            malloc_safe((new_size as u64).wrapping_mul(size_of::<*mut xar_file>() as u64))
+                as *mut *mut xar_file;
         if new_pending_files.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 12 as i32,
-                b"Out of memory\x00" as *const u8 as *const i8
+                b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
@@ -1273,8 +1273,7 @@ unsafe fn heap_add_entry(
             memcpy_safe(
                 new_pending_files as *mut (),
                 safe_heap.files as *const (),
-                (safe_heap.allocated as u64)
-                    .wrapping_mul(::std::mem::size_of::<*mut xar_file>() as u64),
+                (safe_heap.allocated as u64).wrapping_mul(size_of::<*mut xar_file>() as u64),
             );
             free_safe(safe_heap.files as *mut ());
         }
@@ -1388,13 +1387,13 @@ unsafe fn add_link(mut a: *mut archive_read, mut xar: *mut xar, mut file: *mut x
         hdlink = safe_hdlink.next;
         safe_hdlink = unsafe { &mut *hdlink };
     }
-    hdlink = malloc_safe(::std::mem::size_of::<hdlink>() as u64) as *mut hdlink;
+    hdlink = malloc_safe(size_of::<hdlink>() as u64) as *mut hdlink;
     safe_hdlink = unsafe { &mut *hdlink };
     if hdlink.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             12 as i32,
-            b"Out of memory\x00" as *const u8 as *const i8
+            b"Out of memory\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
@@ -1533,7 +1532,7 @@ unsafe fn checksum_final(
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-            b"Sumcheck error\x00" as *const u8 as *const i8
+            b"Sumcheck error\x00" as *const u8
         );
     }
     return r;
@@ -1541,7 +1540,7 @@ unsafe fn checksum_final(
 
 unsafe fn decompression_init(mut a: *mut archive_read, mut encoding: enctype) -> i32 {
     let mut xar: *mut xar = 0 as *mut xar;
-    let mut detail: *const i8 = 0 as *const i8;
+    let mut detail: *const u8 = 0 as *const u8;
     let mut r: i32 = 0;
     xar = unsafe { (*(*a).format).data as *mut xar };
     let mut safe_xar = unsafe { &mut *xar };
@@ -1555,15 +1554,15 @@ unsafe fn decompression_init(mut a: *mut archive_read, mut encoding: enctype) ->
             } else {
                 r = inflateInit__safe(
                     &mut safe_xar.stream,
-                    b"1.2.11\x00" as *const u8 as *const i8,
-                    ::std::mem::size_of::<z_stream_s>() as u64 as i32,
+                    b"1.2.11\x00" as *const u8,
+                    size_of::<z_stream_s>() as u64 as i32,
                 )
             }
             if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 archive_set_error_safe!(
                     &mut safe_a.archive as *mut archive,
                     -(1 as i32),
-                    b"Couldn\'t initialize zlib stream.\x00" as *const u8 as *const i8
+                    b"Couldn\'t initialize zlib stream.\x00" as *const u8
                 );
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
             }
@@ -1584,14 +1583,14 @@ unsafe fn decompression_init(mut a: *mut archive_read, mut encoding: enctype) ->
                 }
                 if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                     let mut err: i32 = ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc;
-                    detail = 0 as *const i8;
+                    detail = 0 as *const u8;
                     match r {
-                        -2 => detail = b"invalid setup parameter\x00" as *const u8 as *const i8,
+                        -2 => detail = b"invalid setup parameter\x00" as *const u8,
                         -3 => {
                             err = ARCHIVE_XAR_DEFINED_PARAM.enomem;
-                            detail = b"out of memory\x00" as *const u8 as *const i8
+                            detail = b"out of memory\x00" as *const u8
                         }
-                        -9 => detail = b"mis-compiled library\x00" as *const u8 as *const i8,
+                        -9 => detail = b"mis-compiled library\x00" as *const u8,
                         _ => {}
                     }
 
@@ -1599,9 +1598,9 @@ unsafe fn decompression_init(mut a: *mut archive_read, mut encoding: enctype) ->
                         &mut safe_a.archive as *mut archive,
                         err,
                         b"Internal error initializing decompressor: %s\x00" as *const u8
-                            as *const i8,
+                            as *const u8,
                         if detail.is_null() {
-                            b"??\x00" as *const u8 as *const i8
+                            b"??\x00" as *const u8
                         } else {
                             detail
                         }
@@ -1655,21 +1654,21 @@ unsafe fn decompression_init(mut a: *mut archive_read, mut encoding: enctype) ->
                                                        ARCHIVE_XAR_DEFINED_PARAM.enomem,
                                                        b"Internal error initializing compression library: Cannot allocate memory\x00"
                                                            as *const u8 as
-                                                           *const i8);
+                                                           *const u8);
                             }
                             8 => {
                                 archive_set_error_safe!(&mut safe_a.archive as *mut archive,
                                                        ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
                                                        b"Internal error initializing compression library: Invalid or unsupported options\x00"
                                                            as *const u8 as
-                                                           *const i8);
+                                                           *const u8);
                             }
                             _ => {
                                 archive_set_error_safe!(
                                     &mut safe_a.archive as *mut archive,
                                     ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
                                     b"Internal error initializing lzma library\x00" as *const u8
-                                        as *const i8
+                                        as *const u8
                                 );
                             }
                         }
@@ -1688,16 +1687,16 @@ unsafe fn decompression_init(mut a: *mut archive_read, mut encoding: enctype) ->
              * Unsupported compression.
              */
             match safe_xar.entry_encoding as u32 {
-                BZIP2 => detail = b"bzip2\x00" as *const u8 as *const i8,
-                LZMA => detail = b"lzma\x00" as *const u8 as *const i8,
-                XZ => detail = b"xz\x00" as *const u8 as *const i8,
-                _ => detail = b"??\x00" as *const u8 as *const i8,
+                BZIP2 => detail = b"bzip2\x00" as *const u8,
+                LZMA => detail = b"lzma\x00" as *const u8,
+                XZ => detail = b"xz\x00" as *const u8,
+                _ => detail = b"??\x00" as *const u8,
             }
 
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                b"%s compression not supported on this platform\x00" as *const u8 as *const i8,
+                b"%s compression not supported on this platform\x00" as *const u8,
                 detail
             );
 
@@ -1734,7 +1733,7 @@ unsafe fn decompress(
                 archive_set_error_safe!(
                     &mut safe_a.archive as *mut archive,
                     12 as i32,
-                    b"Couldn\'t allocate memory for out buffer\x00" as *const u8 as *const i8
+                    b"Couldn\'t allocate memory for out buffer\x00" as *const u8
                 );
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
             }
@@ -1759,7 +1758,7 @@ unsafe fn decompress(
                     archive_set_error_safe!(
                         &mut safe_a.archive as *mut archive,
                         -(1 as i32),
-                        b"File decompression failed (%d)\x00" as *const u8 as *const i8,
+                        b"File decompression failed (%d)\x00" as *const u8,
                         r
                     );
 
@@ -1773,9 +1772,9 @@ unsafe fn decompress(
             match () {
                 #[cfg(HAVE_BZLIB_H)]
                 _ => {
-                    safe_xar.bzstream.next_in = b as uintptr_t as *mut i8;
+                    safe_xar.bzstream.next_in = b as uintptr_t as *mut u8;
                     safe_xar.bzstream.avail_in = avail_in as u32;
-                    safe_xar.bzstream.next_out = outbuff as *mut i8;
+                    safe_xar.bzstream.next_out = outbuff as *mut u8;
                     safe_xar.bzstream.avail_out = avail_out as u32;
                     r = BZ2_bzDecompress_safe(&mut safe_xar.bzstream);
                     match r {
@@ -1788,7 +1787,7 @@ unsafe fn decompress(
                                         &mut safe_a.archive as *mut archive,
                                         ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
                                         b"Failed to clean up decompressor\x00" as *const u8
-                                            as *const i8
+                                            as *const u8
                                     );
                                     return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
                                 }
@@ -1800,7 +1799,7 @@ unsafe fn decompress(
                             archive_set_error_safe!(
                                 &mut safe_a.archive as *mut archive,
                                 ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                                b"bzip decompression failed\x00" as *const u8 as *const i8
+                                b"bzip decompression failed\x00" as *const u8
                             );
                             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
                         }
@@ -1831,11 +1830,11 @@ unsafe fn decompress(
                             archive_set_error_safe!(
                                 &mut safe_a.archive as *mut archive,
                                 ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                                b"%s decompression failed(%d)\x00" as *const u8 as *const i8,
+                                b"%s decompression failed(%d)\x00" as *const u8,
                                 if safe_xar.entry_encoding as u32 == XZ as i32 as u32 {
-                                    b"xz\x00" as *const u8 as *const i8
+                                    b"xz\x00" as *const u8
                                 } else {
-                                    b"lzma\x00" as *const u8 as *const i8
+                                    b"lzma\x00" as *const u8
                                 },
                                 r
                             );
@@ -1879,7 +1878,7 @@ unsafe fn decompression_cleanup(mut a: *mut archive_read) -> i32 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 -(1 as i32),
-                b"Failed to clean up zlib decompressor\x00" as *const u8 as *const i8
+                b"Failed to clean up zlib decompressor\x00" as *const u8
             );
             r = ARCHIVE_XAR_DEFINED_PARAM.archive_fatal
         }
@@ -1893,7 +1892,7 @@ unsafe fn decompression_cleanup(mut a: *mut archive_read) -> i32 {
                     archive_set_error_safe!(
                         &mut safe_a.archive as *mut archive,
                         ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                        b"Failed to clean up bzip2 decompressor\x00" as *const u8 as *const i8
+                        b"Failed to clean up bzip2 decompressor\x00" as *const u8
                     );
                     r = ARCHIVE_XAR_DEFINED_PARAM.archive_fatal
                 }
@@ -1946,12 +1945,12 @@ unsafe fn file_new(
     let mut file: *mut xar_file = 0 as *mut xar_file;
     let mut attr: *mut xmlattr = 0 as *mut xmlattr;
     let mut safe_a = unsafe { &mut *a };
-    file = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<xar_file>() as u64) as *mut xar_file;
+    file = calloc_safe(1 as i32 as u64, size_of::<xar_file>() as u64) as *mut xar_file;
     if file.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.enomem,
-            b"Out of memory\x00" as *const u8 as *const i8
+            b"Out of memory\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
@@ -1965,7 +1964,7 @@ unsafe fn file_new(
     safe_xar.xattr = 0 as *mut xattr;
     attr = unsafe { *list }.first;
     while !attr.is_null() {
-        if strcmp_safe(unsafe { *attr }.name, b"id\x00" as *const u8 as *const i8) == 0 as i32 {
+        if strcmp_safe(unsafe { *attr }.name, b"id\x00" as *const u8) == 0 as i32 {
             safe_file.id = atol10(unsafe { *attr }.value, strlen_safe(unsafe { *attr }.value))
         }
         attr = unsafe { *attr }.next
@@ -2005,12 +2004,12 @@ unsafe fn xattr_new(
     let mut attr: *mut xmlattr = 0 as *mut xmlattr;
     let mut safe_a = unsafe { &mut *a };
     let mut safe_xar = unsafe { &mut *xar };
-    xattr = calloc_safe(1 as i32 as u64, ::std::mem::size_of::<xattr>() as u64) as *mut xattr;
+    xattr = calloc_safe(1 as i32 as u64, size_of::<xattr>() as u64) as *mut xattr;
     if xattr.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.enomem,
-            b"Out of memory\x00" as *const u8 as *const i8
+            b"Out of memory\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
@@ -2018,7 +2017,7 @@ unsafe fn xattr_new(
     attr = unsafe { (*list).first };
     let mut safe_xattr = unsafe { &mut *xattr };
     while !attr.is_null() {
-        if strcmp_safe(unsafe { *attr }.name, b"id\x00" as *const u8 as *const i8) == 0 as i32 {
+        if strcmp_safe(unsafe { *attr }.name, b"id\x00" as *const u8) == 0 as i32 {
             safe_xattr.id = atol10(unsafe { *attr }.value, strlen_safe(unsafe { *attr }.value))
         }
         attr = unsafe { *attr }.next
@@ -2046,39 +2045,33 @@ unsafe fn getencoding(mut list: *mut xmlattr_list) -> i32 {
     let mut encoding: enctype = NONE;
     attr = unsafe { *list }.first;
     while !attr.is_null() {
-        if strcmp_safe(
-            unsafe { *attr }.name,
-            b"style\x00" as *const u8 as *const i8,
-        ) == 0 as i32
-        {
+        if strcmp_safe(unsafe { *attr }.name, b"style\x00" as *const u8) == 0 as i32 {
             if strcmp_safe(
                 unsafe { *attr }.value,
-                b"application/octet-stream\x00" as *const u8 as *const i8,
+                b"application/octet-stream\x00" as *const u8,
             ) == 0 as i32
             {
                 encoding = NONE
             } else if strcmp_safe(
                 unsafe { *attr }.value,
-                b"application/x-gzip\x00" as *const u8 as *const i8,
+                b"application/x-gzip\x00" as *const u8,
             ) == 0 as i32
             {
                 encoding = GZIP
             } else if strcmp_safe(
                 unsafe { *attr }.value,
-                b"application/x-bzip2\x00" as *const u8 as *const i8,
+                b"application/x-bzip2\x00" as *const u8,
             ) == 0 as i32
             {
                 encoding = BZIP2
             } else if strcmp_safe(
                 unsafe { *attr }.value,
-                b"application/x-lzma\x00" as *const u8 as *const i8,
+                b"application/x-lzma\x00" as *const u8,
             ) == 0 as i32
             {
                 encoding = LZMA
-            } else if strcmp_safe(
-                unsafe { *attr }.value,
-                b"application/x-xz\x00" as *const u8 as *const i8,
-            ) == 0 as i32
+            } else if strcmp_safe(unsafe { *attr }.value, b"application/x-xz\x00" as *const u8)
+                == 0 as i32
             {
                 encoding = XZ
             }
@@ -2095,12 +2088,8 @@ unsafe fn getsumalgorithm(mut list: *mut xmlattr_list) -> i32 {
         attr = (*list).first;
     }
     while !attr.is_null() {
-        if strcmp_safe(
-            unsafe { (*attr) }.name,
-            b"style\x00" as *const u8 as *const i8,
-        ) == 0 as i32
-        {
-            let mut v: *const i8 = unsafe { (*attr) }.value;
+        if strcmp_safe(unsafe { (*attr) }.name, b"style\x00" as *const u8) == 0 as i32 {
+            let mut v: *const u8 = unsafe { (*attr) }.value;
             if unsafe {
                 (*v.offset(0 as i32 as isize) as i32 == 'S' as i32
                     || *v.offset(0 as i32 as isize) as i32 == 's' as i32)
@@ -2132,10 +2121,10 @@ unsafe fn getsumalgorithm(mut list: *mut xmlattr_list) -> i32 {
 unsafe fn unknowntag_start(
     mut a: *mut archive_read,
     mut xar: *mut xar,
-    mut name: *const i8,
+    mut name: *const u8,
 ) -> i32 {
     let mut tag: *mut unknown_tag = 0 as *mut unknown_tag;
-    tag = malloc_safe(::std::mem::size_of::<unknown_tag>() as u64) as *mut unknown_tag;
+    tag = malloc_safe(size_of::<unknown_tag>() as u64) as *mut unknown_tag;
     let mut safe_tag = unsafe { &mut *tag };
     let mut safe_a = unsafe { &mut *a };
     let mut safe_xar = unsafe { &mut *xar };
@@ -2143,12 +2132,12 @@ unsafe fn unknowntag_start(
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             12 as i32,
-            b"Out of memory\x00" as *const u8 as *const i8
+            b"Out of memory\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
     safe_tag.next = safe_xar.unknowntags;
-    safe_tag.name.s = 0 as *mut i8;
+    safe_tag.name.s = 0 as *mut u8;
     safe_tag.name.length = 0 as i32 as size_t;
     safe_tag.name.buffer_length = 0 as i32 as size_t;
     safe_tag.name.length = 0 as i32 as size_t;
@@ -2169,7 +2158,7 @@ unsafe fn unknowntag_start(
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-unsafe fn unknowntag_end(mut xar: *mut xar, mut name: *const i8) {
+unsafe fn unknowntag_end(mut xar: *mut xar, mut name: *const u8) {
     let mut tag: *mut unknown_tag = 0 as *mut unknown_tag;
     let mut safe_xar = unsafe { &mut *xar };
     tag = safe_xar.unknowntags;
@@ -2189,7 +2178,7 @@ unsafe fn unknowntag_end(mut xar: *mut xar, mut name: *const i8) {
 
 unsafe fn xml_start(
     mut a: *mut archive_read,
-    mut name: *const i8,
+    mut name: *const u8,
     mut list: *mut xmlattr_list,
 ) -> i32 {
     let mut xar: *mut xar = 0 as *mut xar;
@@ -2202,25 +2191,25 @@ unsafe fn xml_start(
 
     match safe_xar.xmlsts as u32 {
         INIT => {
-            if strcmp_safe(name, b"xar\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"xar\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = XAR
             } else if unknowntag_start(a, xar, name) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
             }
         }
         XAR => {
-            if strcmp_safe(name, b"toc\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"toc\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC
             } else if unknowntag_start(a, xar, name) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
             }
         }
         TOC => {
-            if strcmp_safe(name, b"creation-time\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"creation-time\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_CREATION_TIME
-            } else if strcmp_safe(name, b"checksum\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"checksum\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_CHECKSUM
-            } else if strcmp_safe(name, b"file\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"file\x00" as *const u8) == 0 as i32 {
                 if file_new(a, xar, list) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                     return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
                 }
@@ -2230,61 +2219,57 @@ unsafe fn xml_start(
             }
         }
         TOC_CHECKSUM => {
-            if strcmp_safe(name, b"offset\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"offset\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_CHECKSUM_OFFSET
-            } else if strcmp_safe(name, b"size\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"size\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_CHECKSUM_SIZE
             } else if unknowntag_start(a, xar, name) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
             }
         }
         TOC_FILE => {
-            if strcmp_safe(name, b"file\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"file\x00" as *const u8) == 0 as i32 {
                 if file_new(a, xar, list) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                     return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
                 }
-            } else if strcmp_safe(name, b"data\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"data\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA
-            } else if strcmp_safe(name, b"ea\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"ea\x00" as *const u8) == 0 as i32 {
                 if xattr_new(a, xar, list) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                     return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
                 }
                 safe_xar.xmlsts = FILE_EA
-            } else if strcmp_safe(name, b"ctime\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"ctime\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_CTIME
-            } else if strcmp_safe(name, b"mtime\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"mtime\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_MTIME
-            } else if strcmp_safe(name, b"atime\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"atime\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_ATIME
-            } else if strcmp_safe(name, b"group\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"group\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_GROUP
-            } else if strcmp_safe(name, b"gid\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"gid\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_GID
-            } else if strcmp_safe(name, b"user\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"user\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_USER
-            } else if strcmp_safe(name, b"uid\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"uid\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_UID
-            } else if strcmp_safe(name, b"mode\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"mode\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_MODE
-            } else if strcmp_safe(name, b"device\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"device\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DEVICE
-            } else if strcmp_safe(name, b"deviceno\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"deviceno\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DEVICENO
-            } else if strcmp_safe(name, b"inode\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"inode\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_INODE
-            } else if strcmp_safe(name, b"link\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"link\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_LINK
-            } else if strcmp_safe(name, b"type\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"type\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_TYPE;
                 attr = unsafe { (*list).first };
                 let mut safe_attr = unsafe { &mut *((*list).first) };
                 while !attr.is_null() {
-                    if !(strcmp_safe(safe_attr.name, b"link\x00" as *const u8 as *const i8)
-                        != 0 as i32)
-                    {
-                        if strcmp_safe(safe_attr.value, b"original\x00" as *const u8 as *const i8)
-                            == 0 as i32
-                        {
+                    if !(strcmp_safe(safe_attr.name, b"link\x00" as *const u8) != 0 as i32) {
+                        if strcmp_safe(safe_attr.value, b"original\x00" as *const u8) == 0 as i32 {
                             safe_file.hdnext = safe_xar.hdlink_orgs;
                             safe_xar.hdlink_orgs = safe_xar.file
                         } else {
@@ -2302,61 +2287,55 @@ unsafe fn xml_start(
                     attr = unsafe { (*attr).next };
                     safe_attr = unsafe { &mut *(safe_attr.next) };
                 }
-            } else if strcmp_safe(name, b"name\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"name\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_NAME;
                 attr = unsafe { (*list).first };
                 let mut safe_attr = unsafe { &mut *((*list).first) };
                 while !attr.is_null() {
-                    if strcmp_safe(safe_attr.name, b"enctype\x00" as *const u8 as *const i8)
-                        == 0 as i32
-                        && strcmp_safe(safe_attr.value, b"base64\x00" as *const u8 as *const i8)
-                            == 0 as i32
+                    if strcmp_safe(safe_attr.name, b"enctype\x00" as *const u8) == 0 as i32
+                        && strcmp_safe(safe_attr.value, b"base64\x00" as *const u8) == 0 as i32
                     {
                         safe_xar.base64text = 1 as i32
                     }
                     safe_attr = unsafe { &mut *(safe_attr.next) };
                     attr = unsafe { (*attr).next }
                 }
-            } else if strcmp_safe(name, b"acl\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"acl\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_ACL
-            } else if strcmp_safe(name, b"flags\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"flags\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
-            } else if strcmp_safe(name, b"ext2\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"ext2\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             } else if unknowntag_start(a, xar, name) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
             }
         }
         FILE_DATA => {
-            if strcmp_safe(name, b"length\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"length\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA_LENGTH
-            } else if strcmp_safe(name, b"offset\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"offset\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA_OFFSET
-            } else if strcmp_safe(name, b"size\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"size\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA_SIZE
-            } else if strcmp_safe(name, b"encoding\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"encoding\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA_ENCODING;
                 safe_file.encoding = getencoding(list) as enctype
-            } else if strcmp_safe(name, b"archived-checksum\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            } else if strcmp_safe(name, b"archived-checksum\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA_A_CHECKSUM;
                 safe_file.a_sum.alg = getsumalgorithm(list)
-            } else if strcmp_safe(name, b"extracted-checksum\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            } else if strcmp_safe(name, b"extracted-checksum\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA_E_CHECKSUM;
                 safe_file.e_sum.alg = getsumalgorithm(list)
-            } else if strcmp_safe(name, b"content\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"content\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA_CONTENT
             } else if unknowntag_start(a, xar, name) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
             }
         }
         FILE_DEVICE => {
-            if strcmp_safe(name, b"major\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"major\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DEVICE_MAJOR
-            } else if strcmp_safe(name, b"minor\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"minor\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DEVICE_MINOR
             } else if unknowntag_start(a, xar, name) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
@@ -2368,37 +2347,33 @@ unsafe fn xml_start(
             }
         }
         FILE_EA => {
-            if strcmp_safe(name, b"length\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"length\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA_LENGTH
-            } else if strcmp_safe(name, b"offset\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"offset\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA_OFFSET
-            } else if strcmp_safe(name, b"size\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"size\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA_SIZE
-            } else if strcmp_safe(name, b"encoding\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"encoding\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA_ENCODING;
                 safe_xattr.encoding = getencoding(list) as enctype
-            } else if strcmp_safe(name, b"archived-checksum\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            } else if strcmp_safe(name, b"archived-checksum\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA_A_CHECKSUM
-            } else if strcmp_safe(name, b"extracted-checksum\x00" as *const u8 as *const i8)
-                == 0 as i32
-            {
+            } else if strcmp_safe(name, b"extracted-checksum\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA_E_CHECKSUM
-            } else if strcmp_safe(name, b"name\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"name\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA_NAME
-            } else if strcmp_safe(name, b"fstype\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"fstype\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA_FSTYPE
             } else if unknowntag_start(a, xar, name) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
             }
         }
         FILE_ACL => {
-            if strcmp_safe(name, b"appleextended\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"appleextended\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_ACL_APPLEEXTENDED
-            } else if strcmp_safe(name, b"default\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"default\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_ACL_DEFAULT
-            } else if strcmp_safe(name, b"access\x00" as *const u8 as *const i8) == 0 as i32 {
+            } else if strcmp_safe(name, b"access\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_ACL_ACCESS
             } else if unknowntag_start(a, xar, name) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
@@ -2493,7 +2468,7 @@ unsafe fn xml_start(
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
-unsafe fn xml_end(mut userData: *mut (), mut name: *const i8) {
+unsafe fn xml_end(mut userData: *mut (), mut name: *const u8) {
     let mut a: *mut archive_read = 0 as *mut archive_read;
     let mut xar: *mut xar = 0 as *mut xar;
     a = userData as *mut archive_read;
@@ -2501,37 +2476,37 @@ unsafe fn xml_end(mut userData: *mut (), mut name: *const i8) {
     let mut safe_xar = unsafe { &mut *xar };
     match safe_xar.xmlsts as u32 {
         XAR => {
-            if strcmp_safe(name, b"xar\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"xar\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = INIT
             }
         }
         TOC => {
-            if strcmp_safe(name, b"toc\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"toc\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = XAR
             }
         }
         TOC_CREATION_TIME => {
-            if strcmp_safe(name, b"creation-time\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"creation-time\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC
             }
         }
         TOC_CHECKSUM => {
-            if strcmp_safe(name, b"checksum\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"checksum\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC
             }
         }
         TOC_CHECKSUM_OFFSET => {
-            if strcmp_safe(name, b"offset\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"offset\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_CHECKSUM
             }
         }
         TOC_CHECKSUM_SIZE => {
-            if strcmp_safe(name, b"size\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"size\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_CHECKSUM
             }
         }
         TOC_FILE => {
-            if strcmp_safe(name, b"file\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"file\x00" as *const u8) == 0 as i32 {
                 if !unsafe { *safe_xar.file }.parent.is_null()
                     && unsafe { *safe_xar.file }.mode & ARCHIVE_XAR_DEFINED_PARAM.ae_ifmt as mode_t
                         == ARCHIVE_XAR_DEFINED_PARAM.ae_ifdir as mode_t
@@ -2545,348 +2520,348 @@ unsafe fn xml_end(mut userData: *mut (), mut name: *const i8) {
             }
         }
         FILE_DATA => {
-            if strcmp_safe(name, b"data\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"data\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_DATA_LENGTH => {
-            if strcmp_safe(name, b"length\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"length\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA
             }
         }
         FILE_DATA_OFFSET => {
-            if strcmp_safe(name, b"offset\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"offset\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA
             }
         }
         FILE_DATA_SIZE => {
-            if strcmp_safe(name, b"size\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"size\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA
             }
         }
         FILE_DATA_ENCODING => {
-            if strcmp_safe(name, b"encoding\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"encoding\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA
             }
         }
         FILE_DATA_A_CHECKSUM => {
-            if strcmp_safe(name, b"archived-checksum\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"archived-checksum\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA
             }
         }
         FILE_DATA_E_CHECKSUM => {
-            if strcmp_safe(name, b"extracted-checksum\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"extracted-checksum\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA
             }
         }
         FILE_DATA_CONTENT => {
-            if strcmp_safe(name, b"content\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"content\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DATA
             }
         }
         FILE_EA => {
-            if strcmp_safe(name, b"ea\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"ea\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE;
                 safe_xar.xattr = 0 as *mut xattr
             }
         }
         FILE_EA_LENGTH => {
-            if strcmp_safe(name, b"length\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"length\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA
             }
         }
         FILE_EA_OFFSET => {
-            if strcmp_safe(name, b"offset\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"offset\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA
             }
         }
         FILE_EA_SIZE => {
-            if strcmp_safe(name, b"size\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"size\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA
             }
         }
         FILE_EA_ENCODING => {
-            if strcmp_safe(name, b"encoding\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"encoding\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA
             }
         }
         FILE_EA_A_CHECKSUM => {
-            if strcmp_safe(name, b"archived-checksum\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"archived-checksum\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA
             }
         }
         FILE_EA_E_CHECKSUM => {
-            if strcmp_safe(name, b"extracted-checksum\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"extracted-checksum\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA
             }
         }
         FILE_EA_NAME => {
-            if strcmp_safe(name, b"name\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"name\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA
             }
         }
         FILE_EA_FSTYPE => {
-            if strcmp_safe(name, b"fstype\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"fstype\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EA
             }
         }
         FILE_CTIME => {
-            if strcmp_safe(name, b"ctime\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"ctime\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_MTIME => {
-            if strcmp_safe(name, b"mtime\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"mtime\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_ATIME => {
-            if strcmp_safe(name, b"atime\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"atime\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_GROUP => {
-            if strcmp_safe(name, b"group\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"group\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_GID => {
-            if strcmp_safe(name, b"gid\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"gid\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_USER => {
-            if strcmp_safe(name, b"user\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"user\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_UID => {
-            if strcmp_safe(name, b"uid\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"uid\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_MODE => {
-            if strcmp_safe(name, b"mode\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"mode\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_DEVICE => {
-            if strcmp_safe(name, b"device\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"device\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_DEVICE_MAJOR => {
-            if strcmp_safe(name, b"major\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"major\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DEVICE
             }
         }
         FILE_DEVICE_MINOR => {
-            if strcmp_safe(name, b"minor\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"minor\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_DEVICE
             }
         }
         FILE_DEVICENO => {
-            if strcmp_safe(name, b"deviceno\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"deviceno\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_INODE => {
-            if strcmp_safe(name, b"inode\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"inode\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_LINK => {
-            if strcmp_safe(name, b"link\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"link\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_TYPE => {
-            if strcmp_safe(name, b"type\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"type\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_NAME => {
-            if strcmp_safe(name, b"name\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"name\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_ACL => {
-            if strcmp_safe(name, b"acl\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"acl\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_ACL_DEFAULT => {
-            if strcmp_safe(name, b"default\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"default\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_ACL
             }
         }
         FILE_ACL_ACCESS => {
-            if strcmp_safe(name, b"access\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"access\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_ACL
             }
         }
         FILE_ACL_APPLEEXTENDED => {
-            if strcmp_safe(name, b"appleextended\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"appleextended\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_ACL
             }
         }
         FILE_FLAGS => {
-            if strcmp_safe(name, b"flags\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"flags\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_FLAGS_USER_NODUMP => {
-            if strcmp_safe(name, b"UserNoDump\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"UserNoDump\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
             }
         }
         FILE_FLAGS_USER_IMMUTABLE => {
-            if strcmp_safe(name, b"UserImmutable\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"UserImmutable\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
             }
         }
         FILE_FLAGS_USER_APPEND => {
-            if strcmp_safe(name, b"UserAppend\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"UserAppend\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
             }
         }
         FILE_FLAGS_USER_OPAQUE => {
-            if strcmp_safe(name, b"UserOpaque\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"UserOpaque\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
             }
         }
         FILE_FLAGS_USER_NOUNLINK => {
-            if strcmp_safe(name, b"UserNoUnlink\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"UserNoUnlink\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
             }
         }
         FILE_FLAGS_SYS_ARCHIVED => {
-            if strcmp_safe(name, b"SystemArchived\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"SystemArchived\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
             }
         }
         FILE_FLAGS_SYS_IMMUTABLE => {
-            if strcmp_safe(name, b"SystemImmutable\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"SystemImmutable\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
             }
         }
         FILE_FLAGS_SYS_APPEND => {
-            if strcmp_safe(name, b"SystemAppend\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"SystemAppend\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
             }
         }
         FILE_FLAGS_SYS_NOUNLINK => {
-            if strcmp_safe(name, b"SystemNoUnlink\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"SystemNoUnlink\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
             }
         }
         FILE_FLAGS_SYS_SNAPSHOT => {
-            if strcmp_safe(name, b"SystemSnapshot\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"SystemSnapshot\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_FLAGS
             }
         }
         FILE_EXT2 => {
-            if strcmp_safe(name, b"ext2\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"ext2\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = TOC_FILE
             }
         }
         FILE_EXT2_SecureDeletion => {
-            if strcmp_safe(name, b"SecureDeletion\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"SecureDeletion\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_Undelete => {
-            if strcmp_safe(name, b"Undelete\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"Undelete\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_Compress => {
-            if strcmp_safe(name, b"Compress\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"Compress\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_Synchronous => {
-            if strcmp_safe(name, b"Synchronous\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"Synchronous\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_Immutable => {
-            if strcmp_safe(name, b"Immutable\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"Immutable\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_AppendOnly => {
-            if strcmp_safe(name, b"AppendOnly\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"AppendOnly\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_NoDump => {
-            if strcmp_safe(name, b"NoDump\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"NoDump\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_NoAtime => {
-            if strcmp_safe(name, b"NoAtime\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"NoAtime\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_CompDirty => {
-            if strcmp_safe(name, b"CompDirty\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"CompDirty\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_CompBlock => {
-            if strcmp_safe(name, b"CompBlock\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"CompBlock\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_NoCompBlock => {
-            if strcmp_safe(name, b"NoCompBlock\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"NoCompBlock\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_CompError => {
-            if strcmp_safe(name, b"CompError\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"CompError\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_BTree => {
-            if strcmp_safe(name, b"BTree\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"BTree\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_HashIndexed => {
-            if strcmp_safe(name, b"HashIndexed\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"HashIndexed\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_iMagic => {
-            if strcmp_safe(name, b"iMagic\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"iMagic\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_Journaled => {
-            if strcmp_safe(name, b"Journaled\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"Journaled\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_NoTail => {
-            if strcmp_safe(name, b"NoTail\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"NoTail\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_DirSync => {
-            if strcmp_safe(name, b"DirSync\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"DirSync\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_TopDir => {
-            if strcmp_safe(name, b"TopDir\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"TopDir\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
         FILE_EXT2_Reserved => {
-            if strcmp_safe(name, b"Reserved\x00" as *const u8 as *const i8) == 0 as i32 {
+            if strcmp_safe(name, b"Reserved\x00" as *const u8) == 0 as i32 {
                 safe_xar.xmlsts = FILE_EXT2
             }
         }
@@ -3159,7 +3134,7 @@ static mut base64: [i32; 256] = [
 unsafe fn strappend_base64(
     mut xar: *mut xar,
     mut as_0: *mut archive_string,
-    mut s: *const i8,
+    mut s: *const u8,
     mut l: size_t,
 ) {
     let mut buff: [u8; 256] = [0; 256];
@@ -3214,25 +3189,25 @@ unsafe fn strappend_base64(
             len = len.wrapping_add(1);
             l = l.wrapping_sub(1)
         }
-        if len.wrapping_add(3 as i32 as u64) >= ::std::mem::size_of::<[u8; 256]>() as u64 {
-            archive_strncat_safe(as_0, buff.as_mut_ptr() as *const i8 as *const (), len);
+        if len.wrapping_add(3 as i32 as u64) >= size_of::<[u8; 256]>() as u64 {
+            archive_strncat_safe(as_0, buff.as_mut_ptr() as *const u8 as *const (), len);
             len = 0 as i32 as size_t;
             out = buff.as_mut_ptr()
         }
     }
     if len > 0 as i32 as u64 {
-        archive_strncat_safe(as_0, buff.as_mut_ptr() as *const i8 as *const (), len);
+        archive_strncat_safe(as_0, buff.as_mut_ptr() as *const u8 as *const (), len);
     };
 }
 
-unsafe fn is_string(mut known: *const i8, mut data: *const i8, mut len: size_t) -> i32 {
+unsafe fn is_string(mut known: *const u8, mut data: *const u8, mut len: size_t) -> i32 {
     if strlen_safe(known) != len {
         return -(1 as i32);
     }
     return memcmp_safe(data as *const (), known as *const (), len);
 }
 
-unsafe fn xml_data(mut userData: *mut (), mut s: *const i8, mut len: i32) {
+unsafe fn xml_data(mut userData: *mut (), mut s: *const u8, mut len: i32) {
     let mut a: *mut archive_read = 0 as *mut archive_read;
     let mut xar: *mut xar = 0 as *mut xar;
     a = userData as *mut archive_read;
@@ -3256,7 +3231,7 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const i8, mut len: i32) {
                         &mut (*safe_xar.file).pathname,
                         &mut (*(*safe_xar.file).parent).pathname,
                     );
-                    archive_strappend_char_safe(&mut (*safe_xar.file).pathname, '/' as i32 as i8);
+                    archive_strappend_char_safe(&mut (*safe_xar.file).pathname, '/' as i32 as u8);
                 }
             }
             safe_file.has |= HAS_PATHNAME as u32;
@@ -3272,44 +3247,33 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const i8, mut len: i32) {
             archive_strncat_safe(&mut safe_file.symlink, s as *const (), len as size_t);
         }
         FILE_TYPE => {
-            if is_string(b"file\x00" as *const u8 as *const i8, s, len as size_t) == 0 as i32
-                || is_string(b"hardlink\x00" as *const u8 as *const i8, s, len as size_t)
-                    == 0 as i32
+            if is_string(b"file\x00" as *const u8, s, len as size_t) == 0 as i32
+                || is_string(b"hardlink\x00" as *const u8, s, len as size_t) == 0 as i32
             {
                 safe_file.mode = safe_file.mode & !(ARCHIVE_XAR_DEFINED_PARAM.ae_ifmt as mode_t)
                     | ARCHIVE_XAR_DEFINED_PARAM.ae_ifreg as mode_t
             }
-            if is_string(b"directory\x00" as *const u8 as *const i8, s, len as size_t) == 0 as i32 {
+            if is_string(b"directory\x00" as *const u8, s, len as size_t) == 0 as i32 {
                 safe_file.mode = safe_file.mode & !(ARCHIVE_XAR_DEFINED_PARAM.ae_ifmt as mode_t)
                     | ARCHIVE_XAR_DEFINED_PARAM.ae_ifdir as mode_t
             }
-            if is_string(b"symlink\x00" as *const u8 as *const i8, s, len as size_t) == 0 as i32 {
+            if is_string(b"symlink\x00" as *const u8, s, len as size_t) == 0 as i32 {
                 safe_file.mode = safe_file.mode & !(ARCHIVE_XAR_DEFINED_PARAM.ae_ifmt as mode_t)
                     | ARCHIVE_XAR_DEFINED_PARAM.ae_iflnk as mode_t
             }
-            if is_string(
-                b"character special\x00" as *const u8 as *const i8,
-                s,
-                len as size_t,
-            ) == 0 as i32
-            {
+            if is_string(b"character special\x00" as *const u8, s, len as size_t) == 0 as i32 {
                 safe_file.mode = safe_file.mode & !(ARCHIVE_XAR_DEFINED_PARAM.ae_ifmt as mode_t)
                     | ARCHIVE_XAR_DEFINED_PARAM.ae_ifchr as mode_t
             }
-            if is_string(
-                b"block special\x00" as *const u8 as *const i8,
-                s,
-                len as size_t,
-            ) == 0 as i32
-            {
+            if is_string(b"block special\x00" as *const u8, s, len as size_t) == 0 as i32 {
                 safe_file.mode = safe_file.mode & !(ARCHIVE_XAR_DEFINED_PARAM.ae_ifmt as mode_t)
                     | ARCHIVE_XAR_DEFINED_PARAM.ae_ifblk as mode_t
             }
-            if is_string(b"socket\x00" as *const u8 as *const i8, s, len as size_t) == 0 as i32 {
+            if is_string(b"socket\x00" as *const u8, s, len as size_t) == 0 as i32 {
                 safe_file.mode = safe_file.mode & !(ARCHIVE_XAR_DEFINED_PARAM.ae_ifmt as mode_t)
                     | ARCHIVE_XAR_DEFINED_PARAM.ae_ifsock as mode_t
             }
-            if is_string(b"fifo\x00" as *const u8 as *const i8, s, len as size_t) == 0 as i32 {
+            if is_string(b"fifo\x00" as *const u8, s, len as size_t) == 0 as i32 {
                 safe_file.mode = safe_file.mode & !(ARCHIVE_XAR_DEFINED_PARAM.ae_ifmt as mode_t)
                     | ARCHIVE_XAR_DEFINED_PARAM.ae_ififo as mode_t
             }
@@ -3381,7 +3345,7 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const i8, mut len: i32) {
         FILE_DATA_A_CHECKSUM => {
             safe_file.a_sum.len = atohex(
                 safe_file.a_sum.val.as_mut_ptr(),
-                ::std::mem::size_of::<[u8; 20]>() as u64,
+                size_of::<[u8; 20]>() as u64,
                 s,
                 len as size_t,
             )
@@ -3389,7 +3353,7 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const i8, mut len: i32) {
         FILE_DATA_E_CHECKSUM => {
             safe_file.e_sum.len = atohex(
                 safe_file.e_sum.val.as_mut_ptr(),
-                ::std::mem::size_of::<[u8; 20]>() as u64,
+                size_of::<[u8; 20]>() as u64,
                 s,
                 len as size_t,
             )
@@ -3410,7 +3374,7 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const i8, mut len: i32) {
             safe_file.has |= HAS_XATTR as u32;
             safe_xattr.a_sum.len = atohex(
                 safe_xattr.a_sum.val.as_mut_ptr(),
-                ::std::mem::size_of::<[u8; 20]>() as u64,
+                size_of::<[u8; 20]>() as u64,
                 s,
                 len as size_t,
             )
@@ -3419,7 +3383,7 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const i8, mut len: i32) {
             safe_file.has |= HAS_XATTR as u32;
             safe_xattr.e_sum.len = atohex(
                 safe_xattr.e_sum.val.as_mut_ptr(),
-                ::std::mem::size_of::<[u8; 20]>() as u64,
+                size_of::<[u8; 20]>() as u64,
                 s,
                 len as size_t,
             )
@@ -3491,46 +3455,46 @@ unsafe fn xml_data(mut userData: *mut (), mut s: *const i8, mut len: i32) {
 /*
  * BSD file flags.
  */
-unsafe fn xml_parse_file_flags(mut xar: *mut xar, mut name: *const i8) -> i32 {
+unsafe fn xml_parse_file_flags(mut xar: *mut xar, mut name: *const u8) -> i32 {
     let mut safe_xar = unsafe { &mut *xar };
-    let mut flag: *const i8 = 0 as *const i8;
-    if strcmp_safe(name, b"UserNoDump\x00" as *const u8 as *const i8) == 0 as i32 {
+    let mut flag: *const u8 = 0 as *const u8;
+    if strcmp_safe(name, b"UserNoDump\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_FLAGS_USER_NODUMP;
-        flag = b"nodump\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"UserImmutable\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"nodump\x00" as *const u8
+    } else if strcmp_safe(name, b"UserImmutable\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_FLAGS_USER_IMMUTABLE;
-        flag = b"uimmutable\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"UserAppend\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"uimmutable\x00" as *const u8
+    } else if strcmp_safe(name, b"UserAppend\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_FLAGS_USER_APPEND;
-        flag = b"uappend\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"UserOpaque\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"uappend\x00" as *const u8
+    } else if strcmp_safe(name, b"UserOpaque\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_FLAGS_USER_OPAQUE;
-        flag = b"opaque\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"UserNoUnlink\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"opaque\x00" as *const u8
+    } else if strcmp_safe(name, b"UserNoUnlink\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_FLAGS_USER_NOUNLINK;
-        flag = b"nouunlink\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"SystemArchived\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"nouunlink\x00" as *const u8
+    } else if strcmp_safe(name, b"SystemArchived\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_FLAGS_SYS_ARCHIVED;
-        flag = b"archived\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"SystemImmutable\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"archived\x00" as *const u8
+    } else if strcmp_safe(name, b"SystemImmutable\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_FLAGS_SYS_IMMUTABLE;
-        flag = b"simmutable\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"SystemAppend\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"simmutable\x00" as *const u8
+    } else if strcmp_safe(name, b"SystemAppend\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_FLAGS_SYS_APPEND;
-        flag = b"sappend\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"SystemNoUnlink\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"sappend\x00" as *const u8
+    } else if strcmp_safe(name, b"SystemNoUnlink\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_FLAGS_SYS_NOUNLINK;
-        flag = b"nosunlink\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"SystemSnapshot\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"nosunlink\x00" as *const u8
+    } else if strcmp_safe(name, b"SystemSnapshot\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_FLAGS_SYS_SNAPSHOT;
-        flag = b"snapshot\x00" as *const u8 as *const i8
+        flag = b"snapshot\x00" as *const u8
     }
     if flag.is_null() {
         return 0 as i32;
     }
     unsafe { *safe_xar.file }.has |= HAS_FFLAGS as u32;
     if unsafe { *safe_xar.file }.fflags_text.length > 0 as i32 as u64 {
-        archive_strappend_char_safe(&mut unsafe { *safe_xar.file }.fflags_text, ',' as i32 as i8);
+        archive_strappend_char_safe(&mut unsafe { *safe_xar.file }.fflags_text, ',' as i32 as u8);
     }
     archive_strcat_safe(
         &mut unsafe { *safe_xar.file }.fflags_text,
@@ -3541,75 +3505,75 @@ unsafe fn xml_parse_file_flags(mut xar: *mut xar, mut name: *const i8) -> i32 {
 /*
  * Linux file flags.
  */
-unsafe fn xml_parse_file_ext2(mut xar: *mut xar, mut name: *const i8) -> i32 {
-    let mut flag: *const i8 = 0 as *const i8;
+unsafe fn xml_parse_file_ext2(mut xar: *mut xar, mut name: *const u8) -> i32 {
+    let mut flag: *const u8 = 0 as *const u8;
     let mut safe_xar = unsafe { &mut *xar };
-    if strcmp_safe(name, b"SecureDeletion\x00" as *const u8 as *const i8) == 0 as i32 {
+    if strcmp_safe(name, b"SecureDeletion\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_SecureDeletion;
-        flag = b"securedeletion\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"Undelete\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"securedeletion\x00" as *const u8
+    } else if strcmp_safe(name, b"Undelete\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_Undelete;
-        flag = b"nouunlink\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"Compress\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"nouunlink\x00" as *const u8
+    } else if strcmp_safe(name, b"Compress\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_Compress;
-        flag = b"compress\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"Synchronous\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"compress\x00" as *const u8
+    } else if strcmp_safe(name, b"Synchronous\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_Synchronous;
-        flag = b"sync\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"Immutable\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"sync\x00" as *const u8
+    } else if strcmp_safe(name, b"Immutable\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_Immutable;
-        flag = b"simmutable\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"AppendOnly\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"simmutable\x00" as *const u8
+    } else if strcmp_safe(name, b"AppendOnly\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_AppendOnly;
-        flag = b"sappend\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"NoDump\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"sappend\x00" as *const u8
+    } else if strcmp_safe(name, b"NoDump\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_NoDump;
-        flag = b"nodump\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"NoAtime\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"nodump\x00" as *const u8
+    } else if strcmp_safe(name, b"NoAtime\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_NoAtime;
-        flag = b"noatime\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"CompDirty\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"noatime\x00" as *const u8
+    } else if strcmp_safe(name, b"CompDirty\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_CompDirty;
-        flag = b"compdirty\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"CompBlock\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"compdirty\x00" as *const u8
+    } else if strcmp_safe(name, b"CompBlock\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_CompBlock;
-        flag = b"comprblk\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"NoCompBlock\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"comprblk\x00" as *const u8
+    } else if strcmp_safe(name, b"NoCompBlock\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_NoCompBlock;
-        flag = b"nocomprblk\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"CompError\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"nocomprblk\x00" as *const u8
+    } else if strcmp_safe(name, b"CompError\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_CompError;
-        flag = b"comperr\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"BTree\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"comperr\x00" as *const u8
+    } else if strcmp_safe(name, b"BTree\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_BTree;
-        flag = b"btree\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"HashIndexed\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"btree\x00" as *const u8
+    } else if strcmp_safe(name, b"HashIndexed\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_HashIndexed;
-        flag = b"hashidx\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"iMagic\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"hashidx\x00" as *const u8
+    } else if strcmp_safe(name, b"iMagic\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_iMagic;
-        flag = b"imagic\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"Journaled\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"imagic\x00" as *const u8
+    } else if strcmp_safe(name, b"Journaled\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_Journaled;
-        flag = b"journal\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"NoTail\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"journal\x00" as *const u8
+    } else if strcmp_safe(name, b"NoTail\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_NoTail;
-        flag = b"notail\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"DirSync\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"notail\x00" as *const u8
+    } else if strcmp_safe(name, b"DirSync\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_DirSync;
-        flag = b"dirsync\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"TopDir\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"dirsync\x00" as *const u8
+    } else if strcmp_safe(name, b"TopDir\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_TopDir;
-        flag = b"topdir\x00" as *const u8 as *const i8
-    } else if strcmp_safe(name, b"Reserved\x00" as *const u8 as *const i8) == 0 as i32 {
+        flag = b"topdir\x00" as *const u8
+    } else if strcmp_safe(name, b"Reserved\x00" as *const u8) == 0 as i32 {
         safe_xar.xmlsts = FILE_EXT2_Reserved;
-        flag = b"reserved\x00" as *const u8 as *const i8
+        flag = b"reserved\x00" as *const u8
     }
     if flag.is_null() {
         return 0 as i32;
     }
     if unsafe { *safe_xar.file }.fflags_text.length > 0 as i32 as u64 {
-        archive_strappend_char_safe(&mut unsafe { *safe_xar.file }.fflags_text, ',' as i32 as i8);
+        archive_strappend_char_safe(&mut unsafe { *safe_xar.file }.fflags_text, ',' as i32 as u8);
     }
     archive_strcat_safe(
         &mut unsafe { *safe_xar.file }.fflags_text,
@@ -3634,29 +3598,29 @@ unsafe fn xml2_xmlattr_setup(
     let mut safe_a = unsafe { &mut *a };
     r = xmlTextReaderMoveToFirstAttribute_safe(reader);
     while r == 1 as i32 {
-        attr = malloc_safe(::std::mem::size_of::<xmlattr>() as u64) as *mut xmlattr;
+        attr = malloc_safe(size_of::<xmlattr>() as u64) as *mut xmlattr;
         if attr.is_null() {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.enomem,
-                b"Out of memory\x00" as *const u8 as *const i8
+                b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
         unsafe {
-            (*attr).name = strdup_safe(xmlTextReaderConstLocalName_safe(reader) as *const i8);
+            (*attr).name = strdup_safe(xmlTextReaderConstLocalName_safe(reader) as *const u8);
         }
         if unsafe { (*attr).name.is_null() } {
             free_safe(attr as *mut ());
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.enomem,
-                b"Out of memory\x00" as *const u8 as *const i8
+                b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
         unsafe {
-            (*attr).value = strdup_safe(xmlTextReaderConstValue_safe(reader) as *const i8);
+            (*attr).value = strdup_safe(xmlTextReaderConstValue_safe(reader) as *const u8);
         }
 
         if unsafe { (*attr).value.is_null() } {
@@ -3665,7 +3629,7 @@ unsafe fn xml2_xmlattr_setup(
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 12 as i32,
-                b"Out of memory\x00" as *const u8 as *const i8
+                b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
@@ -3680,7 +3644,7 @@ unsafe fn xml2_xmlattr_setup(
 }
 
 #[cfg(HAVE_LIBXML_XMLREADER_H)]
-unsafe fn xml2_read_cb(mut context: *mut (), mut buffer: *mut i8, mut len: i32) -> i32 {
+unsafe fn xml2_read_cb(mut context: *mut (), mut buffer: *mut u8, mut len: i32) -> i32 {
     let mut a: *mut archive_read = 0 as *mut archive_read;
     let mut xar: *mut xar = 0 as *mut xar;
     let mut d: *const () = 0 as *const ();
@@ -3716,7 +3680,7 @@ unsafe fn xml2_close_cb(mut context: *mut ()) -> i32 {
 #[cfg(HAVE_LIBXML_XMLREADER_H)]
 unsafe fn xml2_error_hdr(
     mut arg: *mut (),
-    mut msg: *const i8,
+    mut msg: *const u8,
     mut severity: xmlParserSeverities,
     mut locator: xmlTextReaderLocatorPtr,
 ) {
@@ -3729,7 +3693,7 @@ unsafe fn xml2_error_hdr(
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                b"XML Parsing error: %s\x00" as *const u8 as *const i8,
+                b"XML Parsing error: %s\x00" as *const u8,
                 msg
             );
         }
@@ -3737,7 +3701,7 @@ unsafe fn xml2_error_hdr(
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
-                b"XML Parsing error: %s\x00" as *const u8 as *const i8,
+                b"XML Parsing error: %s\x00" as *const u8,
                 msg
             )
         }
@@ -3755,18 +3719,18 @@ unsafe fn xml2_read_toc(mut a: *mut archive_read) -> i32 {
     let mut r: i32 = 0;
     let mut safe_a = unsafe { &mut *a };
     reader = xmlReaderForIO_safe(
-        Some(xml2_read_cb as unsafe fn(_: *mut (), _: *mut i8, _: i32) -> i32),
+        Some(xml2_read_cb as unsafe fn(_: *mut (), _: *mut u8, _: i32) -> i32),
         Some(xml2_close_cb as unsafe fn(_: *mut ()) -> i32),
         a as *mut (),
-        0 as *const i8,
-        0 as *const i8,
+        0 as *const u8,
+        0 as *const u8,
         0 as i32,
     );
     if reader.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.enomem,
-            b"Couldn\'t allocate memory for xml parser\x00" as *const u8 as *const i8
+            b"Couldn\'t allocate memory for xml parser\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
@@ -3776,7 +3740,7 @@ unsafe fn xml2_read_toc(mut a: *mut archive_read) -> i32 {
             xml2_error_hdr
                 as unsafe fn(
                     _: *mut (),
-                    _: *const i8,
+                    _: *const u8,
                     _: xmlParserSeverities,
                     _: xmlTextReaderLocatorPtr,
                 ) -> (),
@@ -3788,12 +3752,12 @@ unsafe fn xml2_read_toc(mut a: *mut archive_read) -> i32 {
         if !(r == 1 as i32) {
             break;
         }
-        let mut name: *const i8 = 0 as *const i8;
-        let mut value: *const i8 = 0 as *const i8;
+        let mut name: *const u8 = 0 as *const u8;
+        let mut value: *const u8 = 0 as *const u8;
         let mut type_0: i32 = 0;
         let mut empty: i32 = 0;
         type_0 = xmlTextReaderNodeType_safe(reader);
-        name = xmlTextReaderConstLocalName_safe(reader) as *const i8;
+        name = xmlTextReaderConstLocalName_safe(reader) as *const u8;
         match type_0 as u32 {
             XML_READER_TYPE_ELEMENT => {
                 empty = xmlTextReaderIsEmptyElement_safe(reader);
@@ -3813,7 +3777,7 @@ unsafe fn xml2_read_toc(mut a: *mut archive_read) -> i32 {
                 xml_end(a as *mut (), name);
             }
             XML_READER_TYPE_TEXT => {
-                value = xmlTextReaderConstValue_safe(reader) as *const i8;
+                value = xmlTextReaderConstValue_safe(reader) as *const u8;
                 xml_data(a as *mut (), value, strlen_safe(value) as i32);
             }
             XML_READER_TYPE_SIGNIFICANT_WHITESPACE | _ => {}
@@ -3840,8 +3804,8 @@ unsafe fn expat_xmlattr_setup(
     mut atts: *mut *const XML_Char,
 ) -> i32 {
     let mut attr: *mut xmlattr = 0 as *mut xmlattr;
-    let mut name: *mut i8 = 0 as *mut i8;
-    let mut value: *mut i8 = 0 as *mut i8;
+    let mut name: *mut u8 = 0 as *mut u8;
+    let mut value: *mut u8 = 0 as *mut u8;
     let mut safe_a = unsafe { &mut *a };
     unsafe { (*list).first = 0 as *mut xmlattr };
     unsafe { (*list).last = &mut (*list).first };
@@ -3851,14 +3815,14 @@ unsafe fn expat_xmlattr_setup(
     while unsafe {
         !(*atts.offset(0 as i32 as isize)).is_null() && !(*atts.offset(1 as i32 as isize)).is_null()
     } {
-        attr = malloc_safe(::std::mem::size_of::<xmlattr>() as u64) as *mut xmlattr;
+        attr = malloc_safe(size_of::<xmlattr>() as u64) as *mut xmlattr;
         name = strdup_safe(unsafe { *atts.offset(0 as i32 as isize) });
         value = strdup_safe(unsafe { *atts.offset(1 as i32 as isize) });
         if attr.is_null() || name.is_null() || value.is_null() {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.enomem,
-                b"Out of memory\x00" as *const u8 as *const i8
+                b"Out of memory\x00" as *const u8
             );
             free_safe(attr as *mut ());
             free_safe(name as *mut ());
@@ -3894,7 +3858,7 @@ unsafe fn expat_start_cb(
     let mut r: i32 = 0;
     r = expat_xmlattr_setup(a, &mut list, atts);
     if r == ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
-        r = unsafe { xml_start(a, name as *const i8, &mut list) }
+        r = unsafe { xml_start(a, name as *const u8, &mut list) }
     }
     xmlattr_cleanup(&mut list);
     safe_ud.state = r;
@@ -3904,7 +3868,7 @@ unsafe fn expat_start_cb(
 #[cfg(any(HAVE_EXPAT_H, HAVE_BSDXML_H))]
 unsafe fn expat_end_cb(mut userData: *mut (), mut name: *const XML_Char) {
     let mut ud: *mut expat_userData = userData as *mut expat_userData;
-    xml_end(unsafe { (*ud).archive as *mut () }, name as *const i8);
+    xml_end(unsafe { (*ud).archive as *mut () }, name as *const u8);
 }
 
 #[no_mangle]
@@ -3934,7 +3898,7 @@ unsafe fn expat_read_toc(mut a: *mut archive_read) -> i32 {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             12 as i32,
-            b"Couldn\'t allocate memory for xml parser\x00" as *const u8 as *const i8
+            b"Couldn\'t allocate memory for xml parser\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
@@ -3970,7 +3934,7 @@ unsafe fn expat_read_toc(mut a: *mut archive_read) -> i32 {
             (safe_xar.toc_total as u64).wrapping_add(outbytes) as uint64_t as uint64_t;
         xr = XML_Parse_safe(
             parser,
-            d as *const i8,
+            d as *const u8,
             outbytes as i32,
             (safe_xar.toc_remaining == 0 as i32 as u64) as i32,
         );
@@ -3980,7 +3944,7 @@ unsafe fn expat_read_toc(mut a: *mut archive_read) -> i32 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.archive_errnok_misc,
-                b"XML Parsing failed\x00" as *const u8 as *const i8
+                b"XML Parsing failed\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }

@@ -1,4 +1,5 @@
 use rust_ffi::ffi_alias::alias_set::*;
+use std::mem::size_of;
 
 #[inline]
 pub fn archive_be16dec(mut pp: *const ()) -> uint16_t {

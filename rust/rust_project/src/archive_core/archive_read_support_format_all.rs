@@ -11,6 +11,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
+use std::mem::size_of;
 
 #[no_mangle]
 pub extern "C" fn archive_read_support_format_all(a: *mut archive) -> i32 {
@@ -19,7 +20,7 @@ pub extern "C" fn archive_read_support_format_all(a: *mut archive) -> i32 {
             a,
             ARCHIVE_ALL_DEFINED_PARAM.archive_read_magic,
             ARCHIVE_ALL_DEFINED_PARAM.archive_state_new,
-            b"archive_read_support_format_all\x00" as *const u8 as *const i8,
+            b"archive_read_support_format_all\x00" as *const u8,
         )
     };
     if magic_test == -30 {
