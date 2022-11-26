@@ -5,9 +5,9 @@ use rust_ffi::ffi_struct::struct_transfer::*;
 use std::ffi::CStr;
 use std::mem::size_of;
 
-static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
+static nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x8 as i32,
             c: 'r' as u8,
             wc: 'r' as wchar_t,
@@ -15,7 +15,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x10 as i32,
             c: 'w' as u8,
             wc: 'w' as wchar_t,
@@ -23,7 +23,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x1 as i32,
             c: 'x' as u8,
             wc: 'x' as wchar_t,
@@ -31,7 +31,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x20 as i32,
             c: 'p' as u8,
             wc: 'p' as wchar_t,
@@ -39,7 +39,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x800 as i32,
             c: 'd' as u8,
             wc: 'd' as wchar_t,
@@ -47,7 +47,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x100 as i32,
             c: 'D' as u8,
             wc: 'D' as wchar_t,
@@ -55,7 +55,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x200 as i32,
             c: 'a' as u8,
             wc: 'a' as wchar_t,
@@ -63,7 +63,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x400 as i32,
             c: 'A' as u8,
             wc: 'A' as wchar_t,
@@ -71,7 +71,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x40 as i32,
             c: 'R' as u8,
             wc: 'R' as wchar_t,
@@ -79,7 +79,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x80 as i32,
             c: 'W' as u8,
             wc: 'W' as wchar_t,
@@ -87,7 +87,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x1000 as i32,
             c: 'c' as u8,
             wc: 'c' as wchar_t,
@@ -95,7 +95,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x2000 as i32,
             c: 'C' as u8,
             wc: 'C' as wchar_t,
@@ -103,7 +103,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x4000 as i32,
             c: 'o' as u8,
             wc: 'o' as wchar_t,
@@ -111,7 +111,7 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x8000 as i32,
             c: 's' as u8,
             wc: 's' as wchar_t,
@@ -121,9 +121,9 @@ static mut nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
 ];
 // Initialized in run_static_initializers
 static mut nfsv4_acl_perm_map_size: i32 = 0;
-static mut nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
+static nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x2000000 as i32,
             c: 'f' as u8,
             wc: 'f' as wchar_t,
@@ -131,7 +131,7 @@ static mut nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x4000000 as i32,
             c: 'd' as u8,
             wc: 'd' as wchar_t,
@@ -139,7 +139,7 @@ static mut nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x10000000 as i32,
             c: 'i' as u8,
             wc: 'i' as wchar_t,
@@ -147,7 +147,7 @@ static mut nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x8000000 as i32,
             c: 'n' as u8,
             wc: 'n' as wchar_t,
@@ -155,7 +155,7 @@ static mut nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x20000000 as i32,
             c: 'S' as u8,
             wc: 'S' as wchar_t,
@@ -163,7 +163,7 @@ static mut nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x40000000 as i32,
             c: 'F' as u8,
             wc: 'F' as wchar_t,
@@ -171,7 +171,7 @@ static mut nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
         init
     },
     {
-        let mut init = nfsv4_acl_perm_map_struct {
+        let init = nfsv4_acl_perm_map_struct {
             perm: 0x1000000 as i32,
             c: 'I' as u8,
             wc: 'I' as wchar_t,
@@ -222,12 +222,12 @@ pub extern "C" fn archive_acl_copy(dest: *mut archive_acl, src: *mut archive_acl
 
 #[no_mangle]
 pub extern "C" fn archive_acl_add_entry(
-    mut acl: *mut archive_acl,
-    mut type_0: i32,
-    mut permset: i32,
-    mut tag: i32,
-    mut id: i32,
-    mut name: *const u8,
+    acl: *mut archive_acl,
+    type_0: i32,
+    permset: i32,
+    tag: i32,
+    id: i32,
+    name: *const u8,
 ) -> i32 {
     let mut ap: *mut archive_acl_entry = 0 as *mut archive_acl_entry;
     if acl_special(acl, type_0, permset, tag) == 0 as i32 {
@@ -427,7 +427,7 @@ fn acl_new_entry(
     }
     /* Add a new entry to the end of the list. */
     ap = unsafe {
-        calloc(1 as i32 as u64, size_of::<archive_acl_entry>() as u64) as *mut archive_acl_entry
+        calloc(1 as u64, size_of::<archive_acl_entry>() as u64) as *mut archive_acl_entry
     };
     if ap.is_null() {
         return 0 as *mut archive_acl_entry;
@@ -515,14 +515,14 @@ pub extern "C" fn archive_acl_reset(acl: *mut archive_acl, want_type: i32) -> i3
 
 #[no_mangle]
 pub extern "C" fn archive_acl_next(
-    mut a: *mut archive,
-    mut acl: *mut archive_acl,
-    mut want_type: i32,
-    mut type_0: *mut i32,
-    mut permset: *mut i32,
-    mut tag: *mut i32,
-    mut id: *mut i32,
-    mut name: *mut *const u8,
+    a: *mut archive,
+    acl: *mut archive_acl,
+    want_type: i32,
+    type_0: *mut i32,
+    permset: *mut i32,
+    tag: *mut i32,
+    id: *mut i32,
+    name: *mut *const u8,
 ) -> i32 {
     unsafe {
         *name = 0 as *const u8;
@@ -1158,9 +1158,9 @@ pub fn append_entry_w(
 #[no_mangle]
 pub extern "C" fn archive_acl_to_text_l(
     mut acl: *mut archive_acl,
-    mut text_len: *mut ssize_t,
+    text_len: *mut ssize_t,
     mut flags: i32,
-    mut sc: *mut archive_string_conv,
+    sc: *mut archive_string_conv,
 ) -> *mut u8 {
     let mut count: i32;
     let mut length: ssize_t;
@@ -1342,13 +1342,13 @@ unsafe extern "C" fn append_id(mut p: *mut *mut u8, mut id: i32) {
         (*::std::mem::transmute::<&[u8; 11], &[u8; 11]>(b"0123456789\x00"))[(id % 10) as usize];
 }
 fn append_entry(
-    mut p: *mut *mut u8,
-    mut prefix: *const u8,
-    mut type_0: i32,
-    mut tag: i32,
-    mut flags: i32,
+    p: *mut *mut u8,
+    prefix: *const u8,
+    type_0: i32,
+    tag: i32,
+    flags: i32,
     mut name: *const u8,
-    mut perm: i32,
+    perm: i32,
     mut id: i32,
 ) {
     let mut i: i32 = 0;
@@ -1522,7 +1522,7 @@ fn append_entry(
  */
 #[no_mangle]
 pub extern "C" fn archive_acl_from_text_w(
-    mut acl: *mut archive_acl,
+    acl: *mut archive_acl,
     mut text: *const wchar_t,
     mut want_type: i32,
 ) -> i32 {
@@ -1551,7 +1551,6 @@ pub extern "C" fn archive_acl_from_text_w(
     let mut sep: wchar_t = 0;
     ret = 0;
     types = 0;
-    let mut current_block_6: u64;
     match want_type {
         768 => {
             want_type = 0x100 as i32;
@@ -1901,11 +1900,7 @@ pub extern "C" fn archive_acl_from_text_w(
  * the string is non-empty and consists only of decimal digits,
  * false otherwise.
  */
-extern "C" fn isint_w(
-    mut start: *const wchar_t,
-    mut end: *const wchar_t,
-    mut result: *mut i32,
-) -> i32 {
+extern "C" fn isint_w(mut start: *const wchar_t, end: *const wchar_t, result: *mut i32) -> i32 {
     let mut n: i32 = 0;
     if start >= end {
         return 0;
@@ -1998,9 +1993,9 @@ extern "C" fn is_nfs4_perms_w(
  * flag characters, false otherwise
  */
 extern "C" fn is_nfs4_flags_w(
-    mut start: *const wchar_t,
-    mut end: *const wchar_t,
-    mut permset: *mut i32,
+    start: *const wchar_t,
+    end: *const wchar_t,
+    permset: *mut i32,
 ) -> i32 {
     let mut p: *const wchar_t = start;
     while p < end {
@@ -2038,10 +2033,10 @@ extern "C" fn is_nfs4_flags_w(
  * whitespace.
  */
 extern "C" fn next_field_w(
-    mut wp: *mut *const wchar_t,
-    mut start: *mut *const wchar_t,
-    mut end: *mut *const wchar_t,
-    mut sep: *mut wchar_t,
+    wp: *mut *const wchar_t,
+    start: *mut *const wchar_t,
+    end: *mut *const wchar_t,
+    sep: *mut wchar_t,
 ) {
     /* Skip leading whitespace to find start of field. */
     unsafe {
@@ -2132,10 +2127,10 @@ extern "C" fn next_field_w(
  */
 #[no_mangle]
 pub extern "C" fn archive_acl_from_text_l(
-    mut acl: *mut archive_acl,
+    acl: *mut archive_acl,
     mut text: *const u8,
     mut want_type: i32,
-    mut sc: *mut archive_string_conv,
+    sc: *mut archive_string_conv,
 ) -> i32 {
     let mut field: [archive_string_temporary_field_2; 6] = [archive_string_temporary_field_2 {
         start: 0 as *const u8,
@@ -2160,7 +2155,6 @@ pub extern "C" fn archive_acl_from_text_l(
     let mut id: i32 = 0;
     let mut len: size_t = 0;
     let mut sep: u8 = 0;
-    let mut current_block_4: u64;
     match want_type {
         768 => {
             want_type = 0x100 as i32;
@@ -2571,7 +2565,7 @@ pub extern "C" fn archive_acl_from_text_l(
  * the string is non-empty and consists only of decimal digits,
  * false otherwise.
  */
-extern "C" fn isint(mut start: *const u8, mut end: *const u8, mut result: *mut i32) -> i32 {
+extern "C" fn isint(mut start: *const u8, end: *const u8, result: *mut i32) -> i32 {
     let mut n: i32 = 0 as i32;
     if start >= end {
         return 0 as i32;
@@ -2599,7 +2593,7 @@ extern "C" fn isint(mut start: *const u8, mut end: *const u8, mut result: *mut i
  * the string is non-empty and consists only of mode characters,
  * false otherwise.
  */
-extern "C" fn ismode(mut start: *const u8, mut end: *const u8, mut permset: *mut i32) -> i32 {
+extern "C" fn ismode(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     if start >= end {
         return 0;
@@ -2626,11 +2620,7 @@ extern "C" fn ismode(mut start: *const u8, mut end: *const u8, mut permset: *mut
  * Returns true if the string is non-empty and consists only of NFS4 ACL
  * permission characters, false otherwise
  */
-extern "C" fn is_nfs4_perms(
-    mut start: *const u8,
-    mut end: *const u8,
-    mut permset: *mut i32,
-) -> i32 {
+extern "C" fn is_nfs4_perms(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
     let mut p: *const u8 = start;
     while p < end {
         let fresh38 = p;
@@ -2663,11 +2653,7 @@ extern "C" fn is_nfs4_perms(
  * Returns true if the string is non-empty and consists only of NFS4 ACL
  * flag characters, false otherwise
  */
-extern "C" fn is_nfs4_flags(
-    mut start: *const u8,
-    mut end: *const u8,
-    mut permset: *mut i32,
-) -> i32 {
+extern "C" fn is_nfs4_flags(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
     let mut p: *const u8 = start;
     while p < end {
         let fresh39 = p;
@@ -2704,10 +2690,10 @@ extern "C" fn is_nfs4_flags(
  * whitespace.
  */
 extern "C" fn next_field(
-    mut p: *mut *const u8,
-    mut start: *mut *const u8,
-    mut end: *mut *const u8,
-    mut sep: *mut u8,
+    p: *mut *const u8,
+    start: *mut *const u8,
+    end: *mut *const u8,
+    sep: *mut u8,
 ) {
     /* Skip leading whitespace to find start of field. */
     unsafe {
