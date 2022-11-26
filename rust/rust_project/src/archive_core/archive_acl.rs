@@ -1123,21 +1123,16 @@ pub fn append_entry_w(
             let fresh15 = *wp;
             *wp = (*wp).offset(1);
             *fresh15 = ':' as wchar_t;
-            match type_0 {
-                1024 => {
-                    wcscpy_safe(*wp, wchar::wchz!("allow").as_ptr());
-                }
-                2048 => {
-                    wcscpy_safe(*wp, wchar::wchz!("deny").as_ptr());
-                }
-                4096 => {
-                    wcscpy_safe(*wp, wchar::wchz!("audit").as_ptr());
-                }
-                8192 => {
-                    wcscpy_safe(*wp, wchar::wchz!("alarm").as_ptr());
-                }
-                _ => {}
+            if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_allow {
+                wcscpy_safe(*wp, wchar::wchz!("allow").as_ptr());
+            } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_deny {
+                wcscpy_safe(*wp, wchar::wchz!("deny").as_ptr());
+            } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_audit {
+                wcscpy_safe(*wp, wchar::wchz!("audit").as_ptr());
+            } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_alram {
+                wcscpy_safe(*wp, wchar::wchz!("alarm").as_ptr());
             }
+
             *wp = (*wp).offset(wcslen_safe(*wp) as isize)
         }
     }
@@ -1483,21 +1478,16 @@ fn append_entry(
             *p = (*p).offset(1);
             *fresh32 = ':' as u8
         };
-        match type_0 {
-            1024 => {
-                unsafe { strcpy_safe(*p, b"allow\x00" as *const u8 as *const u8) };
-            }
-            2048 => {
-                unsafe { strcpy_safe(*p, b"deny\x00" as *const u8 as *const u8) };
-            }
-            4096 => {
-                unsafe { strcpy_safe(*p, b"audit\x00" as *const u8 as *const u8) };
-            }
-            8192 => {
-                unsafe { strcpy_safe(*p, b"alarm\x00" as *const u8 as *const u8) };
-            }
-            _ => {}
+        if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_allow {
+            unsafe { strcpy_safe(*p, b"allow\x00" as *const u8 as *const u8) };
+        } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_deny {
+            unsafe { strcpy_safe(*p, b"deny\x00" as *const u8 as *const u8) };
+        } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_audit {
+            unsafe { strcpy_safe(*p, b"audit\x00" as *const u8 as *const u8) };
+        } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_alram {
+            unsafe { strcpy_safe(*p, b"alarm\x00" as *const u8 as *const u8) };
         }
+
         unsafe { *p = (*p).offset(strlen_safe(*p) as isize) }
     }
     if id != -1 {
@@ -1551,18 +1541,17 @@ pub extern "C" fn archive_acl_from_text_w(
     let mut sep: wchar_t = 0;
     ret = 0;
     types = 0;
-    match want_type {
-        768 => {
-            want_type = 0x100 as i32;
-            numfields = 5;
-        }
-        256 | 512 => {
-            numfields = 5;
-        }
-        15360 => {
-            numfields = 6;
-        }
-        _ => return ARCHIVE_ACL_DEFINED_PARAM.archive_fatal,
+    if want_type == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_posix1e {
+        want_type = 0x100 as i32;
+        numfields = 5;
+    } else if want_type == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access
+        || want_type == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_default
+    {
+        numfields = 5;
+    } else if want_type == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_nfs4 {
+        numfields = 6;
+    } else {
+        return ARCHIVE_ACL_DEFINED_PARAM.archive_fatal;
     }
 
     /* Comment, skip entry */
@@ -2155,18 +2144,17 @@ pub extern "C" fn archive_acl_from_text_l(
     let mut id: i32 = 0;
     let mut len: size_t = 0;
     let mut sep: u8 = 0;
-    match want_type {
-        768 => {
-            want_type = 0x100 as i32;
-            numfields = 5 as i32;
-        }
-        256 | 512 => {
-            numfields = 5 as i32;
-        }
-        15360 => {
-            numfields = 6 as i32;
-        }
-        _ => return ARCHIVE_ACL_DEFINED_PARAM.archive_fatal,
+    if want_type == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_posix1e {
+        want_type = 0x100 as i32;
+        numfields = 5;
+    } else if want_type == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access
+        || want_type == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_default
+    {
+        numfields = 5;
+    } else if want_type == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_nfs4 {
+        numfields = 6;
+    } else {
+        return ARCHIVE_ACL_DEFINED_PARAM.archive_fatal;
     }
 
     ret = 0 as i32;
