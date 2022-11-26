@@ -257,21 +257,13 @@ pub fn archive_read_support_format_xar(_a: *mut archive) -> i32 {
             a,
             xar as *mut (),
             b"xar\x00" as *const u8,
-            Some(xar_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
+            Some(xar_bid),
             None,
-            Some(xar_read_header as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32),
-            Some(
-                xar_read_data
-                    as unsafe fn(
-                        _: *mut archive_read,
-                        _: *mut *const (),
-                        _: *mut size_t,
-                        _: *mut int64_t,
-                    ) -> i32,
-            ),
-            Some(xar_read_data_skip as unsafe fn(_: *mut archive_read) -> i32),
+            Some(xar_read_header),
+            Some(xar_read_data),
+            Some(xar_read_data_skip),
             None,
-            Some(xar_cleanup as unsafe fn(_: *mut archive_read) -> i32),
+            Some(xar_cleanup),
             None,
             None,
         )
@@ -3482,8 +3474,8 @@ fn xml2_read_toc(a: *mut archive_read) -> i32 {
     let mut safe_a = unsafe { &mut *a };
     reader = unsafe {
         xmlReaderForIO_safe(
-            Some(xml2_read_cb as unsafe fn(_: *mut (), _: *mut u8, _: i32) -> i32),
-            Some(xml2_close_cb as unsafe fn(_: *mut ()) -> i32),
+            Some(xml2_read_cb),
+            Some(xml2_close_cb),
             a as *mut (),
             0 as *const u8,
             0 as *const u8,
@@ -3498,21 +3490,7 @@ fn xml2_read_toc(a: *mut archive_read) -> i32 {
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
-    unsafe {
-        xmlTextReaderSetErrorHandler_safe(
-            reader,
-            Some(
-                xml2_error_hdr
-                    as unsafe fn(
-                        _: *mut (),
-                        _: *const u8,
-                        _: xmlParserSeverities,
-                        _: xmlTextReaderLocatorPtr,
-                    ) -> (),
-            ),
-            a as *mut (),
-        )
-    };
+    unsafe { xmlTextReaderSetErrorHandler_safe(reader, Some(xml2_error_hdr), a as *mut ()) };
     loop {
         r = unsafe { xmlTextReaderRead_safe(reader) };
         if !(r == 1) {
@@ -3663,18 +3641,8 @@ fn expat_read_toc(a: *mut archive_read) -> i32 {
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
     XML_SetUserData_safe(parser, &mut ud as *mut expat_userData as *mut ());
-    XML_SetElementHandler_safe(
-        parser,
-        Some(
-            expat_start_cb
-                as unsafe fn(_: *mut (), _: *const XML_Char, _: *mut *const XML_Char) -> (),
-        ),
-        Some(expat_end_cb as unsafe fn(_: *mut (), _: *const XML_Char) -> ()),
-    );
-    XML_SetCharacterDataHandler_safe(
-        parser,
-        Some(expat_data_cb as unsafe fn(_: *mut (), _: *const XML_Char, _: i32) -> ()),
-    );
+    XML_SetElementHandler_safe(parser, Some(expat_start_cb), Some(expat_end_cb));
+    XML_SetCharacterDataHandler_safe(parser, Some(expat_data_cb));
     safe_xar.xmlsts = INIT;
     while safe_xar.toc_remaining != 0 && ud.state == ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
         let mut xr: XML_Status = XML_STATUS_ERROR;

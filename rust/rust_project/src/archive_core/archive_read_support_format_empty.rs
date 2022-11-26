@@ -24,21 +24,10 @@ pub fn archive_read_support_format_empty(_a: *mut archive) -> i32 {
             a,
             0 as *mut (),
             b"empty\x00" as *const u8,
-            Some(archive_read_format_empty_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
+            Some(archive_read_format_empty_bid),
             None,
-            Some(
-                archive_read_format_empty_read_header
-                    as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
-            ),
-            Some(
-                archive_read_format_empty_read_data
-                    as unsafe fn(
-                        _: *mut archive_read,
-                        _: *mut *const (),
-                        _: *mut size_t,
-                        _: *mut int64_t,
-                    ) -> i32,
-            ),
+            Some(archive_read_format_empty_read_header),
+            Some(archive_read_format_empty_read_data),
             None,
             None,
             None,
