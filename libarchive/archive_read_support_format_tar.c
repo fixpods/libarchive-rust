@@ -78,6 +78,7 @@ struct archive_tar_defined_param
     int ae_symlink_type_directory;
     int archive_retry;
     int ae_symlink_type_file;
+    long int64_max;
 };
 
 struct archive_tar_defined_param get_archive_tar_defined_param();
@@ -113,6 +114,7 @@ struct archive_tar_defined_param get_archive_tar_defined_param()
     param.ae_ifchr = AE_IFCHR;
     param.ae_ifblk = AE_IFBLK;
     param.ae_ififo = AE_IFIFO;
+    param.int64_max = INT64_MAX;
     return param;
 }
 
