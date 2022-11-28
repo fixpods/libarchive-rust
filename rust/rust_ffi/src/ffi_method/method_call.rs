@@ -3,6 +3,18 @@ use ffi_struct::struct_transfer::*;
 
 extern "C" {
 
+    fn get_u_composition_table() -> *mut unicode_composition_table;
+
+    fn get_u_decomposable_blocks() -> *mut u8;
+
+    fn get_ccc_val() -> *mut u8;
+
+    fn get_ccc_val_index() -> *mut u8;
+
+    fn get_ccc_index() -> *mut u8;
+
+    fn get_u_decomposition_table() -> *mut unicode_decomposition_table;
+
     pub fn archive_clear_error(_: *mut archive);
 
     pub fn archive_string_ensure(_: *mut archive_string, _: size_t) -> *mut archive_string;
@@ -1557,4 +1569,69 @@ pub unsafe fn inflate_safe(strm: z_streamp, flush: i32) -> i32 {
 
 pub unsafe fn inflateEnd_safe(strm: z_streamp) -> i32 {
     return unsafe { inflateEnd(strm) };
+}
+
+lazy_static! {
+    pub static ref u_composition_table: [unicode_composition_table; 931] = unsafe {
+        let mut res: [unicode_composition_table; 931] = [unicode_composition_table {
+            cp1: 0x0 as uint32_t,
+            cp2: 0x0 as uint32_t,
+            nfc: 0x0 as uint32_t,
+        }; 931];
+        let ptr: *mut unicode_composition_table = get_u_composition_table();
+        for i in 0..res.len() {
+            res[i] = *ptr.offset(i as isize);
+        }
+        free(ptr as *mut ());
+        return res;
+    };
+    pub static ref u_decomposable_blocks: [u8; 467] = unsafe {
+        let mut res: [u8; 467] = [0; 467];
+        let ptr: *mut u8 = get_u_decomposable_blocks();
+        for i in 0..res.len() {
+            res[i] = *ptr.offset(i as isize);
+        }
+        free(ptr as *mut ());
+        return res;
+    };
+    pub static ref ccc_val: [u8; 16 * 115] = unsafe {
+        let mut res: [u8; 16 * 115] = [0; 16 * 115];
+        let ptr: *mut u8 = get_ccc_val();
+        for i in 0..res.len() {
+            res[i] = *ptr.offset(i as isize);
+        }
+        free(ptr as *mut ());
+        return res;
+    };
+    pub static ref ccc_val_index: [u8; 16 * 39] = unsafe {
+        let mut res: [u8; 16 * 39] = [0; 16 * 39];
+        let ptr: *mut u8 = get_ccc_val_index();
+        for i in 0..res.len() {
+            res[i] = *ptr.offset(i as isize);
+        }
+        free(ptr as *mut ());
+        return res;
+    };
+    pub static ref ccc_index: [u8; 467] = unsafe {
+        let mut res: [u8; 467] = [0; 467];
+        let ptr: *mut u8 = get_ccc_index();
+        for i in 0..res.len() {
+            res[i] = *ptr.offset(i as isize);
+        }
+        free(ptr as *mut ());
+        return res;
+    };
+    pub static ref u_decomposition_table: [unicode_decomposition_table; 931] = unsafe {
+        let mut res: [unicode_decomposition_table; 931] = [unicode_decomposition_table {
+            nfc: 0x0 as uint32_t,
+            cp1: 0x0 as uint32_t,
+            cp2: 0x0 as uint32_t,
+        }; 931];
+        let ptr: *mut unicode_decomposition_table = get_u_decomposition_table();
+        for i in 0..res.len() {
+            res[i] = *ptr.offset(i as isize);
+        }
+        free(ptr as *mut ());
+        return res;
+    };
 }
