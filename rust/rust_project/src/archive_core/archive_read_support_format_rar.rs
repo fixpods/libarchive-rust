@@ -1,11 +1,11 @@
+use super::archive_string::archive_string_default_conversion_for_read;
 use archive_core::archive_endian::*;
 use rust_ffi::archive_set_error_safe;
 use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
-
-use super::archive_string::archive_string_default_conversion_for_read;
+use std::mem::size_of;
 
 /* Notify how many bits we consumed. */
 static mut cache_masks: [uint32_t; 36] = [
@@ -169,7 +169,7 @@ unsafe fn rar_br_preparation(mut a: *mut archive_read, mut br: *mut rar_br) -> i
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Truncated RAR file data\x00" as *const u8 as *const i8
+                b"Truncated RAR file data\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
@@ -300,9 +300,9 @@ unsafe fn ppmd_read(mut p: *mut ()) -> Byte {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Truncated RAR file data\x00" as *const u8 as *const i8
+            b"Truncated RAR file data\x00" as *const u8
         );
-        safe_rar.valid = 0 as i32 as i8;
+        safe_rar.valid = 0 as i32 as u8;
         return 0 as i32 as Byte;
     }
     b = unsafe {
@@ -322,17 +322,17 @@ pub unsafe fn archive_read_support_format_rar(mut _a: *mut archive) -> i32 {
         _a,
         0xdeb0c5 as u32,
         1 as u32,
-        b"archive_read_support_format_rar\x00" as *const u8 as *const i8,
+        b"archive_read_support_format_rar\x00" as *const u8,
     );
     if magic_test == -(30 as i32) {
         return -(30 as i32);
     }
-    rar = calloc_safe(::std::mem::size_of::<rar>() as u64, 1 as i32 as u64) as *mut rar;
+    rar = calloc_safe(size_of::<rar>() as u64, 1 as i32 as u64) as *mut rar;
     if rar.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             12 as i32,
-            b"Can\'t allocate rar data\x00" as *const u8 as *const i8
+            b"Can\'t allocate rar data\x00" as *const u8
         );
         return -(30 as i32);
     }
@@ -344,11 +344,11 @@ pub unsafe fn archive_read_support_format_rar(mut _a: *mut archive) -> i32 {
     r = __archive_read_register_format_safe(
         a,
         rar as *mut (),
-        b"rar\x00" as *const u8 as *const i8,
+        b"rar\x00" as *const u8,
         Some(archive_read_format_rar_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
         Some(
             archive_read_format_rar_options
-                as unsafe fn(_: *mut archive_read, _: *const i8, _: *const i8) -> i32,
+                as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
         ),
         Some(
             archive_read_format_rar_read_header
@@ -401,18 +401,18 @@ unsafe fn archive_read_format_rar_has_encrypted_entries(mut _a: *mut archive_rea
 }
 
 unsafe fn archive_read_format_rar_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
-    let mut p: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
     /* If there's already a bid > 30, we'll never win. */
     if best_bid > 30 as i32 {
         return -(1 as i32);
     }
-    p = __archive_read_ahead_safe(a, 7 as i32 as size_t, 0 as *mut ssize_t) as *const i8;
+    p = __archive_read_ahead_safe(a, 7 as i32 as size_t, 0 as *mut ssize_t) as *const u8;
     if p.is_null() {
         return -(1 as i32);
     }
     if memcmp_safe(
         p as *const (),
-        b"Rar!\x1a\x07\x00\x00" as *const u8 as *const i8 as *const (),
+        b"Rar!\x1a\x07\x00\x00" as *const u8 as *const (),
         7 as i32 as u64,
     ) == 0 as i32
     {
@@ -423,7 +423,7 @@ unsafe fn archive_read_format_rar_bid(mut a: *mut archive_read, mut best_bid: i3
             && *p.offset(1 as i32 as isize) as i32 == 'Z' as i32
     } || memcmp_safe(
         p as *const (),
-        b"\x7fELF\x00" as *const u8 as *const i8 as *const (),
+        b"\x7fELF\x00" as *const u8 as *const (),
         4 as i32 as u64,
     ) == 0 as i32
     {
@@ -432,9 +432,9 @@ unsafe fn archive_read_format_rar_bid(mut a: *mut archive_read, mut best_bid: i3
         let mut window: ssize_t = 4096 as i32 as ssize_t;
         let mut bytes_avail: ssize_t = 0;
         while offset + window <= (1024 as i32 * 128 as i32) as i64 {
-            let mut buff: *const i8 =
+            let mut buff: *const u8 =
                 __archive_read_ahead_safe(a, (offset + window) as size_t, &mut bytes_avail)
-                    as *const i8;
+                    as *const u8;
             if buff.is_null() {
                 /* Remaining bytes are less than window. */
                 window >>= 1 as i32;
@@ -446,7 +446,7 @@ unsafe fn archive_read_format_rar_bid(mut a: *mut archive_read, mut best_bid: i3
                 while unsafe { p.offset(7 as i32 as isize) < buff.offset(bytes_avail as isize) } {
                     if memcmp_safe(
                         p as *const (),
-                        b"Rar!\x1a\x07\x00\x00" as *const u8 as *const i8 as *const (),
+                        b"Rar!\x1a\x07\x00\x00" as *const u8 as *const (),
                         7 as i32 as u64,
                     ) == 0 as i32
                     {
@@ -463,8 +463,8 @@ unsafe fn archive_read_format_rar_bid(mut a: *mut archive_read, mut best_bid: i3
 
 unsafe fn skip_sfx(mut a: *mut archive_read) -> i32 {
     let mut h: *const () = 0 as *const ();
-    let mut p: *const i8 = 0 as *const i8;
-    let mut q: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
+    let mut q: *const u8 = 0 as *const u8;
     let mut skip: size_t = 0;
     let mut total: size_t = 0;
     let mut bytes: ssize_t = 0;
@@ -483,7 +483,7 @@ unsafe fn skip_sfx(mut a: *mut archive_read) -> i32 {
             if bytes < 0x40 as i32 as i64 {
                 break;
             }
-            p = h as *const i8;
+            p = h as *const u8;
             unsafe {
                 q = p.offset(bytes as isize);
             }
@@ -494,17 +494,17 @@ unsafe fn skip_sfx(mut a: *mut archive_read) -> i32 {
             while unsafe { p.offset(7 as i32 as isize) < q } {
                 if memcmp_safe(
                     p as *const (),
-                    b"Rar!\x1a\x07\x00\x00" as *const u8 as *const i8 as *const (),
+                    b"Rar!\x1a\x07\x00\x00" as *const u8 as *const (),
                     7 as i32 as u64,
                 ) == 0 as i32
                 {
-                    unsafe { skip = p.offset_from(h as *const i8) as i64 as size_t };
+                    unsafe { skip = p.offset_from(h as *const u8) as i64 as size_t };
                     __archive_read_consume_safe(a, skip as int64_t);
                     return ARCHIVE_RAR_DEFINED_PARAM.archive_ok;
                 }
                 unsafe { p = p.offset(0x10 as i32 as isize) }
             }
-            unsafe { skip = p.offset_from(h as *const i8) as i64 as size_t };
+            unsafe { skip = p.offset_from(h as *const u8) as i64 as size_t };
             __archive_read_consume_safe(a, skip as int64_t);
             total = (total as u64).wrapping_add(skip) as size_t as size_t
         }
@@ -512,26 +512,26 @@ unsafe fn skip_sfx(mut a: *mut archive_read) -> i32 {
     archive_set_error_safe!(
         &mut (*a).archive as *mut archive,
         ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-        b"Couldn\'t find out RAR header\x00" as *const u8 as *const i8
+        b"Couldn\'t find out RAR header\x00" as *const u8
     );
     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
 }
 
 unsafe fn archive_read_format_rar_options(
     mut a: *mut archive_read,
-    mut key: *const i8,
-    mut val: *const i8,
+    mut key: *const u8,
+    mut val: *const u8,
 ) -> i32 {
     let safe_a = unsafe { &mut *a };
     let mut rar: *mut rar = 0 as *mut rar;
     let mut ret: i32 = ARCHIVE_RAR_DEFINED_PARAM.archive_failed;
     rar = unsafe { (*(*a).format).data as *mut rar };
-    if strcmp_safe(key, b"hdrcharset\x00" as *const u8 as *const i8) == 0 as i32 {
+    if strcmp_safe(key, b"hdrcharset\x00" as *const u8) == 0 as i32 {
         if unsafe { val.is_null() || *val.offset(0 as i32 as isize) as i32 == 0 as i32 } {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_misc,
-                b"rar: hdrcharset option needs a character-set name\x00" as *const u8 as *const i8
+                b"rar: hdrcharset option needs a character-set name\x00" as *const u8
             );
         } else {
             unsafe {
@@ -558,16 +558,16 @@ unsafe fn archive_read_format_rar_read_header(
 ) -> i32 {
     let safe_a = unsafe { &mut *a };
     let mut h: *const () = 0 as *const ();
-    let mut p: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
     let mut rar: *mut rar = 0 as *mut rar;
     let mut skip: size_t = 0;
-    let mut head_type: i8 = 0;
+    let mut head_type: u8 = 0;
     let mut ret: i32 = 0;
     let mut flags: u32 = 0;
     let mut crc32_expected: u64 = 0;
     safe_a.archive.archive_format = ARCHIVE_RAR_DEFINED_PARAM.archive_format_rar;
     if safe_a.archive.archive_format_name.is_null() {
-        safe_a.archive.archive_format_name = b"RAR\x00" as *const u8 as *const i8
+        safe_a.archive.archive_format_name = b"RAR\x00" as *const u8
     }
     rar = unsafe { (*(*a).format).data as *mut rar };
     let safe_rar = unsafe { &mut *rar };
@@ -590,14 +590,14 @@ unsafe fn archive_read_format_rar_read_header(
     if h == 0 as *mut () {
         return ARCHIVE_RAR_DEFINED_PARAM.archive_eof;
     }
-    p = h as *const i8;
+    p = h as *const u8;
     if unsafe {
         (*rar).found_first_header == 0 as i32
             && (*p.offset(0 as i32 as isize) as i32 == 'M' as i32
                 && *p.offset(1 as i32 as isize) as i32 == 'Z' as i32
                 || memcmp_safe(
                     p as *const (),
-                    b"\x7fELF\x00" as *const u8 as *const i8 as *const (),
+                    b"\x7fELF\x00" as *const u8 as *const (),
                     4 as i32 as u64,
                 ) == 0 as i32)
     } {
@@ -614,19 +614,19 @@ unsafe fn archive_read_format_rar_read_header(
         if h == 0 as *mut () {
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
-        p = h as *const i8;
+        p = h as *const u8;
         unsafe { head_type = *p.offset(2 as i32 as isize) };
         if head_type as i32 == ARCHIVE_RAR_DEFINED_PARAM.mark_head {
             if memcmp_safe(
                 p as *const (),
-                b"Rar!\x1a\x07\x00\x00" as *const u8 as *const i8 as *const (),
+                b"Rar!\x1a\x07\x00\x00" as *const u8 as *const (),
                 7 as i32 as u64,
             ) != 0 as i32
             {
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                    b"Invalid marker header\x00" as *const u8 as *const i8
+                    b"Invalid marker header\x00" as *const u8
                 );
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
@@ -639,13 +639,13 @@ unsafe fn archive_read_format_rar_read_header(
             skip = archive_le16dec(unsafe { p.offset(5 as i32 as isize) as *const () }) as size_t;
             if skip
                 < (7 as i32 as u64)
-                    .wrapping_add(::std::mem::size_of::<[i8; 2]>() as u64)
-                    .wrapping_add(::std::mem::size_of::<[i8; 4]>() as u64)
+                    .wrapping_add(size_of::<[u8; 2]>() as u64)
+                    .wrapping_add(size_of::<[u8; 4]>() as u64)
             {
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                    b"Invalid header size\x00" as *const u8 as *const i8
+                    b"Invalid header size\x00" as *const u8
                 );
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
@@ -653,52 +653,52 @@ unsafe fn archive_read_format_rar_read_header(
             if h == 0 as *mut () {
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
-            p = h as *const i8;
+            p = h as *const u8;
             memcpy_safe(
                 safe_rar.reserved1.as_mut_ptr() as *mut (),
                 unsafe { p.offset(7 as i32 as isize) as *const () },
-                ::std::mem::size_of::<[i8; 2]>() as u64,
+                size_of::<[u8; 2]>() as u64,
             );
             memcpy_safe(
                 safe_rar.reserved2.as_mut_ptr() as *mut (),
                 unsafe {
                     p.offset(7 as i32 as isize)
-                        .offset(::std::mem::size_of::<[i8; 2]>() as u64 as isize)
+                        .offset(size_of::<[u8; 2]>() as u64 as isize)
                         as *const ()
                 },
-                ::std::mem::size_of::<[i8; 4]>() as u64,
+                size_of::<[u8; 4]>() as u64,
             );
             if safe_rar.main_flags & ARCHIVE_RAR_DEFINED_PARAM.mhd_encryptver as u32 != 0 {
                 if skip
                     < (7 as i32 as u64)
-                        .wrapping_add(::std::mem::size_of::<[i8; 2]>() as u64)
-                        .wrapping_add(::std::mem::size_of::<[i8; 4]>() as u64)
+                        .wrapping_add(size_of::<[u8; 2]>() as u64)
+                        .wrapping_add(size_of::<[u8; 4]>() as u64)
                         .wrapping_add(1 as i32 as u64)
                 {
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                        b"Invalid header size\x00" as *const u8 as *const i8
+                        b"Invalid header size\x00" as *const u8
                     );
                     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                 }
                 unsafe {
                     (*rar).encryptver = *p
                         .offset(7 as i32 as isize)
-                        .offset(::std::mem::size_of::<[i8; 2]>() as u64 as isize)
-                        .offset(::std::mem::size_of::<[i8; 4]>() as u64 as isize)
+                        .offset(size_of::<[u8; 2]>() as u64 as isize)
+                        .offset(size_of::<[u8; 4]>() as u64 as isize)
                 }
             }
             /* Main header is password encrypted, so we cannot read any
             file names or any other info about files from the header. */
             if safe_rar.main_flags & ARCHIVE_RAR_DEFINED_PARAM.mhd_password as u32 != 0 {
-                archive_entry_set_is_metadata_encrypted_safe(entry, 1 as i32 as i8);
-                archive_entry_set_is_data_encrypted_safe(entry, 1 as i32 as i8);
+                archive_entry_set_is_metadata_encrypted_safe(entry, 1 as i32 as u8);
+                archive_entry_set_is_data_encrypted_safe(entry, 1 as i32 as u8);
                 safe_rar.has_encrypted_entries = 1 as i32;
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                    b"RAR encryption support unavailable.\x00" as *const u8 as *const i8
+                    b"RAR encryption support unavailable.\x00" as *const u8
                 );
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
@@ -711,7 +711,7 @@ unsafe fn archive_read_format_rar_read_header(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                    b"Header CRC error\x00" as *const u8 as *const i8
+                    b"Header CRC error\x00" as *const u8
                 );
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
@@ -733,7 +733,7 @@ unsafe fn archive_read_format_rar_read_header(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                    b"Invalid header size too small\x00" as *const u8 as *const i8
+                    b"Invalid header size too small\x00" as *const u8
                 );
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
@@ -742,7 +742,7 @@ unsafe fn archive_read_format_rar_read_header(
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                        b"Invalid header size too small\x00" as *const u8 as *const i8
+                        b"Invalid header size too small\x00" as *const u8
                     );
                     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                 }
@@ -750,7 +750,7 @@ unsafe fn archive_read_format_rar_read_header(
                 if h == 0 as *mut () {
                     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                 }
-                p = h as *const i8;
+                p = h as *const u8;
                 unsafe {
                     skip = (skip as u64).wrapping_add(archive_le32dec(
                         p.offset(7 as i32 as isize) as *const ()
@@ -773,11 +773,11 @@ unsafe fn archive_read_format_rar_read_header(
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                        b"Bad RAR file\x00" as *const u8 as *const i8
+                        b"Bad RAR file\x00" as *const u8
                     );
                     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                 }
-                p = h as *const i8;
+                p = h as *const u8;
                 crc32_val = crc32_safe(crc32_val, p as *const u8, to_read as uInt);
                 __archive_read_consume_safe(a, to_read as int64_t);
                 skip = (skip as u64).wrapping_sub(to_read) as size_t as size_t
@@ -786,7 +786,7 @@ unsafe fn archive_read_format_rar_read_header(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                    b"Header CRC error\x00" as *const u8 as *const i8
+                    b"Header CRC error\x00" as *const u8
                 );
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
@@ -802,7 +802,7 @@ unsafe fn archive_read_format_rar_read_header(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Bad RAR file\x00" as *const u8 as *const i8
+                b"Bad RAR file\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
@@ -858,14 +858,14 @@ unsafe fn archive_read_format_rar_read_data(
                     .Ppmd7_Free
                     .expect("non-null function pointer")(&mut (*rar).ppmd7_context);
             }
-            safe_rar.start_new_table = 1 as i32 as i8;
-            safe_rar.ppmd_valid = 0 as i32 as i8
+            safe_rar.start_new_table = 1 as i32 as u8;
+            safe_rar.ppmd_valid = 0 as i32 as u8
         }
     } else {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Unsupported compression method for RAR file.\x00" as *const u8 as *const i8
+            b"Unsupported compression method for RAR file.\x00" as *const u8
         );
         ret = ARCHIVE_RAR_DEFINED_PARAM.archive_fatal
     }
@@ -968,7 +968,7 @@ unsafe fn archive_read_format_rar_seek_data(
                             &mut (*a).archive as *mut archive,
                             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_misc,
                             b"Attempt to seek past beginning of RAR data block\x00" as *const u8
-                                as *const i8
+                                as *const u8
                         );
                         return ARCHIVE_RAR_DEFINED_PARAM.archive_failed as int64_t;
                     }
@@ -1001,7 +1001,7 @@ unsafe fn archive_read_format_rar_seek_data(
                         archive_set_error_safe!(
                             &mut (*a).archive as *mut archive,
                             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_misc,
-                            b"Error during seek of RAR file\x00" as *const u8 as *const i8
+                            b"Error during seek of RAR file\x00" as *const u8
                         );
                         return ARCHIVE_RAR_DEFINED_PARAM.archive_failed as int64_t;
                     }
@@ -1042,14 +1042,14 @@ unsafe fn archive_read_format_rar_seek_data(
                         }
                         ret = archive_read_format_rar_read_header(a, safe_a.entry) as int64_t;
                         if ret == ARCHIVE_RAR_DEFINED_PARAM.archive_eof as i64 {
-                            safe_rar.has_endarc_header = 1 as i32 as i8;
+                            safe_rar.has_endarc_header = 1 as i32 as u8;
                             ret = archive_read_format_rar_read_header(a, safe_a.entry) as int64_t
                         }
                         if ret != ARCHIVE_RAR_DEFINED_PARAM.archive_ok as int64_t {
                             archive_set_error_safe!(
                                 &mut (*a).archive as *mut archive,
                                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_misc,
-                                b"Error during seek of RAR file\x00" as *const u8 as *const i8
+                                b"Error during seek of RAR file\x00" as *const u8
                             );
                             return ARCHIVE_RAR_DEFINED_PARAM.archive_failed as int64_t;
                         }
@@ -1102,7 +1102,7 @@ unsafe fn archive_read_format_rar_seek_data(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_misc,
-            b"Seeking of compressed RAR files is unsupported\x00" as *const u8 as *const i8
+            b"Seeking of compressed RAR files is unsupported\x00" as *const u8
         );
     }
     return ARCHIVE_RAR_DEFINED_PARAM.archive_failed as int64_t;
@@ -1131,11 +1131,11 @@ unsafe fn archive_read_format_rar_cleanup(mut a: *mut archive_read) -> i32 {
 unsafe fn read_header(
     mut a: *mut archive_read,
     mut entry: *mut archive_entry,
-    mut head_type: i8,
+    mut head_type: u8,
 ) -> i32 {
     let mut h: *const () = 0 as *const ();
-    let mut p: *const i8 = 0 as *const i8;
-    let mut endp: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
+    let mut endp: *const u8 = 0 as *const u8;
     let mut rar: *mut rar = 0 as *mut rar;
     let mut rar_header: rar_header = rar_header {
         crc: [0; 2],
@@ -1157,10 +1157,10 @@ unsafe fn read_header(
     let mut header_size: int64_t = 0;
     let mut filename_size: u32 = 0;
     let mut end: u32 = 0;
-    let mut filename: *mut i8 = 0 as *mut i8;
-    let mut strp: *mut i8 = 0 as *mut i8;
-    let mut packed_size: [i8; 8] = [0; 8];
-    let mut unp_size: [i8; 8] = [0; 8];
+    let mut filename: *mut u8 = 0 as *mut u8;
+    let mut strp: *mut u8 = 0 as *mut u8;
+    let mut packed_size: [u8; 8] = [0; 8];
+    let mut unp_size: [u8; 8] = [0; 8];
     let mut ttime: i32 = 0;
     let mut sconv: *mut archive_string_conv = 0 as *mut archive_string_conv;
     let mut fn_sconv: *mut archive_string_conv = 0 as *mut archive_string_conv;
@@ -1184,19 +1184,19 @@ unsafe fn read_header(
     if h == 0 as *mut () {
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
-    p = h as *const i8;
+    p = h as *const u8;
     memcpy_safe(
         &mut rar_header as *mut rar_header as *mut (),
         p as *const (),
-        ::std::mem::size_of::<rar_header>() as u64,
+        size_of::<rar_header>() as u64,
     );
     safe_rar.file_flags = archive_le16dec(rar_header.flags.as_mut_ptr() as *const ()) as u32;
     header_size = archive_le16dec(rar_header.size.as_mut_ptr() as *const ()) as int64_t;
-    if header_size < ::std::mem::size_of::<rar_file_header>() as u64 as int64_t + 7 as i32 as i64 {
+    if header_size < size_of::<rar_file_header>() as u64 as int64_t + 7 as i32 as i64 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Invalid header size\x00" as *const u8 as *const i8
+            b"Invalid header size\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -1207,7 +1207,7 @@ unsafe fn read_header(
     );
     __archive_read_consume_safe(a, 7 as i32 as int64_t);
     if safe_rar.file_flags & ARCHIVE_RAR_DEFINED_PARAM.fhd_solid as u32 == 0 {
-        safe_rar.compression_method = 0 as i32 as i8;
+        safe_rar.compression_method = 0 as i32 as u8;
         safe_rar.packed_size = 0 as i32 as int64_t;
         safe_rar.unp_size = 0 as i32 as int64_t;
         safe_rar.mtime = 0 as i32 as time_t;
@@ -1216,9 +1216,9 @@ unsafe fn read_header(
         safe_rar.arctime = 0 as i32 as time_t;
         safe_rar.mode = 0 as i32 as mode_t;
         memset_safe(
-            &mut safe_rar.salt as *mut [i8; 8] as *mut (),
+            &mut safe_rar.salt as *mut [u8; 8] as *mut (),
             0 as i32,
-            ::std::mem::size_of::<[i8; 8]>() as u64,
+            size_of::<[u8; 8]>() as u64,
         );
         safe_rar.atime = 0 as i32 as time_t;
         safe_rar.ansec = 0 as i32 as i64;
@@ -1232,7 +1232,7 @@ unsafe fn read_header(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"RAR solid archive support unavailable.\x00" as *const u8 as *const i8
+            b"RAR solid archive support unavailable.\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -1256,30 +1256,30 @@ unsafe fn read_header(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Header CRC error\x00" as *const u8 as *const i8
+            b"Header CRC error\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
     /* If no CRC error, Go on parsing File Header. */
-    p = h as *const i8;
+    p = h as *const u8;
     unsafe { endp = p.offset(header_size as isize).offset(-(7 as i32 as isize)) };
     memcpy_safe(
         &mut file_header as *mut rar_file_header as *mut (),
         p as *const (),
-        ::std::mem::size_of::<rar_file_header>() as u64,
+        size_of::<rar_file_header>() as u64,
     );
-    unsafe { p = p.offset(::std::mem::size_of::<rar_file_header>() as u64 as isize) };
+    unsafe { p = p.offset(size_of::<rar_file_header>() as u64 as isize) };
     safe_rar.compression_method = file_header.method;
     ttime = archive_le32dec(file_header.file_time.as_mut_ptr() as *const ()) as i32;
     safe_rar.mtime = get_time(ttime);
     safe_rar.file_crc = archive_le32dec(file_header.file_crc.as_mut_ptr() as *const ()) as u64;
     if safe_rar.file_flags & ARCHIVE_RAR_DEFINED_PARAM.fhd_password as u32 != 0 {
-        archive_entry_set_is_data_encrypted_safe(entry, 1 as i32 as i8);
+        archive_entry_set_is_data_encrypted_safe(entry, 1 as i32 as u8);
         safe_rar.has_encrypted_entries = 1 as i32;
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"RAR encryption support unavailable.\x00" as *const u8 as *const i8
+            b"RAR encryption support unavailable.\x00" as *const u8
         );
         /* Since it is only the data part itself that is encrypted we can at least
         extract information about the currently processed entry and don't need
@@ -1310,8 +1310,8 @@ unsafe fn read_header(
         );
         unsafe { p = p.offset(4 as i32 as isize) };
         safe_rar.packed_size =
-            archive_le64dec(&mut packed_size as *mut [i8; 8] as *const ()) as int64_t;
-        safe_rar.unp_size = archive_le64dec(&mut unp_size as *mut [i8; 8] as *const ()) as int64_t
+            archive_le64dec(&mut packed_size as *mut [u8; 8] as *const ()) as int64_t;
+        safe_rar.unp_size = archive_le64dec(&mut unp_size as *mut [u8; 8] as *const ()) as int64_t
     } else {
         safe_rar.packed_size =
             archive_le32dec(file_header.pack_size.as_mut_ptr() as *const ()) as int64_t;
@@ -1322,7 +1322,7 @@ unsafe fn read_header(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Invalid sizes specified.\x00" as *const u8 as *const i8
+            b"Invalid sizes specified.\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -1332,7 +1332,7 @@ unsafe fn read_header(
      */
     if head_type as i32 == 0x7a as i32 {
         unsafe {
-            let mut distance: size_t = p.offset_from(h as *const i8) as i64 as size_t;
+            let mut distance: size_t = p.offset_from(h as *const u8) as i64 as size_t;
             header_size += safe_rar.packed_size;
             /* Make sure we have the extended data. */
             h = __archive_read_ahead_safe(
@@ -1343,7 +1343,7 @@ unsafe fn read_header(
             if h == 0 as *mut () {
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
-            p = h as *const i8;
+            p = h as *const u8;
             endp = p.offset(header_size as isize).offset(-(7 as i32 as isize));
             p = p.offset(distance as isize)
         }
@@ -1353,7 +1353,7 @@ unsafe fn read_header(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Invalid filename size\x00" as *const u8 as *const i8
+            b"Invalid filename size\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -1362,16 +1362,16 @@ unsafe fn read_header(
             .wrapping_mul(2 as i32 as u32)
             .wrapping_add(2 as i32 as u32) as u64
     {
-        let mut newptr: *mut i8 = 0 as *mut i8;
+        let mut newptr: *mut u8 = 0 as *mut u8;
         let mut newsize: size_t = filename_size
             .wrapping_mul(2 as i32 as u32)
             .wrapping_add(2 as i32 as u32) as size_t;
-        newptr = realloc_safe(safe_rar.filename as *mut (), newsize) as *mut i8;
+        newptr = realloc_safe(safe_rar.filename as *mut (), newsize) as *mut u8;
         if newptr.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.enomem,
-                b"Couldn\'t allocate memory.\x00" as *const u8 as *const i8
+                b"Couldn\'t allocate memory.\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
@@ -1380,7 +1380,7 @@ unsafe fn read_header(
     }
     filename = safe_rar.filename;
     memcpy_safe(filename as *mut (), p as *const (), filename_size as u64);
-    unsafe { *filename.offset(filename_size as isize) = '\u{0}' as i32 as i8 };
+    unsafe { *filename.offset(filename_size as isize) = '\u{0}' as i32 as u8 };
     if safe_rar.file_flags & ARCHIVE_RAR_DEFINED_PARAM.fhd_unicode as u32 != 0 {
         if filename_size as u64 != strlen_safe(filename) {
             let mut highbyte: u8 = 0;
@@ -1410,7 +1410,7 @@ unsafe fn read_header(
                         0 => {
                             let fresh3 = filename_size;
                             filename_size = filename_size.wrapping_add(1);
-                            *filename.offset(fresh3 as isize) = '\u{0}' as i32 as i8;
+                            *filename.offset(fresh3 as isize) = '\u{0}' as i32 as u8;
                             let fresh4 = offset;
                             offset = offset.wrapping_add(1);
                             let fresh5 = filename_size;
@@ -1420,7 +1420,7 @@ unsafe fn read_header(
                         1 => {
                             let fresh6 = filename_size;
                             filename_size = filename_size.wrapping_add(1);
-                            *filename.offset(fresh6 as isize) = highbyte as i8;
+                            *filename.offset(fresh6 as isize) = highbyte as u8;
                             let fresh7 = offset;
                             offset = offset.wrapping_add(1);
                             let fresh8 = filename_size;
@@ -1438,8 +1438,8 @@ unsafe fn read_header(
                             offset = offset.wrapping_add(2 as i32 as u32)
                         }
                         3 => {
-                            let mut extra: i8 = 0;
-                            let mut high: i8 = 0;
+                            let mut extra: u8 = 0;
+                            let mut high: u8 = 0;
                             let fresh11 = offset;
                             offset = offset.wrapping_add(1);
                             let mut length: uint8_t = *p.offset(fresh11 as isize) as uint8_t;
@@ -1447,9 +1447,9 @@ unsafe fn read_header(
                                 let fresh12 = offset;
                                 offset = offset.wrapping_add(1);
                                 extra = *p.offset(fresh12 as isize);
-                                high = highbyte as i8
+                                high = highbyte as u8
                             } else {
-                                high = 0 as i32 as i8;
+                                high = 0 as i32 as u8;
                                 extra = high
                             }
                             length = ((length as i32 & 0x7f as i32) + 2 as i32) as uint8_t;
@@ -1461,7 +1461,7 @@ unsafe fn read_header(
                                 let fresh14 = filename_size;
                                 filename_size = filename_size.wrapping_add(1);
                                 *filename.offset(fresh14 as isize) =
-                                    (*p.offset(cp as isize) as i32 + extra as i32) as i8;
+                                    (*p.offset(cp as isize) as i32 + extra as i32) as u8;
                                 length = length.wrapping_sub(1)
                             }
                         }
@@ -1473,26 +1473,26 @@ unsafe fn read_header(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                    b"Invalid filename\x00" as *const u8 as *const i8
+                    b"Invalid filename\x00" as *const u8
                 );
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
             let fresh15 = filename_size;
             filename_size = filename_size.wrapping_add(1);
             unsafe {
-                *filename.offset(fresh15 as isize) = '\u{0}' as i32 as i8;
+                *filename.offset(fresh15 as isize) = '\u{0}' as i32 as u8;
                 /*
                  * Do not increment filename_size here as the computations below
                  * add the space for the terminating NUL explicitly.
                  */
-                *filename.offset(filename_size as isize) = '\u{0}' as i32 as i8
+                *filename.offset(filename_size as isize) = '\u{0}' as i32 as u8
             };
             /* Decoded unicode form is UTF-16BE, so we have to update a string
              * conversion object for it. */
             if safe_rar.sconv_utf16be.is_null() {
                 safe_rar.sconv_utf16be = archive_string_conversion_from_charset_safe(
                     &mut safe_a.archive,
-                    b"UTF-16BE\x00" as *const u8 as *const i8,
+                    b"UTF-16BE\x00" as *const u8,
                     1 as i32,
                 );
                 if safe_rar.sconv_utf16be.is_null() {
@@ -1503,17 +1503,17 @@ unsafe fn read_header(
             strp = filename;
             while memcmp_safe(
                 strp as *const (),
-                b"\x00\x00\x00" as *const u8 as *const i8 as *const (),
+                b"\x00\x00\x00" as *const u8 as *const (),
                 2 as i32 as u64,
             ) != 0
             {
                 if memcmp_safe(
                     strp as *const (),
-                    b"\x00\\\x00" as *const u8 as *const i8 as *const (),
+                    b"\x00\\\x00" as *const u8 as *const (),
                     2 as i32 as u64,
                 ) == 0
                 {
-                    unsafe { *strp.offset(1 as i32 as isize) = '/' as i32 as i8 }
+                    unsafe { *strp.offset(1 as i32 as isize) = '/' as i32 as u8 }
                 }
                 unsafe { strp = strp.offset(2 as i32 as isize) }
             }
@@ -1527,7 +1527,7 @@ unsafe fn read_header(
             if safe_rar.sconv_utf8.is_null() {
                 safe_rar.sconv_utf8 = archive_string_conversion_from_charset_safe(
                     &mut safe_a.archive,
-                    b"UTF-8\x00" as *const u8 as *const i8,
+                    b"UTF-8\x00" as *const u8,
                     1 as i32,
                 );
                 if safe_rar.sconv_utf8.is_null() {
@@ -1540,7 +1540,7 @@ unsafe fn read_header(
                 if strp.is_null() {
                     break;
                 }
-                unsafe { *strp = '/' as i32 as i8 }
+                unsafe { *strp = '/' as i32 as u8 }
             }
             unsafe { p = p.offset(filename_size as isize) }
         }
@@ -1551,7 +1551,7 @@ unsafe fn read_header(
             if strp.is_null() {
                 break;
             }
-            unsafe { *strp = '/' as i32 as i8 }
+            unsafe { *strp = '/' as i32 as u8 }
         }
         unsafe { p = p.offset(filename_size as isize) }
     }
@@ -1570,14 +1570,13 @@ unsafe fn read_header(
             safe_rar.nodes = safe_rar.nodes.wrapping_add(1);
             safe_rar.dbo = realloc_safe(
                 safe_rar.dbo as *mut (),
-                (::std::mem::size_of::<data_block_offsets>() as u64)
-                    .wrapping_mul(safe_rar.nodes as u64),
+                (size_of::<data_block_offsets>() as u64).wrapping_mul(safe_rar.nodes as u64),
             ) as *mut data_block_offsets;
             if safe_rar.dbo.is_null() {
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR_DEFINED_PARAM.enomem,
-                    b"Couldn\'t allocate memory.\x00" as *const u8 as *const i8
+                    b"Couldn\'t allocate memory.\x00" as *const u8
                 );
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
@@ -1601,7 +1600,7 @@ unsafe fn read_header(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
                 b"Mismatch of file parts split across multi-volume archive\x00" as *const u8
-                    as *const i8
+                    as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
@@ -1609,7 +1608,7 @@ unsafe fn read_header(
     safe_rar.filename_save = realloc_safe(
         safe_rar.filename_save as *mut (),
         filename_size.wrapping_add(1 as i32 as u32) as u64,
-    ) as *mut i8;
+    ) as *mut u8;
     memcpy_safe(
         safe_rar.filename_save as *mut (),
         safe_rar.filename as *const (),
@@ -1618,15 +1617,13 @@ unsafe fn read_header(
     safe_rar.filename_save_size = filename_size as size_t;
     /* Set info for seeking */
     free_safe(safe_rar.dbo as *mut ());
-    safe_rar.dbo = calloc_safe(
-        1 as i32 as u64,
-        ::std::mem::size_of::<data_block_offsets>() as u64,
-    ) as *mut data_block_offsets;
+    safe_rar.dbo = calloc_safe(1 as i32 as u64, size_of::<data_block_offsets>() as u64)
+        as *mut data_block_offsets;
     if safe_rar.dbo.is_null() {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.enomem,
-            b"Couldn\'t allocate memory.\x00" as *const u8 as *const i8
+            b"Couldn\'t allocate memory.\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -1642,7 +1639,7 @@ unsafe fn read_header(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Invalid header size\x00" as *const u8 as *const i8
+                b"Invalid header size\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
@@ -1658,7 +1655,7 @@ unsafe fn read_header(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Invalid header size\x00" as *const u8 as *const i8
+                b"Invalid header size\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
@@ -1695,7 +1692,7 @@ unsafe fn read_header(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Unknown file attributes from RAR file\'s host OS\x00" as *const u8 as *const i8
+            b"Unknown file attributes from RAR file\'s host OS\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -1710,10 +1707,10 @@ unsafe fn read_header(
     safe_rar.br.cache_avail = 0 as i32;
     safe_rar.br.avail_in = 0 as i32 as ssize_t;
     safe_rar.crc_calculated = 0 as i32 as u64;
-    safe_rar.entry_eof = 0 as i32 as i8;
-    safe_rar.valid = 1 as i32 as i8;
-    safe_rar.is_ppmd_block = 0 as i32 as i8;
-    safe_rar.start_new_table = 1 as i32 as i8;
+    safe_rar.entry_eof = 0 as i32 as u8;
+    safe_rar.valid = 1 as i32 as u8;
+    safe_rar.is_ppmd_block = 0 as i32 as u8;
+    safe_rar.start_new_table = 1 as i32 as u8;
     free_safe(safe_rar.unp_buffer as *mut ());
     safe_rar.unp_buffer = 0 as *mut u8;
     safe_rar.unp_offset = 0 as i32 as u32;
@@ -1721,14 +1718,14 @@ unsafe fn read_header(
     memset_safe(
         safe_rar.lengthtable.as_mut_ptr() as *mut (),
         0 as i32,
-        ::std::mem::size_of::<[u8; 404]>() as u64,
+        size_of::<[u8; 404]>() as u64,
     );
     unsafe {
         __archive_ppmd7_functions
             .Ppmd7_Free
             .expect("non-null function pointer")(&mut safe_rar.ppmd7_context);
     }
-    safe_rar.ppmd_eod = 0 as i32 as i8;
+    safe_rar.ppmd_eod = 0 as i32 as u8;
     safe_rar.ppmd_valid = safe_rar.ppmd_eod;
     /* Don't set any archive entries for non-file header types */
     if head_type as i32 == 0x7a as i32 {
@@ -1745,7 +1742,7 @@ unsafe fn read_header(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.enomem,
-                b"Can\'t allocate memory for Pathname\x00" as *const u8 as *const i8
+                b"Can\'t allocate memory for Pathname\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
@@ -1753,7 +1750,7 @@ unsafe fn read_header(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
             b"Pathname cannot be converted from %s to current locale.\x00" as *const u8
-                as *const i8,
+                as *const u8,
             archive_string_conversion_charset_name(fn_sconv)
         );
         ret = ARCHIVE_RAR_DEFINED_PARAM.archive_warn
@@ -1774,7 +1771,7 @@ unsafe fn read_header(
         }
     }
     if safe_rar.bytes_remaining == 0 as i32 as i64 {
-        safe_rar.entry_eof = 1 as i32 as i8
+        safe_rar.entry_eof = 1 as i32 as u8
     }
     return ret;
 }
@@ -1791,7 +1788,7 @@ unsafe fn get_time(mut ttime: i32) -> time_t {
         tm_yday: 0,
         tm_isdst: 0,
         tm_gmtoff: 0,
-        tm_zone: 0 as *const i8,
+        tm_zone: 0 as *const u8,
     };
     tm.tm_sec = 2 as i32 * (ttime & 0x1f as i32);
     tm.tm_min = ttime >> 5 as i32 & 0x3f as i32;
@@ -1803,7 +1800,7 @@ unsafe fn get_time(mut ttime: i32) -> time_t {
     return mktime_safe(&mut tm);
 }
 
-unsafe fn read_exttime(mut p: *const i8, mut rar: *mut rar, mut endp: *const i8) -> i32 {
+unsafe fn read_exttime(mut p: *const u8, mut rar: *mut rar, mut endp: *const u8) -> i32 {
     let mut rmode: u32 = 0;
     let mut flags: u32 = 0;
     let mut rem: u32 = 0;
@@ -1827,7 +1824,7 @@ unsafe fn read_exttime(mut p: *const i8, mut rar: *mut rar, mut endp: *const i8)
         tm_yday: 0,
         tm_isdst: 0,
         tm_gmtoff: 0,
-        tm_zone: 0 as *const i8,
+        tm_zone: 0 as *const u8,
     };
 
     match () {
@@ -1928,7 +1925,7 @@ unsafe fn read_symlink_stored(
     mut sconv: *mut archive_string_conv,
 ) -> i32 {
     let mut h: *const () = 0 as *const ();
-    let mut p: *const i8 = 0 as *const i8;
+    let mut p: *const u8 = 0 as *const u8;
     let mut rar: *mut rar = 0 as *mut rar;
     let mut ret: i32 = ARCHIVE_RAR_DEFINED_PARAM.archive_ok;
     rar = unsafe { (*(*a).format).data as *mut rar };
@@ -1937,20 +1934,20 @@ unsafe fn read_symlink_stored(
     if h == 0 as *mut () {
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
-    p = h as *const i8;
+    p = h as *const u8;
     if _archive_entry_copy_symlink_l_safe(entry, p, safe_rar.packed_size as size_t, sconv) != 0 {
         if unsafe { *__errno_location() == ARCHIVE_RAR_DEFINED_PARAM.enomem } {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.enomem,
-                b"Can\'t allocate memory for link\x00" as *const u8 as *const i8
+                b"Can\'t allocate memory for link\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"link cannot be converted from %s to current locale.\x00" as *const u8 as *const i8,
+            b"link cannot be converted from %s to current locale.\x00" as *const u8,
             archive_string_conversion_charset_name(sconv)
         );
         ret = ARCHIVE_RAR_DEFINED_PARAM.archive_warn
@@ -1983,11 +1980,11 @@ unsafe fn read_data_stored(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"File CRC error\x00" as *const u8 as *const i8
+                b"File CRC error\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
-        safe_rar.entry_eof = 1 as i32 as i8;
+        safe_rar.entry_eof = 1 as i32 as u8;
         return ARCHIVE_RAR_DEFINED_PARAM.archive_eof;
     }
     *safe_buff = rar_read_ahead(a, 1 as i32 as size_t, &mut bytes_avail);
@@ -1995,7 +1992,7 @@ unsafe fn read_data_stored(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Truncated RAR file data\x00" as *const u8 as *const i8
+            b"Truncated RAR file data\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -2081,11 +2078,11 @@ unsafe fn read_data_compressed(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                    b"File CRC error\x00" as *const u8 as *const i8
+                    b"File CRC error\x00" as *const u8
                 );
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
-            safe_rar.entry_eof = 1 as i32 as i8;
+            safe_rar.entry_eof = 1 as i32 as u8;
             return ARCHIVE_RAR_DEFINED_PARAM.archive_eof;
         }
         if safe_rar.is_ppmd_block == 0
@@ -2147,7 +2144,7 @@ unsafe fn read_data_compressed(
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                        b"Invalid symbol\x00" as *const u8 as *const i8
+                        b"Invalid symbol\x00" as *const u8
                     );
                     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                 }
@@ -2168,24 +2165,24 @@ unsafe fn read_data_compressed(
                         archive_set_error_safe!(
                             &mut (*a).archive as *mut archive,
                             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                            b"Invalid symbol\x00" as *const u8 as *const i8
+                            b"Invalid symbol\x00" as *const u8
                         );
                         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                     }
                     match code {
                         0 => {
-                            safe_rar.start_new_table = 1 as i32 as i8;
+                            safe_rar.start_new_table = 1 as i32 as u8;
                             return read_data_compressed(a, buff, size, offset, looper);
                         }
                         2 => {
-                            safe_rar.ppmd_eod = 1 as i32 as i8;
+                            safe_rar.ppmd_eod = 1 as i32 as u8;
                             current_block_102 = 7095457783677275021;
                         }
                         3 => {
                             archive_set_error_safe!(
                                 &mut (*a).archive as *mut archive,
                                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_misc,
-                                b"Parsing filters is unsupported.\x00" as *const u8 as *const i8
+                                b"Parsing filters is unsupported.\x00" as *const u8
                             );
                             return ARCHIVE_RAR_DEFINED_PARAM.archive_failed;
                         }
@@ -2205,7 +2202,7 @@ unsafe fn read_data_compressed(
                                     archive_set_error_safe!(
                                         &mut (*a).archive as *mut archive,
                                         ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                                        b"Invalid symbol\x00" as *const u8 as *const i8
+                                        b"Invalid symbol\x00" as *const u8
                                     );
                                     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                                 }
@@ -2224,7 +2221,7 @@ unsafe fn read_data_compressed(
                                 archive_set_error_safe!(
                                     &mut (*a).archive as *mut archive,
                                     ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                                    b"Invalid symbol\x00" as *const u8 as *const i8
+                                    b"Invalid symbol\x00" as *const u8
                                 );
                                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                             }
@@ -2245,7 +2242,7 @@ unsafe fn read_data_compressed(
                                 archive_set_error_safe!(
                                     &mut (*a).archive as *mut archive,
                                     ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                                    b"Invalid symbol\x00" as *const u8 as *const i8
+                                    b"Invalid symbol\x00" as *const u8
                                 );
                                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                             }
@@ -2277,7 +2274,7 @@ unsafe fn read_data_compressed(
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                        b"Internal error extracting RAR file\x00" as *const u8 as *const i8
+                        b"Internal error extracting RAR file\x00" as *const u8
                     );
                     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                 }
@@ -2357,7 +2354,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
         unsafe {
             safe_rar.is_ppmd_block = ((safe_br.cache_buffer >> safe_br.cache_avail - 1 as i32)
                 as uint32_t
-                & cache_masks[1 as i32 as usize]) as i8
+                & cache_masks[1 as i32 as usize]) as u8
         };
         if safe_rar.is_ppmd_block as i32 != 0 as i32 {
             safe_br.cache_avail -= 1 as i32;
@@ -2437,7 +2434,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                             &mut (*a).archive as *mut archive,
                                             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
                                             b"Truncated RAR file data\x00" as *const u8
-                                                as *const i8
+                                                as *const u8
                                         );
                                         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                                     }
@@ -2473,7 +2470,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                             &mut (*a).archive as *mut archive,
                                             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
                                             b"Invalid zero dictionary size\x00" as *const u8
-                                                as *const i8
+                                                as *const u8
                                         );
                                         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                                     }
@@ -2488,7 +2485,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                         archive_set_error_safe!(
                                             &mut (*a).archive as *mut archive,
                                             ARCHIVE_RAR_DEFINED_PARAM.enomem,
-                                            b"Out of memory\x00" as *const u8 as *const i8
+                                            b"Out of memory\x00" as *const u8
                                         );
                                         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                                     }
@@ -2504,7 +2501,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
                                             b"Unable to initialize PPMd range decoder\x00"
                                                 as *const u8
-                                                as *const i8
+                                                as *const u8
                                         );
                                         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                                     }
@@ -2516,13 +2513,13 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                             maxorder,
                                         )
                                     };
-                                    safe_rar.ppmd_valid = 1 as i32 as i8
+                                    safe_rar.ppmd_valid = 1 as i32 as u8
                                 } else {
                                     if safe_rar.ppmd_valid == 0 {
                                         archive_set_error_safe!(
                                             &mut (*a).archive as *mut archive,
                                             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                                            b"Invalid PPMd sequence\x00" as *const u8 as *const i8
+                                            b"Invalid PPMd sequence\x00" as *const u8
                                         );
                                         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                                     }
@@ -2538,7 +2535,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
                                             b"Unable to initialize PPMd range decoder\x00"
                                                 as *const u8
-                                                as *const i8
+                                                as *const u8
                                         );
                                         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                                     }
@@ -2566,14 +2563,14 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                     memset_safe(
                         safe_rar.lengthtable.as_mut_ptr() as *mut (),
                         0 as i32,
-                        ::std::mem::size_of::<[u8; 404]>() as u64,
+                        size_of::<[u8; 404]>() as u64,
                     );
                 }
                 safe_br.cache_avail -= 1 as i32;
                 memset_safe(
                     &mut bitlengths as *mut [u8; 20] as *mut (),
                     0 as i32,
-                    ::std::mem::size_of::<[u8; 20]>() as u64,
+                    size_of::<[u8; 20]>() as u64,
                 );
                 i = 0 as i32;
                 loop {
@@ -2631,14 +2628,14 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                         memset_safe(
                             &mut precode as *mut huffman_code as *mut (),
                             0 as i32,
-                            ::std::mem::size_of::<huffman_code>() as u64,
+                            size_of::<huffman_code>() as u64,
                         );
                         r = create_code(
                             a,
                             &mut precode,
                             bitlengths.as_mut_ptr(),
                             ARCHIVE_RAR_DEFINED_PARAM.max_symbols,
-                            ARCHIVE_RAR_DEFINED_PARAM.max_symbol_length as i8,
+                            ARCHIVE_RAR_DEFINED_PARAM.max_symbol_length as u8,
                         );
                         if r != ARCHIVE_RAR_DEFINED_PARAM.archive_ok {
                             free_safe(precode.tree as *mut ());
@@ -2670,7 +2667,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                         &mut (*a).archive as *mut archive,
                                         ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
                                         b"Internal error extracting RAR file.\x00" as *const u8
-                                            as *const i8
+                                            as *const u8
                                     );
                                     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                                 }
@@ -2784,7 +2781,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                             .offset(0 as i32 as isize)
                                     },
                                     ARCHIVE_RAR_DEFINED_PARAM.maincode_size,
-                                    ARCHIVE_RAR_DEFINED_PARAM.max_symbol_length as i8,
+                                    ARCHIVE_RAR_DEFINED_PARAM.max_symbol_length as u8,
                                 );
                                 if r != ARCHIVE_RAR_DEFINED_PARAM.archive_ok {
                                     return r;
@@ -2797,7 +2794,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                             ARCHIVE_RAR_DEFINED_PARAM.maincode_size as isize,
                                         ),
                                         ARCHIVE_RAR_DEFINED_PARAM.offsetcode_size,
-                                        ARCHIVE_RAR_DEFINED_PARAM.max_symbol_length as i8,
+                                        ARCHIVE_RAR_DEFINED_PARAM.max_symbol_length as u8,
                                     )
                                 };
                                 if r != ARCHIVE_RAR_DEFINED_PARAM.archive_ok {
@@ -2813,7 +2810,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                                 as isize,
                                         ),
                                         ARCHIVE_RAR_DEFINED_PARAM.lowoffsetcode_size,
-                                        ARCHIVE_RAR_DEFINED_PARAM.max_symbol_length as i8,
+                                        ARCHIVE_RAR_DEFINED_PARAM.max_symbol_length as u8,
                                     )
                                 };
                                 if r != ARCHIVE_RAR_DEFINED_PARAM.archive_ok {
@@ -2830,7 +2827,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                                 as isize,
                                         ),
                                         ARCHIVE_RAR_DEFINED_PARAM.lengthcode_size,
-                                        ARCHIVE_RAR_DEFINED_PARAM.max_symbol_length as i8,
+                                        ARCHIVE_RAR_DEFINED_PARAM.max_symbol_length as u8,
                                     )
                                 };
                                 if r != ARCHIVE_RAR_DEFINED_PARAM.archive_ok {
@@ -2861,7 +2858,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                         archive_set_error_safe!(
                             &mut (*a).archive as *mut archive,
                             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                            b"Zero window size is invalid.\x00" as *const u8 as *const i8
+                            b"Zero window size is invalid.\x00" as *const u8
                         );
                         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                     }
@@ -2871,7 +2868,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                             &mut (*a).archive as *mut archive,
                             ARCHIVE_RAR_DEFINED_PARAM.enomem,
                             b"Unable to allocate memory for uncompressed data.\x00" as *const u8
-                                as *const i8
+                                as *const u8
                         );
                         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                     }
@@ -2885,7 +2882,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                     safe_rar.lzss.mask =
                         safe_rar.dictionary_size.wrapping_sub(1 as i32 as u32) as i32
                 }
-                safe_rar.start_new_table = 0 as i32 as i8;
+                safe_rar.start_new_table = 0 as i32 as u8;
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_ok;
             }
         }
@@ -2893,9 +2890,9 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
     archive_set_error_safe!(
         &mut (*a).archive as *mut archive,
         ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-        b"Truncated RAR file data\x00" as *const u8 as *const i8
+        b"Truncated RAR file data\x00" as *const u8
     );
-    safe_rar.valid = 0 as i32 as i8;
+    safe_rar.valid = 0 as i32 as u8;
     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
 }
 
@@ -2913,22 +2910,22 @@ unsafe fn free_codes(mut a: *mut archive_read) {
     memset_safe(
         &mut safe_rar.maincode as *mut huffman_code as *mut (),
         0 as i32,
-        ::std::mem::size_of::<huffman_code>() as u64,
+        size_of::<huffman_code>() as u64,
     );
     memset_safe(
         &mut safe_rar.offsetcode as *mut huffman_code as *mut (),
         0 as i32,
-        ::std::mem::size_of::<huffman_code>() as u64,
+        size_of::<huffman_code>() as u64,
     );
     memset_safe(
         &mut safe_rar.lowoffsetcode as *mut huffman_code as *mut (),
         0 as i32,
-        ::std::mem::size_of::<huffman_code>() as u64,
+        size_of::<huffman_code>() as u64,
     );
     memset_safe(
         &mut safe_rar.lengthcode as *mut huffman_code as *mut (),
         0 as i32,
-        ::std::mem::size_of::<huffman_code>() as u64,
+        size_of::<huffman_code>() as u64,
     );
 }
 
@@ -2958,9 +2955,9 @@ unsafe fn read_next_symbol(mut a: *mut archive_read, mut code: *mut huffman_code
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Truncated RAR file data\x00" as *const u8 as *const i8
+            b"Truncated RAR file data\x00" as *const u8
         );
-        safe_rar.valid = 0 as i32 as i8;
+        safe_rar.valid = 0 as i32 as u8;
         return -(1 as i32);
     }
     unsafe {
@@ -2975,7 +2972,7 @@ unsafe fn read_next_symbol(mut a: *mut archive_read, mut code: *mut huffman_code
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Invalid prefix code in bitstream\x00" as *const u8 as *const i8
+            b"Invalid prefix code in bitstream\x00" as *const u8
         );
         return -(1 as i32);
     }
@@ -2998,9 +2995,9 @@ unsafe fn read_next_symbol(mut a: *mut archive_read, mut code: *mut huffman_code
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Truncated RAR file data\x00" as *const u8 as *const i8
+                b"Truncated RAR file data\x00" as *const u8
             );
-            safe_rar.valid = 0 as i32 as i8;
+            safe_rar.valid = 0 as i32 as u8;
             return -(1 as i32);
         }
         unsafe {
@@ -3012,7 +3009,7 @@ unsafe fn read_next_symbol(mut a: *mut archive_read, mut code: *mut huffman_code
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Invalid prefix code in bitstream\x00" as *const u8 as *const i8
+                b"Invalid prefix code in bitstream\x00" as *const u8
             );
             return -(1 as i32);
         }
@@ -3026,7 +3023,7 @@ unsafe fn create_code(
     mut code: *mut huffman_code,
     mut lengths: *mut u8,
     mut numsymbols: i32,
-    mut maxlength: i8,
+    mut maxlength: u8,
 ) -> i32 {
     let mut i: i32 = 0;
     let mut j: i32 = 0;
@@ -3039,7 +3036,7 @@ unsafe fn create_code(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.enomem,
-            b"Unable to allocate memory for node data.\x00" as *const u8 as *const i8
+            b"Unable to allocate memory for node data.\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -3117,7 +3114,7 @@ unsafe fn add_value(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Prefix found\x00" as *const u8 as *const i8
+                b"Prefix found\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
@@ -3126,7 +3123,7 @@ unsafe fn add_value(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR_DEFINED_PARAM.enomem,
-                    b"Unable to allocate memory for node data.\x00" as *const u8 as *const i8
+                    b"Unable to allocate memory for node data.\x00" as *const u8
                 );
                 return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
             }
@@ -3144,7 +3141,7 @@ unsafe fn add_value(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Prefix found\x00" as *const u8 as *const i8
+            b"Prefix found\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -3204,8 +3201,7 @@ unsafe fn new_node(mut code: *mut huffman_code) -> i32 {
         }
         new_tree = realloc_safe(
             safe_code.tree as *mut (),
-            (new_num_entries as u64)
-                .wrapping_mul(::std::mem::size_of::<huffman_tree_node>() as u64),
+            (new_num_entries as u64).wrapping_mul(size_of::<huffman_tree_node>() as u64),
         );
         if new_tree.is_null() {
             return -(1 as i32);
@@ -3231,7 +3227,7 @@ unsafe fn make_table(mut a: *mut archive_read, mut code: *mut huffman_code) -> i
     }
     safe_code.table = calloc_safe(
         1 as i32 as u64,
-        (::std::mem::size_of::<huffman_table_entry>() as u64)
+        (size_of::<huffman_table_entry>() as u64)
             .wrapping_mul((1 as i32 as size_t) << safe_code.tablesize),
     ) as *mut huffman_table_entry;
     return make_table_recurse(
@@ -3260,7 +3256,7 @@ unsafe fn make_table_recurse(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Huffman tree was not created.\x00" as *const u8 as *const i8
+            b"Huffman tree was not created.\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -3268,7 +3264,7 @@ unsafe fn make_table_recurse(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Invalid location to Huffman tree specified.\x00" as *const u8 as *const i8
+            b"Invalid location to Huffman tree specified.\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -3552,7 +3548,7 @@ unsafe fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
             && lzss_position(&mut safe_rar.lzss) + safe_rar.lastlength as i64 <= end
         {
             lzss_emit_match(rar, safe_rar.lastoffset as i32, safe_rar.lastlength as i32);
-            safe_rar.output_last_match = 0 as i32 as i8
+            safe_rar.output_last_match = 0 as i32 as u8
         }
         if safe_rar.is_ppmd_block as i32 != 0
             || safe_rar.output_last_match as i32 != 0
@@ -3564,7 +3560,7 @@ unsafe fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
         if symbol < 0 as i32 {
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal as int64_t;
         }
-        safe_rar.output_last_match = 0 as i32 as i8;
+        safe_rar.output_last_match = 0 as i32 as u8;
         if symbol < 256 as i32 {
             lzss_emit_literal(rar, symbol as uint8_t);
         } else if symbol == 256 as i32 {
@@ -3582,7 +3578,7 @@ unsafe fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
             };
             safe_br.cache_avail -= 1 as i32;
             if newfile != 0 {
-                safe_rar.start_new_block = 1 as i32 as i8;
+                safe_rar.start_new_block = 1 as i32 as u8;
                 if !(safe_br.cache_avail >= 1 as i32
                     || rar_br_fillup(a, br) != 0
                     || safe_br.cache_avail >= 1 as i32)
@@ -3593,7 +3589,7 @@ unsafe fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
                 unsafe {
                     safe_rar.start_new_table =
                         ((safe_br.cache_buffer >> safe_br.cache_avail - 1 as i32) as uint32_t
-                            & cache_masks[1 as i32 as usize]) as i8
+                            & cache_masks[1 as i32 as usize]) as u8
                 };
                 safe_br.cache_avail -= 1 as i32;
                 return lzss_position(&mut safe_rar.lzss);
@@ -3604,7 +3600,7 @@ unsafe fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_misc,
-                b"Parsing filters is unsupported.\x00" as *const u8 as *const i8
+                b"Parsing filters is unsupported.\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_failed as int64_t;
         } else {
@@ -3805,7 +3801,7 @@ unsafe fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
             }
             safe_rar.lastoffset = offs as u32;
             safe_rar.lastlength = len as u32;
-            safe_rar.output_last_match = 1 as i32 as i8
+            safe_rar.output_last_match = 1 as i32 as u8
         }
     }
     match current_block {
@@ -3813,7 +3809,7 @@ unsafe fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Bad RAR file data\x00" as *const u8 as *const i8
+                b"Bad RAR file data\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal as int64_t;
         }
@@ -3821,9 +3817,9 @@ unsafe fn expand(mut a: *mut archive_read, mut end: int64_t) -> int64_t {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Truncated RAR file data\x00" as *const u8 as *const i8
+                b"Truncated RAR file data\x00" as *const u8
             );
-            safe_rar.valid = 0 as i32 as i8;
+            safe_rar.valid = 0 as i32 as u8;
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal as int64_t;
         }
     };
@@ -3846,7 +3842,7 @@ unsafe fn copy_from_lzss_window(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.enomem,
-                b"Unable to allocate memory for uncompressed data.\x00" as *const u8 as *const i8
+                b"Unable to allocate memory for uncompressed data.\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
@@ -3866,7 +3862,7 @@ unsafe fn copy_from_lzss_window(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-                b"Bad RAR file data\x00" as *const u8 as *const i8
+                b"Bad RAR file data\x00" as *const u8
             );
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
         }
@@ -3909,7 +3905,7 @@ unsafe fn copy_from_lzss_window(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR_DEFINED_PARAM.archive_errno_file_format,
-            b"Bad RAR file data\x00" as *const u8 as *const i8
+            b"Bad RAR file data\x00" as *const u8
         );
         return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
     }
@@ -3949,13 +3945,13 @@ unsafe fn rar_read_ahead(
                 && safe_rar.main_flags & ARCHIVE_RAR_DEFINED_PARAM.mhd_volume as u32 != 0
                 && safe_rar.file_flags & ARCHIVE_RAR_DEFINED_PARAM.fhd_split_after as u32 != 0
             {
-                safe_rar.filename_must_match = 1 as i32 as i8;
+                safe_rar.filename_must_match = 1 as i32 as u8;
                 ret = archive_read_format_rar_read_header(a, safe_a.entry);
                 if ret == ARCHIVE_RAR_DEFINED_PARAM.archive_eof {
-                    safe_rar.has_endarc_header = 1 as i32 as i8;
+                    safe_rar.has_endarc_header = 1 as i32 as u8;
                     ret = archive_read_format_rar_read_header(a, safe_a.entry)
                 }
-                safe_rar.filename_must_match = 0 as i32 as i8;
+                safe_rar.filename_must_match = 0 as i32 as u8;
                 if ret != ARCHIVE_RAR_DEFINED_PARAM.archive_ok {
                     return 0 as *const ();
                 }
@@ -3968,20 +3964,16 @@ unsafe fn rar_read_ahead(
 
 unsafe fn run_static_initializers() {
     unsafe {
-        lengthb_min = (::std::mem::size_of::<[u8; 28]>() as u64)
-            .wrapping_div(::std::mem::size_of::<u8>() as u64) as i32
+        lengthb_min = (size_of::<[u8; 28]>() as u64).wrapping_div(size_of::<u8>() as u64) as i32
     }
     unsafe {
-        offsetb_min = if ((::std::mem::size_of::<[u32; 60]>() as u64)
-            .wrapping_div(::std::mem::size_of::<u32>() as u64) as i32)
-            < (::std::mem::size_of::<[u8; 60]>() as u64)
-                .wrapping_div(::std::mem::size_of::<u8>() as u64) as i32
+        offsetb_min = if ((size_of::<[u32; 60]>() as u64).wrapping_div(size_of::<u32>() as u64)
+            as i32)
+            < (size_of::<[u8; 60]>() as u64).wrapping_div(size_of::<u8>() as u64) as i32
         {
-            (::std::mem::size_of::<[u32; 60]>() as u64)
-                .wrapping_div(::std::mem::size_of::<u32>() as u64) as i32
+            (size_of::<[u32; 60]>() as u64).wrapping_div(size_of::<u32>() as u64) as i32
         } else {
-            (::std::mem::size_of::<[u8; 60]>() as u64)
-                .wrapping_div(::std::mem::size_of::<u8>() as u64) as i32
+            (size_of::<[u8; 60]>() as u64).wrapping_div(size_of::<u8>() as u64) as i32
         }
     }
 }
@@ -3996,19 +3988,12 @@ static INIT_ARRAY: [unsafe fn(); 1] = [run_static_initializers];
 unsafe fn archive_test_make_table_recurse(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut huffman_code: *mut huffman_code = 0 as *mut huffman_code;
-    huffman_code = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<huffman_code>() as u64,
-        )
-    } as *mut huffman_code;
+    huffman_code = unsafe { calloc_safe(1 as i32 as u64, size_of::<huffman_code>() as u64) }
+        as *mut huffman_code;
     let mut huffman_table_entry: *mut huffman_table_entry = 0 as *mut huffman_table_entry;
-    huffman_table_entry = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<huffman_table_entry>() as u64,
-        )
-    } as *mut huffman_table_entry;
+    huffman_table_entry =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<huffman_table_entry>() as u64) }
+            as *mut huffman_table_entry;
     make_table_recurse(a, huffman_code, 0, huffman_table_entry, 0, 0);
 }
 
@@ -4016,11 +4001,10 @@ unsafe fn archive_test_make_table_recurse(mut _a: *mut archive) {
 unsafe fn archive_test_rar_br_preparation(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
-    rar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar>() as u64) } as *mut rar;
+    rar = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar>() as u64) } as *mut rar;
     (*rar).bytes_remaining = 1;
     let mut rar_br: *mut rar_br = 0 as *mut rar_br;
-    rar_br = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar_br>() as u64) }
-        as *mut rar_br;
+    rar_br = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar_br>() as u64) } as *mut rar_br;
     (*rar_br).avail_in = -1;
     (*(*a).format).data = rar as *mut ();
     rar_br_preparation(a, rar_br);
@@ -4030,13 +4014,10 @@ unsafe fn archive_test_rar_br_preparation(mut _a: *mut archive) {
 unsafe fn archive_test_rar_skip_sfx(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
-    archive_read_filter = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read_filter>() as u64,
-        )
-    } as *mut archive_read_filter;
-    (*archive_read_filter).fatal = 'a' as i8;
+    archive_read_filter =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read_filter>() as u64) }
+            as *mut archive_read_filter;
+    (*archive_read_filter).fatal = 'a' as u8;
     (*a).filter = archive_read_filter as *mut archive_read_filter;
     skip_sfx(a);
 }
@@ -4046,8 +4027,8 @@ unsafe fn archive_test_archive_read_format_rar_options(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     archive_read_format_rar_options(
         a,
-        b"hdrcharset\x00" as *const u8 as *const i8,
-        b"hdrcharset\x00" as *const u8 as *const i8,
+        b"hdrcharset\x00" as *const u8,
+        b"hdrcharset\x00" as *const u8,
     );
 }
 
@@ -4060,7 +4041,7 @@ unsafe fn archive_test_archive_read_format_rar_read_data(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
-    rar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar>() as u64) } as *mut rar;
+    rar = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar>() as u64) } as *mut rar;
     (*(*a).format).data = rar as *mut ();
     archive_read_format_rar_read_data(a, buff, size, offset);
     (*rar).offset_seek = 1;
@@ -4073,7 +4054,7 @@ unsafe fn archive_test_archive_read_format_rar_read_data(
 unsafe fn archive_test_archive_read_format_rar_seek_data(mut _a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
-    rar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar>() as u64) } as *mut rar;
+    rar = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar>() as u64) } as *mut rar;
     (*rar).compression_method = 0x31;
     (*(*a).format).data = rar as *mut ();
     archive_read_format_rar_seek_data(a, 1, 1);
@@ -4088,7 +4069,7 @@ unsafe fn archive_test_read_data_stored(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
-    rar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar>() as u64) } as *mut rar;
+    rar = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar>() as u64) } as *mut rar;
     (*rar).bytes_remaining = 0;
     (*rar).main_flags = 1;
     (*(*a).format).data = rar as *mut ();
@@ -4108,7 +4089,7 @@ unsafe fn archive_test_copy_from_lzss_window(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar: *mut rar = 0 as *mut rar;
-    rar = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar>() as u64) } as *mut rar;
+    rar = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar>() as u64) } as *mut rar;
     (*rar).lzss.mask = 1;
     copy_from_lzss_window(a, buffer, startpos, length);
 }

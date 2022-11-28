@@ -198,6 +198,7 @@ struct archive_7zip_defined_param
   int knumbitmodeltotalbits;
   int kbitmodeltotal;
   int knummovebits;
+  int archive_failed
 };
 
 struct archive_7zip_defined_param get_archive_7zip_defined_param();
@@ -268,6 +269,7 @@ struct archive_7zip_defined_param get_archive_7zip_defined_param(){
   param.knumbitmodeltotalbits = kNumBitModelTotalBits;
   param.kbitmodeltotal = kBitModelTotal;
   param.knummovebits = kNumMoveBits;
+  param.archive_failed = ARCHIVE_FAILED;
   return param;
 }
 

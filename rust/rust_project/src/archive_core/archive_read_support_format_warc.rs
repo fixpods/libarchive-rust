@@ -33,7 +33,7 @@ pub extern "C" fn archive_read_support_format_warc(_a: *mut archive) -> i32 {
             _a,
             ARCHIVE_WARC_DEFINED_PARAM.archive_read_magic,
             ARCHIVE_WARC_DEFINED_PARAM.archive_state_new,
-            b"archive_read_support_format_warc\x00" as *const u8 as *const i8,
+            b"archive_read_support_format_warc\x00" as *const u8,
         )
     };
     if magic_test == ARCHIVE_WARC_DEFINED_PARAM.archive_fatal {
@@ -44,7 +44,7 @@ pub extern "C" fn archive_read_support_format_warc(_a: *mut archive) -> i32 {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_WARC_DEFINED_PARAM.enomem,
-            b"Can\'t allocate warc data\x00" as *const u8 as *const i8
+            b"Can\'t allocate warc data\x00" as *const u8
         );
         return ARCHIVE_WARC_DEFINED_PARAM.archive_fatal;
     }
@@ -52,7 +52,7 @@ pub extern "C" fn archive_read_support_format_warc(_a: *mut archive) -> i32 {
         __archive_read_register_format_safe(
             a,
             w as *mut (),
-            b"warc\x00" as *const u8 as *const i8,
+            b"warc\x00" as *const u8,
             Some(_warc_bid),
             None,
             Some(_warc_rdhdr),
@@ -84,12 +84,12 @@ fn _warc_cleanup(a: *mut archive_read) -> i32 {
     return ARCHIVE_WARC_DEFINED_PARAM.archive_ok;
 }
 fn _warc_bid(mut a: *mut archive_read, best_bid: i32) -> i32 {
-    let mut hdr: *const i8;
+    let mut hdr: *const u8;
     let mut nrd: ssize_t = 0;
     let mut ver: u32;
     /* UNUSED */
     /* check first line of file, it should be a record already */
-    hdr = unsafe { __archive_read_ahead_safe(a, 12, &mut nrd) as *const i8 };
+    hdr = unsafe { __archive_read_ahead_safe(a, 12, &mut nrd) as *const u8 };
     if hdr.is_null() {
         /* no idea what to do */
         return -1;
@@ -112,13 +112,13 @@ fn _warc_bid(mut a: *mut archive_read, best_bid: i32) -> i32 {
 fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
     let w: *mut warc_s = unsafe { (*(*a).format).data as *mut warc_s };
     let mut ver: u32;
-    let mut buf: *const i8;
+    let mut buf: *const u8;
     let mut nrd: ssize_t = 0;
-    let mut eoh: *const i8;
+    let mut eoh: *const u8;
     /* for the file name, saves some strndup()'ing */
     let mut fnam: warc_string_t = warc_string_t {
         len: 0,
-        str_0: 0 as *const i8,
+        str_0: 0 as *const u8,
     };
     /* warc record type, not that we really use it a lot */
     let mut ftyp: warc_type_t;
@@ -136,14 +136,14 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
          * and reproduce that functionality here */
         buf = unsafe {
             __archive_read_ahead_safe(a, ARCHIVE_WARC_DEFINED_PARAM.hdr_probe_len as u64, &mut nrd)
-                as *const i8
+                as *const u8
         };
         if nrd < 0 {
             /* no good */
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_WARC_DEFINED_PARAM.archive_errno_misc,
-                b"Bad record header\x00" as *const u8 as *const i8
+                b"Bad record header\x00" as *const u8
             );
             return ARCHIVE_WARC_DEFINED_PARAM.archive_fatal;
         } else if buf.is_null() {
@@ -160,7 +160,7 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_WARC_DEFINED_PARAM.archive_errno_misc,
-                b"Bad record header\x00" as *const u8 as *const i8
+                b"Bad record header\x00" as *const u8
             );
             return ARCHIVE_WARC_DEFINED_PARAM.archive_fatal;
         }
@@ -170,14 +170,14 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_WARC_DEFINED_PARAM.archive_errno_misc,
-                b"Invalid record version\x00" as *const u8 as *const i8
+                b"Invalid record version\x00" as *const u8
             );
             return ARCHIVE_WARC_DEFINED_PARAM.archive_fatal;
         } else if ver < 1200 || ver > 10000 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_WARC_DEFINED_PARAM.archive_errno_misc,
-                b"Unsupported record version: %u.%u\x00" as *const u8 as *const i8,
+                b"Unsupported record version: %u.%u\x00" as *const u8,
                 ver / 10000,
                 (ver % 10000) / 100
             );
@@ -190,7 +190,7 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_WARC_DEFINED_PARAM.einval,
-                b"Bad content length\x00" as *const u8 as *const i8
+                b"Bad content length\x00" as *const u8
             );
             return ARCHIVE_WARC_DEFINED_PARAM.archive_fatal;
         }
@@ -201,7 +201,7 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_WARC_DEFINED_PARAM.einval,
-                b"Bad record time\x00" as *const u8 as *const i8
+                b"Bad record time\x00" as *const u8
             );
             return ARCHIVE_WARC_DEFINED_PARAM.archive_fatal;
         }
@@ -212,7 +212,7 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             unsafe {
                 archive_string_sprintf(
                     &mut safe_w.sver as *mut archive_string,
-                    b"WARC/%u.%u\x00" as *const u8 as *const i8,
+                    b"WARC/%u.%u\x00" as *const u8,
                     ver / 10000,
                     (ver % 10000) / 100,
                 )
@@ -234,18 +234,18 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
                 /* check the last character in the URI to avoid creating
                  * directory endpoints as files, see Todo above */
                 if fnam.len == 0
-                    || unsafe { *fnam.str_0.offset((fnam.len - 1) as isize) } == '/' as i8
+                    || unsafe { *fnam.str_0.offset((fnam.len - 1) as isize) } == '/' as u8
                 {
                     /* break here for now */
                     fnam.len = 0;
-                    fnam.str_0 = 0 as *const i8;
+                    fnam.str_0 = 0 as *const u8;
                 }
                 /* bang to our string pool, so we save a
                  * malloc()+free() roundtrip */
                 if fnam.len + 1 > safe_w.pool.len {
                     safe_w.pool.len = ((fnam.len + 64) / 64) * 64;
                     safe_w.pool.str_0 = unsafe {
-                        realloc_safe(safe_w.pool.str_0 as *mut (), safe_w.pool.len) as *mut i8
+                        realloc_safe(safe_w.pool.str_0 as *mut (), safe_w.pool.len) as *mut u8
                     }
                 }
                 unsafe {
@@ -255,7 +255,7 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
                         fnam.len,
                     )
                 };
-                unsafe { *safe_w.pool.str_0.offset(fnam.len as isize) = '\u{0}' as i8 };
+                unsafe { *safe_w.pool.str_0.offset(fnam.len as isize) = '\u{0}' as u8 };
                 /* let no one else know about the pool, it's a secret, shhh */
                 fnam.str_0 = safe_w.pool.str_0;
 
@@ -270,7 +270,7 @@ fn _warc_rdhdr(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             }
             WT_NONE | WT_INFO | WT_META | WT_REQ | WT_RVIS | WT_CONV | WT_CONT | LAST_WT | _ => {
                 fnam.len = 0;
-                fnam.str_0 = 0 as *const i8;
+                fnam.str_0 = 0 as *const u8;
             }
         }
         /* now eat some of those delicious buffer bits */
@@ -307,7 +307,7 @@ fn _warc_read(
     off: *mut int64_t,
 ) -> i32 {
     let w: *mut warc_s = unsafe { (*(*a).format).data as *mut warc_s };
-    let rab: *const i8;
+    let rab: *const u8;
     let mut nrd: ssize_t = 0;
     let safe_off = unsafe { &mut *off };
     let safe_w = unsafe { &mut *w };
@@ -318,7 +318,7 @@ fn _warc_read(
             unsafe { __archive_read_consume_safe(a, safe_w.unconsumed as int64_t) };
             safe_w.unconsumed = 0;
         }
-        rab = unsafe { __archive_read_ahead_safe(a, 1, &mut nrd) as *const i8 };
+        rab = unsafe { __archive_read_ahead_safe(a, 1, &mut nrd) as *const u8 };
         if nrd < 0 {
             unsafe { *bsz = 0 };
             /* big catastrophe */
@@ -358,12 +358,12 @@ fn deconst(c: *const ()) -> *mut () {
     return c as uintptr_t as *mut ();
 }
 
-fn xmemmem(mut hay: *const i8, haysize: size_t, needle: *const i8, needlesize: size_t) -> *mut i8 {
-    let eoh: *const i8 = unsafe { hay.offset(haysize as isize) };
-    let eon: *const i8 = unsafe { needle.offset(needlesize as isize) };
-    let mut hp: *const i8;
-    let mut np: *const i8;
-    let mut cand: *const i8;
+fn xmemmem(mut hay: *const u8, haysize: size_t, needle: *const u8, needlesize: size_t) -> *mut u8 {
+    let eoh: *const u8 = unsafe { hay.offset(haysize as isize) };
+    let eon: *const u8 = unsafe { needle.offset(needlesize as isize) };
+    let mut hp: *const u8;
+    let mut np: *const u8;
+    let mut cand: *const u8;
     let mut hsum: u32;
     let mut nsum: u32;
     let mut eqp: u32;
@@ -373,14 +373,14 @@ fn xmemmem(mut hay: *const i8, haysize: size_t, needle: *const i8, needlesize: s
      * then run strchr() to find a candidate in HAYSTACK (i.e. a portion
      * that happens to begin with *NEEDLE) */
     if needlesize == 0 {
-        return deconst(hay as *const ()) as *mut i8;
+        return deconst(hay as *const ()) as *mut u8;
     } else {
         hay = unsafe {
-            memchr_safe(hay as *const (), unsafe { *needle as i32 }, haysize) as *const i8
+            memchr_safe(hay as *const (), unsafe { *needle as i32 }, haysize) as *const u8
         };
         if hay.is_null() {
             /* trivial */
-            return 0 as *mut i8;
+            return 0 as *mut u8;
         }
     }
 
@@ -408,10 +408,10 @@ fn xmemmem(mut hay: *const i8, haysize: size_t, needle: *const i8, needlesize: s
     /* HP now references the (NEEDLESIZE + 1)-th character. */
     if np < eon {
         /* haystack is smaller than needle, :O */
-        return 0 as *mut i8;
+        return 0 as *mut u8;
     } else if eqp != 0 {
         /* found a match */
-        return deconst(hay as *const ()) as *mut i8;
+        return deconst(hay as *const ()) as *mut u8;
     }
 
     /* now loop through the rest of haystack,
@@ -428,16 +428,16 @@ fn xmemmem(mut hay: *const i8, haysize: size_t, needle: *const i8, needlesize: s
         if hsum == nsum
             && unsafe { memcmp_safe(cand as *const (), needle as *const (), needlesize - 1) == 0 }
         {
-            return deconst(cand as *const ()) as *mut i8;
+            return deconst(cand as *const ()) as *mut u8;
         }
         hp = unsafe { hp.offset(1) }
     }
-    return 0 as *mut i8;
+    return 0 as *mut u8;
 }
 
-fn strtoi_lim(str: *const i8, ep: *mut *const i8, mut llim: i32, mut ulim: i32) -> i32 {
+fn strtoi_lim(str: *const u8, ep: *mut *const u8, mut llim: i32, mut ulim: i32) -> i32 {
     let mut res: i32 = 0;
-    let mut sp: *const i8;
+    let mut sp: *const u8;
     /* we keep track of the number of digits via rulim */
     let mut rulim: i32;
 
@@ -487,7 +487,7 @@ fn time_from_tm(t: *mut tm) -> time_t {
         + (safe_t.tm_year + 299) / 400 * 86400) as time_t;
 }
 
-fn xstrpisotime(mut s: *const i8, endptr: *mut *mut i8) -> time_t {
+fn xstrpisotime(mut s: *const u8, endptr: *mut *mut u8) -> time_t {
     /* * like strptime() but strictly for ISO 8601 Zulu strings */
     let mut tm: tm = tm {
         tm_sec: 0,
@@ -500,7 +500,7 @@ fn xstrpisotime(mut s: *const i8, endptr: *mut *mut i8) -> time_t {
         tm_yday: 0,
         tm_isdst: 0,
         tm_gmtoff: 0,
-        tm_zone: 0 as *const i8,
+        tm_zone: 0 as *const u8,
     };
     let mut res: time_t = -1;
     /* make sure tm is clean */
@@ -583,15 +583,15 @@ fn xstrpisotime(mut s: *const i8, endptr: *mut *mut i8) -> time_t {
         }
     }
     if !endptr.is_null() {
-        unsafe { *endptr = deconst(s as *const ()) as *mut i8 }
+        unsafe { *endptr = deconst(s as *const ()) as *mut u8 }
     }
     return res;
 }
 
 /* private routines */
-fn _warc_rdver(mut buf: *const i8, mut bsz: size_t) -> u32 {
-    static magic: [i8; 6] = unsafe { *transmute::<&[u8; 6], &[i8; 6]>(b"WARC/\x00") };
-    let c: *const i8;
+fn _warc_rdver(mut buf: *const u8, mut bsz: size_t) -> u32 {
+    static magic: [u8; 6] = unsafe { *transmute::<&[u8; 6], &[u8; 6]>(b"WARC/\x00") };
+    let c: *const u8;
     let mut ver: u32 = 0;
     let mut end: u32 = 0;
     if bsz < 12 as u64
@@ -599,7 +599,7 @@ fn _warc_rdver(mut buf: *const i8, mut bsz: size_t) -> u32 {
             memcmp_safe(
                 buf as *const (),
                 unsafe { magic.as_ptr() as *const () },
-                size_of::<[i8; 6]>() as u64 - 1,
+                size_of::<[u8; 6]>() as u64 - 1,
             ) != 0
         }
     {
@@ -607,10 +607,10 @@ fn _warc_rdver(mut buf: *const i8, mut bsz: size_t) -> u32 {
         return ver;
     }
     /* looks good so far, read the version number for a laugh */
-    buf = unsafe { buf.offset((size_of::<[i8; 6]>() as u64 - 1) as isize) };
+    buf = unsafe { buf.offset((size_of::<[u8; 6]>() as u64 - 1) as isize) };
     if unsafe {
         *(*__ctype_b_loc()).offset(*buf.offset(0) as isize) as i32 & _ISdigit as i32 != 0
-            && *buf.offset(1) == '.' as i8
+            && *buf.offset(1) == '.' as u8
             && *(*__ctype_b_loc()).offset(*buf.offset(2) as isize) as i32 & _ISdigit as i32 != 0
     } {
         /* we support a maximum of 2 digits in the minor version */
@@ -620,13 +620,13 @@ fn _warc_rdver(mut buf: *const i8, mut bsz: size_t) -> u32 {
             end = 1
         }
         /* set up major version */
-        ver = unsafe { ((*buf.offset(0) - '0' as i8) as u32) * 10000 };
+        ver = unsafe { ((*buf.offset(0) - '0' as u8) as u32) * 10000 };
         /* set up minor version */
         if end == 1 {
-            ver = ver.wrapping_add((unsafe { *buf.offset(2) - '0' as i8 } as u32) * 1000);
-            ver = ver.wrapping_add((unsafe { *buf.offset(3) - '0' as i8 } as u32) * 100)
+            ver = ver.wrapping_add((unsafe { *buf.offset(2) - '0' as u8 } as u32) * 1000);
+            ver = ver.wrapping_add((unsafe { *buf.offset(3) - '0' as u8 } as u32) * 100)
         } else {
-            ver = ver.wrapping_add((unsafe { *buf.offset(2) - '0' as i8 } as u32) * 100)
+            ver = ver.wrapping_add((unsafe { *buf.offset(2) - '0' as u8 } as u32) * 100)
         }
         /*
          * WARC below version 0.12 has a space-separated header
@@ -634,37 +634,32 @@ fn _warc_rdver(mut buf: *const i8, mut bsz: size_t) -> u32 {
          */
         c = unsafe { buf.offset(3).offset(end as isize) };
         if ver >= 1200 {
-            if unsafe {
-                memcmp_safe(
-                    c as *const (),
-                    b"\r\n\x00" as *const u8 as *const i8 as *const (),
-                    2,
-                ) != 0
-            } {
+            if unsafe { memcmp_safe(c as *const (), b"\r\n\x00" as *const u8 as *const (), 2) != 0 }
+            {
                 ver = 0
             }
-        } else if unsafe { *c != ' ' as i8 && *c != '\t' as i8 } {
+        } else if unsafe { *c != ' ' as u8 && *c != '\t' as u8 } {
             ver = 0
         }
     }
     return ver;
 }
-fn _warc_rdtyp(mut buf: *const i8, mut bsz: size_t) -> u32 {
-    static _key: [i8; 13] = unsafe { *transmute::<&[u8; 13], &[i8; 13]>(b"\r\nWARC-Type:\x00") };
-    let mut val: *const i8;
-    let eol: *const i8;
+fn _warc_rdtyp(mut buf: *const u8, mut bsz: size_t) -> u32 {
+    static _key: [u8; 13] = unsafe { *transmute::<&[u8; 13], &[u8; 13]>(b"\r\nWARC-Type:\x00") };
+    let mut val: *const u8;
+    let eol: *const u8;
     val = xmemmem(
         buf,
         bsz,
         unsafe { _key.as_ptr() },
-        size_of::<[i8; 13]>() as u64 - 1,
+        size_of::<[u8; 13]>() as u64 - 1,
     );
     if val.is_null() {
         /* ver < 1200U */
         /* no bother */
         return WT_NONE;
     }
-    val = unsafe { val.offset((size_of::<[i8; 13]>() as u64 - 1) as isize) };
+    val = unsafe { val.offset((size_of::<[u8; 13]>() as u64 - 1) as isize) };
     eol = _warc_find_eol(val, unsafe {
         buf.offset(bsz as isize).offset_from(val) as size_t
     });
@@ -673,14 +668,14 @@ fn _warc_rdtyp(mut buf: *const i8, mut bsz: size_t) -> u32 {
         return WT_NONE;
     }
     /* overread whitespace */
-    while unsafe { val < eol && (*val == ' ' as i8 || *val == '\t' as i8) } {
+    while unsafe { val < eol && (*val == ' ' as u8 || *val == '\t' as u8) } {
         unsafe { val = val.offset(1) }
     }
     if unsafe { val.offset(8) } == eol {
         if unsafe {
             memcmp_safe(
                 val as *const (),
-                b"resource\x00" as *const u8 as *const i8 as *const (),
+                b"resource\x00" as *const u8 as *const (),
                 8,
             ) == 0
         } {
@@ -689,7 +684,7 @@ fn _warc_rdtyp(mut buf: *const i8, mut bsz: size_t) -> u32 {
             if unsafe {
                 memcmp_safe(
                     val as *const (),
-                    b"response\x00" as *const u8 as *const i8 as *const (),
+                    b"response\x00" as *const u8 as *const (),
                     8,
                 ) == 0
             } {
@@ -699,29 +694,29 @@ fn _warc_rdtyp(mut buf: *const i8, mut bsz: size_t) -> u32 {
     }
     return WT_NONE;
 }
-fn _warc_rduri(mut buf: *const i8, mut bsz: size_t) -> warc_string_t {
-    static _key: [i8; 19] =
-        unsafe { *transmute::<&[u8; 19], &[i8; 19]>(b"\r\nWARC-Target-URI:\x00") };
-    let mut val: *const i8;
-    let mut uri: *const i8;
-    let eol: *const i8;
-    let mut p: *const i8;
+fn _warc_rduri(mut buf: *const u8, mut bsz: size_t) -> warc_string_t {
+    static _key: [u8; 19] =
+        unsafe { *transmute::<&[u8; 19], &[u8; 19]>(b"\r\nWARC-Target-URI:\x00") };
+    let mut val: *const u8;
+    let mut uri: *const u8;
+    let eol: *const u8;
+    let mut p: *const u8;
     let mut res = warc_string_t {
         len: 0,
-        str_0: 0 as *const i8,
+        str_0: 0 as *const u8,
     };
     val = xmemmem(
         buf,
         bsz,
         unsafe { _key.as_ptr() },
-        size_of::<[i8; 19]>() as u64 - 1,
+        size_of::<[u8; 19]>() as u64 - 1,
     );
     if val.is_null() {
         /* no bother */
         return res;
     }
     /* overread whitespace */
-    val = unsafe { val.offset((size_of::<[i8; 19]>() as u64 - 1) as isize) };
+    val = unsafe { val.offset((size_of::<[u8; 19]>() as u64 - 1) as isize) };
     eol = _warc_find_eol(val, unsafe {
         buf.offset(bsz as isize).offset_from(val) as size_t
     });
@@ -729,14 +724,14 @@ fn _warc_rduri(mut buf: *const i8, mut bsz: size_t) -> warc_string_t {
         /* no end of line */
         return res;
     }
-    while unsafe { val < eol && (*val == ' ' as i8 || *val == '\t' as i8) } {
+    while unsafe { val < eol && (*val == ' ' as u8 || *val == '\t' as u8) } {
         val = unsafe { val.offset(1) }
     }
     /* overread URL designators */
     uri = xmemmem(
         val,
         unsafe { eol.offset_from(val) as size_t },
-        b"://\x00" as *const u8 as *const i8,
+        b"://\x00" as *const u8,
         3,
     );
     if uri.is_null() {
@@ -758,32 +753,18 @@ fn _warc_rduri(mut buf: *const i8, mut bsz: size_t) -> warc_string_t {
     /* move uri to point to after :// */
     uri = unsafe { uri.offset(3) };
     /* now then, inspect the URI */
-    if !(unsafe {
-        memcmp_safe(
-            val as *const (),
-            b"file\x00" as *const u8 as *const i8 as *const (),
-            4,
-        ) == 0
-    }) {
-        if unsafe {
-            memcmp_safe(
-                val as *const (),
-                b"http\x00" as *const u8 as *const i8 as *const (),
-                4,
-            ) == 0
-        } || unsafe {
-            memcmp_safe(
-                val as *const (),
-                b"ftp\x00" as *const u8 as *const i8 as *const (),
-                3,
-            ) == 0
-        } {
+    if !(unsafe { memcmp_safe(val as *const (), b"file\x00" as *const u8 as *const (), 4) == 0 }) {
+        if unsafe { memcmp_safe(val as *const (), b"http\x00" as *const u8 as *const (), 4) == 0 }
+            || unsafe {
+                memcmp_safe(val as *const (), b"ftp\x00" as *const u8 as *const (), 3) == 0
+            }
+        {
             /* overread domain, and the first / */
             while uri < eol && {
                 unsafe {
                     let before_uri = uri;
                     uri = uri.offset(1);
-                    *before_uri != '/' as i8
+                    *before_uri != '/' as u8
                 }
             } {}
         } else {
@@ -795,24 +776,24 @@ fn _warc_rduri(mut buf: *const i8, mut bsz: size_t) -> warc_string_t {
     res.len = unsafe { eol.offset_from(uri) as size_t };
     return res;
 }
-fn _warc_rdlen(mut buf: *const i8, mut bsz: size_t) -> ssize_t {
-    static _key: [i8; 18] =
-        unsafe { *transmute::<&[u8; 18], &[i8; 18]>(b"\r\nContent-Length:\x00") };
-    let mut val: *const i8;
-    let eol: *const i8;
-    let mut on: *mut i8 = 0 as *mut i8;
+fn _warc_rdlen(mut buf: *const u8, mut bsz: size_t) -> ssize_t {
+    static _key: [u8; 18] =
+        unsafe { *transmute::<&[u8; 18], &[u8; 18]>(b"\r\nContent-Length:\x00") };
+    let mut val: *const u8;
+    let eol: *const u8;
+    let mut on: *mut u8 = 0 as *mut u8;
     let mut len: i64;
     val = xmemmem(
         buf,
         bsz,
         unsafe { _key.as_ptr() },
-        (size_of::<[i8; 18]>() as u64) - 1,
+        (size_of::<[u8; 18]>() as u64) - 1,
     );
     if val.is_null() {
         /* no bother */
         return -1;
     }
-    val = unsafe { val.offset((size_of::<[i8; 18]>() as u64 - 1) as isize) };
+    val = unsafe { val.offset((size_of::<[u8; 18]>() as u64 - 1) as isize) };
     eol = _warc_find_eol(val, unsafe {
         buf.offset(bsz as isize).offset_from(val) as size_t
     });
@@ -822,7 +803,7 @@ fn _warc_rdlen(mut buf: *const i8, mut bsz: size_t) -> ssize_t {
     }
     /* skip leading whitespace */
     unsafe {
-        while val < eol && (*val == ' ' as i8 || *val == '\t' as i8) {
+        while val < eol && (*val == ' ' as u8 || *val == '\t' as u8) {
             val = val.offset(1)
         }
     }
@@ -832,29 +813,29 @@ fn _warc_rdlen(mut buf: *const i8, mut bsz: size_t) -> ssize_t {
     }
     unsafe { *__errno_location_safe() = 0 };
     len = unsafe { strtol_safe(val, &mut on, 10) };
-    if unsafe { *__errno_location_safe() != 0 } || on != eol as *mut i8 {
+    if unsafe { *__errno_location_safe() != 0 } || on != eol as *mut u8 {
         /* line must end here */
         return -1;
     }
     return len as ssize_t;
 }
-fn _warc_rdrtm(mut buf: *const i8, mut bsz: size_t) -> time_t {
-    static _key: [i8; 13] = unsafe { *transmute::<&[u8; 13], &[i8; 13]>(b"\r\nWARC-Date:\x00") };
-    let mut val: *const i8;
-    let eol: *const i8;
-    let mut on: *mut i8 = 0 as *mut i8;
+fn _warc_rdrtm(mut buf: *const u8, mut bsz: size_t) -> time_t {
+    static _key: [u8; 13] = unsafe { *transmute::<&[u8; 13], &[u8; 13]>(b"\r\nWARC-Date:\x00") };
+    let mut val: *const u8;
+    let eol: *const u8;
+    let mut on: *mut u8 = 0 as *mut u8;
     let res: time_t;
     val = xmemmem(
         buf,
         bsz,
         unsafe { _key.as_ptr() },
-        size_of::<[i8; 13]>() as u64 - 1,
+        size_of::<[u8; 13]>() as u64 - 1,
     );
     if val.is_null() {
         /* no bother */
         return -1;
     }
-    val = unsafe { val.offset((size_of::<[i8; 13]>() as u64 - 1) as isize) };
+    val = unsafe { val.offset((size_of::<[u8; 13]>() as u64 - 1) as isize) };
     eol = _warc_find_eol(val, unsafe {
         buf.offset(bsz as isize).offset_from(val) as size_t
     });
@@ -864,30 +845,30 @@ fn _warc_rdrtm(mut buf: *const i8, mut bsz: size_t) -> time_t {
     }
     /* xstrpisotime() kindly overreads whitespace for us, so use that */
     res = xstrpisotime(val, &mut on);
-    if on != eol as *mut i8 {
+    if on != eol as *mut u8 {
         /* line must end here */
         return -1;
     }
     return res;
 }
-fn _warc_rdmtm(mut buf: *const i8, mut bsz: size_t) -> time_t {
-    static _key: [i8; 17] =
-        unsafe { *transmute::<&[u8; 17], &[i8; 17]>(b"\r\nLast-Modified:\x00") };
-    let mut val: *const i8;
-    let eol: *const i8;
-    let mut on: *mut i8 = 0 as *mut i8;
+fn _warc_rdmtm(mut buf: *const u8, mut bsz: size_t) -> time_t {
+    static _key: [u8; 17] =
+        unsafe { *transmute::<&[u8; 17], &[u8; 17]>(b"\r\nLast-Modified:\x00") };
+    let mut val: *const u8;
+    let eol: *const u8;
+    let mut on: *mut u8 = 0 as *mut u8;
     let res: time_t;
     val = xmemmem(
         buf,
         bsz,
         unsafe { _key.as_ptr() },
-        size_of::<[i8; 17]>() as u64 - 1,
+        size_of::<[u8; 17]>() as u64 - 1,
     );
     if val.is_null() {
         /* no bother */
         return -1;
     }
-    val = unsafe { val.offset((size_of::<[i8; 17]>() as u64 - 1) as isize) };
+    val = unsafe { val.offset((size_of::<[u8; 17]>() as u64 - 1) as isize) };
     eol = _warc_find_eol(val, unsafe {
         buf.offset(bsz as isize).offset_from(val) as size_t
     });
@@ -897,32 +878,32 @@ fn _warc_rdmtm(mut buf: *const i8, mut bsz: size_t) -> time_t {
     }
     /* xstrpisotime() kindly overreads whitespace for us, so use that */
     res = xstrpisotime(val, &mut on);
-    if on != eol as *mut i8 {
+    if on != eol as *mut u8 {
         /* line must end here */
         return -1;
     }
     return res;
 }
-fn _warc_find_eoh(mut buf: *const i8, mut bsz: size_t) -> *const i8 {
-    static _marker: [i8; 5] = unsafe { *transmute::<&[u8; 5], &[i8; 5]>(b"\r\n\r\n\x00") };
-    let mut hit: *const i8 = xmemmem(
+fn _warc_find_eoh(mut buf: *const u8, mut bsz: size_t) -> *const u8 {
+    static _marker: [u8; 5] = unsafe { *transmute::<&[u8; 5], &[u8; 5]>(b"\r\n\r\n\x00") };
+    let mut hit: *const u8 = xmemmem(
         buf,
         bsz,
         unsafe { _marker.as_ptr() },
-        size_of::<[i8; 5]>() as u64 - 1,
+        size_of::<[u8; 5]>() as u64 - 1,
     );
     if !hit.is_null() {
-        hit = unsafe { hit.offset((size_of::<[i8; 5]>() as u64 - 1) as isize) }
+        hit = unsafe { hit.offset((size_of::<[u8; 5]>() as u64 - 1) as isize) }
     }
     return hit;
 }
-fn _warc_find_eol(mut buf: *const i8, mut bsz: size_t) -> *const i8 {
-    static _marker: [i8; 3] = unsafe { *transmute::<&[u8; 3], &[i8; 3]>(b"\r\n\x00") };
-    let hit: *const i8 = xmemmem(
+fn _warc_find_eol(mut buf: *const u8, mut bsz: size_t) -> *const u8 {
+    static _marker: [u8; 3] = unsafe { *transmute::<&[u8; 3], &[u8; 3]>(b"\r\n\x00") };
+    let hit: *const u8 = xmemmem(
         buf,
         bsz,
         unsafe { _marker.as_ptr() },
-        size_of::<[i8; 3]>() as u64 - 1,
+        size_of::<[u8; 3]>() as u64 - 1,
     );
     return hit;
 }

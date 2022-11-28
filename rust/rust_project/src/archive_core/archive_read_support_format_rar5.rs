@@ -5,7 +5,7 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
-
+use std::mem::size_of;
 /* Real RAR5 magic number is:
  *
  * 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00
@@ -50,9 +50,7 @@ fn cdeque_init(d: *mut cdeque, max_capacity_power_of_2: i32) -> i32 {
     }
     cdeque_clear(d);
     safe_d.arr = unsafe {
-        malloc_safe(
-            (::std::mem::size_of::<*mut ()>() as u64).wrapping_mul(max_capacity_power_of_2 as u64),
-        )
+        malloc_safe((size_of::<*mut ()>() as u64).wrapping_mul(max_capacity_power_of_2 as u64))
     } as *mut size_t;
     return if !safe_d.arr.is_null() {
         CDE_OK as i32
@@ -229,7 +227,7 @@ fn write_filter_data(rar: *mut rar5, offset: uint32_t, value: uint32_t) {
 fn add_new_filter(rar: *mut rar5) -> *mut filter_info {
     let safe_rar = unsafe { &mut *rar };
     let mut f: *mut filter_info =
-        unsafe { calloc_safe(1, ::std::mem::size_of::<filter_info>() as u64) as *mut filter_info };
+        unsafe { calloc_safe(1, size_of::<filter_info>() as u64) as *mut filter_info };
     if f.is_null() {
         return 0 as *mut filter_info;
     }
@@ -364,7 +362,7 @@ fn run_filter(a: *mut archive_read, flt: *mut filter_info) -> i32 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.enomem,
-            b"Can\'t allocate memory for filter data.\x00" as *const u8 as *const i8
+            b"Can\'t allocate memory for filter data.\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -379,7 +377,7 @@ fn run_filter(a: *mut archive_read, flt: *mut filter_info) -> i32 {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                b"Unsupported filter type: 0x%x\x00" as *const u8 as *const i8,
+                b"Unsupported filter type: 0x%x\x00" as *const u8,
                 (*flt).type_0
             );
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
@@ -403,7 +401,7 @@ fn run_filter(a: *mut archive_read, flt: *mut filter_info) -> i32 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Stack overflow when submitting unpacked data\x00" as *const u8 as *const i8
+            b"Stack overflow when submitting unpacked data\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -578,7 +576,7 @@ fn reset_file_context(mut rar: *mut rar5) {
         memset_safe(
             &mut safe_rar.file as *mut file_header as *mut (),
             0,
-            ::std::mem::size_of::<file_header>() as u64,
+            size_of::<file_header>() as u64,
         );
         blake2sp_init_safe(&mut safe_rar.file.b2state, 32);
     }
@@ -603,7 +601,7 @@ fn get_archive_read(a: *mut archive, ar: *mut *mut archive_read) -> i32 {
             a,
             0xdeb0c5,
             1,
-            b"archive_read_support_format_rar5\x00" as *const u8 as *const i8,
+            b"archive_read_support_format_rar5\x00" as *const u8,
         )
     };
     if magic_test == ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal {
@@ -830,16 +828,16 @@ fn read_u64(a: *mut archive_read, pvalue: *mut uint64_t) -> i32 {
 
 fn bid_standard(a: *mut archive_read) -> i32 {
     let mut p: *const uint8_t = 0 as *const uint8_t;
-    let mut signature: [i8; 8] = [0; 8];
+    let mut signature: [u8; 8] = [0; 8];
     rar5_signature(signature.as_mut_ptr());
-    if read_ahead(a, ::std::mem::size_of::<[u8; 8]>() as u64, &mut p) == 0 {
+    if read_ahead(a, size_of::<[u8; 8]>() as u64, &mut p) == 0 {
         return -1;
     }
     if unsafe {
         memcmp_safe(
             signature.as_mut_ptr() as *const (),
             p as *const (),
-            ::std::mem::size_of::<[u8; 8]>() as u64,
+            size_of::<[u8; 8]>() as u64,
         )
     } == 0
     {
@@ -860,7 +858,7 @@ fn rar5_bid(a: *mut archive_read, best_bid: i32) -> i32 {
     return -1;
 }
 
-fn rar5_options(a: *mut archive_read, key: *const i8, val: *const i8) -> i32 {
+fn rar5_options(a: *mut archive_read, key: *const u8, val: *const u8) -> i32 {
     /* No options supported in this version. Return the ARCHIVE_WARN code
      * to signal the options supervisor that the unpacker didn't handle
      * setting this option. */
@@ -870,7 +868,7 @@ fn rar5_options(a: *mut archive_read, key: *const i8, val: *const i8) -> i32 {
 fn init_header(a: *mut archive_read) {
     let safe_a = unsafe { &mut *a };
     safe_a.archive.archive_format = ARCHIVE_RAR5_DEFINED_PARAM.archive_format_rar_v5;
-    safe_a.archive.archive_format_name = b"RAR5\x00" as *const u8 as *const i8;
+    safe_a.archive.archive_format_name = b"RAR5\x00" as *const u8;
 }
 
 fn init_window_mask(mut rar: *mut rar5) {
@@ -924,7 +922,7 @@ fn parse_file_extra_hash(
      * CRC32. */
     if hash_type == BLAKE2sp as i32 as u64 {
         let mut p: *const uint8_t = 0 as *const uint8_t;
-        let hash_size: i32 = ::std::mem::size_of::<[uint8_t; 32]>() as u64 as i32;
+        let hash_size: i32 = size_of::<[uint8_t; 32]>() as u64 as i32;
         if read_ahead(a, hash_size as size_t, &mut p) == 0 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
@@ -944,7 +942,7 @@ fn parse_file_extra_hash(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Unsupported hash type (0x%x)\x00" as *const u8 as *const i8,
+            b"Unsupported hash type (0x%x)\x00" as *const u8,
             hash_type as i32
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
@@ -960,7 +958,7 @@ fn time_win_to_unix(win_time: uint64_t) -> uint64_t {
 
 fn parse_htime_item(
     a: *mut archive_read,
-    unix_time: i8,
+    unix_time: u8,
     where_0: *mut uint64_t,
     extra_data_size: *mut ssize_t,
 ) -> i32 {
@@ -994,16 +992,16 @@ fn parse_file_extra_version(
     let mut value_len: size_t = 0;
     let safe_extra_data_size = unsafe { &mut *extra_data_size };
     let mut version_string: archive_string = archive_string {
-        s: 0 as *mut i8,
+        s: 0 as *mut u8,
         length: 0,
         buffer_length: 0,
     };
     let mut name_utf8_string: archive_string = archive_string {
-        s: 0 as *mut i8,
+        s: 0 as *mut u8,
         length: 0,
         buffer_length: 0,
     };
-    let mut cur_filename: *const i8 = 0 as *const i8;
+    let mut cur_filename: *const u8 = 0 as *const u8;
     /* Flags are ignored. */
     if read_var_sized(a, &mut flags, &mut value_len) == 0 {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
@@ -1027,21 +1025,21 @@ fn parse_file_extra_version(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-            b"Version entry without file name\x00" as *const u8 as *const i8
+            b"Version entry without file name\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
-    version_string.s = 0 as *mut i8;
+    version_string.s = 0 as *mut u8;
     version_string.length = 0;
     version_string.buffer_length = 0;
-    name_utf8_string.s = 0 as *mut i8;
+    name_utf8_string.s = 0 as *mut u8;
     name_utf8_string.length = 0;
     name_utf8_string.buffer_length = 0;
     /* Prepare a ;123 suffix for the filename, where '123' is the version
      * value of this file. */
     archive_string_sprintf_safe!(
         &mut version_string as *mut archive_string,
-        b";%zu\x00" as *const u8 as *const i8,
+        b";%zu\x00" as *const u8,
         version
     );
     /* Build the new filename. */
@@ -1063,7 +1061,7 @@ fn parse_file_extra_htime(
     rar: *mut rar5,
     extra_data_size: *mut ssize_t,
 ) -> i32 {
-    let mut unix_time: i8 = 0;
+    let mut unix_time: u8 = 0;
     let mut flags: size_t = 0;
     let mut value_len: size_t = 0;
     let safe_extra_data_size = unsafe { &mut *extra_data_size };
@@ -1076,7 +1074,7 @@ fn parse_file_extra_htime(
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, value_len as int64_t) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
-    unix_time = (flags & IS_UNIX as i32 as u64) as i8;
+    unix_time = (flags & IS_UNIX as i32 as u64) as u8;
     if flags & HAS_MTIME as i32 as u64 != 0 {
         parse_htime_item(a, unix_time, &mut safe_rar.file.e_mtime, extra_data_size);
         unsafe {
@@ -1112,7 +1110,7 @@ fn parse_file_extra_redir(
 ) -> i32 {
     let mut value_size: uint64_t = 0 as i32 as uint64_t;
     let mut target_size: size_t = 0 as i32 as size_t;
-    let mut target_utf8_buf: [i8; 8192] = [0; 8192];
+    let mut target_utf8_buf: [u8; 8192] = [0; 8192];
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let safe_rar = unsafe { &mut *rar };
     let safe_extra_data_size = unsafe { &mut *extra_data_size };
@@ -1144,7 +1142,7 @@ fn parse_file_extra_redir(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Link target is too long\x00" as *const u8 as *const i8
+            b"Link target is too long\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1152,7 +1150,7 @@ fn parse_file_extra_redir(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"No link target specified\x00" as *const u8 as *const i8
+            b"No link target specified\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1163,7 +1161,7 @@ fn parse_file_extra_redir(
             target_size,
         )
     };
-    target_utf8_buf[target_size as usize] = 0 as i32 as i8;
+    target_utf8_buf[target_size as usize] = 0 as i32 as u8;
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, target_size as int64_t) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
@@ -1210,7 +1208,7 @@ fn parse_file_extra_owner(
     let mut id: uint64_t = 0;
     let mut name_len: size_t = 0;
     let mut name_size: size_t = 0;
-    let mut namebuf: [i8; 256] = [0; 256];
+    let mut namebuf: [u8; 256] = [0; 256];
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let safe_extra_data_size = unsafe { &mut *extra_data_size };
     if read_var(a, &mut flags, &mut value_size) == 0 {
@@ -1366,7 +1364,7 @@ fn process_head_file(
     let mut crc: uint32_t = 0;
     let mut c_method: i32 = 0;
     let mut c_version: i32 = 0;
-    let mut name_utf8_buf: [i8; 8192] = [0; 8192];
+    let mut name_utf8_buf: [u8; 8192] = [0; 8192];
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let safe_rar = unsafe { &mut *rar };
     unsafe { archive_entry_clear_safe(entry) };
@@ -1392,7 +1390,7 @@ fn process_head_file(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"no data found in file/service block\x00" as *const u8 as *const i8
+            b"no data found in file/service block\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1406,7 +1404,7 @@ fn process_head_file(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-            b"Files with unknown unpacked size are not supported\x00" as *const u8 as *const i8
+            b"Files with unknown unpacked size are not supported\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1449,7 +1447,7 @@ fn process_head_file(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
             b"Declared solid file, but no window buffer initialized yet.\x00" as *const u8
-                as *const i8
+                as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1461,7 +1459,7 @@ fn process_head_file(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Declared dictionary size is not supported.\x00" as *const u8 as *const i8
+            b"Declared dictionary size is not supported.\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1474,7 +1472,7 @@ fn process_head_file(
             archive_set_error_safe!(&mut (*a).archive as *mut archive,
                               ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
                               b"Window size for this solid file doesn\'t match the window size used in previous solid file. \x00"
-                                  as *const u8 as *const i8);
+                                  as *const u8);
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
     }
@@ -1515,30 +1513,29 @@ fn process_head_file(
         unsafe { archive_entry_set_mode_safe(entry, mode) };
         if file_attr & (ATTR_READONLY as i32 | ATTR_HIDDEN as i32 | ATTR_SYSTEM as i32) as u64 != 0
         {
-            let mut fflags_text: *mut i8 = 0 as *mut i8;
-            let mut ptr: *mut i8 = 0 as *mut i8;
+            let mut fflags_text: *mut u8 = 0 as *mut u8;
+            let mut ptr: *mut u8 = 0 as *mut u8;
             /* allocate for "rdonly,hidden,system," */
             fflags_text = unsafe {
-                malloc_safe((22 as i32 as u64).wrapping_mul(::std::mem::size_of::<i8>() as u64))
-                    as *mut i8
+                malloc_safe((22 as i32 as u64).wrapping_mul(size_of::<u8>() as u64)) as *mut u8
             };
             if !fflags_text.is_null() {
                 ptr = fflags_text;
                 if file_attr & ATTR_READONLY as i32 as u64 != 0 {
-                    unsafe { strcpy_safe(ptr, b"rdonly,\x00" as *const u8 as *const i8) };
+                    unsafe { strcpy_safe(ptr, b"rdonly,\x00" as *const u8) };
                     unsafe { ptr = ptr.offset(7) }
                 }
                 if file_attr & ATTR_HIDDEN as i32 as u64 != 0 {
-                    unsafe { strcpy_safe(ptr, b"hidden,\x00" as *const u8 as *const i8) };
+                    unsafe { strcpy_safe(ptr, b"hidden,\x00" as *const u8) };
                     unsafe { ptr = ptr.offset(7) }
                 }
                 if file_attr & ATTR_SYSTEM as i32 as u64 != 0 {
-                    unsafe { strcpy_safe(ptr, b"system,\x00" as *const u8 as *const i8) };
+                    unsafe { strcpy_safe(ptr, b"system,\x00" as *const u8) };
                     unsafe { ptr = ptr.offset(7) }
                 }
                 if ptr > fflags_text {
                     /* Delete trailing comma */
-                    unsafe { *ptr.offset(-(1)) = '\u{0}' as i32 as i8 };
+                    unsafe { *ptr.offset(-(1)) = '\u{0}' as i32 as u8 };
                     unsafe { archive_entry_copy_fflags_text_safe(entry, fflags_text) };
                 }
                 unsafe { free_safe(fflags_text as *mut ()) };
@@ -1552,7 +1549,7 @@ fn process_head_file(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Unsupported Host OS: 0x%x\x00" as *const u8 as *const i8,
+            b"Unsupported Host OS: 0x%x\x00" as *const u8,
             host_os as i32
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
@@ -1567,7 +1564,7 @@ fn process_head_file(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Filename is too long\x00" as *const u8 as *const i8
+            b"Filename is too long\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1575,7 +1572,7 @@ fn process_head_file(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"No filename specified\x00" as *const u8 as *const i8
+            b"No filename specified\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1586,7 +1583,7 @@ fn process_head_file(
             name_size,
         )
     };
-    name_utf8_buf[name_size as usize] = 0 as i32 as i8;
+    name_utf8_buf[name_size as usize] = 0 as i32 as u8;
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, name_size as int64_t) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
@@ -1699,7 +1696,7 @@ fn process_head_main(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                b"Invalid volume number\x00" as *const u8 as *const i8
+                b"Invalid volume number\x00" as *const u8
             );
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
@@ -1731,7 +1728,7 @@ fn process_head_main(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Invalid extra field size\x00" as *const u8 as *const i8
+            b"Invalid extra field size\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1748,7 +1745,7 @@ fn process_head_main(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                b"Unsupported extra type (0x%x)\x00" as *const u8 as *const i8,
+                b"Unsupported extra type (0x%x)\x00" as *const u8,
                 extra_field_id as i32
             );
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
@@ -1865,7 +1862,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Base block header is too large\x00" as *const u8 as *const i8
+            b"Base block header is too large\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1874,7 +1871,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Too small block encountered (%zu bytes)\x00" as *const u8 as *const i8,
+            b"Too small block encountered (%zu bytes)\x00" as *const u8,
             raw_hdr_size
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
@@ -1890,7 +1887,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Header CRC error\x00" as *const u8 as *const i8
+            b"Header CRC error\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -1937,7 +1934,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                b"Encryption is not supported\x00" as *const u8 as *const i8
+                b"Encryption is not supported\x00" as *const u8
             );
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
@@ -1959,7 +1956,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
                         archive_set_error_safe!(
                             &mut (*a).archive as *mut archive,
                             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                            b"Header error\x00" as *const u8 as *const i8
+                            b"Header error\x00" as *const u8
                         );
                         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                     }
@@ -1978,7 +1975,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                    b"Header type error\x00" as *const u8 as *const i8
+                    b"Header type error\x00" as *const u8
                 );
                 return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
             } else {
@@ -2025,7 +2022,7 @@ fn rar5_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
     }
     if safe_rar.skipped_magic == 0 {
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok
-            != consume(a, ::std::mem::size_of::<[u8; 8]>() as u64 as int64_t)
+            != consume(a, size_of::<[u8; 8]>() as u64 as int64_t)
         {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
@@ -2065,27 +2062,27 @@ fn init_unpack(mut rar: *mut rar5) {
         memset_safe(
             &mut safe_rar.cstate.bd as *mut decode_table as *mut (),
             0,
-            ::std::mem::size_of::<decode_table>() as u64,
+            size_of::<decode_table>() as u64,
         );
         memset_safe(
             &mut safe_rar.cstate.ld as *mut decode_table as *mut (),
             0,
-            ::std::mem::size_of::<decode_table>() as u64,
+            size_of::<decode_table>() as u64,
         );
         memset_safe(
             &mut safe_rar.cstate.dd as *mut decode_table as *mut (),
             0,
-            ::std::mem::size_of::<decode_table>() as u64,
+            size_of::<decode_table>() as u64,
         );
         memset_safe(
             &mut safe_rar.cstate.ldd as *mut decode_table as *mut (),
             0,
-            ::std::mem::size_of::<decode_table>() as u64,
+            size_of::<decode_table>() as u64,
         );
         memset_safe(
             &mut safe_rar.cstate.rd as *mut decode_table as *mut (),
             0,
-            ::std::mem::size_of::<decode_table>() as u64,
+            size_of::<decode_table>() as u64,
         );
     }
 }
@@ -2142,12 +2139,12 @@ fn create_decode_tables(
         memset_safe(
             &mut lc as *mut [i32; 16] as *mut (),
             0,
-            ::std::mem::size_of::<[i32; 16]>() as u64,
+            size_of::<[i32; 16]>() as u64,
         );
         memset_safe(
             safe_table.decode_num.as_mut_ptr() as *mut (),
             0,
-            ::std::mem::size_of::<[uint16_t; 306]>() as u64,
+            size_of::<[uint16_t; 306]>() as u64,
         );
     }
     safe_table.size = size as uint32_t;
@@ -2177,7 +2174,7 @@ fn create_decode_tables(
         memcpy_safe(
             decode_pos_clone.as_mut_ptr() as *mut (),
             safe_table.decode_pos.as_mut_ptr() as *const (),
-            ::std::mem::size_of::<[uint32_t; 16]>() as u64,
+            size_of::<[uint32_t; 16]>() as u64,
         );
     }
     i = 0;
@@ -2198,8 +2195,8 @@ fn create_decode_tables(
         let mut dist: i32 = 0;
         let mut pos: i32 = 0;
         while cur_len
-            < (::std::mem::size_of::<[int32_t; 16]>() as u64)
-                .wrapping_div(::std::mem::size_of::<int32_t>() as u64) as ssize_t
+            < (size_of::<[int32_t; 16]>() as u64).wrapping_div(size_of::<int32_t>() as u64)
+                as ssize_t
             && bit_field >= safe_table.decode_len[cur_len as usize]
         {
             cur_len += 1
@@ -2210,8 +2207,8 @@ fn create_decode_tables(
         pos = safe_table.decode_pos[(cur_len & 15 as i32 as i64) as usize].wrapping_add(dist as u32)
             as i32;
         if cur_len
-            < (::std::mem::size_of::<[uint32_t; 16]>() as u64)
-                .wrapping_div(::std::mem::size_of::<uint32_t>() as u64) as ssize_t
+            < (size_of::<[uint32_t; 16]>() as u64).wrapping_div(size_of::<uint32_t>() as u64)
+                as ssize_t
             && pos < size
         {
             safe_table.quick_num[code as usize] = safe_table.decode_num[pos as usize]
@@ -2290,7 +2287,7 @@ fn parse_tables(a: *mut archive_read, rar: *mut rar5, p: *const uint8_t) -> i32 
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                b"Truncated data in huffman tables\x00" as *const u8 as *const i8
+                b"Truncated data in huffman tables\x00" as *const u8
             );
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
@@ -2347,7 +2344,7 @@ fn parse_tables(a: *mut archive_read, rar: *mut rar5, p: *const uint8_t) -> i32 
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Decoding huffman tables failed\x00" as *const u8 as *const i8
+            b"Decoding huffman tables failed\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -2359,7 +2356,7 @@ fn parse_tables(a: *mut archive_read, rar: *mut rar5, p: *const uint8_t) -> i32 
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                b"Truncated data in huffman tables (#2)\x00" as *const u8 as *const i8
+                b"Truncated data in huffman tables (#2)\x00" as *const u8
             );
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
@@ -2368,7 +2365,7 @@ fn parse_tables(a: *mut archive_read, rar: *mut rar5, p: *const uint8_t) -> i32 
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                b"Decoding huffman tables failed\x00" as *const u8 as *const i8
+                b"Decoding huffman tables failed\x00" as *const u8
             );
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
@@ -2406,7 +2403,7 @@ fn parse_tables(a: *mut archive_read, rar: *mut rar5, p: *const uint8_t) -> i32 
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                    b"Unexpected error when decoding huffman tables\x00" as *const u8 as *const i8
+                    b"Unexpected error when decoding huffman tables\x00" as *const u8
                 );
                 return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
             }
@@ -2446,7 +2443,7 @@ fn parse_tables(a: *mut archive_read, rar: *mut rar5, p: *const uint8_t) -> i32 
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Failed to create literal table\x00" as *const u8 as *const i8
+            b"Failed to create literal table\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -2460,7 +2457,7 @@ fn parse_tables(a: *mut archive_read, rar: *mut rar5, p: *const uint8_t) -> i32 
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Failed to create distance table\x00" as *const u8 as *const i8
+            b"Failed to create distance table\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -2474,7 +2471,7 @@ fn parse_tables(a: *mut archive_read, rar: *mut rar5, p: *const uint8_t) -> i32 
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Failed to create lower bits of distances table\x00" as *const u8 as *const i8
+            b"Failed to create lower bits of distances table\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -2488,7 +2485,7 @@ fn parse_tables(a: *mut archive_read, rar: *mut rar5, p: *const uint8_t) -> i32 
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Failed to create repeating distances table\x00" as *const u8 as *const i8
+            b"Failed to create repeating distances table\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -2510,14 +2507,14 @@ fn parse_block_header(
         memcpy_safe(
             hdr as *mut (),
             p as *const (),
-            ::std::mem::size_of::<compressed_block_header>() as u64,
+            size_of::<compressed_block_header>() as u64,
         )
     };
     if bf_byte_count(hdr) > 2 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Unsupported block header size (was %d, max is 2)\x00" as *const u8 as *const i8,
+            b"Unsupported block header size (was %d, max is 2)\x00" as *const u8,
             bf_byte_count(hdr) as i32
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
@@ -2559,7 +2556,7 @@ fn parse_block_header(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Block checksum error: got 0x%x, expected 0x%x\x00" as *const u8 as *const i8,
+            b"Block checksum error: got 0x%x, expected 0x%x\x00" as *const u8,
             (*hdr).block_cksum as i32,
             calculated_cksum as i32
         );
@@ -2643,7 +2640,7 @@ fn parse_filter(ar: *mut archive_read, p: *const uint8_t) -> i32 {
         archive_set_error_safe!(
             &mut (*ar).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Invalid filter encountered\x00" as *const u8 as *const i8
+            b"Invalid filter encountered\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -2653,7 +2650,7 @@ fn parse_filter(ar: *mut archive_read, p: *const uint8_t) -> i32 {
         archive_set_error_safe!(
             &mut (*ar).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.enomem,
-            b"Can\'t allocate memory for a filter descriptor.\x00" as *const u8 as *const i8
+            b"Can\'t allocate memory for a filter descriptor.\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -2789,7 +2786,7 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-                        b"Failed to decode the code length\x00" as *const u8 as *const i8
+                        b"Failed to decode the code length\x00" as *const u8
                     );
                     return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                 }
@@ -2799,7 +2796,7 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-                        b"Failed to decode the distance slot\x00" as *const u8 as *const i8
+                        b"Failed to decode the distance slot\x00" as *const u8
                     );
                     return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                 }
@@ -2839,7 +2836,7 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
                             archive_set_error_safe!(
                                 &mut (*a).archive as *mut archive,
                                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-                                b"Failed to decode the distance slot\x00" as *const u8 as *const i8
+                                b"Failed to decode the distance slot\x00" as *const u8
                             );
                             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                         }
@@ -2849,7 +2846,7 @@ fn do_uncompress_block(a: *mut archive_read, p: *const uint8_t) -> i32 {
                             archive_set_error_safe!(
                                 &mut (*a).archive as *mut archive,
                                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                                b"Distance pointer overflow\x00" as *const u8 as *const i8
+                                b"Distance pointer overflow\x00" as *const u8
                             );
                             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                         }
@@ -2922,7 +2919,7 @@ fn scan_for_signature(mut a: *mut archive_read) -> i32 {
     let mut p: *const uint8_t = 0 as *const uint8_t;
     let chunk_size: i32 = 512;
     let mut i: ssize_t = 0;
-    let mut signature: [i8; 8] = [0; 8];
+    let mut signature: [u8; 8] = [0; 8];
     /* If we're here, it means we're on an 'unknown territory' data.
      * There's no indication what kind of data we're reading here.
      * It could be some text comment, any kind of binary data,
@@ -2939,12 +2936,12 @@ fn scan_for_signature(mut a: *mut archive_read) -> i32 {
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
         }
         i = 0;
-        while i < (chunk_size - ::std::mem::size_of::<[u8; 8]>() as u64 as i32) as i64 {
+        while i < (chunk_size - size_of::<[u8; 8]>() as u64 as i32) as i64 {
             if unsafe {
                 memcmp_safe(
                     unsafe { &*p.offset(i as isize) as *const uint8_t as *const () },
                     signature.as_mut_ptr() as *const (),
-                    ::std::mem::size_of::<[u8; 8]>() as u64,
+                    size_of::<[u8; 8]>() as u64,
                 )
             } == 0
             {
@@ -2955,7 +2952,7 @@ fn scan_for_signature(mut a: *mut archive_read) -> i32 {
                  * on a valid base block header. */
                 consume(
                     a,
-                    (i as u64).wrapping_add(::std::mem::size_of::<[u8; 8]>() as u64) as int64_t,
+                    (i as u64).wrapping_add(size_of::<[u8; 8]>() as u64) as int64_t,
                 );
                 return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
             }
@@ -3044,7 +3041,7 @@ fn merge_block(a: *mut archive_read, block_size: ssize_t, p: *mut *const uint8_t
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-            b"Recursive merge is not allowed\x00" as *const u8 as *const i8
+            b"Recursive merge is not allowed\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -3063,7 +3060,7 @@ fn merge_block(a: *mut archive_read, block_size: ssize_t, p: *mut *const uint8_t
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.enomem,
-            b"Can\'t allocate memory for a merge block buffer.\x00" as *const u8 as *const i8
+            b"Can\'t allocate memory for a merge block buffer.\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -3094,7 +3091,7 @@ fn merge_block(a: *mut archive_read, block_size: ssize_t, p: *mut *const uint8_t
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                b"Encountered block size == 0 during block merge\x00" as *const u8 as *const i8
+                b"Encountered block size == 0 during block merge\x00" as *const u8
             );
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
@@ -3107,7 +3104,7 @@ fn merge_block(a: *mut archive_read, block_size: ssize_t, p: *mut *const uint8_t
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-                b"Consumed too much data when merging blocks.\x00" as *const u8 as *const i8
+                b"Consumed too much data when merging blocks.\x00" as *const u8
             );
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
@@ -3190,7 +3187,7 @@ fn process_block(a: *mut archive_read) -> i32 {
         }
         /* Skip block header. Next data is huffman tables,
          * if present. */
-        to_skip = (::std::mem::size_of::<compressed_block_header>() as u64)
+        to_skip = (size_of::<compressed_block_header>() as u64)
             .wrapping_add(bf_byte_count(&mut safe_rar.last_block_hdr) as u64)
             .wrapping_add(1) as ssize_t;
         if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, to_skip) {
@@ -3295,8 +3292,8 @@ fn use_data(rar: *mut rar5, buf: *mut *const (), size: *mut size_t, offset: *mut
     let safe_offset = unsafe { &mut *offset };
     i = 0;
     while (i as i64)
-        < (::std::mem::size_of::<[data_ready; 2]>() as u64)
-            .wrapping_div(::std::mem::size_of::<data_ready>() as u64) as ssize_t
+        < (size_of::<[data_ready; 2]>() as u64).wrapping_div(size_of::<data_ready>() as u64)
+            as ssize_t
     {
         let mut d: *mut data_ready = unsafe {
             &mut *(*rar).cstate.dready.as_mut_ptr().offset(i as isize) as *mut data_ready
@@ -3345,14 +3342,14 @@ fn push_data_ready(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-            b"Sanity check error: output stream is not continuous\x00" as *const u8 as *const i8
+            b"Sanity check error: output stream is not continuous\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
     i = 0;
     while (i as i64)
-        < (::std::mem::size_of::<[data_ready; 2]>() as u64)
-            .wrapping_div(::std::mem::size_of::<data_ready>() as u64) as ssize_t
+        < (size_of::<[data_ready; 2]>() as u64).wrapping_div(size_of::<data_ready>() as u64)
+            as ssize_t
     {
         let mut d: *mut data_ready = unsafe {
             &mut *(*rar).cstate.dready.as_mut_ptr().offset(i as isize) as *mut data_ready
@@ -3380,7 +3377,7 @@ fn push_data_ready(
     archive_set_error_safe!(
         &mut (*a).archive as *mut archive,
         ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-        b"Error: premature end of data_ready stack\x00" as *const u8 as *const i8
+        b"Error: premature end of data_ready stack\x00" as *const u8
     );
     return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
 }
@@ -3477,7 +3474,7 @@ fn do_uncompress_file(mut a: *mut archive_read) -> i32 {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-                b"Can\'t read first filter\x00" as *const u8 as *const i8
+                b"Can\'t read first filter\x00" as *const u8
             );
             return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
         }
@@ -3567,7 +3564,7 @@ fn do_unstore_file(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"I/O error when unstoring file\x00" as *const u8 as *const i8
+            b"I/O error when unstoring file\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -3614,7 +3611,7 @@ fn do_unpack(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                    b"Compression method not supported: 0x%x\x00" as *const u8 as *const i8,
+                    b"Compression method not supported: 0x%x\x00" as *const u8,
                     (*rar).cstate.method
                 );
                 return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
@@ -3670,7 +3667,7 @@ fn verify_checksums(a: *mut archive_read) -> i32 {
                         archive_set_error_safe!(
                             &mut (*a).archive as *mut archive,
                             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                            b"Checksum error: CRC32\x00" as *const u8 as *const i8
+                            b"Checksum error: CRC32\x00" as *const u8
                         );
                         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                     }
@@ -3710,7 +3707,7 @@ fn verify_checksums(a: *mut archive_read) -> i32 {
                         archive_set_error_safe!(
                             &mut (*a).archive as *mut archive,
                             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-                            b"Checksum error: BLAKE2\x00" as *const u8 as *const i8
+                            b"Checksum error: BLAKE2\x00" as *const u8
                         );
                         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
                     }
@@ -3732,12 +3729,12 @@ fn verify_global_checksums(mut a: *mut archive_read) -> i32 {
  * Decryption function for the magic signature pattern. Check the comment near
  * the `rar5_signature_xor` symbol to read the rationale behind this.
  */
-fn rar5_signature(buf: *mut i8) {
+fn rar5_signature(buf: *mut u8) {
     let mut i: size_t = 0;
     i = 0;
-    while i < ::std::mem::size_of::<[u8; 8]>() as u64 {
+    while i < size_of::<[u8; 8]>() as u64 {
         unsafe {
-            *buf.offset(i as isize) = (rar5_signature_xor[i as usize] as i32 ^ 0xa1 as i32) as i8
+            *buf.offset(i as isize) = (rar5_signature_xor[i as usize] as i32 ^ 0xa1 as i32) as u8
         };
         i = i + 1
     }
@@ -3764,7 +3761,7 @@ fn rar5_read_data(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_file_format,
-            b"Can\'t decompress an entry marked as a directory\x00" as *const u8 as *const i8
+            b"Can\'t decompress an entry marked as a directory\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_failed;
     }
@@ -3772,7 +3769,7 @@ fn rar5_read_data(
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
-            b"Unpacker has written too many bytes\x00" as *const u8 as *const i8
+            b"Unpacker has written too many bytes\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -3880,7 +3877,7 @@ fn rar5_has_encrypted_entries(mut _a: *mut archive_read) -> i32 {
 fn rar5_init(rar: *mut rar5) -> i32 {
     let safe_rar = unsafe { &mut *rar };
     unsafe {
-        memset_safe(rar as *mut (), 0, ::std::mem::size_of::<rar5>() as u64);
+        memset_safe(rar as *mut (), 0, size_of::<rar5>() as u64);
     }
     if CDE_OK as i32 != cdeque_init(&mut safe_rar.cstate.filters, 8192 as i32) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
@@ -3897,12 +3894,12 @@ pub fn archive_read_support_format_rar5(mut _a: *mut archive) -> i32 {
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != ret {
         return ret;
     }
-    rar = unsafe { malloc_safe(::std::mem::size_of::<rar5>() as u64) as *mut rar5 };
+    rar = unsafe { malloc_safe(size_of::<rar5>() as u64) as *mut rar5 };
     if rar.is_null() {
         archive_set_error_safe!(
             &mut (*ar).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.enomem,
-            b"Can\'t allocate rar5 data\x00" as *const u8 as *const i8
+            b"Can\'t allocate rar5 data\x00" as *const u8
         );
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
     }
@@ -3910,7 +3907,7 @@ pub fn archive_read_support_format_rar5(mut _a: *mut archive) -> i32 {
         archive_set_error_safe!(
             &mut (*ar).archive as *mut archive,
             ARCHIVE_RAR5_DEFINED_PARAM.enomem,
-            b"Can\'t allocate rar5 filter buffer\x00" as *const u8 as *const i8
+            b"Can\'t allocate rar5 filter buffer\x00" as *const u8
         );
         unsafe { free_safe(rar as *mut ()) };
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
@@ -3919,10 +3916,10 @@ pub fn archive_read_support_format_rar5(mut _a: *mut archive) -> i32 {
         __archive_read_register_format_safe(
             ar,
             rar as *mut (),
-            b"rar5\x00" as *const u8 as *const i8,
+            b"rar5\x00" as *const u8,
             Some(rar5_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
             Some(
-                rar5_options as unsafe fn(_: *mut archive_read, _: *const i8, _: *const i8) -> i32,
+                rar5_options as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
             ),
             Some(rar5_read_header as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32),
             Some(
@@ -3977,8 +3974,7 @@ pub fn archive_test_rar5_read_data(
 ) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar5: *mut rar5 = 0 as *mut rar5;
-    rar5 =
-        unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
+    rar5 = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar5>() as u64) } as *mut rar5;
     unsafe {
         if flag as i32 != 0 as i32 {
             (*rar5).skip_mode = 0;
@@ -3999,7 +3995,7 @@ pub fn archive_test_do_unpack(
 ) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar5: *mut rar5 = 0 as *mut rar5;
-    rar5 = unsafe { calloc_safe(1, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
+    rar5 = unsafe { calloc_safe(1, size_of::<rar5>() as u64) } as *mut rar5;
     unsafe { (*rar5).cstate.method = 6 };
     return do_unpack(a, rar5, buff, size, offset);
 }
@@ -4008,10 +4004,9 @@ pub fn archive_test_do_unpack(
 pub fn archive_test_run_filter(mut _a: *mut archive, mut flag: i32) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar5: *mut rar5 = 0 as *mut rar5;
-    rar5 =
-        unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
+    rar5 = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar5>() as u64) } as *mut rar5;
     let mut flt: *mut filter_info = 0 as *mut filter_info;
-    flt = unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<filter_info>() as u64) }
+    flt = unsafe { calloc_safe(1 as i32 as u64, size_of::<filter_info>() as u64) }
         as *mut filter_info;
     unsafe { (*(*a).format).data = rar5 as *mut () };
     return run_filter(a, flt);
@@ -4026,8 +4021,7 @@ pub fn archive_test_push_data(
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar5: *mut rar5 = 0 as *mut rar5;
-    rar5 =
-        unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
+    rar5 = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar5>() as u64) } as *mut rar5;
     unsafe {
         (*rar5).cstate.window_mask = 1;
         (*rar5).cstate.solid_offset = 0;
@@ -4046,35 +4040,30 @@ pub fn archive_test_process_head_file(
 ) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar5: *mut rar5 = 0 as *mut rar5;
-    rar5 =
-        unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
+    rar5 = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar5>() as u64) } as *mut rar5;
     return process_head_file(a, rar5, e, block_flags);
 }
 
 #[no_mangle]
 pub fn archive_test_parse_htime_item(
     mut _a: *mut archive,
-    mut unix_time: i8,
+    mut unix_time: u8,
     mut where_0: *mut uint64_t,
     mut extra_data_size: *mut ssize_t,
 ) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
-    archive_read_filter = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<archive_read_filter>() as u64,
-        )
-    } as *mut archive_read_filter;
-    unsafe { (*archive_read_filter).fatal = 'a' as i8 };
+    archive_read_filter =
+        unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read_filter>() as u64) }
+            as *mut archive_read_filter;
+    unsafe { (*archive_read_filter).fatal = 'a' as u8 };
     return parse_htime_item(a, unix_time, where_0, extra_data_size);
 }
 
 #[no_mangle]
 pub fn archive_test_init_unpack() {
     let mut rar5: *mut rar5 = 0 as *mut rar5;
-    rar5 =
-        unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
+    rar5 = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar5>() as u64) } as *mut rar5;
     unsafe { (*rar5).cstate.window_size = 0 };
     init_unpack(rar5);
 }
@@ -4089,8 +4078,7 @@ pub fn archive_test_do_unstore_file(
 ) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar5: *mut rar5 = 0 as *mut rar5;
-    rar5 =
-        unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
+    rar5 = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar5>() as u64) } as *mut rar5;
     unsafe { (*rar5).file.bytes_remaining = bytes_remaining as ssize_t };
     return do_unstore_file(a, rar5, buf, size, offset);
 }
@@ -4104,8 +4092,7 @@ pub fn archive_test_merge_block(
 ) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar5: *mut rar5 = 0 as *mut rar5;
-    rar5 =
-        unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
+    rar5 = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar5>() as u64) } as *mut rar5;
     unsafe {
         (*rar5).merge_mode = merge_mode;
         (*(*a).format).data = rar5 as *mut ();
@@ -4117,8 +4104,7 @@ pub fn archive_test_merge_block(
 pub fn archive_test_parse_tables(mut _a: *mut archive, mut p: *const uint8_t) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut rar5: *mut rar5 = 0 as *mut rar5;
-    rar5 =
-        unsafe { calloc_safe(1 as i32 as u64, ::std::mem::size_of::<rar5>() as u64) } as *mut rar5;
+    rar5 = unsafe { calloc_safe(1 as i32 as u64, size_of::<rar5>() as u64) } as *mut rar5;
     unsafe { (*rar5).cstate.cur_block_size = 0 };
     return parse_tables(a, rar5, p);
 }
@@ -4131,12 +4117,8 @@ pub fn archive_test_parse_block_header(
 ) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut hdr: *mut compressed_block_header = 0 as *mut compressed_block_header;
-    hdr = unsafe {
-        calloc_safe(
-            1 as i32 as u64,
-            ::std::mem::size_of::<compressed_block_header>() as u64,
-        )
-    } as *mut compressed_block_header;
+    hdr = unsafe { calloc_safe(1 as i32 as u64, size_of::<compressed_block_header>() as u64) }
+        as *mut compressed_block_header;
     unsafe { (*hdr).block_flags_u8 = 56 };
     return parse_block_header(a, p, block_size, hdr);
 }
