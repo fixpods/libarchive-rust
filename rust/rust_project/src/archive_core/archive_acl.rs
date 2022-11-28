@@ -1084,7 +1084,7 @@ pub extern "C" fn archive_acl_to_text_l(
                     && flags & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_style_mark_default
                         != 0 as i32
                 {
-                    prefix = b"default:\x00" as *const u8 as *const u8
+                    prefix = b"default:\x00" as *const u8
                 } else {
                     prefix = 0 as *const u8
                 }
@@ -1195,17 +1195,17 @@ fn append_entry(
             unsafe { strcpy_safe(*p, b"group\x00" as *const u8) };
         }
     } else if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group {
-        unsafe { strcpy_safe(*p, b"group\x00" as *const u8 as *const u8) };
+        unsafe { strcpy_safe(*p, b"group\x00" as *const u8) };
     } else if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_mask {
-        unsafe { strcpy_safe(*p, b"mask\x00" as *const u8 as *const u8) };
+        unsafe { strcpy_safe(*p, b"mask\x00" as *const u8) };
         name = 0 as *const u8;
         id = -1;
     } else if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other {
-        unsafe { strcpy_safe(*p, b"other\x00" as *const u8 as *const u8) };
+        unsafe { strcpy_safe(*p, b"other\x00" as *const u8) };
         name = 0 as *const u8;
         id = -1;
     } else if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_everyone {
-        unsafe { strcpy_safe(*p, b"everyone@\x00" as *const u8 as *const u8) };
+        unsafe { strcpy_safe(*p, b"everyone@\x00" as *const u8) };
         name = 0 as *const u8;
         id = -1;
     }
@@ -1302,13 +1302,13 @@ fn append_entry(
             *fresh32 = ':' as u8
         };
         if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_allow {
-            unsafe { strcpy_safe(*p, b"allow\x00" as *const u8 as *const u8) };
+            unsafe { strcpy_safe(*p, b"allow\x00" as *const u8) };
         } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_deny {
-            unsafe { strcpy_safe(*p, b"deny\x00" as *const u8 as *const u8) };
+            unsafe { strcpy_safe(*p, b"deny\x00" as *const u8) };
         } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_audit {
-            unsafe { strcpy_safe(*p, b"audit\x00" as *const u8 as *const u8) };
+            unsafe { strcpy_safe(*p, b"audit\x00" as *const u8) };
         } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_alram {
-            unsafe { strcpy_safe(*p, b"alarm\x00" as *const u8 as *const u8) };
+            unsafe { strcpy_safe(*p, b"alarm\x00" as *const u8) };
         }
 
         unsafe { *p = (*p).offset(strlen_safe(*p) as isize) }
@@ -2042,7 +2042,7 @@ pub extern "C" fn archive_acl_from_text_l(
                         && unsafe {
                             memcmp_safe(
                                 s.offset(1 as isize) as *const (),
-                                b"efault\x00" as *const u8 as *const u8 as *const (),
+                                b"efault\x00" as *const u8 as *const (),
                                 6 as u64,
                             )
                         } == 0 as i32)
@@ -2089,7 +2089,7 @@ pub extern "C" fn archive_acl_from_text_l(
                                 && unsafe {
                                     memcmp_safe(
                                         st as *const (),
-                                        b"ser\x00" as *const u8 as *const u8 as *const (),
+                                        b"ser\x00" as *const u8 as *const (),
                                         3 as u64,
                                     )
                                 } == 0 as i32
@@ -2103,7 +2103,7 @@ pub extern "C" fn archive_acl_from_text_l(
                                 && unsafe {
                                     memcmp_safe(
                                         st as *const (),
-                                        b"roup\x00" as *const u8 as *const u8 as *const (),
+                                        b"roup\x00" as *const u8 as *const (),
                                         4 as u64,
                                     )
                                 } == 0 as i32
@@ -2117,7 +2117,7 @@ pub extern "C" fn archive_acl_from_text_l(
                                 && unsafe {
                                     memcmp_safe(
                                         st as *const (),
-                                        b"ther\x00" as *const u8 as *const u8 as *const (),
+                                        b"ther\x00" as *const u8 as *const (),
                                         4 as u64,
                                     )
                                 } == 0 as i32
@@ -2131,7 +2131,7 @@ pub extern "C" fn archive_acl_from_text_l(
                                 && unsafe {
                                     memcmp_safe(
                                         st as *const (),
-                                        b"ask\x00" as *const u8 as *const u8 as *const (),
+                                        b"ask\x00" as *const u8 as *const (),
                                         3 as u64,
                                     )
                                 } == 0 as i32
@@ -2209,7 +2209,7 @@ pub extern "C" fn archive_acl_from_text_l(
                     if unsafe {
                         memcmp_safe(
                             s as *const (),
-                            b"user\x00" as *const u8 as *const u8 as *const (),
+                            b"user\x00" as *const u8 as *const (),
                             4 as u64,
                         )
                     } == 0 as i32
@@ -2221,7 +2221,7 @@ pub extern "C" fn archive_acl_from_text_l(
                     if unsafe {
                         memcmp_safe(
                             s as *const (),
-                            b"group\x00" as *const u8 as *const u8 as *const (),
+                            b"group\x00" as *const u8 as *const (),
                             5 as i32 as u64,
                         )
                     } == 0 as i32
@@ -2233,7 +2233,7 @@ pub extern "C" fn archive_acl_from_text_l(
                     if unsafe {
                         memcmp_safe(
                             s as *const (),
-                            b"owner@\x00" as *const u8 as *const u8 as *const (),
+                            b"owner@\x00" as *const u8 as *const (),
                             6 as u64,
                         )
                     } == 0 as i32
@@ -2242,7 +2242,7 @@ pub extern "C" fn archive_acl_from_text_l(
                     } else if unsafe {
                         memcmp_safe(
                             s as *const (),
-                            b"group@\x00" as *const u8 as *const u8 as *const (),
+                            b"group@\x00" as *const u8 as *const (),
                             6 as u64,
                         )
                     } == 0 as i32
@@ -2254,7 +2254,7 @@ pub extern "C" fn archive_acl_from_text_l(
                     if unsafe {
                         memcmp_safe(
                             s as *const (),
-                            b"everyone@\x00" as *const u8 as *const u8 as *const (),
+                            b"everyone@\x00" as *const u8 as *const (),
                             9 as u64,
                         )
                     } == 0 as i32
@@ -2303,7 +2303,7 @@ pub extern "C" fn archive_acl_from_text_l(
                         if len == 4 as u64 {
                             if memcmp_safe(
                                 s as *const (),
-                                b"deny\x00" as *const u8 as *const u8 as *const (),
+                                b"deny\x00" as *const u8 as *const (),
                                 4 as u64,
                             ) == 0 as i32
                             {
@@ -2312,21 +2312,21 @@ pub extern "C" fn archive_acl_from_text_l(
                         } else if len == 5 as i32 as u64 {
                             if memcmp_safe(
                                 s as *const (),
-                                b"allow\x00" as *const u8 as *const u8 as *const (),
+                                b"allow\x00" as *const u8 as *const (),
                                 5 as u64,
                             ) == 0 as i32
                             {
                                 type_0 = 0x400 as i32
                             } else if memcmp_safe(
                                 s as *const (),
-                                b"audit\x00" as *const u8 as *const u8 as *const (),
+                                b"audit\x00" as *const u8 as *const (),
                                 5 as u64,
                             ) == 0 as i32
                             {
                                 type_0 = 0x1000 as i32
                             } else if memcmp_safe(
                                 s as *const (),
-                                b"alarm\x00" as *const u8 as *const u8 as *const (),
+                                b"alarm\x00" as *const u8 as *const (),
                                 5 as u64,
                             ) == 0 as i32
                             {

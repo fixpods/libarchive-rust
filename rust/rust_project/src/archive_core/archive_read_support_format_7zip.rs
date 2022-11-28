@@ -4116,7 +4116,7 @@ fn read_stream(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         84 as i32,
-                        b"Truncated 7-Zip file body\x00" as *const u8 as *const u8,
+                        b"Truncated 7-Zip file body\x00" as *const u8,
                     )
                 };
                 return ARCHIVE_7ZIP_DEFINED_PARAM.archive_fatal as ssize_t;
