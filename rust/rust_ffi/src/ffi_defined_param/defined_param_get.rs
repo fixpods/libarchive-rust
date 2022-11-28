@@ -625,6 +625,7 @@ pub struct archive_tar_defined_param {
     pub ae_symlink_type_directory: i32,
     pub archive_retry: i32,
     pub ae_symlink_type_file: i32,
+    pub int64_max: i64,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
