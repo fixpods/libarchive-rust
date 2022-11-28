@@ -2868,196 +2868,187 @@ fn read_Header(a: *mut archive_read, h: *mut _7z_header_info, check_header_id: i
                 return -1;
             }
             ll = size_0;
-
-            match type_0 {
-                14 => {
-                    if !(*h).emptyStreamBools.is_null() {
-                        return -1;
-                    }
-                    (*h).emptyStreamBools =
-                        calloc((*zip).numFiles, size_of::<u8>() as u64) as *mut u8;
-                    if (*h).emptyStreamBools.is_null() {
-                        return -1;
-                    }
-                    if read_Bools(a, (*h).emptyStreamBools, (*zip).numFiles) < 0 as i32 {
-                        return -1;
-                    }
-                    empty_streams = 0 as i32;
-                    i = 0 as i32 as u32;
-                    while (i as u64) < (*zip).numFiles {
-                        if *(*h).emptyStreamBools.offset(i as isize) != 0 {
-                            empty_streams += 1
-                        }
-                        i = i.wrapping_add(1)
-                    }
+            if type_0 == ARCHIVE_7ZIP_DEFINED_PARAM.kemptystream {
+                if !(*h).emptyStreamBools.is_null() {
+                    return -1;
                 }
-                15 => {
-                    if empty_streams <= 0 as i32 {
-                        /* Unexcepted sequence. Skip this. */
-                        if header_bytes(a, ll).is_null() {
-                            return -1;
-                        }
-                    } else {
-                        if !(*h).emptyFileBools.is_null() {
-                            return -1;
-                        }
-                        (*h).emptyFileBools =
-                            calloc(empty_streams as u64, size_of::<u8>() as u64) as *mut u8;
-                        if (*h).emptyFileBools.is_null() {
-                            return -1;
-                        }
-                        if read_Bools(a, (*h).emptyFileBools, empty_streams as size_t) < 0 as i32 {
-                            return -1;
-                        }
-                    }
+                (*h).emptyStreamBools = calloc((*zip).numFiles, size_of::<u8>() as u64) as *mut u8;
+                if (*h).emptyStreamBools.is_null() {
+                    return -1;
                 }
-                16 => {
-                    if empty_streams <= 0 as i32 {
-                        /* Unexcepted sequence. Skip this. */
-                        if header_bytes(a, ll).is_null() {
-                            return -1;
-                        }
-                    } else {
-                        if !(*h).antiBools.is_null() {
-                            return -1;
-                        }
-                        (*h).antiBools =
-                            calloc(empty_streams as u64, size_of::<u8>() as u64) as *mut u8;
-                        if (*h).antiBools.is_null() {
-                            return -1;
-                        }
-                        if read_Bools(a, (*h).antiBools, empty_streams as size_t) < 0 as i32 {
-                            return -1;
-                        }
-                    }
+                if read_Bools(a, (*h).emptyStreamBools, (*zip).numFiles) < 0 as i32 {
+                    return -1;
                 }
-                18 | 19 | 20 => {
-                    if read_Times(a, h, type_0) < 0 as i32 {
-                        return -1;
+                empty_streams = 0 as i32;
+                i = 0 as i32 as u32;
+                while (i as u64) < (*zip).numFiles {
+                    if *(*h).emptyStreamBools.offset(i as isize) != 0 {
+                        empty_streams += 1
                     }
+                    i = i.wrapping_add(1)
                 }
-                17 => {
-                    let mut np: *mut u8 = 0 as *mut u8;
-                    let mut nl: size_t;
-                    let mut nb: size_t;
-                    /* Skip one byte. */
-                    p = header_bytes(a, 1 as size_t);
-                    if p.is_null() {
-                        return -1;
-                    }
-                    ll = ll.wrapping_sub(1);
-                    if ll & 1 as i32 as u64 != 0 || ll < (*zip).numFiles.wrapping_mul(4 as u64) {
-                        return -1;
-                    }
-                    if !(*zip).entry_names.is_null() {
-                        return -1;
-                    }
-                    (*zip).entry_names = malloc(ll) as *mut u8;
-                    if (*zip).entry_names.is_null() {
-                        return -1;
-                    }
-                    np = (*zip).entry_names;
-                    nb = ll;
-                    /*
-                     * Copy whole file names.
-                     * NOTE: This loop prevents from expanding
-                     * the uncompressed buffer in order not to
-                     * use extra memory resource.
-                     */
-                    while nb != 0 {
-                        let mut b: size_t = 0;
-                        if nb > (64 as i32 * 1024 as i32) as u64 {
-                            b = (64 as i32 * 1024 as i32) as size_t
-                        } else {
-                            b = nb
-                        }
-                        p = header_bytes(a, b);
-                        if p.is_null() {
-                            return -(1 as i32);
-                        }
-                        memcpy(np as *mut (), p as *const (), b);
-                        np = np.offset(b as isize);
-                        nb = (nb as u64).wrapping_sub(b) as size_t as size_t
-                    }
-                    np = (*zip).entry_names;
-                    nl = ll;
-                    i = 0 as u32;
-                    while (i as u64) < (*zip).numFiles {
-                        let ref mut fresh10 = (*entries.offset(i as isize)).utf16name;
-                        *fresh10 = np;
-
-                        match () {
-                            #[cfg_attr(_WIN32, _DEBUG, cfg(not(__CYGWIN__)))]
-                            _ => {
-                                let ref mut fresh_cfg_1 = (*entries.offset(i as isize)).wname;
-                                *fresh_cfg_1 = np as *mut wchar_t;
-                            }
-                            #[cfg(any(not(_WIN32), not(_DEBUG), __CYGWIN__))]
-                            _ => {}
-                        }
-
-                        /* Find a terminator. */
-                        while nl >= 2 as u64
-                            && (*np.offset(0 as isize) as i32 != 0
-                                || *np.offset(1 as isize) as i32 != 0)
-                        {
-                            np = np.offset(2 as isize); /* Terminator not found */
-                            nl = (nl as u64).wrapping_sub(2 as u64) as size_t
-                        }
-                        if nl < 2 as i32 as u64 {
-                            return -1;
-                        }
-                        (*entries.offset(i as isize)).name_len =
-                            np.offset_from((*entries.offset(i as isize)).utf16name) as i64
-                                as size_t;
-                        np = np.offset(2 as isize);
-                        nl = (nl as u64).wrapping_sub(2 as u64) as size_t;
-                        i = i.wrapping_add(1)
-                    }
-                }
-                21 => {
-                    let mut allAreDefined: i32 = 0;
-                    p = header_bytes(a, 2 as i32 as size_t);
-                    if p.is_null() {
-                        return -1;
-                    }
-                    allAreDefined = *p as i32;
-                    if !(*h).attrBools.is_null() {
-                        return -1;
-                    }
-                    (*h).attrBools = calloc((*zip).numFiles, size_of::<u8>() as u64) as *mut u8;
-                    if (*h).attrBools.is_null() {
-                        return -1;
-                    }
-                    if allAreDefined != 0 {
-                        memset((*h).attrBools as *mut (), 1 as i32, (*zip).numFiles);
-                    } else if read_Bools(a, (*h).attrBools, (*zip).numFiles) < 0 as i32 {
-                        return -1;
-                    }
-                    i = 0 as i32 as u32;
-                    while (i as u64) < (*zip).numFiles {
-                        if *(*h).attrBools.offset(i as isize) != 0 {
-                            p = header_bytes(a, 4 as size_t);
-                            if p.is_null() {
-                                return -1;
-                            }
-                            (*entries.offset(i as isize)).attr = archive_le32dec(p as *const ())
-                        }
-                        i = i.wrapping_add(1)
-                    }
-                }
-                25 => {
-                    if ll == 0 as u64 {
-                    } else {
-                        if header_bytes(a, ll).is_null() {
-                            return -1;
-                        }
-                    }
-                }
-                _ => {
+            } else if type_0 == ARCHIVE_7ZIP_DEFINED_PARAM.kemptyfile {
+                if empty_streams <= 0 as i32 {
+                    /* Unexcepted sequence. Skip this. */
                     if header_bytes(a, ll).is_null() {
                         return -1;
                     }
+                } else {
+                    if !(*h).emptyFileBools.is_null() {
+                        return -1;
+                    }
+                    (*h).emptyFileBools =
+                        calloc(empty_streams as u64, size_of::<u8>() as u64) as *mut u8;
+                    if (*h).emptyFileBools.is_null() {
+                        return -1;
+                    }
+                    if read_Bools(a, (*h).emptyFileBools, empty_streams as size_t) < 0 as i32 {
+                        return -1;
+                    }
+                }
+            } else if type_0 == ARCHIVE_7ZIP_DEFINED_PARAM.kanti {
+                if empty_streams <= 0 as i32 {
+                    /* Unexcepted sequence. Skip this. */
+                    if header_bytes(a, ll).is_null() {
+                        return -1;
+                    }
+                } else {
+                    if !(*h).antiBools.is_null() {
+                        return -1;
+                    }
+                    (*h).antiBools =
+                        calloc(empty_streams as u64, size_of::<u8>() as u64) as *mut u8;
+                    if (*h).antiBools.is_null() {
+                        return -1;
+                    }
+                    if read_Bools(a, (*h).antiBools, empty_streams as size_t) < 0 as i32 {
+                        return -1;
+                    }
+                }
+            } else if type_0 == ARCHIVE_7ZIP_DEFINED_PARAM.kctime
+                || type_0 == ARCHIVE_7ZIP_DEFINED_PARAM.katime
+                || type_0 == ARCHIVE_7ZIP_DEFINED_PARAM.kmtime
+            {
+                if read_Times(a, h, type_0) < 0 as i32 {
+                    return -1;
+                }
+            } else if type_0 == ARCHIVE_7ZIP_DEFINED_PARAM.kname {
+                let mut np: *mut u8 = 0 as *mut u8;
+                let mut nl: size_t;
+                let mut nb: size_t;
+                /* Skip one byte. */
+                p = header_bytes(a, 1 as size_t);
+                if p.is_null() {
+                    return -1;
+                }
+                ll = ll.wrapping_sub(1);
+                if ll & 1 as i32 as u64 != 0 || ll < (*zip).numFiles.wrapping_mul(4 as u64) {
+                    return -1;
+                }
+                if !(*zip).entry_names.is_null() {
+                    return -1;
+                }
+                (*zip).entry_names = malloc(ll) as *mut u8;
+                if (*zip).entry_names.is_null() {
+                    return -1;
+                }
+                np = (*zip).entry_names;
+                nb = ll;
+                /*
+                 * Copy whole file names.
+                 * NOTE: This loop prevents from expanding
+                 * the uncompressed buffer in order not to
+                 * use extra memory resource.
+                 */
+                while nb != 0 {
+                    let mut b: size_t = 0;
+                    if nb > (64 as i32 * 1024 as i32) as u64 {
+                        b = (64 as i32 * 1024 as i32) as size_t
+                    } else {
+                        b = nb
+                    }
+                    p = header_bytes(a, b);
+                    if p.is_null() {
+                        return -(1 as i32);
+                    }
+                    memcpy(np as *mut (), p as *const (), b);
+                    np = np.offset(b as isize);
+                    nb = (nb as u64).wrapping_sub(b) as size_t as size_t
+                }
+                np = (*zip).entry_names;
+                nl = ll;
+                i = 0 as u32;
+                while (i as u64) < (*zip).numFiles {
+                    let ref mut fresh10 = (*entries.offset(i as isize)).utf16name;
+                    *fresh10 = np;
+
+                    match () {
+                        #[cfg_attr(_WIN32, _DEBUG, cfg(not(__CYGWIN__)))]
+                        _ => {
+                            let ref mut fresh_cfg_1 = (*entries.offset(i as isize)).wname;
+                            *fresh_cfg_1 = np as *mut wchar_t;
+                        }
+                        #[cfg(any(not(_WIN32), not(_DEBUG), __CYGWIN__))]
+                        _ => {}
+                    }
+
+                    /* Find a terminator. */
+                    while nl >= 2 as u64
+                        && (*np.offset(0 as isize) as i32 != 0
+                            || *np.offset(1 as isize) as i32 != 0)
+                    {
+                        np = np.offset(2 as isize); /* Terminator not found */
+                        nl = (nl as u64).wrapping_sub(2 as u64) as size_t
+                    }
+                    if nl < 2 as i32 as u64 {
+                        return -1;
+                    }
+                    (*entries.offset(i as isize)).name_len =
+                        np.offset_from((*entries.offset(i as isize)).utf16name) as i64 as size_t;
+                    np = np.offset(2 as isize);
+                    nl = (nl as u64).wrapping_sub(2 as u64) as size_t;
+                    i = i.wrapping_add(1)
+                }
+            } else if type_0 == ARCHIVE_7ZIP_DEFINED_PARAM.kattributes {
+                let mut allAreDefined: i32 = 0;
+                p = header_bytes(a, 2 as i32 as size_t);
+                if p.is_null() {
+                    return -1;
+                }
+                allAreDefined = *p as i32;
+                if !(*h).attrBools.is_null() {
+                    return -1;
+                }
+                (*h).attrBools = calloc((*zip).numFiles, size_of::<u8>() as u64) as *mut u8;
+                if (*h).attrBools.is_null() {
+                    return -1;
+                }
+                if allAreDefined != 0 {
+                    memset((*h).attrBools as *mut (), 1 as i32, (*zip).numFiles);
+                } else if read_Bools(a, (*h).attrBools, (*zip).numFiles) < 0 as i32 {
+                    return -1;
+                }
+                i = 0 as i32 as u32;
+                while (i as u64) < (*zip).numFiles {
+                    if *(*h).attrBools.offset(i as isize) != 0 {
+                        p = header_bytes(a, 4 as size_t);
+                        if p.is_null() {
+                            return -1;
+                        }
+                        (*entries.offset(i as isize)).attr = archive_le32dec(p as *const ())
+                    }
+                    i = i.wrapping_add(1)
+                }
+            } else if type_0 == ARCHIVE_7ZIP_DEFINED_PARAM.kdummy {
+                if ll == 0 as u64 {
+                } else {
+                    if header_bytes(a, ll).is_null() {
+                        return -1;
+                    }
+                }
+            } else {
+                if header_bytes(a, ll).is_null() {
+                    return -1;
                 }
             }
         }
@@ -4178,30 +4169,36 @@ fn setup_decode_folder(a: *mut archive_read, folder: *mut _7z_folder, header: i3
      */
     i = 0;
     while (i as u64) < (safe_folder).numCoders {
-        match unsafe { (*(safe_folder).coders.offset(i as isize)).codec } {
-            116457729 | 116458243 | 116459265 => {
-                /* For entry that is associated with this folder, mark
-                it as encrypted (data+metadata). */
-                (safe_zip).has_encrypted_entries = 1 as i32;
-                if !(safe_a).entry.is_null() {
-                    unsafe {
-                        archive_entry_set_is_data_encrypted_safe((safe_a).entry, 1 as u8);
-                        archive_entry_set_is_metadata_encrypted_safe((safe_a).entry, 1 as u8)
-                    };
-                }
+        if unsafe { (*(safe_folder).coders.offset(i as isize)).codec }
+            == ARCHIVE_7ZIP_DEFINED_PARAM._7z_crypto_main_zip as u64
+            || unsafe { (*(safe_folder).coders.offset(i as isize)).codec }
+                == ARCHIVE_7ZIP_DEFINED_PARAM._7z_crypto_rar_29 as u64
+            || unsafe { (*(safe_folder).coders.offset(i as isize)).codec }
+                == ARCHIVE_7ZIP_DEFINED_PARAM._7z_crypto_aes_256_sha_256 as u64
+        {
+            /* For entry that is associated with this folder, mark
+            it as encrypted (data+metadata). */
+            (safe_zip).has_encrypted_entries = 1 as i32;
+            if !(safe_a).entry.is_null() {
                 unsafe {
-                    archive_set_error(
-                        &mut (safe_a).archive as *mut archive,
-                        ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                        b"The %s is encrypted, but currently not supported\x00" as *const u8
-                            as *const u8,
-                        cname,
-                    )
+                    archive_entry_set_is_data_encrypted_safe((safe_a).entry, 1 as u8);
+                    archive_entry_set_is_metadata_encrypted_safe((safe_a).entry, 1 as u8)
                 };
-                return ARCHIVE_7ZIP_DEFINED_PARAM.archive_fatal;
             }
-            50528539 => found_bcj2 += 1,
-            _ => {}
+            unsafe {
+                archive_set_error(
+                    &mut (safe_a).archive as *mut archive,
+                    ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                    b"The %s is encrypted, but currently not supported\x00" as *const u8
+                        as *const u8,
+                    cname,
+                )
+            };
+            return ARCHIVE_7ZIP_DEFINED_PARAM.archive_fatal;
+        } else if unsafe { (*(safe_folder).coders.offset(i as isize)).codec }
+            == ARCHIVE_7ZIP_DEFINED_PARAM._7z_x86_bcj2 as u64
+        {
+            found_bcj2 += 1;
         }
         i = i.wrapping_add(1)
     }
