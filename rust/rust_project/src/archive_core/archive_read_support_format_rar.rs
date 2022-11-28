@@ -2427,8 +2427,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                         )
                                     };
                                     safe_rar.bytein.a = a;
-                                    safe_rar.bytein.Read =
-                                        Some(ppmd_read);
+                                    safe_rar.bytein.Read = Some(ppmd_read);
                                     unsafe {
                                         __archive_ppmd7_functions
                                             .PpmdRAR_RangeDec_CreateVTable

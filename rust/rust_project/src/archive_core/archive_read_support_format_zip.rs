@@ -3732,12 +3732,10 @@ fn archive_read_format_zip_options(a: *mut archive_read, key: *const u8, val: *c
             if unsafe { strcmp_safe(key, b"ignorecrc32\x00" as *const u8) } == 0 {
                 /* Mostly useful for testing. */
                 if unsafe { val.is_null() || *val.offset(0 as isize) as i32 == 0 } {
-                    (safe_zip).crc32func =
-                        Some(real_crc32);
+                    (safe_zip).crc32func = Some(real_crc32);
                     (safe_zip).ignore_crc32 = 0
                 } else {
-                    (safe_zip).crc32func =
-                        Some(fake_crc32);
+                    (safe_zip).crc32func = Some(fake_crc32);
                     (safe_zip).ignore_crc32 = 1
                 }
                 return 0;

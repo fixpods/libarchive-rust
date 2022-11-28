@@ -529,10 +529,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
      * made by libarchive2.x.
      */
     if safe_sc.flag & (1 as i32) << 4 as i32 != 0 {
-        add_converter(
-            sc,
-            Some(strncat_from_utf8_libarchive2),
-        );
+        add_converter(sc, Some(strncat_from_utf8_libarchive2));
         return;
     }
     /*
@@ -544,30 +541,18 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
          * a UTF-8 string into a UTF-16BE string.
          */
         if safe_sc.flag & (1 as i32) << 9 as i32 != 0 {
-            add_converter(
-                sc,
-                Some(archive_string_append_unicode),
-            );
+            add_converter(sc, Some(archive_string_append_unicode));
             return;
         }
         if safe_sc.cd != -(1 as i32) as iconv_t {
-            add_converter(
-                sc,
-                Some(iconv_strncat_in_locale),
-            );
+            add_converter(sc, Some(iconv_strncat_in_locale));
             return;
         }
         if safe_sc.flag & (1 as i32) << 2 as i32 != 0 {
             if safe_sc.flag & (1 as i32) << 10 as i32 != 0 {
-                add_converter(
-                    sc,
-                    Some(best_effort_strncat_to_utf16be),
-                );
+                add_converter(sc, Some(best_effort_strncat_to_utf16be));
             } else {
-                add_converter(
-                    sc,
-                    Some(best_effort_strncat_to_utf16le),
-                );
+                add_converter(sc, Some(best_effort_strncat_to_utf16le));
             }
         } else {
             /* Make sure we have no converter. */
@@ -583,15 +568,9 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
          * At least we should normalize a UTF-16BE string.
          */
         if safe_sc.flag & (1 as i32) << 7 as i32 != 0 {
-            add_converter(
-                sc,
-                Some(archive_string_normalize_D),
-            );
+            add_converter(sc, Some(archive_string_normalize_D));
         } else if safe_sc.flag & (1 as i32) << 6 as i32 != 0 {
-            add_converter(
-                sc,
-                Some(archive_string_normalize_C),
-            );
+            add_converter(sc, Some(archive_string_normalize_C));
         }
         if safe_sc.flag & (1 as i32) << 8 as i32 != 0 {
             /*
@@ -599,30 +578,18 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
              * a UTF-16BE/LE string into a UTF-8 string directly.
              */
             if safe_sc.flag & ((1 as i32) << 7 as i32 | (1 as i32) << 6 as i32) == 0 {
-                add_converter(
-                    sc,
-                    Some(archive_string_append_unicode),
-                );
+                add_converter(sc, Some(archive_string_append_unicode));
             }
             return;
         }
         if safe_sc.cd != -(1 as i32) as iconv_t {
-            add_converter(
-                sc,
-                Some(iconv_strncat_in_locale),
-            );
+            add_converter(sc, Some(iconv_strncat_in_locale));
             return;
         }
         if safe_sc.flag & ((1) << 2 | (1) << 11) == (1) << 2 | (1) << 11 {
-            add_converter(
-                sc,
-                Some(best_effort_strncat_from_utf16be),
-            );
+            add_converter(sc, Some(best_effort_strncat_from_utf16be));
         } else if safe_sc.flag & ((1) << 2 | (1) << 13) == (1) << 2 | (1) << 13 {
-            add_converter(
-                sc,
-                Some(best_effort_strncat_from_utf16le),
-            );
+            add_converter(sc, Some(best_effort_strncat_from_utf16le));
         } else {
             /* Make sure we have no converter. */
             safe_sc.nconverter = 0
@@ -634,15 +601,9 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
          * At least we should normalize a UTF-8 string.
          */
         if safe_sc.flag & (1) << 7 != 0 {
-            add_converter(
-                sc,
-                Some(archive_string_normalize_D),
-            );
+            add_converter(sc, Some(archive_string_normalize_D));
         } else if safe_sc.flag & (1) << 6 != 0 {
-            add_converter(
-                sc,
-                Some(archive_string_normalize_C),
-            );
+            add_converter(sc, Some(archive_string_normalize_C));
         }
         /*
          * Copy UTF-8 string with a check of CESU-8.
@@ -656,19 +617,13 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
              * a UTF-16BE string into a UTF-8 string directly.
              */
             if safe_sc.flag & ((1) << 7 | (1) << 6) == 0 {
-                add_converter(
-                    sc,
-                    Some(strncat_from_utf8_to_utf8),
-                );
+                add_converter(sc, Some(strncat_from_utf8_to_utf8));
             }
             return;
         }
     }
     if safe_sc.cd != -(1 as i32) as iconv_t {
-        add_converter(
-            sc,
-            Some(iconv_strncat_in_locale),
-        );
+        add_converter(sc, Some(iconv_strncat_in_locale));
         /*
          * iconv generally does not support UTF-8-MAC and so
          * we have to the output of iconv from NFC to NFD if
@@ -676,10 +631,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
          */
         if safe_sc.flag & (1) << 1 != 0 && safe_sc.flag & (1) << 8 != 0 {
             if safe_sc.flag & (1) << 7 != 0 {
-                add_converter(
-                    sc,
-                    Some(archive_string_normalize_D),
-                );
+                add_converter(sc, Some(archive_string_normalize_D));
             }
         }
         return;
@@ -688,10 +640,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
      * Try conversion in the best effort or no conversion.
      */
     if safe_sc.flag & (1) << 2 != 0 || safe_sc.same != 0 {
-        add_converter(
-            sc,
-            Some(best_effort_strncat_in_locale),
-        );
+        add_converter(sc, Some(best_effort_strncat_in_locale));
     } else {
         /* Make sure we have no converter. */
         safe_sc.nconverter = 0
