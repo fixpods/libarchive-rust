@@ -159,13 +159,8 @@ pub unsafe fn archive_read_support_format_mtree(mut _a: *mut archive) -> i32 {
     static mut rb_ops: archive_rb_tree_ops = unsafe {
         {
             let mut init = archive_rb_tree_ops {
-                rbto_compare_nodes: Some(
-                    mtree_cmp_node
-                        as unsafe fn(_: *const archive_rb_node, _: *const archive_rb_node) -> i32,
-                ),
-                rbto_compare_key: Some(
-                    mtree_cmp_key as unsafe fn(_: *const archive_rb_node, _: *const ()) -> i32,
-                ),
+                rbto_compare_nodes: Some(mtree_cmp_node),
+                rbto_compare_key: Some(mtree_cmp_key),
             };
             init
         }
@@ -202,24 +197,13 @@ pub unsafe fn archive_read_support_format_mtree(mut _a: *mut archive) -> i32 {
         a,
         mtree as *mut (),
         b"mtree\x00" as *const u8,
-        Some(mtree_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
-        Some(
-            archive_read_format_mtree_options
-                as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
-        ),
-        Some(read_header as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32),
-        Some(
-            read_data
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *mut *const (),
-                    _: *mut size_t,
-                    _: *mut int64_t,
-                ) -> i32,
-        ),
-        Some(skip as unsafe fn(_: *mut archive_read) -> i32),
+        Some(mtree_bid),
+        Some(archive_read_format_mtree_options),
+        Some(read_header),
+        Some(read_data),
+        Some(skip),
         None,
-        Some(cleanup as unsafe fn(_: *mut archive_read) -> i32),
+        Some(cleanup),
         None,
         None,
     );

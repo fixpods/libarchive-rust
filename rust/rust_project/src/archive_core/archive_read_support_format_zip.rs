@@ -2173,7 +2173,7 @@ fn zipx_ppmd8_init(a: *mut archive_read, zip: *mut zip) -> i32 {
      * and will increment the 'zip->zipx_ppmd_read_compressed' counter. */
     safe_zip.ppmd8.Stream.In = &mut safe_zip.zipx_ppmd_stream;
     safe_zip.zipx_ppmd_stream.a = a;
-    safe_zip.zipx_ppmd_stream.Read = Some(ppmd_read as unsafe fn(_: *mut ()) -> Byte);
+    safe_zip.zipx_ppmd_stream.Read = Some(ppmd_read);
     /* Reset number of read bytes to 0. */
     safe_zip.zipx_ppmd_read_compressed = 0;
     /* Read Ppmd8 header (2 bytes). */
@@ -3733,11 +3733,11 @@ fn archive_read_format_zip_options(a: *mut archive_read, key: *const u8, val: *c
                 /* Mostly useful for testing. */
                 if unsafe { val.is_null() || *val.offset(0 as isize) as i32 == 0 } {
                     (safe_zip).crc32func =
-                        Some(real_crc32 as unsafe fn(_: u64, _: *const (), _: size_t) -> u64);
+                        Some(real_crc32);
                     (safe_zip).ignore_crc32 = 0
                 } else {
                     (safe_zip).crc32func =
-                        Some(fake_crc32 as unsafe fn(_: u64, _: *const (), _: size_t) -> u64);
+                        Some(fake_crc32);
                     (safe_zip).ignore_crc32 = 1
                 }
                 return 0;
@@ -4097,44 +4097,21 @@ pub fn archive_read_support_format_zip_streamable(_a: *mut archive) -> i32 {
      * any encrypted entries yet.
      */
     (safe_zip).has_encrypted_entries = -1;
-    (safe_zip).crc32func = Some(real_crc32 as unsafe fn(_: u64, _: *const (), _: size_t) -> u64);
+    (safe_zip).crc32func = Some(real_crc32);
     r = unsafe {
         __archive_read_register_format_safe(
             a,
             zip as *mut (),
             b"zip\x00" as *const u8,
             Some(archive_read_format_zip_streamable_bid),
-            Some(
-                archive_read_format_zip_options
-                    as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_streamable_read_header
-                    as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_read_data
-                    as unsafe fn(
-                        _: *mut archive_read,
-                        _: *mut *const (),
-                        _: *mut size_t,
-                        _: *mut int64_t,
-                    ) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_read_data_skip_streamable
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
+            Some(archive_read_format_zip_options),
+            Some(archive_read_format_zip_streamable_read_header),
+            Some(archive_read_format_zip_read_data),
+            Some(archive_read_format_zip_read_data_skip_streamable),
             None,
-            Some(archive_read_format_zip_cleanup as unsafe fn(_: *mut archive_read) -> i32),
-            Some(
-                archive_read_support_format_zip_capabilities_streamable
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_has_encrypted_entries
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
+            Some(archive_read_format_zip_cleanup),
+            Some(archive_read_support_format_zip_capabilities_streamable),
+            Some(archive_read_format_zip_has_encrypted_entries),
         )
     };
     if r != 0 {
@@ -4357,12 +4334,8 @@ fn cmp_key(n: *const archive_rb_node, key: *const ()) -> i32 {
 }
 static mut rb_ops: archive_rb_tree_ops = {
     let init = archive_rb_tree_ops {
-        rbto_compare_nodes: Some(
-            cmp_node as unsafe fn(_: *const archive_rb_node, _: *const archive_rb_node) -> i32,
-        ),
-        rbto_compare_key: Some(
-            cmp_key as unsafe fn(_: *const archive_rb_node, _: *const ()) -> i32,
-        ),
+        rbto_compare_nodes: Some(cmp_node),
+        rbto_compare_key: Some(cmp_key),
     };
     init
 };
@@ -4380,12 +4353,8 @@ fn rsrc_cmp_key(n: *const archive_rb_node, key: *const ()) -> i32 {
 }
 static mut rb_rsrc_ops: archive_rb_tree_ops = {
     let mut init = archive_rb_tree_ops {
-        rbto_compare_nodes: Some(
-            rsrc_cmp_node as unsafe fn(_: *const archive_rb_node, _: *const archive_rb_node) -> i32,
-        ),
-        rbto_compare_key: Some(
-            rsrc_cmp_key as unsafe fn(_: *const archive_rb_node, _: *const ()) -> i32,
-        ),
+        rbto_compare_nodes: Some(rsrc_cmp_node),
+        rbto_compare_key: Some(rsrc_cmp_key),
     };
     init
 };
@@ -5186,47 +5155,21 @@ pub fn archive_read_support_format_zip_seekable(_a: *mut archive) -> i32 {
      * any encrypted entries yet.
      */
     (safe_zip).has_encrypted_entries = -1;
-    (safe_zip).crc32func = Some(real_crc32 as unsafe fn(_: u64, _: *const (), _: size_t) -> u64);
+    (safe_zip).crc32func = Some(real_crc32);
     r = unsafe {
         __archive_read_register_format_safe(
             a,
             zip as *mut (),
             b"zip\x00" as *const u8,
-            Some(
-                archive_read_format_zip_seekable_bid
-                    as unsafe fn(_: *mut archive_read, _: i32) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_options
-                    as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_seekable_read_header
-                    as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_read_data
-                    as unsafe fn(
-                        _: *mut archive_read,
-                        _: *mut *const (),
-                        _: *mut size_t,
-                        _: *mut int64_t,
-                    ) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_read_data_skip_seekable
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
+            Some(archive_read_format_zip_seekable_bid),
+            Some(archive_read_format_zip_options),
+            Some(archive_read_format_zip_seekable_read_header),
+            Some(archive_read_format_zip_read_data),
+            Some(archive_read_format_zip_read_data_skip_seekable),
             None,
-            Some(archive_read_format_zip_cleanup as unsafe fn(_: *mut archive_read) -> i32),
-            Some(
-                archive_read_support_format_zip_capabilities_seekable
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_has_encrypted_entries
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
+            Some(archive_read_format_zip_cleanup),
+            Some(archive_read_support_format_zip_capabilities_seekable),
+            Some(archive_read_format_zip_has_encrypted_entries),
         )
     };
     if r != 0 {

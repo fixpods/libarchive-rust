@@ -531,15 +531,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
     if safe_sc.flag & (1 as i32) << 4 as i32 != 0 {
         add_converter(
             sc,
-            Some(
-                strncat_from_utf8_libarchive2
-                    as unsafe extern "C" fn(
-                        _: *mut archive_string,
-                        _: *const (),
-                        _: size_t,
-                        _: *mut archive_string_conv,
-                    ) -> i32,
-            ),
+            Some(strncat_from_utf8_libarchive2),
         );
         return;
     }
@@ -554,30 +546,14 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
         if safe_sc.flag & (1 as i32) << 9 as i32 != 0 {
             add_converter(
                 sc,
-                Some(
-                    archive_string_append_unicode
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
+                Some(archive_string_append_unicode),
             );
             return;
         }
         if safe_sc.cd != -(1 as i32) as iconv_t {
             add_converter(
                 sc,
-                Some(
-                    iconv_strncat_in_locale
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
+                Some(iconv_strncat_in_locale),
             );
             return;
         }
@@ -585,28 +561,12 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
             if safe_sc.flag & (1 as i32) << 10 as i32 != 0 {
                 add_converter(
                     sc,
-                    Some(
-                        best_effort_strncat_to_utf16be
-                            as unsafe extern "C" fn(
-                                _: *mut archive_string,
-                                _: *const (),
-                                _: size_t,
-                                _: *mut archive_string_conv,
-                            ) -> i32,
-                    ),
+                    Some(best_effort_strncat_to_utf16be),
                 );
             } else {
                 add_converter(
                     sc,
-                    Some(
-                        best_effort_strncat_to_utf16le
-                            as unsafe extern "C" fn(
-                                _: *mut archive_string,
-                                _: *const (),
-                                _: size_t,
-                                _: *mut archive_string_conv,
-                            ) -> i32,
-                    ),
+                    Some(best_effort_strncat_to_utf16le),
                 );
             }
         } else {
@@ -625,28 +585,12 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
         if safe_sc.flag & (1 as i32) << 7 as i32 != 0 {
             add_converter(
                 sc,
-                Some(
-                    archive_string_normalize_D
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
+                Some(archive_string_normalize_D),
             );
         } else if safe_sc.flag & (1 as i32) << 6 as i32 != 0 {
             add_converter(
                 sc,
-                Some(
-                    archive_string_normalize_C
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
+                Some(archive_string_normalize_C),
             );
         }
         if safe_sc.flag & (1 as i32) << 8 as i32 != 0 {
@@ -657,15 +601,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
             if safe_sc.flag & ((1 as i32) << 7 as i32 | (1 as i32) << 6 as i32) == 0 {
                 add_converter(
                     sc,
-                    Some(
-                        archive_string_append_unicode
-                            as unsafe extern "C" fn(
-                                _: *mut archive_string,
-                                _: *const (),
-                                _: size_t,
-                                _: *mut archive_string_conv,
-                            ) -> i32,
-                    ),
+                    Some(archive_string_append_unicode),
                 );
             }
             return;
@@ -673,43 +609,19 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
         if safe_sc.cd != -(1 as i32) as iconv_t {
             add_converter(
                 sc,
-                Some(
-                    iconv_strncat_in_locale
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
+                Some(iconv_strncat_in_locale),
             );
             return;
         }
         if safe_sc.flag & ((1) << 2 | (1) << 11) == (1) << 2 | (1) << 11 {
             add_converter(
                 sc,
-                Some(
-                    best_effort_strncat_from_utf16be
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
+                Some(best_effort_strncat_from_utf16be),
             );
         } else if safe_sc.flag & ((1) << 2 | (1) << 13) == (1) << 2 | (1) << 13 {
             add_converter(
                 sc,
-                Some(
-                    best_effort_strncat_from_utf16le
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
+                Some(best_effort_strncat_from_utf16le),
             );
         } else {
             /* Make sure we have no converter. */
@@ -724,28 +636,12 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
         if safe_sc.flag & (1) << 7 != 0 {
             add_converter(
                 sc,
-                Some(
-                    archive_string_normalize_D
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
+                Some(archive_string_normalize_D),
             );
         } else if safe_sc.flag & (1) << 6 != 0 {
             add_converter(
                 sc,
-                Some(
-                    archive_string_normalize_C
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
+                Some(archive_string_normalize_C),
             );
         }
         /*
@@ -762,15 +658,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
             if safe_sc.flag & ((1) << 7 | (1) << 6) == 0 {
                 add_converter(
                     sc,
-                    Some(
-                        strncat_from_utf8_to_utf8
-                            as unsafe extern "C" fn(
-                                _: *mut archive_string,
-                                _: *const (),
-                                _: size_t,
-                                _: *mut archive_string_conv,
-                            ) -> i32,
-                    ),
+                    Some(strncat_from_utf8_to_utf8),
                 );
             }
             return;
@@ -779,15 +667,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
     if safe_sc.cd != -(1 as i32) as iconv_t {
         add_converter(
             sc,
-            Some(
-                iconv_strncat_in_locale
-                    as unsafe extern "C" fn(
-                        _: *mut archive_string,
-                        _: *const (),
-                        _: size_t,
-                        _: *mut archive_string_conv,
-                    ) -> i32,
-            ),
+            Some(iconv_strncat_in_locale),
         );
         /*
          * iconv generally does not support UTF-8-MAC and so
@@ -798,15 +678,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
             if safe_sc.flag & (1) << 7 != 0 {
                 add_converter(
                     sc,
-                    Some(
-                        archive_string_normalize_D
-                            as unsafe extern "C" fn(
-                                _: *mut archive_string,
-                                _: *const (),
-                                _: size_t,
-                                _: *mut archive_string_conv,
-                            ) -> i32,
-                    ),
+                    Some(archive_string_normalize_D),
                 );
             }
         }
@@ -818,15 +690,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
     if safe_sc.flag & (1) << 2 != 0 || safe_sc.same != 0 {
         add_converter(
             sc,
-            Some(
-                best_effort_strncat_in_locale
-                    as unsafe extern "C" fn(
-                        _: *mut archive_string,
-                        _: *const (),
-                        _: size_t,
-                        _: *mut archive_string_conv,
-                    ) -> i32,
-            ),
+            Some(best_effort_strncat_in_locale),
         );
     } else {
         /* Make sure we have no converter. */
@@ -2124,57 +1988,32 @@ extern "C" fn archive_string_append_unicode(
         None;
     let safe_sc = unsafe { &mut *sc };
     if safe_sc.flag & (1) << 10 != 0 {
-        unparse = Some(
-            unicode_to_utf16be
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16be);
         ts = 2
     } else if safe_sc.flag & (1) << 12 != 0 {
-        unparse = Some(
-            unicode_to_utf16le
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16le);
         ts = 2
     } else if safe_sc.flag & (1) << 8 != 0 {
-        unparse = Some(
-            unicode_to_utf8 as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf8);
         ts = 1
     } else if safe_sc.flag & (1) << 11 != 0 {
-        unparse = Some(
-            unicode_to_utf16be
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16be);
         ts = 2
     } else if safe_sc.flag & (1) << 13 != 0 {
-        unparse = Some(
-            unicode_to_utf16le
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16le);
         ts = 2
     } else {
-        unparse = Some(
-            unicode_to_utf8 as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf8);
         ts = 1
     }
     if safe_sc.flag & (1) << 11 != 0 {
-        parse = Some(
-            utf16be_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16be_to_unicode);
         tm = 1
     } else if safe_sc.flag & (1) << 13 != 0 {
-        parse = Some(
-            utf16le_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16le_to_unicode);
         tm = 1
     } else {
-        parse = Some(
-            cesu8_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(cesu8_to_unicode);
         tm = ts
     }
     let safe_as_0 = unsafe { &mut *as_0 };
@@ -2316,27 +2155,19 @@ extern "C" fn archive_string_normalize_C(
     ts = 1;
     let safe_sc = unsafe { &mut *sc };
     if safe_sc.flag & (1) << 10 != 0 {
-        unparse = Some(
-            unicode_to_utf16be
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16be);
         ts = 2;
         if safe_sc.flag & (1) << 11 != 0 {
             always_replace = 0
         }
     } else if safe_sc.flag & (1) << 12 != 0 {
-        unparse = Some(
-            unicode_to_utf16le
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16le);
         ts = 2;
         if safe_sc.flag & (1) << 13 != 0 {
             always_replace = 0
         }
     } else if safe_sc.flag & (1) << 8 != 0 {
-        unparse = Some(
-            unicode_to_utf8 as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf8);
         if safe_sc.flag & (1) << 9 != 0 {
             always_replace = 0
         }
@@ -2350,39 +2181,24 @@ extern "C" fn archive_string_normalize_C(
             unparse = Some(unicode_to_utf16be);
             ts = 2
         } else if safe_sc.flag & (1) << 13 != 0 {
-            unparse = Some(
-                unicode_to_utf16le
-                    as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-            );
+            unparse = Some(unicode_to_utf16le);
             ts = 2
         } else {
-            unparse = Some(
-                unicode_to_utf8
-                    as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-            )
+            unparse = Some(unicode_to_utf8)
         }
     }
     if safe_sc.flag & (1) << 11 != 0 {
-        parse = Some(
-            utf16be_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16be_to_unicode);
         tm = 1;
         spair = 4
         /* surrogate pair size in UTF-16. */
     } else if safe_sc.flag & (1) << 13 != 0 {
-        parse = Some(
-            utf16le_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16le_to_unicode);
         tm = 1;
         spair = 4
         /* surrogate pair size in UTF-16. */
     } else {
-        parse = Some(
-            cesu8_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(cesu8_to_unicode);
         tm = ts;
         spair = 6
         /* surrogate pair size in UTF-8. */
@@ -3676,27 +3492,19 @@ extern "C" fn archive_string_normalize_D(
     ts = 1;
     let safe_sc = unsafe { &mut *sc };
     if safe_sc.flag & (1) << 10 != 0 {
-        unparse = Some(
-            unicode_to_utf16be
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16be);
         ts = 2;
         if safe_sc.flag & (1) << 11 != 0 {
             always_replace = 0
         }
     } else if safe_sc.flag & (1) << 12 != 0 {
-        unparse = Some(
-            unicode_to_utf16le
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16le);
         ts = 2;
         if safe_sc.flag & (1) << 13 != 0 {
             always_replace = 0
         }
     } else if safe_sc.flag & (1) << 8 != 0 {
-        unparse = Some(
-            unicode_to_utf8 as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf8);
         if safe_sc.flag & (1) << 9 != 0 {
             always_replace = 0
         }
@@ -3710,39 +3518,24 @@ extern "C" fn archive_string_normalize_D(
             unparse = Some(unicode_to_utf16be);
             ts = 2
         } else if safe_sc.flag & (1) << 13 != 0 {
-            unparse = Some(
-                unicode_to_utf16le
-                    as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-            );
+            unparse = Some(unicode_to_utf16le);
             ts = 2
         } else {
-            unparse = Some(
-                unicode_to_utf8
-                    as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-            )
+            unparse = Some(unicode_to_utf8)
         }
     }
     if safe_sc.flag & (1) << 11 != 0 {
-        parse = Some(
-            utf16be_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16be_to_unicode);
         tm = 1;
         spair = 4
         /* surrogate pair size in UTF-16. */
     } else if safe_sc.flag & (1) << 13 != 0 {
-        parse = Some(
-            utf16le_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16le_to_unicode);
         tm = 1;
         spair = 4
         /* surrogate pair size in UTF-16. */
     } else {
-        parse = Some(
-            cesu8_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(cesu8_to_unicode);
         tm = ts;
         spair = 6
         /* surrogate pair size in UTF-8. */

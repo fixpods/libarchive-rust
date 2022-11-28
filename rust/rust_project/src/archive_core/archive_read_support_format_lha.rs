@@ -151,27 +151,13 @@ pub unsafe fn archive_read_support_format_lha(mut _a: *mut archive) -> i32 {
         a,
         lha as *mut lha as *mut (),
         b"lha\x00" as *const u8,
-        Some(archive_read_format_lha_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
-        Some(
-            archive_read_format_lha_options
-                as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
-        ),
-        Some(
-            archive_read_format_lha_read_header
-                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
-        ),
-        Some(
-            archive_read_format_lha_read_data
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *mut *const (),
-                    _: *mut size_t,
-                    _: *mut int64_t,
-                ) -> i32,
-        ),
-        Some(archive_read_format_lha_read_data_skip as unsafe fn(_: *mut archive_read) -> i32),
+        Some(archive_read_format_lha_bid),
+        Some(archive_read_format_lha_options),
+        Some(archive_read_format_lha_read_header),
+        Some(archive_read_format_lha_read_data),
+        Some(archive_read_format_lha_read_data_skip),
         None,
-        Some(archive_read_format_lha_cleanup as unsafe fn(_: *mut archive_read) -> i32),
+        Some(archive_read_format_lha_cleanup),
         None,
         None,
     );

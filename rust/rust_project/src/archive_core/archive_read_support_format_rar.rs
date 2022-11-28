@@ -345,36 +345,15 @@ pub unsafe fn archive_read_support_format_rar(mut _a: *mut archive) -> i32 {
         a,
         rar as *mut (),
         b"rar\x00" as *const u8,
-        Some(archive_read_format_rar_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
-        Some(
-            archive_read_format_rar_options
-                as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
-        ),
-        Some(
-            archive_read_format_rar_read_header
-                as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
-        ),
-        Some(
-            archive_read_format_rar_read_data
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *mut *const (),
-                    _: *mut size_t,
-                    _: *mut int64_t,
-                ) -> i32,
-        ),
-        Some(archive_read_format_rar_read_data_skip as unsafe fn(_: *mut archive_read) -> i32),
-        Some(
-            archive_read_format_rar_seek_data
-                as unsafe fn(_: *mut archive_read, _: int64_t, _: i32) -> int64_t,
-        ),
-        Some(archive_read_format_rar_cleanup as unsafe fn(_: *mut archive_read) -> i32),
-        Some(
-            archive_read_support_format_rar_capabilities as unsafe fn(_: *mut archive_read) -> i32,
-        ),
-        Some(
-            archive_read_format_rar_has_encrypted_entries as unsafe fn(_: *mut archive_read) -> i32,
-        ),
+        Some(archive_read_format_rar_bid),
+        Some(archive_read_format_rar_options),
+        Some(archive_read_format_rar_read_header),
+        Some(archive_read_format_rar_read_data),
+        Some(archive_read_format_rar_read_data_skip),
+        Some(archive_read_format_rar_seek_data),
+        Some(archive_read_format_rar_cleanup),
+        Some(archive_read_support_format_rar_capabilities),
+        Some(archive_read_format_rar_has_encrypted_entries),
     );
     if r != 0 as i32 {
         free_safe(rar as *mut ());
@@ -2039,7 +2018,7 @@ unsafe fn read_data_compressed(
     let safe_buff = unsafe { &mut *buff };
     let safe_size = unsafe { &mut *size };
     let safe_offset = unsafe { &mut *offset };
-    let mut current_block_102: u64;
+    let mut current_block: u64;
     loop {
         if safe_rar.valid == 0 {
             return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
@@ -2151,7 +2130,7 @@ unsafe fn read_data_compressed(
                 if sym != safe_rar.ppmd_escape {
                     lzss_emit_literal(rar, sym as uint8_t);
                     safe_rar.bytes_uncopied += 1;
-                    current_block_102 = 14541395414537699361;
+                    current_block = 1;
                 } else {
                     unsafe {
                         code = __archive_ppmd7_functions
@@ -2176,7 +2155,7 @@ unsafe fn read_data_compressed(
                         }
                         2 => {
                             safe_rar.ppmd_eod = 1 as i32 as u8;
-                            current_block_102 = 7095457783677275021;
+                            current_block = 0;
                         }
                         3 => {
                             archive_set_error_safe!(
@@ -2227,7 +2206,7 @@ unsafe fn read_data_compressed(
                             }
                             lzss_emit_match(rar, lzss_offset + 2 as i32, length + 32 as i32);
                             safe_rar.bytes_uncopied += (length + 32 as i32) as i64;
-                            current_block_102 = 14541395414537699361;
+                            current_block = 1;
                         }
                         5 => {
                             unsafe {
@@ -2248,12 +2227,12 @@ unsafe fn read_data_compressed(
                             }
                             lzss_emit_match(rar, 1 as i32, length + 4 as i32);
                             safe_rar.bytes_uncopied += (length + 4 as i32) as i64;
-                            current_block_102 = 14541395414537699361;
+                            current_block = 1;
                         }
                         _ => {
                             lzss_emit_literal(rar, sym as uint8_t);
                             safe_rar.bytes_uncopied += 1;
-                            current_block_102 = 14541395414537699361;
+                            current_block = 1;
                         }
                     }
                 }
@@ -2278,10 +2257,10 @@ unsafe fn read_data_compressed(
                     );
                     return ARCHIVE_RAR_DEFINED_PARAM.archive_fatal;
                 }
-                current_block_102 = 14541395414537699361;
+                current_block = 1;
             }
-            match current_block_102 {
-                7095457783677275021 => {}
+            match current_block {
+                0 => {}
                 _ => {
                     if safe_rar.bytes_uncopied
                         > safe_rar.unp_buffer_size.wrapping_sub(safe_rar.unp_offset) as i64
@@ -2449,7 +2428,7 @@ unsafe fn parse_codes(mut a: *mut archive_read) -> i32 {
                                     };
                                     safe_rar.bytein.a = a;
                                     safe_rar.bytein.Read =
-                                        Some(ppmd_read as unsafe fn(_: *mut ()) -> Byte);
+                                        Some(ppmd_read);
                                     unsafe {
                                         __archive_ppmd7_functions
                                             .PpmdRAR_RangeDec_CreateVTable

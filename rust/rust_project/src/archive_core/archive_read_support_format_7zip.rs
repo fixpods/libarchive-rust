@@ -1617,7 +1617,7 @@ fn decompress(
             (safe_zip).ppstream.avail_out = t_avail_out as int64_t;
             if (safe_zip).ppmd7_stat == 0 {
                 (safe_zip).bytein.a = a;
-                (safe_zip).bytein.Read = Some(ppmd_read as unsafe fn(_: *mut ()) -> Byte);
+                (safe_zip).bytein.Read = Some(ppmd_read);
                 (safe_zip).range_dec.Stream = &mut (safe_zip).bytein;
                 r = unsafe {
                     __archive_ppmd7_functions

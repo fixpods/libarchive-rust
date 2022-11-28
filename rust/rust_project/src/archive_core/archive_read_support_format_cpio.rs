@@ -39,27 +39,13 @@ pub fn archive_read_support_format_cpio(_a: *mut archive) -> i32 {
             a,
             cpio as *mut (),
             b"cpio\x00" as *const u8,
-            Some(archive_read_format_cpio_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
-            Some(
-                archive_read_format_cpio_options
-                    as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
-            ),
-            Some(
-                archive_read_format_cpio_read_header
-                    as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
-            ),
-            Some(
-                archive_read_format_cpio_read_data
-                    as unsafe fn(
-                        _: *mut archive_read,
-                        _: *mut *const (),
-                        _: *mut size_t,
-                        _: *mut int64_t,
-                    ) -> i32,
-            ),
-            Some(archive_read_format_cpio_skip as unsafe fn(_: *mut archive_read) -> i32),
+            Some(archive_read_format_cpio_bid),
+            Some(archive_read_format_cpio_options),
+            Some(archive_read_format_cpio_read_header),
+            Some(archive_read_format_cpio_read_data),
+            Some(archive_read_format_cpio_skip),
             None,
-            Some(archive_read_format_cpio_cleanup as unsafe fn(_: *mut archive_read) -> i32),
+            Some(archive_read_format_cpio_cleanup),
             None,
             None,
         )
@@ -84,16 +70,7 @@ fn archive_read_format_cpio_bid(a: *mut archive_read, best_bid: i32) -> i32 {
     let cpio_safe = unsafe { &mut *cpio };
     if unsafe { memcmp_safe(p as *const (), b"070707\x00" as *const u8 as *const (), 6) } == 0 {
         /* ASCII cpio archive (odc, POSIX.1) */
-        cpio_safe.read_header = Some(
-            header_odc
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *mut cpio,
-                    _: *mut archive_entry,
-                    _: *mut size_t,
-                    _: *mut size_t,
-                ) -> i32,
-        );
+        cpio_safe.read_header = Some(header_odc);
         bid += 48
         /*
          * XXX TODO:  More verification; Could check that only octal
@@ -103,16 +80,7 @@ fn archive_read_format_cpio_bid(a: *mut archive_read, best_bid: i32) -> i32 {
         == 0
     {
         /* afio large ASCII cpio archive */
-        cpio_safe.read_header = Some(
-            header_odc
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *mut cpio,
-                    _: *mut archive_entry,
-                    _: *mut size_t,
-                    _: *mut size_t,
-                ) -> i32,
-        );
+        cpio_safe.read_header = Some(header_odc);
         bid += 48
         /*
          * XXX TODO:  More verification; Could check that almost hex
@@ -122,16 +90,7 @@ fn archive_read_format_cpio_bid(a: *mut archive_read, best_bid: i32) -> i32 {
         == 0
     {
         /* ASCII cpio archive (SVR4 without CRC) */
-        cpio_safe.read_header = Some(
-            header_newc
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *mut cpio,
-                    _: *mut archive_entry,
-                    _: *mut size_t,
-                    _: *mut size_t,
-                ) -> i32,
-        );
+        cpio_safe.read_header = Some(header_newc);
         bid += 48
         /*
          * XXX TODO:  More verification; Could check that only hex
@@ -142,16 +101,7 @@ fn archive_read_format_cpio_bid(a: *mut archive_read, best_bid: i32) -> i32 {
     {
         /* ASCII cpio archive (SVR4 with CRC) */
         /* XXX TODO: Flag that we should check the CRC. XXX */
-        cpio_safe.read_header = Some(
-            header_newc
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *mut cpio,
-                    _: *mut archive_entry,
-                    _: *mut size_t,
-                    _: *mut size_t,
-                ) -> i32,
-        );
+        cpio_safe.read_header = Some(header_newc);
         bid += 48
         /*
          * XXX TODO:  More verification; Could check that only hex
@@ -159,30 +109,12 @@ fn archive_read_format_cpio_bid(a: *mut archive_read, best_bid: i32) -> i32 {
          */
     } else if unsafe { *p.offset(0) as i32 * 256 as i32 + *p.offset(1) as i32 == 0o70707 as i32 } {
         /* big-endian binary cpio archives */
-        cpio_safe.read_header = Some(
-            header_bin_be
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *mut cpio,
-                    _: *mut archive_entry,
-                    _: *mut size_t,
-                    _: *mut size_t,
-                ) -> i32,
-        );
+        cpio_safe.read_header = Some(header_bin_be);
         bid += 16
         /* Is more verification possible here? */
     } else if unsafe { *p.offset(0) as i32 + *p.offset(1) as i32 * 256 as i32 == 0o70707 as i32 } {
         /* little-endian binary cpio archives */
-        cpio_safe.read_header = Some(
-            header_bin_le
-                as unsafe fn(
-                    _: *mut archive_read,
-                    _: *mut cpio,
-                    _: *mut archive_entry,
-                    _: *mut size_t,
-                    _: *mut size_t,
-                ) -> i32,
-        );
+        cpio_safe.read_header = Some(header_bin_le);
         bid += 16
         /* Is more verification possible here? */
     } else {
