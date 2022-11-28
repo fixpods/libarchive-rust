@@ -1635,14 +1635,14 @@ lazy_static! {
     };
 }
 
-pub fn inflateReset_cab_safe(strm: z_streamp) -> i32 {
-    return unsafe { inflateReset(strm) };
+pub unsafe fn inflateReset_cab_safe(strm: z_streamp) -> i32 {
+    return inflateReset(strm);
 }
 
-pub fn inflate_cab_safe(strm: z_streamp, flush: i32) -> i32 {
-    return unsafe { inflate(strm, flush) };
+pub unsafe fn inflate_cab_safe(strm: z_streamp, flush: i32) -> i32 {
+    return inflate(strm, flush);
 }
 
-pub fn inflateEnd_cab_safe(strm: z_streamp) -> i32 {
-    return unsafe { inflateEnd(strm) };
+pub unsafe fn inflateEnd_cab_safe(strm: z_streamp) -> i32 {
+    return inflateEnd(strm);
 }
