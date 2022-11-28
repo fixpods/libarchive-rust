@@ -327,7 +327,7 @@ unsafe fn archive_read_format_iso9660_bid(a: *mut archive_read, best_bid: i32) -
         /* Standard Identifier must be "CD001" */
         if memcmp_safe(
             unsafe { p.offset(1 as isize) } as *const (),
-            b"CD001\x00" as *const u8 as *const i8 as *const (),
+            b"CD001\x00" as *const u8 as *const (),
             5,
         ) != 0
         {
@@ -336,7 +336,7 @@ unsafe fn archive_read_format_iso9660_bid(a: *mut archive_read, best_bid: i32) -
         if isPVD(iso9660, p) != 0 {
             continue;
         }
-        if iso9660.joliet.location != 0 {
+        if iso9660.joliet.location == 0 {
             if isJolietSVD(iso9660, p) != 0 {
                 continue;
             }
@@ -372,16 +372,16 @@ unsafe fn archive_read_format_iso9660_bid(a: *mut archive_read, best_bid: i32) -
 
 unsafe fn archive_read_format_iso9660_options(
     a: *mut archive_read,
-    key: *const i8,
-    val: *const i8,
+    key: *const u8,
+    val: *const u8,
 ) -> i32 {
     let iso9660 = unsafe { &mut *((*(*a).format).data as *mut iso9660) };
-    if strcmp_safe(key, b"joliet\x00" as *const u8 as *const i8) == 0 {
+    if strcmp_safe(key, b"joliet\x00" as *const u8) == 0 {
         if val.is_null()
-            || strcmp_safe(val, b"off\x00" as *const u8 as *const i8) == 0
-            || strcmp_safe(val, b"ignore\x00" as *const u8 as *const i8) == 0
-            || strcmp_safe(val, b"disable\x00" as *const u8 as *const i8) == 0
-            || strcmp_safe(val, b"0\x00" as *const u8 as *const i8) == 0
+            || strcmp_safe(val, b"off\x00" as *const u8) == 0
+            || strcmp_safe(val, b"ignore\x00" as *const u8) == 0
+            || strcmp_safe(val, b"disable\x00" as *const u8) == 0
+            || strcmp_safe(val, b"0\x00" as *const u8) == 0
         {
             iso9660.opt_support_joliet = 0
         } else {
@@ -389,8 +389,8 @@ unsafe fn archive_read_format_iso9660_options(
         }
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
     }
-    if strcmp_safe(key, b"rockridge\x00" as *const u8 as *const i8) == 0
-        || strcmp_safe(key, b"Rockridge\x00" as *const u8 as *const i8) == 0
+    if strcmp_safe(key, b"rockridge\x00" as *const u8) == 0
+        || strcmp_safe(key, b"Rockridge\x00" as *const u8) == 0
     {
         iso9660.opt_support_rockridge = (val != 0 as *mut () as *const u8) as i32;
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
@@ -591,7 +591,7 @@ unsafe fn isSVD(iso9660: *mut iso9660, h: *const u8) -> i32 {
     logical_block_size = archive_le16dec(unsafe {
         h.offset(ARCHIVE_ISO9660_DEFINED_PARAM.svd_logical_block_size_offset as isize)
     } as *const ()) as ssize_t;
-    if logical_block_size <= 0 as i32 as i64 {
+    if logical_block_size <= 0 {
         return 0;
     }
     volume_block = archive_le32dec(unsafe {
@@ -909,7 +909,7 @@ unsafe fn read_children(a: *mut archive_read, parent: *mut file_info) -> i32 {
     }
     if iso9660.current_position < parent.offset {
         let mut skipsize: int64_t = 0;
-        skipsize = (parent.offset - iso9660.current_position) as i64;
+        skipsize = (parent.offset - iso9660.current_position) as int64_t;
         skipsize = __archive_read_consume_safe(a, skipsize);
         if skipsize < 0 {
             return skipsize as i32;
@@ -929,8 +929,7 @@ unsafe fn read_children(a: *mut archive_read, parent: *mut file_info) -> i32 {
         );
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
     }
-    iso9660.current_position =
-        (iso9660.current_position as u64).wrapping_add(step) as uint64_t as uint64_t;
+    iso9660.current_position += step;
     let mut multi = 0 as *mut file_info;
     skip_size = step;
     while step != 0 {
@@ -938,7 +937,7 @@ unsafe fn read_children(a: *mut archive_read, parent: *mut file_info) -> i32 {
         unsafe {
             b = b.offset(iso9660.logical_block_size as isize);
         }
-        step = (step as u64).wrapping_sub(iso9660.logical_block_size as u64) as size_t as size_t;
+        step -= iso9660.logical_block_size as u64;
         while unsafe { *p } != 0 && p < b && unsafe { p.offset(*p as i32 as isize) } <= b {
             let mut child: *mut file_info = 0 as *mut file_info;
             /* N.B.: these special directory identifiers
@@ -1173,7 +1172,7 @@ unsafe fn archive_read_format_iso9660_read_header(
         if iso9660.sconv_utf16be.is_null() {
             iso9660.sconv_utf16be = archive_string_conversion_from_charset_safe(
                 &mut safe_a.archive,
-                b"UTF-16BE\x00" as *const u8 as *const i8,
+                b"UTF-16BE\x00" as *const u8,
                 1,
             );
             if iso9660.sconv_utf16be.is_null() {
@@ -1245,7 +1244,7 @@ unsafe fn archive_read_format_iso9660_read_header(
             rd_r = ARCHIVE_ISO9660_DEFINED_PARAM.archive_warn
         }
     } else {
-        let path: *const i8 = build_pathname(&mut iso9660.pathname, file, 0 as i32);
+        let path: *const u8 = build_pathname(&mut iso9660.pathname, file, 0);
         if path.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
@@ -1268,7 +1267,7 @@ unsafe fn archive_read_format_iso9660_read_header(
             b"File is beyond end-of-media: %s\x00" as *const u8,
             archive_entry_pathname(entry)
         );
-        iso9660.entry_bytes_remaining = 0 as i32 as int64_t;
+        iso9660.entry_bytes_remaining = 0;
         return ARCHIVE_ISO9660_DEFINED_PARAM.archive_warn;
     }
     /* Set up the entry structure with information about this entry. */
@@ -1294,7 +1293,7 @@ unsafe fn archive_read_format_iso9660_read_header(
      * return the same body again, so if the next entry refers to
      * the same data, we have to return it as a hardlink to the
      * original entry. */
-    if file.number != -1 as i64 && file.number == iso9660.previous_number {
+    if file.number != -1 && file.number == iso9660.previous_number {
         if iso9660.seenJoliet != 0 {
             r = _archive_entry_copy_hardlink_l_safe(
                 entry,
@@ -1615,7 +1614,7 @@ unsafe fn zisofs_read_data(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                    b"Illegal zisofs block pointers\x00" as *const u8 as *const i8
+                    b"Illegal zisofs block pointers\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -1630,7 +1629,7 @@ unsafe fn zisofs_read_data(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                    b"Illegal zisofs block pointers(cannot seek)\x00" as *const u8 as *const i8
+                    b"Illegal zisofs block pointers(cannot seek)\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -1644,7 +1643,7 @@ unsafe fn zisofs_read_data(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
-                    b"Illegal zisofs block pointers\x00" as *const u8 as *const i8
+                    b"Illegal zisofs block pointers\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -1666,7 +1665,7 @@ unsafe fn zisofs_read_data(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                    b"Can\'t initialize zisofs decompression.\x00" as *const u8 as *const i8
+                    b"Can\'t initialize zisofs decompression.\x00" as *const u8
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
             }
@@ -1699,7 +1698,7 @@ unsafe fn zisofs_read_data(
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
-                    b"zisofs decompression failed (%d)\x00" as *const u8 as *const i8,
+                    b"zisofs decompression failed (%d)\x00" as *const u8,
                     r
                 );
                 return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
@@ -2028,12 +2027,12 @@ unsafe fn parse_file_info(
          */
         /* Chop off trailing ';1' from files. */
         if name_len > 4
-            && unsafe { *p.offset((name_len - 4) as isize) } as i32 == 0
+            && unsafe { *p.offset((name_len - 4) as isize) } == 0
             && unsafe { *p.offset((name_len - 3) as isize) } == ';' as u8
-            && unsafe { *p.offset((name_len - 2) as isize) } as i32 == 0
+            && unsafe { *p.offset((name_len - 2) as isize) } == 0
             && unsafe { *p.offset((name_len - 1) as isize) } == '1' as u8
         {
-            name_len = (name_len as u64).wrapping_sub(4) as size_t as size_t
+            name_len -= 4
         }
         file.utf16be_name = malloc_safe(name_len) as *mut u8;
         if file.utf16be_name.is_null() {
@@ -2061,7 +2060,7 @@ unsafe fn parse_file_info(
             name_len = name_len - 1
         }
         file.name.length = 0;
-        archive_strncat_safe(&mut file.name, p as *const i8 as *const (), name_len);
+        archive_strncat_safe(&mut file.name, p as *const (), name_len);
         current_block = 6528285054092551010;
     }
     match current_block {
@@ -2108,7 +2107,7 @@ unsafe fn parse_file_info(
                     p = rr_start;
                     if memcmp_safe(
                         p as *const (),
-                        b"SP\x07\x01\xbe\xef\x00" as *const u8 as *const i8 as *const (),
+                        b"SP\x07\x01\xbe\xef\x00" as *const u8 as *const (),
                         6,
                     ) == 0
                     {
@@ -2182,12 +2181,9 @@ unsafe fn parse_file_info(
                             && flags & 0x2 != 0
                             && iso9660.rr_moved.is_null()
                             && !file.name.s.is_null()
-                            && (strcmp_safe(file.name.s, b"rr_moved\x00" as *const u8 as *const i8)
-                                == 0
-                                || strcmp_safe(
-                                    file.name.s,
-                                    b".rr_moved\x00" as *const u8 as *const i8,
-                                ) == 0 as i32)
+                            && (strcmp_safe(file.name.s, b"rr_moved\x00" as *const u8) == 0
+                                || strcmp_safe(file.name.s, b".rr_moved\x00" as *const u8)
+                                    == 0 as i32)
                         {
                             iso9660.rr_moved = file;
                             file.rr_moved = 1;
@@ -2809,7 +2805,7 @@ unsafe fn parse_rockridge_NM1(file: *mut file_info, data: *const u8, data_length
             }
             archive_strncat_safe(
                 &mut file.name,
-                unsafe { (data as *const i8).offset(1 as isize) } as *const (),
+                unsafe { data.offset(1 as isize) } as *const (),
                 (data_length - 1 as i32) as size_t,
             );
         }
@@ -2819,7 +2815,7 @@ unsafe fn parse_rockridge_NM1(file: *mut file_info, data: *const u8, data_length
             }
             archive_strncat_safe(
                 &mut file.name,
-                unsafe { (data as *const i8).offset(1 as isize) } as *const (),
+                unsafe { data.offset(1 as isize) } as *const (),
                 (data_length - 1 as i32) as size_t,
             );
             file.name_continues = 1
@@ -2922,7 +2918,7 @@ unsafe fn parse_rockridge_TF1(file: *mut file_info, mut data: *const u8, mut dat
 
 unsafe fn parse_rockridge_SL1(file: *mut file_info, mut data: *const u8, mut data_length: i32) {
     let mut file = unsafe { &mut *file };
-    let mut separator: *const i8 = b"\x00" as *const u8 as *const i8;
+    let mut separator: *const u8 = b"\x00" as *const u8;
     if file.symlink_continues == 0 || file.symlink.length < 1 {
         file.symlink.length = 0
     }
@@ -3006,10 +3002,7 @@ unsafe fn parse_rockridge_SL1(file: *mut file_info, mut data: *const u8, mut dat
             16 => {
                 /* Undefined (historically "volume root" */
                 file.symlink.length = 0;
-                archive_strcat_safe(
-                    &mut file.symlink,
-                    b"ROOT\x00" as *const u8 as *const i8 as *const (),
-                );
+                archive_strcat_safe(&mut file.symlink, b"ROOT\x00" as *const u8 as *const ());
             }
             32 => {
                 /* Undefined (historically "hostname") */
@@ -3734,12 +3727,12 @@ unsafe fn time_from_tm(t: *mut tm) -> time_t {
         + (t.tm_year + 299 as i32) / 400 * 86400 as i32) as time_t;
 }
 
-unsafe fn build_pathname(as_0: *mut archive_string, file: *mut file_info, depth: i32) -> *const i8 {
+unsafe fn build_pathname(as_0: *mut archive_string, file: *mut file_info, depth: i32) -> *const u8 {
     let mut file = unsafe { &mut *file };
     // Plain ISO9660 only allows 8 dir levels; if we get
     // to 1000, then something is very, very wrong.
     if depth > 1000 {
-        return 0 as *const i8;
+        return 0 as *const u8;
     } /* Path is too long! */
     if !(*file).parent.is_null() && unsafe { (*(*file).parent).name.length } > 0 {
         if build_pathname(as_0, (*file).parent, depth + 1 as i32).is_null() {
@@ -3748,7 +3741,7 @@ unsafe fn build_pathname(as_0: *mut archive_string, file: *mut file_info, depth:
         archive_strcat_safe(as_0, b"/\x00" as *const u8 as *const ());
     }
     if (*file).name.length == 0 {
-        archive_strcat_safe(as_0, b".\x00" as *const u8 as *const i8 as *const ());
+        archive_strcat_safe(as_0, b".\x00" as *const u8 as *const ());
     } else {
         archive_string_concat_safe(as_0, &mut (*file).name);
     }

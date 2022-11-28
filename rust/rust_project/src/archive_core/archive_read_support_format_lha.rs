@@ -255,7 +255,7 @@ unsafe fn lha_check_header_format(mut h: *const ()) -> size_t {
 
 /* Minimum header size. */
 unsafe fn archive_read_format_lha_bid(mut a: *mut archive_read, mut best_bid: i32) -> i32 {
-    let mut p: *const i8;
+    let mut p: *const u8;
     let mut buff: *const ();
     let mut bytes_avail: ssize_t = 0;
     let mut offset: ssize_t;
@@ -277,7 +277,7 @@ unsafe fn archive_read_format_lha_bid(mut a: *mut archive_read, mut best_bid: i3
     if lha_check_header_format(p as *const ()) == 0 {
         return 30;
     }
-    if ({ *p.offset(0 as isize) } == 'M' as i8) && ({ *p.offset(1 as isize) } == 'Z' as i8) {
+    if ({ *p.offset(0 as isize) } == 'M' as u8) && ({ *p.offset(1 as isize) } == 'Z' as u8) {
         /* PE file */
         offset = 0;
         window = 4096;
@@ -290,7 +290,7 @@ unsafe fn archive_read_format_lha_bid(mut a: *mut archive_read, mut best_bid: i3
                     return 0;
                 }
             } else {
-                p = (buff as *const i8).offset(offset as isize);
+                p = (buff as *const u8).offset(offset as isize);
                 while {
                     p.offset(ARCHIVE_LHA_DEFINED_PARAM.h_size as isize)
                         < (buff as *const u8).offset(bytes_avail as isize)
@@ -316,7 +316,7 @@ unsafe fn archive_read_format_lha_options(
     let safe_a = unsafe { &mut *a };
     let mut lha = { &mut *((*safe_a.format).data as *mut lha) };
     let mut ret: i32 = ARCHIVE_LHA_DEFINED_PARAM.archive_failed;
-    if strcmp_safe(key, b"hdrcharset\x00" as *const u8 as *const i8) == 0 {
+    if strcmp_safe(key, b"hdrcharset\x00" as *const u8) == 0 {
         if val.is_null() || { *val.offset(0) } == 0 {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
@@ -342,8 +342,8 @@ unsafe fn archive_read_format_lha_options(
 
 unsafe fn lha_skip_sfx(mut a: *mut archive_read) -> i32 {
     let mut h: *const ();
-    let mut p: *const i8;
-    let mut q: *const i8;
+    let mut p: *const u8;
+    let mut q: *const u8;
     let mut next: size_t;
     let mut skip: size_t;
     let mut bytes: ssize_t = 0;
@@ -361,7 +361,7 @@ unsafe fn lha_skip_sfx(mut a: *mut archive_read) -> i32 {
             if bytes < ARCHIVE_LHA_DEFINED_PARAM.h_size as i64 {
                 break;
             }
-            p = h as *const i8;
+            p = h as *const u8;
             q = p.wrapping_offset(bytes as isize);
             /*
              * Scan ahead until we find something that looks
@@ -370,7 +370,7 @@ unsafe fn lha_skip_sfx(mut a: *mut archive_read) -> i32 {
             while unsafe { p.offset(ARCHIVE_LHA_DEFINED_PARAM.h_size as isize) } < q {
                 next = lha_check_header_format(p as *const ());
                 if next == 0 {
-                    skip = unsafe { p.offset_from(h as *const i8) } as i64 as size_t;
+                    skip = unsafe { p.offset_from(h as *const u8) } as i64 as size_t;
                     __archive_read_consume_safe(a, skip as int64_t);
                     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
                 }
@@ -460,17 +460,17 @@ unsafe fn archive_read_format_lha_read_header(
          * the mark of the end of the archive.
          */
         signature =
-            __archive_read_ahead_safe(a, ::std::mem::size_of::<i8>() as u64, 0 as *mut ssize_t)
-                as *const i8;
+            __archive_read_ahead_safe(a, ::std::mem::size_of::<u8>() as u64, 0 as *mut ssize_t)
+                as *const u8;
         if signature.is_null() || unsafe { *signature.offset(0 as isize) } == 0 {
             return ARCHIVE_LHA_DEFINED_PARAM.archive_eof;
         }
         return truncated_error(a);
     }
-    signature = p as *const i8;
+    signature = p as *const u8;
     if lha.found_first_header == 0
-        && unsafe { *signature.offset(0 as isize) } == 'M' as i8
-        && unsafe { *signature.offset(1 as isize) } == 'Z' as i8
+        && unsafe { *signature.offset(0 as isize) } == 'M' as u8
+        && unsafe { *signature.offset(1 as isize) } == 'Z' as u8
     {
         /* This is an executable?  Must be self-extracting...   */
         err = lha_skip_sfx(a);
@@ -504,14 +504,14 @@ unsafe fn archive_read_format_lha_read_header(
     lha.header_size = 0;
     lha.level = unsafe { *p.offset(ARCHIVE_LHA_DEFINED_PARAM.h_level_offset as isize) };
     lha.method[0] =
-        unsafe { *p.offset((ARCHIVE_LHA_DEFINED_PARAM.h_method_offset + 1) as isize) } as i8;
+        unsafe { *p.offset((ARCHIVE_LHA_DEFINED_PARAM.h_method_offset + 1) as isize) } as u8;
     lha.method[1] =
-        unsafe { *p.offset((ARCHIVE_LHA_DEFINED_PARAM.h_method_offset + 2) as isize) } as i8;
+        unsafe { *p.offset((ARCHIVE_LHA_DEFINED_PARAM.h_method_offset + 2) as isize) } as u8;
     lha.method[2] =
-        unsafe { *p.offset((ARCHIVE_LHA_DEFINED_PARAM.h_method_offset + 3) as isize) } as i8;
+        unsafe { *p.offset((ARCHIVE_LHA_DEFINED_PARAM.h_method_offset + 3) as isize) } as u8;
     if memcmp_safe(
         lha.method.as_mut_ptr() as *const (),
-        b"lhd\x00" as *const u8 as *const i8 as *const (),
+        b"lhd\x00" as *const u8 as *const (),
         3,
     ) == 0
     {
@@ -521,12 +521,12 @@ unsafe fn archive_read_format_lha_read_header(
     }
     if memcmp_safe(
         lha.method.as_mut_ptr() as *const (),
-        b"lh0\x00" as *const u8 as *const i8 as *const (),
+        b"lh0\x00" as *const u8 as *const (),
         3,
     ) == 0
         || memcmp_safe(
             lha.method.as_mut_ptr() as *const (),
-            b"lz4\x00" as *const u8 as *const i8 as *const (),
+            b"lz4\x00" as *const u8 as *const (),
             3,
         ) == 0
     {
@@ -588,13 +588,13 @@ unsafe fn archive_read_format_lha_read_header(
     linkname.s = 0 as *mut wchar_t;
     linkname.length = 0;
     linkname.buffer_length = 0;
-    conv_buffer.aes_mbs.s = 0 as *mut i8;
+    conv_buffer.aes_mbs.s = 0 as *mut u8;
     conv_buffer.aes_mbs.length = 0;
     conv_buffer.aes_mbs.buffer_length = 0;
-    conv_buffer.aes_mbs_in_locale.s = 0 as *mut i8;
+    conv_buffer.aes_mbs_in_locale.s = 0 as *mut u8;
     conv_buffer.aes_mbs_in_locale.length = 0;
     conv_buffer.aes_mbs_in_locale.buffer_length = 0;
-    conv_buffer.aes_utf8.s = 0 as *mut i8;
+    conv_buffer.aes_utf8.s = 0 as *mut u8;
     conv_buffer.aes_utf8.length = 0;
     conv_buffer.aes_utf8.buffer_length = 0;
     conv_buffer.aes_wcs.s = 0 as *mut wchar_t;
@@ -757,7 +757,7 @@ unsafe fn archive_read_format_lha_read_header(
     }
     sprintf_safe!(
         lha.format_name.as_mut_ptr(),
-        b"lha -%c%c%c-\x00" as *const u8 as *const i8,
+        b"lha -%c%c%c-\x00" as *const u8,
         lha.method[0] as i32,
         lha.method[1] as i32,
         lha.method[2] as i32
@@ -1020,7 +1020,7 @@ unsafe fn lha_read_file_header_1(a: *mut archive_read, lha: &mut lha) -> i32 {
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
                         ARCHIVE_LHA_DEFINED_PARAM.archive_errno_misc,
-                        b"LHa header sum error\x00" as *const u8 as *const i8
+                        b"LHa header sum error\x00" as *const u8
                     );
                     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
                 }
@@ -1373,11 +1373,11 @@ unsafe fn lha_read_file_extended_header(
                     break;
                 }
                 lha.filename.length = 0;
-                archive_array_append_safe(&mut lha.filename, extdheader as *const i8, datasize);
+                archive_array_append_safe(&mut lha.filename, extdheader as *const u8, datasize);
                 /* Setup a string conversion for a filename. */
                 lha.sconv_fname = archive_string_conversion_from_charset_safe(
                     &mut safe_a.archive,
-                    b"UTF-16LE\x00" as *const u8 as *const i8,
+                    b"UTF-16LE\x00" as *const u8,
                     1,
                 );
                 if lha.sconv_fname.is_null() {
@@ -1402,7 +1402,7 @@ unsafe fn lha_read_file_extended_header(
                 i = 0;
                 while (i as u64) < lha.dirname.length {
                     if unsafe { *lha.dirname.s.offset(i as isize) } as u8 == 0xff {
-                        unsafe { *lha.dirname.s.offset(i as isize) = '/' as i8 }
+                        unsafe { *lha.dirname.s.offset(i as isize) = '/' as u8 }
                     }
                     i = i + 1
                 }
@@ -1424,10 +1424,10 @@ unsafe fn lha_read_file_extended_header(
                 break;
             } else {
                 lha.dirname.length = 0;
-                archive_array_append_safe(&mut lha.dirname, extdheader as *const i8, datasize);
+                archive_array_append_safe(&mut lha.dirname, extdheader as *const u8, datasize);
                 lha.sconv_dir = archive_string_conversion_from_charset_safe(
                     &mut safe_a.archive,
-                    b"UTF-16LE\x00" as *const u8 as *const i8,
+                    b"UTF-16LE\x00" as *const u8,
                     1,
                 );
                 if lha.sconv_dir.is_null() {
@@ -1500,8 +1500,8 @@ unsafe fn lha_read_file_extended_header(
                     length: 0,
                     buffer_length: 0,
                 };
-                let mut charset: *const i8 = 0 as *const i8;
-                cp.s = 0 as *mut i8;
+                let mut charset: *const u8 = 0 as *const u8;
+                cp.s = 0 as *mut u8;
                 cp.length = 0;
                 cp.buffer_length = 0;
                 match archive_le32dec(extdheader as *const ()) {
@@ -1747,7 +1747,7 @@ unsafe fn lha_read_data_lzh(
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
-                b"Unsupported lzh compression method -%c%c%c-\x00" as *const u8 as *const i8,
+                b"Unsupported lzh compression method -%c%c%c-\x00" as *const u8,
                 lha_safe.method[0] as i32,
                 lha_safe.method[1] as i32,
                 lha_safe.method[2] as i32
@@ -2089,7 +2089,7 @@ unsafe fn lha_crc16(mut crc: uint16_t, pp: *const (), mut len: size_t) -> uint16
  * Returns ARCHIVE_FATAL if initialization failed; memory allocation
  * error occurred.
  */
-unsafe fn lzh_decode_init(strm: &mut lzh_stream, method: *const i8) -> i32 {
+unsafe fn lzh_decode_init(strm: &mut lzh_stream, method: *const u8) -> i32 {
     let mut w_bits: i32 = 0;
     let mut w_size: i32 = 0;
     if strm.ds.is_null() {
@@ -2101,8 +2101,8 @@ unsafe fn lzh_decode_init(strm: &mut lzh_stream, method: *const i8) -> i32 {
     let ds = unsafe { &mut *strm.ds };
     ds.error = ARCHIVE_LHA_DEFINED_PARAM.archive_failed;
     if method.is_null()
-        || unsafe { *method.offset(0 as isize) } != 'l' as i8
-        || unsafe { *method.offset(1 as isize) } != 'h' as i8
+        || unsafe { *method.offset(0 as isize) } != 'l' as u8
+        || unsafe { *method.offset(1 as isize) } != 'h' as u8
     {
         return ARCHIVE_LHA_DEFINED_PARAM.archive_failed;
     }
@@ -3449,8 +3449,8 @@ unsafe fn archive_test_lha_check_header_format(h: *const ()) {
 #[no_mangle]
 unsafe fn archive_test_archive_read_format_lha_options(
     _a: *mut archive,
-    key: *const i8,
-    val: *const i8,
+    key: *const u8,
+    val: *const u8,
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     archive_read_format_lha_options(a, key, val);
