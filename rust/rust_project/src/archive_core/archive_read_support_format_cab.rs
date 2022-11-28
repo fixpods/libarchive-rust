@@ -1,3 +1,4 @@
+use super::archive_string::archive_string_default_conversion_for_read;
 use archive_core::archive_endian::*;
 use rust_ffi::archive_set_error_safe;
 use rust_ffi::ffi_alias::alias_set::*;
@@ -5,28 +6,6 @@ use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use std::mem::size_of;
-
-use super::archive_string::archive_string_default_conversion_for_read;
-
-extern "C" {
-    fn inflateReset(strm: z_streamp) -> i32;
-
-    fn inflate(strm: z_streamp, flush: i32) -> i32;
-
-    fn inflateEnd(strm: z_streamp) -> i32;
-}
-
-pub fn inflateReset_cab_safe(strm: z_streamp) -> i32 {
-    return unsafe { inflateReset(strm) };
-}
-
-pub fn inflate_cab_safe(strm: z_streamp, flush: i32) -> i32 {
-    return unsafe { inflate(strm, flush) };
-}
-
-pub fn inflateEnd_cab_safe(strm: z_streamp) -> i32 {
-    return unsafe { inflateEnd(strm) };
-}
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -1856,7 +1835,7 @@ fn cab_read_ahead_cfdata_deflate(a: *mut archive_read, avail: *mut ssize_t) -> *
         cab_safe.stream.avail_out = 0;
         cab_safe.stream.total_out = 0;
         if cab_safe.stream_valid != 0 {
-            r = inflateReset_cab_safe(&mut cab_safe.stream)
+            r = unsafe { inflateReset_cab_safe(&mut cab_safe.stream) }
         } else {
             r = unsafe {
                 inflateInit2__safe(
@@ -1973,7 +1952,7 @@ fn cab_read_ahead_cfdata_deflate(a: *mut archive_read, avail: *mut ssize_t) -> *
                 mszip = 0
             }
         }
-        r = inflate_cab_safe(&mut cab_safe.stream, 0);
+        r = unsafe { inflate_cab_safe(&mut cab_safe.stream, 0) };
         match r {
             0 => {}
             1 => eod = 1,
@@ -2037,7 +2016,7 @@ fn cab_read_ahead_cfdata_deflate(a: *mut archive_read, avail: *mut ssize_t) -> *
              * skipping file data.
              */
             if cab_cffolder_safe.cfdata_index < cab_cffolder_safe.cfdata_count as i32 {
-                r = inflateReset_cab_safe(&mut cab_safe.stream);
+                r = unsafe { inflateReset_cab_safe(&mut cab_safe.stream) };
                 if r != ARCHIVE_CAB_DEFINED_PARAM.z_ok {
                     current_block = 12144037074258575129;
                 } else {
@@ -2573,7 +2552,7 @@ fn archive_read_format_cab_cleanup(a: *mut archive_read) -> i32 {
         #[cfg(HAVE_ZLIB_H)]
         _ => {
             if cab_safe.stream_valid != 0 {
-                inflateEnd_cab_safe(&mut cab_safe.stream);
+                unsafe { inflateEnd_cab_safe(&mut cab_safe.stream) };
             }
         }
         #[cfg(not(HAVE_ZLIB_H))]

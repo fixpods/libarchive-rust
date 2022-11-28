@@ -2,11 +2,10 @@ use super::archive_string::archive_string_default_conversion_for_read;
 use rust_ffi::archive_set_error_safe;
 use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
-use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use std::mem::size_of;
-//hj 2022 11 17
+
 #[no_mangle]
 pub fn archive_read_support_format_gnutar(a: *mut archive) -> i32 {
     let magic_test: i32 = unsafe {
@@ -941,12 +940,10 @@ fn header_Solaris_ACL(
         unsafe { p = p.offset(1) }
     }
     match type_0 as i32 & !(0o777777) {
-        //01000000
         262144 => {
             /* POSIX.1e ACL */
             acl_type = ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_access
         }
-        //03000000
         786432 => {
             /* NFSv4 ACL */
             acl_type = ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_nfs4
@@ -2060,7 +2057,6 @@ fn pax_attribute_acl(
     let mut safe_tar = unsafe { &mut *tar };
     let mut safe_a = unsafe { &mut *a };
     let mut errstr: *const u8;
-    //改match为if else
     if type_0 == ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_access {
         errstr = b"SCHILY.acl.access\x00" as *const u8;
     } else if type_0 == ARCHIVE_TAR_DEFINED_PARAM.archive_entry_acl_type_default {
@@ -2390,11 +2386,6 @@ fn pax_attribute(
                 pax_time(value, &mut s, &mut n);
                 archive_entry_set_ctime_safe(entry, s, n);
             }
-            // else if strcmp_safe(key, b"charset\x00" as *const u8) == 0 {
-            //     /* TODO: Publish charset information in entry. */
-            // } else if strcmp_safe(key, b"comment\x00" as *const u8) == 0 {
-            //     /* TODO: Publish comment in entry. */
-            // }
         },
         'g' => unsafe {
             if strcmp_safe(key, b"gid\x00" as *const u8) == 0 {
@@ -3094,7 +3085,6 @@ fn tar_atol_base_n(mut p: *const u8, mut char_cnt: size_t, base: i32) -> int64_t
     let mut last_digit_limit: int64_t;
     let mut digit: i32;
     let mut sign: i32;
-    //wei
     maxval = i64::MAX;
     limit = i64::MAX / base as i64;
     last_digit_limit = i64::MAX % base as i64;
@@ -3364,7 +3354,6 @@ fn base64_decode(s: *const u8, mut len: size_t, out_len: *mut size_t) -> *mut u8
         v <<= 6 * (4 - group_size);
         let mut current_block_23: u64;
         /* Unpack the group we just collected. */
-        //无法理解
         match group_size {
             4 => {
                 unsafe { *d.offset(2) = (v & 0xff) as u8 };
@@ -3411,7 +3400,6 @@ fn url_decode(in_0: *const u8) -> *mut u8 {
     s = in_0;
     d = out;
     while unsafe { *s } != '\u{0}' as u8 {
-        //fresh改了就过不了ctest
         if unsafe {
             *s.offset(0) == '%' as u8
                 && *s.offset(1) != '\u{0}' as u8

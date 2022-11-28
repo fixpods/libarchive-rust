@@ -1,88 +1,12 @@
 use archive_core::archive_endian::*;
 use rust_ffi::ffi_alias::alias_set::*;
-use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use std::mem::size_of;
 
-extern "C" {
-    fn get_u_composition_table() -> *mut unicode_composition_table;
-    fn get_u_decomposable_blocks() -> *mut u8;
-    fn get_ccc_val() -> *mut u8;
-    fn get_ccc_val_index() -> *mut u8;
-    fn get_ccc_index() -> *mut u8;
-    fn get_u_decomposition_table() -> *mut unicode_decomposition_table;
-}
-
-lazy_static! {
-    pub static ref u_composition_table: [unicode_composition_table; 931] = unsafe {
-        let mut res: [unicode_composition_table; 931] = [unicode_composition_table {
-            cp1: 0x0 as uint32_t,
-            cp2: 0x0 as uint32_t,
-            nfc: 0x0 as uint32_t,
-        }; 931];
-        let ptr: *mut unicode_composition_table = get_u_composition_table();
-        for i in 0..res.len() {
-            res[i] = *ptr.offset(i as isize);
-        }
-        free(ptr as *mut ());
-        return res;
-    };
-    pub static ref u_decomposable_blocks: [u8; 467] = unsafe {
-        let mut res: [u8; 467] = [0; 467];
-        let ptr: *mut u8 = get_u_decomposable_blocks();
-        for i in 0..res.len() {
-            res[i] = *ptr.offset(i as isize);
-        }
-        free(ptr as *mut ());
-        return res;
-    };
-    pub static ref ccc_val: [u8; 16 * 115] = unsafe {
-        let mut res: [u8; 16 * 115] = [0; 16 * 115];
-        let ptr: *mut u8 = get_ccc_val();
-        for i in 0..res.len() {
-            res[i] = *ptr.offset(i as isize);
-        }
-        free(ptr as *mut ());
-        return res;
-    };
-    pub static ref ccc_val_index: [u8; 16 * 39] = unsafe {
-        let mut res: [u8; 16 * 39] = [0; 16 * 39];
-        let ptr: *mut u8 = get_ccc_val_index();
-        for i in 0..res.len() {
-            res[i] = *ptr.offset(i as isize);
-        }
-        free(ptr as *mut ());
-        return res;
-    };
-    pub static ref ccc_index: [u8; 467] = unsafe {
-        let mut res: [u8; 467] = [0; 467];
-        let ptr: *mut u8 = get_ccc_index();
-        for i in 0..res.len() {
-            res[i] = *ptr.offset(i as isize);
-        }
-        free(ptr as *mut ());
-        return res;
-    };
-    pub static ref u_decomposition_table: [unicode_decomposition_table; 931] = unsafe {
-        let mut res: [unicode_decomposition_table; 931] = [unicode_decomposition_table {
-            nfc: 0x0 as uint32_t,
-            cp1: 0x0 as uint32_t,
-            cp2: 0x0 as uint32_t,
-        }; 931];
-        let ptr: *mut unicode_decomposition_table = get_u_decomposition_table();
-        for i in 0..res.len() {
-            res[i] = *ptr.offset(i as isize);
-        }
-        free(ptr as *mut ());
-        return res;
-    };
-}
-
 /* Replacement character. */
 /* Set U+FFFD(Replacement character) in UTF-8. */
-static mut utf8_replacement_char: [u8; 3] =
-    [0xef as i32 as u8, 0xbf as i32 as u8, 0xbd as i32 as u8];
+static mut utf8_replacement_char: [u8; 3] = [0xef, 0xbf, 0xbd];
 extern "C" fn archive_string_append(
     as_0: *mut archive_string,
     p: *const u8,

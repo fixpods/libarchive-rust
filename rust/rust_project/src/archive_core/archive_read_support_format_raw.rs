@@ -4,15 +4,7 @@ use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use std::mem::size_of;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct raw_info {
-    pub offset: int64_t,
-    pub unconsumed: int64_t,
-    pub end_of_file: i32,
-}
 
-//hj 2022 11 16
 #[no_mangle]
 pub fn archive_read_support_format_raw(_a: *mut archive) -> i32 {
     let a: *mut archive_read = _a as *mut archive_read;
