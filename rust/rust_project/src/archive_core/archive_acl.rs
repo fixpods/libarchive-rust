@@ -5,183 +5,6 @@ use rust_ffi::ffi_struct::struct_transfer::*;
 use std::ffi::CStr;
 use std::mem::size_of;
 
-static nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x8 as i32,
-            c: 'r' as u8,
-            wc: 'r' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x10 as i32,
-            c: 'w' as u8,
-            wc: 'w' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x1 as i32,
-            c: 'x' as u8,
-            wc: 'x' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x20 as i32,
-            c: 'p' as u8,
-            wc: 'p' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x800 as i32,
-            c: 'd' as u8,
-            wc: 'd' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x100 as i32,
-            c: 'D' as u8,
-            wc: 'D' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x200 as i32,
-            c: 'a' as u8,
-            wc: 'a' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x400 as i32,
-            c: 'A' as u8,
-            wc: 'A' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x40 as i32,
-            c: 'R' as u8,
-            wc: 'R' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x80 as i32,
-            c: 'W' as u8,
-            wc: 'W' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x1000 as i32,
-            c: 'c' as u8,
-            wc: 'c' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x2000 as i32,
-            c: 'C' as u8,
-            wc: 'C' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x4000 as i32,
-            c: 'o' as u8,
-            wc: 'o' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x8000 as i32,
-            c: 's' as u8,
-            wc: 's' as wchar_t,
-        };
-        init
-    },
-];
-// Initialized in run_static_initializers
-static mut nfsv4_acl_perm_map_size: i32 = 0;
-static nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x2000000 as i32,
-            c: 'f' as u8,
-            wc: 'f' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x4000000 as i32,
-            c: 'd' as u8,
-            wc: 'd' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x10000000 as i32,
-            c: 'i' as u8,
-            wc: 'i' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x8000000 as i32,
-            c: 'n' as u8,
-            wc: 'n' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x20000000 as i32,
-            c: 'S' as u8,
-            wc: 'S' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x40000000 as i32,
-            c: 'F' as u8,
-            wc: 'F' as wchar_t,
-        };
-        init
-    },
-    {
-        let init = nfsv4_acl_perm_map_struct {
-            perm: 0x1000000 as i32,
-            c: 'I' as u8,
-            wc: 'I' as wchar_t,
-        };
-        init
-    },
-];
-// Initialized in run_static_initializers
-static mut nfsv4_acl_flag_map_size: i32 = 0;
-
 #[no_mangle]
 pub extern "C" fn archive_acl_clear(acl: *mut archive_acl) {
     let safe_acl = unsafe { &mut *acl };
@@ -2740,20 +2563,119 @@ extern "C" fn next_field(
         };
     }
 }
-extern "C" fn run_static_initializers() {
-    unsafe {
-        nfsv4_acl_perm_map_size = (size_of::<[nfsv4_acl_perm_map_struct; 14]>() as u64)
-            .wrapping_div(size_of::<nfsv4_acl_perm_map_struct>() as u64)
-            as i32
-    };
-    unsafe {
-        nfsv4_acl_flag_map_size = (size_of::<[nfsv4_acl_perm_map_struct; 7]>() as u64)
-            .wrapping_div(size_of::<nfsv4_acl_perm_map_struct>() as u64)
-            as i32
-    }
-}
-#[used]
-#[cfg_attr(target_os = "linux", link_section = ".init_array")]
-#[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
-#[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
-static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];
+
+static nfsv4_acl_perm_map: [nfsv4_acl_perm_map_struct; 14] = [
+    nfsv4_acl_perm_map_struct {
+        perm: 0x8,
+        c: 'r' as u8,
+        wc: 'r' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x10,
+        c: 'w' as u8,
+        wc: 'w' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x1,
+        c: 'x' as u8,
+        wc: 'x' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x20,
+        c: 'p' as u8,
+        wc: 'p' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x800,
+        c: 'd' as u8,
+        wc: 'd' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x100,
+        c: 'D' as u8,
+        wc: 'D' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x200,
+        c: 'a' as u8,
+        wc: 'a' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x400,
+        c: 'A' as u8,
+        wc: 'A' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x40,
+        c: 'R' as u8,
+        wc: 'R' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x80,
+        c: 'W' as u8,
+        wc: 'W' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x1000,
+        c: 'c' as u8,
+        wc: 'c' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x2000,
+        c: 'C' as u8,
+        wc: 'C' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x4000,
+        c: 'o' as u8,
+        wc: 'o' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x8000,
+        c: 's' as u8,
+        wc: 's' as wchar_t,
+    },
+];
+// Initialized in run_static_initializers
+static mut nfsv4_acl_perm_map_size: i32 =
+    (size_of::<[nfsv4_acl_perm_map_struct; 14]>() / size_of::<nfsv4_acl_perm_map_struct>()) as i32;
+static nfsv4_acl_flag_map: [nfsv4_acl_perm_map_struct; 7] = [
+    nfsv4_acl_perm_map_struct {
+        perm: 0x2000000,
+        c: 'f' as u8,
+        wc: 'f' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x4000000,
+        c: 'd' as u8,
+        wc: 'd' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x10000000,
+        c: 'i' as u8,
+        wc: 'i' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x8000000,
+        c: 'n' as u8,
+        wc: 'n' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x20000000,
+        c: 'S' as u8,
+        wc: 'S' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x40000000,
+        c: 'F' as u8,
+        wc: 'F' as wchar_t,
+    },
+    nfsv4_acl_perm_map_struct {
+        perm: 0x1000000,
+        c: 'I' as u8,
+        wc: 'I' as wchar_t,
+    },
+];
+// Initialized in run_static_initializers
+static mut nfsv4_acl_flag_map_size: i32 =
+    (size_of::<[nfsv4_acl_perm_map_struct; 7]>() / size_of::<nfsv4_acl_perm_map_struct>()) as i32;
