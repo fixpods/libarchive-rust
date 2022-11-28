@@ -1713,3 +1713,11 @@ pub type EVP_CIPHER = evp_cipher_st;
 pub type EVP_CIPHER_CTX = evp_cipher_ctx_st;
 pub type CPpmd8_Context = CPpmd8_Context_;
 pub type ASN1_TYPE = asn1_type_st;
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct raw_info {
+    pub offset: int64_t,
+    pub unconsumed: int64_t,
+    pub end_of_file: i32,
+}
