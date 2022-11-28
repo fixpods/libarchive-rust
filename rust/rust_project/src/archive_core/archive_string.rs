@@ -1,6 +1,5 @@
 use archive_core::archive_endian::*;
 use rust_ffi::ffi_alias::alias_set::*;
-use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use std::mem::size_of;

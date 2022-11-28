@@ -1721,3 +1721,38 @@ pub struct raw_info {
     pub unconsumed: int64_t,
     pub end_of_file: i32,
 }
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct cpio {
+    pub magic: i32,
+    pub read_header: Option<
+        unsafe fn(
+            _: *mut archive_read,
+            _: *mut cpio,
+            _: *mut archive_entry,
+            _: *mut size_t,
+            _: *mut size_t,
+        ) -> i32,
+    >,
+    pub links_head: *mut links_entry,
+    pub entry_bytes_remaining: int64_t,
+    pub entry_bytes_unconsumed: int64_t,
+    pub entry_offset: int64_t,
+    pub entry_padding: int64_t,
+    pub opt_sconv: *mut archive_string_conv,
+    pub sconv_default: *mut archive_string_conv,
+    pub init_default_conversion: i32,
+    pub option_pwb: i32,
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct links_entry {
+    pub next: *mut links_entry,
+    pub previous: *mut links_entry,
+    pub links: u32,
+    pub dev: dev_t,
+    pub ino: int64_t,
+    pub name: *mut u8,
+}

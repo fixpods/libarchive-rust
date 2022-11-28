@@ -1,3 +1,4 @@
+use super::archive_string::archive_string_default_conversion_for_read;
 use archive_core::archive_endian::*;
 use rust_ffi::archive_set_error_safe;
 use rust_ffi::ffi_alias::alias_set::*;
@@ -5,28 +6,6 @@ use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use std::mem::size_of;
-
-use super::archive_string::archive_string_default_conversion_for_read;
-
-extern "C" {
-    fn inflateReset(strm: z_streamp) -> i32;
-
-    fn inflate(strm: z_streamp, flush: i32) -> i32;
-
-    fn inflateEnd(strm: z_streamp) -> i32;
-}
-
-pub fn inflateReset_cab_safe(strm: z_streamp) -> i32 {
-    return unsafe { inflateReset(strm) };
-}
-
-pub fn inflate_cab_safe(strm: z_streamp, flush: i32) -> i32 {
-    return unsafe { inflate(strm, flush) };
-}
-
-pub fn inflateEnd_cab_safe(strm: z_streamp) -> i32 {
-    return unsafe { inflateEnd(strm) };
-}
 
 #[derive(Copy, Clone)]
 #[repr(C)]

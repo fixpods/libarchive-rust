@@ -17,17 +17,8 @@ use std::mem::size_of;
  * this "false" one.
  *
  * The array itself is decrypted in `rar5_init` function. */
-static mut rar5_signature_xor: [u8; 8] = [
-    243 as i32 as u8,
-    192 as i32 as u8,
-    211 as i32 as u8,
-    128 as i32 as u8,
-    187 as i32 as u8,
-    166 as i32 as u8,
-    160 as i32 as u8,
-    161 as i32 as u8,
-];
-static mut g_unpack_window_size: size_t = 0x20000 as i32 as size_t;
+static mut rar5_signature_xor: [u8; 8] = [243, 192, 211, 128, 187, 166, 160, 161];
+static mut g_unpack_window_size: size_t = 0x20000 as size_t;
 /* Clears the contents of this circular deque. */
 fn cdeque_clear(mut d: *mut cdeque) {
     let safe_d = unsafe { &mut *d };
@@ -1161,7 +1152,7 @@ fn parse_file_extra_redir(
             target_size,
         )
     };
-    target_utf8_buf[target_size as usize] = 0 as i32 as u8;
+    target_utf8_buf[target_size as usize] = 0;
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, target_size as int64_t) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
@@ -1583,7 +1574,7 @@ fn process_head_file(
             name_size,
         )
     };
-    name_utf8_buf[name_size as usize] = 0 as i32 as u8;
+    name_utf8_buf[name_size as usize] = 0;
     if ARCHIVE_RAR5_DEFINED_PARAM.archive_ok != consume(a, name_size as int64_t) {
         return ARCHIVE_RAR5_DEFINED_PARAM.archive_eof;
     }
