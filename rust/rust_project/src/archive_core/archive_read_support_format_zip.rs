@@ -2853,7 +2853,8 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                 archive_le16dec(unsafe { p.offset(6 as isize) as *const () })
                                     as u32;
                             match (safe_zip).alg_id {
-                                26113 | 26114 | 26115 | 26121 | 26126 | 26127 | 26128 | 26370 | 26400 | 26401 | 26625 => {}
+                                26113 | 26114 | 26115 | 26121 | 26126 | 26127 | 26128 | 26370
+                                | 26400 | 26401 | 26625 => {}
                                 _ => {
                                     unsafe {
                                         archive_set_error(
@@ -2881,7 +2882,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                     as u32;
                             let mut current_block: u64;
                             match (safe_zip).flags & 0xf000 {
-                                1 | 2 | 3=> {}
+                                1 | 2 | 3 => {}
                                 _ => {
                                     unsafe {
                                         archive_set_error(
@@ -3034,11 +3035,9 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                                                 }
                                                                     as *mut uint8_t;
                                                                 if safe_zip.v_data.is_null() {
-                                                                    current_block =
-                                                                        1;
+                                                                    current_block = 1;
                                                                 } else {
-                                                                    current_block =
-                                                                        6;
+                                                                    current_block = 6;
                                                                 }
                                                             } else {
                                                                 current_block = 6;
@@ -3066,8 +3065,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                                                         as *const u8
                                                                     };
                                                                     if p.is_null() {
-                                                                        current_block =
-                                                                            3;
+                                                                        current_block = 3;
                                                                     } else {
                                                                         safe_zip.v_crc32 =
                                                                             archive_le32dec(

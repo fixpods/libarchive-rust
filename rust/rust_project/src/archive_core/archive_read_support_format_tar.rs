@@ -3352,34 +3352,34 @@ fn base64_decode(s: *const u8, mut len: size_t, out_len: *mut size_t) -> *mut u8
         /* Skip illegal characters (including line breaks) */
         /* Align a short group properly. */
         v <<= 6 * (4 - group_size);
-        let mut current_block_23: u64;
+        let mut current_block: u64;
         /* Unpack the group we just collected. */
         match group_size {
             4 => {
                 unsafe { *d.offset(2) = (v & 0xff) as u8 };
-                current_block_23 = 13843085778775597086;
+                current_block = 4;
             }
             3 => {
-                current_block_23 = 13843085778775597086;
+                current_block = 3;
             }
             2 => {
-                current_block_23 = 10880025040852361420;
+                current_block = 2;
             }
             1 | _ => {
-                current_block_23 = 8704759739624374314;
+                current_block = 1;
             }
         }
-        match current_block_23 {
-            13843085778775597086 =>
+        match current_block {
+            4 | 3 =>
             /* FALLTHROUGH */
             {
                 unsafe { *d.offset(1) = (v >> 8 & 0xff) as u8 };
-                current_block_23 = 10880025040852361420;
+                current_block = 2;
             }
             _ => {}
         }
-        match current_block_23 {
-            10880025040852361420 =>
+        match current_block {
+            2 =>
             /* FALLTHROUGH */
             unsafe { *d.offset(0) = (v >> 16 & 0xff) as u8 },
             _ => {}
