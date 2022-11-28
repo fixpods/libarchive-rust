@@ -739,7 +739,7 @@ unsafe fn archive_read_format_lha_read_header(
      * Prepare variables used to read a file content.
      */
     lha.entry_bytes_remaining = lha.compsize;
-    if lha.entry_bytes_remaining < 0 as i32 as i64 {
+    if lha.entry_bytes_remaining < 0 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
@@ -752,7 +752,7 @@ unsafe fn archive_read_format_lha_read_header(
     /*
      * This file does not have a content.
      */
-    if lha.directory != 0 || lha.compsize == 0 as i32 as i64 {
+    if lha.directory != 0 || lha.compsize == 0 {
         lha.end_of_entry = 1
     }
     sprintf_safe!(
@@ -928,11 +928,9 @@ unsafe fn lha_read_file_header_0(a: *mut archive_read, lha: &mut lha) -> i32 {
  * +----------------+---------------------+------------------------+
  * *------(*1)-----> <--------------------(*2)-------------------->
  */
-unsafe fn lha_read_file_header_1(mut a: *mut archive_read, mut lha: &mut lha) -> i32 {
-    let mut current_block: u64;
+unsafe fn lha_read_file_header_1(a: *mut archive_read, lha: &mut lha) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     let mut extdsize: size_t = 0;
-    let mut i: i32 = 0;
     let mut err: i32 = 0;
     let mut err2: i32 = 0;
     let mut namelen: i32 = 0;
@@ -973,71 +971,64 @@ unsafe fn lha_read_file_header_1(mut a: *mut archive_read, mut lha: &mut lha) ->
         if p.is_null() {
             return truncated_error(a);
         }
-        i = 0;
-        loop {
-            if !(i < namelen) {
-                current_block = 17833034027772472439;
-                break;
-            }
+        let mut invalid = false;
+        for i in 0..namelen {
             if unsafe { *p.offset((i + ARCHIVE_LHA_DEFINED_PARAM.h1_file_name_offset) as isize) }
                 == 0xff as u8
             {
-                current_block = 7310071999204176054;
+                invalid = true;
                 break;
                 /* Invalid filename. */
             }
-            i += 1
         }
-        match current_block {
-            7310071999204176054 => {}
-            _ => {
-                lha.filename.length = 0;
-                archive_strncat_safe(
-                    &mut lha.filename,
-                    unsafe { p.offset(ARCHIVE_LHA_DEFINED_PARAM.h1_file_name_offset as isize) }
-                        as *const (),
-                    namelen as size_t,
-                );
-                lha.crc = archive_le16dec(unsafe {
-                    p.offset(ARCHIVE_LHA_DEFINED_PARAM.h1_file_name_offset as isize)
-                        .offset(namelen as isize)
-                } as *const ());
-                lha.setflag |= ARCHIVE_LHA_DEFINED_PARAM.crc_is_set;
-                sum_calculated = lha_calcsum(0, p as *const (), 2 as i32, lha.header_size - 2);
-                /* Consume used bytes but not include `next header size' data
-                 * since it will be consumed in lha_read_file_extended_header(). */
-                __archive_read_consume_safe(a, (lha.header_size - 2) as int64_t);
-                /* Read extended headers */
-                err2 = lha_read_file_extended_header(
-                    a,
-                    lha,
-                    0 as *mut uint16_t,
-                    2 as i32,
-                    (lha.compsize + 2 as i32 as i64) as size_t,
-                    &mut extdsize,
-                );
-                if err2 < ARCHIVE_LHA_DEFINED_PARAM.archive_warn {
-                    return err2;
+        if !invalid {
+            lha.filename.length = 0;
+            archive_strncat_safe(
+                &mut lha.filename,
+                unsafe { p.offset(ARCHIVE_LHA_DEFINED_PARAM.h1_file_name_offset as isize) }
+                    as *const (),
+                namelen as size_t,
+            );
+            lha.crc = archive_le16dec(unsafe {
+                p.offset(ARCHIVE_LHA_DEFINED_PARAM.h1_file_name_offset as isize)
+                    .offset(namelen as isize)
+            } as *const ());
+            lha.setflag |= ARCHIVE_LHA_DEFINED_PARAM.crc_is_set;
+            sum_calculated = lha_calcsum(0, p as *const (), 2 as i32, lha.header_size - 2);
+            /* Consume used bytes but not include `next header size' data
+             * since it will be consumed in lha_read_file_extended_header(). */
+            __archive_read_consume_safe(a, (lha.header_size - 2) as int64_t);
+            /* Read extended headers */
+            err2 = lha_read_file_extended_header(
+                a,
+                lha,
+                0 as *mut uint16_t,
+                2 as i32,
+                (lha.compsize + 2 as i32 as i64) as size_t,
+                &mut extdsize,
+            );
+            if err2 < ARCHIVE_LHA_DEFINED_PARAM.archive_warn {
+                return err2;
+            }
+            if err2 < err {
+                err = err2
+            }
+            /* Get a real compressed file size. */
+            lha.compsize -= extdsize as i64 - 2; /* Invalid compressed file size */
+            if !(lha.compsize < 0) {
+                if sum_calculated != headersum {
+                    archive_set_error_safe!(
+                        &mut (*a).archive as *mut archive,
+                        ARCHIVE_LHA_DEFINED_PARAM.archive_errno_misc,
+                        b"LHa header sum error\x00" as *const u8 as *const i8
+                    );
+                    return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
                 }
-                if err2 < err {
-                    err = err2
-                }
-                /* Get a real compressed file size. */
-                lha.compsize -= extdsize as i64 - 2; /* Invalid compressed file size */
-                if !(lha.compsize < 0 as i32 as i64) {
-                    if sum_calculated as i32 != headersum as i32 {
-                        archive_set_error_safe!(
-                            &mut (*a).archive as *mut archive,
-                            ARCHIVE_LHA_DEFINED_PARAM.archive_errno_misc,
-                            b"LHa header sum error\x00" as *const u8 as *const i8
-                        );
-                        return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
-                    }
-                    return err;
-                }
+                return err;
             }
         }
     }
+    // invalid
     archive_set_error_safe!(
         &mut (*a).archive as *mut archive,
         ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
@@ -1046,7 +1037,29 @@ unsafe fn lha_read_file_header_1(mut a: *mut archive_read, mut lha: &mut lha) ->
     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
 }
 
-unsafe fn lha_read_file_header_2(mut a: *mut archive_read, mut lha: &mut lha) -> i32 {
+/*
+ * Header 2 format
+ *
+ * +0              +2               +7                  +11               +15
+ * +---------------+----------------+-------------------+-----------------+
+ * |header size(*1)|compression type|compressed size(*2)|uncompressed size|
+ * +---------------+----------------+-------------------+-----------------+
+ *  <--------------------------------(*1)---------------------------------*
+ *
+ * +15               +19          +20              +21        +23         +24
+ * +-----------------+------------+----------------+----------+-----------+
+ * |data/time(time_t)| 0x20 fixed |header level(=2)|file CRC16|  creator  |
+ * +-----------------+------------+----------------+----------+-----------+
+ * *---------------------------------(*1)---------------------------------*
+ *
+ * +24              +26                 +26+(*3)      +26+(*3)+(*4)
+ * +----------------+-------------------+-------------+-------------------+
+ * |next header size|extended header(*3)| padding(*4) |  compressed data  |
+ * +----------------+-------------------+-------------+-------------------+
+ * *--------------------------(*1)-------------------> <------(*2)------->
+ *
+ */
+unsafe fn lha_read_file_header_2(a: *mut archive_read, lha: &mut lha) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     let mut extdsize: size_t = 0;
     let mut err: i32 = 0;
@@ -1090,7 +1103,7 @@ unsafe fn lha_read_file_header_2(mut a: *mut archive_read, mut lha: &mut lha) ->
         return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
     }
     header_crc = lha_crc16(
-        0 as i32 as uint16_t,
+        0,
         p as *const (),
         ARCHIVE_LHA_DEFINED_PARAM.h2_fixed_size as size_t,
     );
@@ -1100,7 +1113,7 @@ unsafe fn lha_read_file_header_2(mut a: *mut archive_read, mut lha: &mut lha) ->
         a,
         lha,
         &mut header_crc,
-        2 as i32,
+        2,
         lha.header_size - (ARCHIVE_LHA_DEFINED_PARAM.h2_fixed_size as u64),
         &mut extdsize,
     );
@@ -1108,8 +1121,8 @@ unsafe fn lha_read_file_header_2(mut a: *mut archive_read, mut lha: &mut lha) ->
         return err;
     }
     /* Calculate a padding size. The result will be normally 0 or 1. */
-    padding = lha.header_size as i32
-        - (ARCHIVE_LHA_DEFINED_PARAM.h2_fixed_size as u64).wrapping_add(extdsize) as i32;
+    padding =
+        lha.header_size as i32 - (ARCHIVE_LHA_DEFINED_PARAM.h2_fixed_size as u64 + extdsize) as i32;
     if padding > 0 {
         p = __archive_read_ahead_safe(a, padding as size_t, 0 as *mut ssize_t) as *const u8;
         if p.is_null() {
@@ -1118,7 +1131,7 @@ unsafe fn lha_read_file_header_2(mut a: *mut archive_read, mut lha: &mut lha) ->
         header_crc = lha_crc16(header_crc, p as *const (), padding as size_t);
         __archive_read_consume_safe(a, padding as int64_t);
     }
-    if header_crc as i32 != lha.header_crc as i32 {
+    if header_crc != lha.header_crc {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
@@ -1129,6 +1142,28 @@ unsafe fn lha_read_file_header_2(mut a: *mut archive_read, mut lha: &mut lha) ->
     return err;
 }
 
+/*
+ * Header 3 format
+ *
+ * +0           +2               +7                  +11               +15
+ * +------------+----------------+-------------------+-----------------+
+ * | 0x04 fixed |compression type|compressed size(*2)|uncompressed size|
+ * +------------+----------------+-------------------+-----------------+
+ *  <-------------------------------(*1)-------------------------------*
+ *
+ * +15               +19          +20              +21        +23         +24
+ * +-----------------+------------+----------------+----------+-----------+
+ * |date/time(time_t)| 0x20 fixed |header level(=3)|file CRC16|  creator  |
+ * +-----------------+------------+----------------+----------+-----------+
+ * *--------------------------------(*1)----------------------------------*
+ *
+ * +24             +28              +32                 +32+(*3)
+ * +---------------+----------------+-------------------+-----------------+
+ * |header size(*1)|next header size|extended header(*3)| compressed data |
+ * +---------------+----------------+-------------------+-----------------+
+ * *------------------------(*1)-----------------------> <------(*2)----->
+ *
+ */
 unsafe fn lha_read_file_header_3(mut a: *mut archive_read, mut lha: &mut lha) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     let mut extdsize: size_t = 0;
@@ -1145,7 +1180,7 @@ unsafe fn lha_read_file_header_3(mut a: *mut archive_read, mut lha: &mut lha) ->
     if !(archive_le16dec(
         unsafe { p.offset(ARCHIVE_LHA_DEFINED_PARAM.h3_field_len_offset as isize) } as *const (),
     ) as i32
-        != 4 as i32)
+        != 4)
     {
         lha.header_size = archive_le32dec(unsafe {
             p.offset(ARCHIVE_LHA_DEFINED_PARAM.h3_header_size_offset as isize)
@@ -1166,9 +1201,9 @@ unsafe fn lha_read_file_header_3(mut a: *mut archive_read, mut lha: &mut lha) ->
             );
         lha.setflag |= ARCHIVE_LHA_DEFINED_PARAM.crc_is_set;
 
-        if !(lha.header_size < (ARCHIVE_LHA_DEFINED_PARAM.h3_fixed_size + 4 as i32) as u64) {
+        if !(lha.header_size < (ARCHIVE_LHA_DEFINED_PARAM.h3_fixed_size + 4) as u64) {
             header_crc = lha_crc16(
-                0 as i32 as uint16_t,
+                0,
                 p as *const (),
                 ARCHIVE_LHA_DEFINED_PARAM.h3_fixed_size as size_t,
             );
@@ -1178,14 +1213,14 @@ unsafe fn lha_read_file_header_3(mut a: *mut archive_read, mut lha: &mut lha) ->
                 a,
                 lha,
                 &mut header_crc,
-                4 as i32,
+                4,
                 lha.header_size - (ARCHIVE_LHA_DEFINED_PARAM.h3_fixed_size as u64),
                 &mut extdsize,
             );
             if err < ARCHIVE_LHA_DEFINED_PARAM.archive_warn {
                 return err;
             }
-            if header_crc as i32 != lha.header_crc as i32 {
+            if header_crc != lha.header_crc {
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
@@ -1219,12 +1254,12 @@ unsafe fn lha_read_file_header_3(mut a: *mut archive_read, mut lha: &mut lha) ->
 *
 */
 unsafe fn lha_read_file_extended_header(
-    mut a: *mut archive_read,
-    mut lha: &mut lha,
-    mut crc: *mut uint16_t,
-    mut sizefield_length: i32,
-    mut limitsize: size_t,
-    mut total_size: &mut size_t,
+    a: *mut archive_read,
+    lha: &mut lha,
+    crc: *mut uint16_t,
+    sizefield_length: i32,
+    limitsize: size_t,
+    total_size: &mut size_t,
 ) -> i32 {
     let safe_a = unsafe { &mut *a };
     let mut h: *const () = 0 as *const ();
@@ -1281,14 +1316,14 @@ unsafe fn lha_read_file_extended_header(
         if h == 0 as *mut () {
             return truncated_error(a);
         }
-        *total_size = (*total_size as u64).wrapping_add(extdsize) as size_t as size_t;
+        *total_size = (*total_size as u64 + extdsize) as size_t;
         extdheader = h as *const u8;
         /* Get the extended header type. */
         extdtype = unsafe { *extdheader.offset(sizefield_length as isize) };
         /* Calculate an extended data size. */
         datasize = extdsize - (1 + sizefield_length) as u64;
         /* Skip an extended header size field and type field. */
-        extdheader = unsafe { extdheader.offset((sizefield_length + 1 as i32) as isize) };
+        extdheader = unsafe { extdheader.offset((sizefield_length + 1) as isize) };
         if !crc.is_null() && extdtype as i32 != ARCHIVE_LHA_DEFINED_PARAM.ext_header_crc {
             unsafe { *crc = lha_crc16(*crc, h, extdsize) }
         }
@@ -1343,7 +1378,7 @@ unsafe fn lha_read_file_extended_header(
                 lha.sconv_fname = archive_string_conversion_from_charset_safe(
                     &mut safe_a.archive,
                     b"UTF-16LE\x00" as *const u8 as *const i8,
-                    1 as i32,
+                    1,
                 );
                 if lha.sconv_fname.is_null() {
                     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
@@ -1364,9 +1399,9 @@ unsafe fn lha_read_file_extended_header(
                  * Convert directory delimiter from 0xFF
                  * to '/' for local system.
                  */
-                i = 0 as i32 as u32;
+                i = 0;
                 while (i as u64) < lha.dirname.length {
-                    if unsafe { *lha.dirname.s.offset(i as isize) } as u8 as i32 == 0xff as i32 {
+                    if unsafe { *lha.dirname.s.offset(i as isize) } as u8 == 0xff {
                         unsafe { *lha.dirname.s.offset(i as isize) = '/' as i8 }
                     }
                     i = i + 1
@@ -1393,7 +1428,7 @@ unsafe fn lha_read_file_extended_header(
                 lha.sconv_dir = archive_string_conversion_from_charset_safe(
                     &mut safe_a.archive,
                     b"UTF-16LE\x00" as *const u8 as *const i8,
-                    1 as i32,
+                    1,
                 );
                 if lha.sconv_dir.is_null() {
                     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
@@ -1403,17 +1438,17 @@ unsafe fn lha_read_file_extended_header(
                      * to '/' for local system.
                      */
                     let mut dirSep: uint16_t = 0;
-                    let mut d: uint16_t = 1 as i32 as uint16_t;
+                    let mut d: uint16_t = 1;
                     if archive_be16dec(&mut d as *mut uint16_t as *const ()) == 1 {
-                        dirSep = 0x2f00 as i32 as uint16_t
+                        dirSep = 0x2f00 as uint16_t
                     } else {
-                        dirSep = 0x2f as i32 as uint16_t
+                        dirSep = 0x2f as uint16_t
                     }
                     /* UTF-16LE character */
                     let mut utf16name: *mut uint16_t = lha.dirname.s as *mut uint16_t;
-                    i = 0 as i32 as u32;
+                    i = 0;
                     while (i as u64) < lha.dirname.length / 2 {
-                        if unsafe { *utf16name.offset(i as isize) } as i32 == 0xffff as i32 {
+                        if unsafe { *utf16name.offset(i as isize) } as u16 == 0xffff {
                             unsafe { *utf16name.offset(i as isize) = dirSep }
                         }
                         i = i + 1
@@ -1452,7 +1487,7 @@ unsafe fn lha_read_file_extended_header(
                     | ARCHIVE_LHA_DEFINED_PARAM.atime_is_set
             }
         } else if extdtype as i32 == ARCHIVE_LHA_DEFINED_PARAM.ext_filesize {
-            if datasize == (::std::mem::size_of::<uint64_t>() as u64).wrapping_mul(2) {
+            if datasize == (::std::mem::size_of::<uint64_t>() as u64 * 2) {
                 lha.compsize = archive_le64dec(extdheader as *const ()) as int64_t;
                 extdheader =
                     unsafe { extdheader.offset(::std::mem::size_of::<uint64_t>() as u64 as isize) };
@@ -1486,16 +1521,10 @@ unsafe fn lha_read_file_extended_header(
                         charset = cp.s
                     }
                 }
-                lha.sconv_dir = archive_string_conversion_from_charset_safe(
-                    &mut safe_a.archive,
-                    charset,
-                    1 as i32,
-                );
-                lha.sconv_fname = archive_string_conversion_from_charset_safe(
-                    &mut safe_a.archive,
-                    charset,
-                    1 as i32,
-                );
+                lha.sconv_dir =
+                    archive_string_conversion_from_charset_safe(&mut safe_a.archive, charset, 1);
+                lha.sconv_fname =
+                    archive_string_conversion_from_charset_safe(&mut safe_a.archive, charset, 1);
                 archive_string_free_safe(&mut cp);
                 if lha.sconv_dir.is_null() {
                     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
@@ -1587,7 +1616,7 @@ unsafe fn lha_read_file_extended_header(
     return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
 }
 
-unsafe fn lha_end_of_entry(mut a: *mut archive_read) -> i32 {
+fn lha_end_of_entry(a: *mut archive_read) -> i32 {
     let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
     let mut r: i32 = ARCHIVE_LHA_DEFINED_PARAM.archive_eof;
     if lha.end_of_entry_cleanup == 0 {
@@ -1608,10 +1637,10 @@ unsafe fn lha_end_of_entry(mut a: *mut archive_read) -> i32 {
 }
 
 unsafe fn archive_read_format_lha_read_data(
-    mut a: *mut archive_read,
-    mut buff: *mut *const (),
-    mut size: *mut size_t,
-    mut offset: *mut int64_t,
+    a: *mut archive_read,
+    buff: *mut *const (),
+    size: *mut size_t,
+    offset: *mut int64_t,
 ) -> i32 {
     let safe_a = unsafe { &mut *a };
     let safe_buff = unsafe { &mut *buff };
@@ -1646,15 +1675,15 @@ unsafe fn archive_read_format_lha_read_data(
 * lha->end_of_entry if it consumes all of the data.
 */
 unsafe fn lha_read_data_none(
-    mut a: *mut archive_read,
-    mut buff: *mut *const (),
-    mut size: *mut size_t,
-    mut offset: *mut int64_t,
+    a: *mut archive_read,
+    buff: *mut *const (),
+    size: *mut size_t,
+    offset: *mut int64_t,
 ) -> i32 {
-    let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
+    let lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
     let lha_safe = unsafe { &mut *lha };
     let mut bytes_avail: ssize_t = 0;
-    if lha_safe.entry_bytes_remaining == 0 as i32 as i64 {
+    if lha_safe.entry_bytes_remaining == 0 {
         *buff = 0 as *const ();
         *size = 0;
         *offset = lha_safe.entry_offset;
@@ -1667,8 +1696,8 @@ unsafe fn lha_read_data_none(
      * available bytes; asking for more than that forces the
      * decompressor to combine reads by copying data.
      */
-    *buff = __archive_read_ahead_safe(a, 1 as i32 as size_t, &mut bytes_avail);
-    if bytes_avail <= 0 as i32 as i64 {
+    *buff = __archive_read_ahead_safe(a, 1, &mut bytes_avail);
+    if bytes_avail <= 0 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
@@ -1685,7 +1714,7 @@ unsafe fn lha_read_data_none(
     *offset = lha_safe.entry_offset;
     lha_safe.entry_offset += bytes_avail;
     lha_safe.entry_bytes_remaining -= bytes_avail;
-    if lha_safe.entry_bytes_remaining == 0 as i32 as i64 {
+    if lha_safe.entry_bytes_remaining == 0 {
         lha_safe.end_of_entry = 1
     }
     lha_safe.entry_unconsumed = bytes_avail;
@@ -1700,12 +1729,12 @@ unsafe fn lha_read_data_none(
 * all of the data.
 */
 unsafe fn lha_read_data_lzh(
-    mut a: *mut archive_read,
-    mut buff: *mut *const (),
-    mut size: *mut size_t,
-    mut offset: *mut int64_t,
+    a: *mut archive_read,
+    buff: *mut *const (),
+    size: *mut size_t,
+    offset: *mut int64_t,
 ) -> i32 {
-    let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
+    let lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
     let lha_safe = unsafe { &mut *lha };
     let mut bytes_avail: ssize_t = 0;
     let mut r: i32 = 0;
@@ -1749,8 +1778,8 @@ unsafe fn lha_read_data_lzh(
      * decompressor to combine reads by copying data.
      */
     lha_safe.strm.next_in =
-        __archive_read_ahead_safe(a, 1 as i32 as size_t, &mut bytes_avail) as *const u8;
-    if bytes_avail <= 0 as i32 as i64 {
+        __archive_read_ahead_safe(a, 1 as size_t, &mut bytes_avail) as *const u8;
+    if bytes_avail <= 0 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_LHA_DEFINED_PARAM.archive_errno_file_format,
@@ -1801,8 +1830,8 @@ unsafe fn lha_read_data_lzh(
 /*
  * Skip a file content.
  */
-unsafe fn archive_read_format_lha_read_data_skip(mut a: *mut archive_read) -> i32 {
-    let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
+unsafe fn archive_read_format_lha_read_data_skip(a: *mut archive_read) -> i32 {
+    let lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
     let mut bytes_skipped: int64_t = 0;
     if lha.entry_unconsumed != 0 {
         /* Consume as much as the decompressor actually used. */
@@ -1818,7 +1847,7 @@ unsafe fn archive_read_format_lha_read_data_skip(mut a: *mut archive_read) -> i3
      * compressed data much more quickly.
      */
     bytes_skipped = __archive_read_consume_safe(a, lha.entry_bytes_remaining);
-    if bytes_skipped < 0 as i32 as i64 {
+    if bytes_skipped < 0 {
         return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
     }
     /* This entry is finished and done. */
@@ -1827,9 +1856,9 @@ unsafe fn archive_read_format_lha_read_data_skip(mut a: *mut archive_read) -> i3
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
-unsafe fn archive_read_format_lha_cleanup(mut a: *mut archive_read) -> i32 {
+unsafe fn archive_read_format_lha_cleanup(a: *mut archive_read) -> i32 {
     let safe_a_format = unsafe { &mut *(*a).format };
-    let mut lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
+    let lha = unsafe { &mut *((*(*a).format).data as *mut lha) };
     lzh_decode_free(&mut lha.strm);
     archive_string_free_safe(&mut lha.dirname);
     archive_string_free_safe(&mut lha.filename);
@@ -1852,10 +1881,10 @@ unsafe fn archive_read_format_lha_cleanup(mut a: *mut archive_read) -> i32 {
 *  then a archived pathname is 'xxx/bbb|aaa/bb/cc'
 */
 unsafe fn lha_parse_linkname(
-    mut linkname: &mut archive_wstring,
-    mut pathname: &mut archive_wstring,
+    linkname: &mut archive_wstring,
+    pathname: &mut archive_wstring,
 ) -> i32 {
-    let mut linkptr = unsafe { &mut *wcschr_safe(pathname.s, '|' as wchar_t) };
+    let linkptr = unsafe { &mut *wcschr_safe(pathname.s, '|' as wchar_t) };
     let mut symlen: size_t = 0;
     if !(linkptr as *mut wchar_t).is_null() {
         symlen = wcslen_safe(unsafe { (linkptr as *mut wchar_t).offset(1 as isize) });
@@ -1865,7 +1894,7 @@ unsafe fn lha_parse_linkname(
             unsafe { (linkptr as *mut wchar_t).offset(1 as isize) },
             symlen,
         );
-        *linkptr = 0 as wchar_t;
+        *linkptr = 0;
         pathname.length = wcslen_safe(pathname.s);
         return 1;
     }
@@ -1873,7 +1902,7 @@ unsafe fn lha_parse_linkname(
 }
 
 /* Convert an MSDOS-style date/time into Unix-style time. */
-unsafe fn lha_dos_time(mut p: *const u8) -> time_t {
+unsafe fn lha_dos_time(p: *const u8) -> time_t {
     let mut msTime: i32 = 0; /* Years since 1900. */
     let mut msDate: i32 = 0; /* Month number.     */
     let mut ts: tm = tm {
@@ -1893,16 +1922,16 @@ unsafe fn lha_dos_time(mut p: *const u8) -> time_t {
     msDate = archive_le16dec(unsafe { p.offset(2 as isize) } as *const ()) as i32;
     memset_safe(
         &mut ts as *mut tm as *mut (),
-        0 as i32,
+        0,
         ::std::mem::size_of::<tm>() as u64,
     );
-    ts.tm_year = (msDate >> 9 & 0x7f as i32) + 80;
-    ts.tm_mon = (msDate >> 5 & 0xf as i32) - 1;
-    ts.tm_mday = msDate & 0x1f as i32;
-    ts.tm_hour = msTime >> 11 & 0x1f as i32;
-    ts.tm_min = msTime >> 5 & 0x3f as i32;
-    ts.tm_sec = msTime << 1 & 0x3e as i32;
-    ts.tm_isdst = -(1 as i32);
+    ts.tm_year = (msDate >> 9 & 0x7f) + 80;
+    ts.tm_mon = (msDate >> 5 & 0xf) - 1;
+    ts.tm_mday = msDate & 0x1f;
+    ts.tm_hour = msTime >> 11 & 0x1f;
+    ts.tm_min = msTime >> 5 & 0x3f;
+    ts.tm_sec = msTime << 1 & 0x3e;
+    ts.tm_isdst = -(1);
     return mktime_safe(&mut ts);
 }
 
@@ -1917,19 +1946,18 @@ unsafe fn lha_win_time(mut wintime: uint64_t, mut ns: &mut i64) -> time_t {
         return (wintime / 10000000) as time_t;
     } else {
         if !(ns as *mut i64).is_null() {
-            *ns = 0 as i32 as i64
+            *ns = 0
         }
         return 0;
     };
 }
 
-unsafe fn lha_calcsum(mut sum: u8, mut pp: *const (), mut offset: i32, mut size: size_t) -> u8 {
+unsafe fn lha_calcsum(mut sum: u8, pp: *const (), offset: i32, mut size: size_t) -> u8 {
     let mut p: *const u8 = pp as *const u8;
     p = unsafe { p.offset(offset as isize) };
     while size > 0 {
-        let fresh0 = unsafe { &*p };
+        sum = (sum + unsafe { &*p }) as u8;
         p = unsafe { p.offset(1) };
-        sum = (sum as i32 + *fresh0 as i32) as u8;
         size = size - 1
     }
     return sum;
@@ -1944,13 +1972,13 @@ unsafe fn lha_crc16_init() {
         return;
     }
     crc16init = 1;
-    i = 0 as i32 as u32;
-    while i < 256 as i32 as u32 {
+    i = 0;
+    while i < 256 {
         let mut j: u32 = 0;
         let mut crc: uint16_t = i as uint16_t;
-        j = 8 as i32 as u32;
+        j = 8;
         while j != 0 {
-            crc = (crc as i32 >> 1 ^ (crc as i32 & 1 as i32) * 0xa001 as i32) as uint16_t;
+            crc = (crc as i32 >> 1 ^ (crc as i32 & 1) * 0xa001) as uint16_t;
             j = j - 1
         }
         unsafe {
@@ -1958,18 +1986,18 @@ unsafe fn lha_crc16_init() {
         }
         i = i + 1
     }
-    i = 0 as i32 as u32;
-    while i < 256 as i32 as u32 {
+    i = 0;
+    while i < 256 {
         unsafe {
             crc16tbl[1][i as usize] = (crc16tbl[0][i as usize] as i32 >> 8
-                ^ crc16tbl[0][(crc16tbl[0][i as usize] as i32 & 0xff as i32) as usize] as i32)
+                ^ crc16tbl[0][(crc16tbl[0][i as usize] & 0xff) as usize] as i32)
                 as uint16_t;
         }
         i = i + 1
     }
 }
 
-unsafe fn lha_crc16(mut crc: uint16_t, mut pp: *const (), mut len: size_t) -> uint16_t {
+unsafe fn lha_crc16(mut crc: uint16_t, pp: *const (), mut len: size_t) -> uint16_t {
     let mut p: *const u8 = pp as *const u8;
     let mut buff: *const uint16_t = 0 as *const uint16_t;
     let u: archive_temporary_u = archive_temporary_u {
@@ -1980,12 +2008,10 @@ unsafe fn lha_crc16(mut crc: uint16_t, mut pp: *const (), mut len: size_t) -> ui
     }
     /* Process unaligned address. */
     if p as uintptr_t & 0x1 as i32 as uintptr_t != 0 {
-        let fresh1 = p;
-        unsafe { p = p.offset(1) };
         crc = (crc as i32 >> 8
-            ^ unsafe { crc16tbl[0] }
-                [((crc as i32 ^ unsafe { *fresh1 } as i32) & 0xff as i32) as usize]
+            ^ unsafe { crc16tbl[0] }[((crc as i32 ^ unsafe { *p } as i32) & 0xff as i32) as usize]
                 as i32) as uint16_t;
+        unsafe { p = p.offset(1) };
         len = len - 1
     }
     buff = p as *const uint16_t;
@@ -2001,69 +2027,58 @@ unsafe fn lha_crc16(mut crc: uint16_t, mut pp: *const (), mut len: size_t) -> ui
         /* All clang versions have __builtin_bswap16() */
         /* Big endian */
         if unsafe { u.c[0] } == 1 {
-            crc = (crc as i32 ^ unsafe { (*buff) }.swap_bytes() as i32) as uint16_t;
+            crc = (crc ^ unsafe { (*buff) }.swap_bytes()) as uint16_t;
             unsafe { buff = buff.offset(1) }
         } else {
-            let fresh2 = buff;
+            crc = (crc ^ unsafe { *buff }) as uint16_t;
             unsafe {
                 buff = buff.offset(1);
             }
-            crc = (crc as i32 ^ unsafe { *fresh2 } as i32) as uint16_t
         }
-        crc = (unsafe { crc16tbl[1][(crc as i32 & 0xff as i32) as usize] } as i32
-            ^ unsafe { crc16tbl[0][(crc as i32 >> 8 as i32) as usize] } as i32)
-            as uint16_t;
+        crc = (unsafe { crc16tbl[1][(crc & 0xff) as usize] }
+            ^ unsafe { crc16tbl[0][(crc >> 8) as usize] }) as uint16_t;
         if unsafe { u.c[0] } == 1 {
-            crc = (crc as i32 ^ unsafe { (*buff) }.swap_bytes() as i32) as uint16_t;
+            crc = (crc ^ unsafe { (*buff) }.swap_bytes()) as uint16_t;
             unsafe { buff = buff.offset(1) }
         } else {
-            let fresh3 = buff;
+            crc = (crc ^ unsafe { *buff }) as uint16_t;
             unsafe {
                 buff = buff.offset(1);
             }
-            crc = (crc as i32 ^ unsafe { *fresh3 } as i32) as uint16_t
         }
-        crc = (unsafe { crc16tbl[1][(crc as i32 & 0xff as i32) as usize] } as i32
-            ^ unsafe { crc16tbl[0][(crc as i32 >> 8 as i32) as usize] } as i32)
-            as uint16_t;
+        crc = (unsafe { crc16tbl[1][(crc & 0xff) as usize] }
+            ^ unsafe { crc16tbl[0][(crc >> 8) as usize] }) as uint16_t;
         if unsafe { u.c[0] } == 1 {
-            crc = (crc as i32 ^ unsafe { (*buff) }.swap_bytes() as i32) as uint16_t;
+            crc = (crc ^ unsafe { (*buff) }.swap_bytes()) as uint16_t;
             unsafe { buff = buff.offset(1) }
         } else {
-            let fresh4 = buff;
+            crc = (crc ^ unsafe { *buff }) as uint16_t;
             unsafe {
                 buff = buff.offset(1);
             }
-            crc = (crc as i32 ^ unsafe { *fresh4 } as i32) as uint16_t
         }
-        crc = (unsafe { crc16tbl[1][(crc as i32 & 0xff as i32) as usize] } as i32
-            ^ unsafe { crc16tbl[0][(crc as i32 >> 8 as i32) as usize] } as i32)
-            as uint16_t;
+        crc = (unsafe { crc16tbl[1][(crc & 0xff) as usize] }
+            ^ unsafe { crc16tbl[0][(crc >> 8) as usize] }) as uint16_t;
         if unsafe { u.c[0] } == 1 {
-            crc = (crc as i32 ^ unsafe { (*buff) }.swap_bytes() as i32) as uint16_t;
+            crc = (crc ^ unsafe { (*buff) }.swap_bytes()) as uint16_t;
             unsafe { buff = buff.offset(1) }
         } else {
-            let fresh5 = buff;
+            crc = (crc ^ unsafe { *buff }) as uint16_t;
             unsafe {
                 buff = buff.offset(1);
             }
-            crc = (crc as i32 ^ unsafe { *fresh5 } as i32) as uint16_t
         }
-        crc = (unsafe { crc16tbl[1][(crc as i32 & 0xff as i32) as usize] } as i32
-            ^ unsafe { crc16tbl[0][(crc as i32 >> 8 as i32) as usize] } as i32)
-            as uint16_t;
+        crc = (unsafe { crc16tbl[1][(crc & 0xff) as usize] }
+            ^ unsafe { crc16tbl[0][(crc >> 8) as usize] }) as uint16_t;
         len = len - 8
     }
     p = buff as *const u8;
     while len != 0 {
-        let fresh6 = p;
+        crc = (crc >> 8 ^ unsafe { crc16tbl[0][((crc ^ unsafe { *p } as u16) & 0xff) as usize] })
+            as uint16_t;
         unsafe {
             p = p.offset(1);
         }
-        crc = (crc as i32 >> 8
-            ^ unsafe {
-                crc16tbl[0][((crc as i32 ^ unsafe { *fresh6 } as i32) & 0xff as i32) as usize]
-            } as i32) as uint16_t;
         len = len - 1
     }
     return crc;
@@ -2077,7 +2092,7 @@ unsafe fn lha_crc16(mut crc: uint16_t, mut pp: *const (), mut len: size_t) -> ui
  * Returns ARCHIVE_FATAL if initialization failed; memory allocation
  * error occurred.
  */
-unsafe fn lzh_decode_init(mut strm: &mut lzh_stream, mut method: *const i8) -> i32 {
+unsafe fn lzh_decode_init(strm: &mut lzh_stream, method: *const i8) -> i32 {
     let mut w_bits: i32 = 0;
     let mut w_size: i32 = 0;
     if strm.ds.is_null() {
@@ -2089,17 +2104,17 @@ unsafe fn lzh_decode_init(mut strm: &mut lzh_stream, mut method: *const i8) -> i
     let ds = unsafe { &mut *strm.ds };
     ds.error = ARCHIVE_LHA_DEFINED_PARAM.archive_failed;
     if method.is_null()
-        || unsafe { *method.offset(0 as isize) } as i32 != 'l' as i32
-        || unsafe { *method.offset(1 as isize) } as i32 != 'h' as i32
+        || unsafe { *method.offset(0 as isize) } != 'l' as i8
+        || unsafe { *method.offset(1 as isize) } != 'h' as i8
     {
         return ARCHIVE_LHA_DEFINED_PARAM.archive_failed;
     }
-    match unsafe { *method.offset(2 as isize) } as i32 {
+    match unsafe { *method.offset(2 as isize) } {
         53 => {
             w_bits = 13
             /* Not supported. */
         }
-        54 => w_bits = 15 as i32,
+        54 => w_bits = 15,
         55 => {
             /* 32KiB for window */
             w_bits = 16
@@ -2109,7 +2124,7 @@ unsafe fn lzh_decode_init(mut strm: &mut lzh_stream, mut method: *const i8) -> i
     ds.error = ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
     /* Expand a window size up to 128 KiB for decompressing process
      * performance whatever its original window size is. */
-    ds.w_size = ((1 as u32) << 17 as i32) as i32;
+    ds.w_size = 1 << 17;
     ds.w_mask = ds.w_size - 1;
     if ds.w_buff.is_null() {
         ds.w_buff = malloc_safe(ds.w_size as u64) as *mut u8;
@@ -2117,14 +2132,14 @@ unsafe fn lzh_decode_init(mut strm: &mut lzh_stream, mut method: *const i8) -> i
             return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
         }
     }
-    w_size = ((1 as u32) << w_bits) as i32;
+    w_size = 1 << w_bits;
     memset_safe(
         unsafe {
             ds.w_buff
                 .offset(ds.w_size as isize)
                 .offset(-(w_size as isize))
         } as *mut (),
-        0x20 as i32,
+        0x20,
         w_size as u64,
     );
     ds.w_pos = 0;
@@ -2133,7 +2148,7 @@ unsafe fn lzh_decode_init(mut strm: &mut lzh_stream, mut method: *const i8) -> i
     ds.pos_pt_len_bits = if w_bits == 15 || w_bits == 16 { 5 } else { 4 };
     ds.literal_pt_len_size = ARCHIVE_LHA_DEFINED_PARAM.pt_bitlen_size;
     ds.literal_pt_len_bits = 5;
-    ds.br.cache_buffer = 0 as i32 as uint64_t;
+    ds.br.cache_buffer = 0;
     ds.br.cache_avail = 0;
     if lzh_huffman_init(
         &mut ds.lt,
@@ -2159,7 +2174,7 @@ unsafe fn lzh_decode_init(mut strm: &mut lzh_stream, mut method: *const i8) -> i
 /*
  * Release LZHUF decoder.
  */
-unsafe fn lzh_decode_free(mut strm: &mut lzh_stream) {
+unsafe fn lzh_decode_free(strm: &mut lzh_stream) {
     if strm.ds.is_null() {
         return;
     }
@@ -2173,26 +2188,8 @@ unsafe fn lzh_decode_free(mut strm: &mut lzh_stream) {
 
 /* Notify how many bits we consumed. */
 static cache_masks: [uint16_t; 20] = [
-    0 as i32 as uint16_t,
-    0x1 as i32 as uint16_t,
-    0x3 as i32 as uint16_t,
-    0x7 as i32 as uint16_t,
-    0xf as i32 as uint16_t,
-    0x1f as i32 as uint16_t,
-    0x3f as i32 as uint16_t,
-    0x7f as i32 as uint16_t,
-    0xff as i32 as uint16_t,
-    0x1ff as i32 as uint16_t,
-    0x3ff as i32 as uint16_t,
-    0x7ff as i32 as uint16_t,
-    0xfff as i32 as uint16_t,
-    0x1fff as i32 as uint16_t,
-    0x3fff as i32 as uint16_t,
-    0x7fff as i32 as uint16_t,
-    0xffff as i32 as uint16_t,
-    0xffff as i32 as uint16_t,
-    0xffff as i32 as uint16_t,
-    0xffff as i32 as uint16_t,
+    0, 0x1, 0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff, 0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff, 0x3fff,
+    0x7fff, 0xffff, 0xffff, 0xffff, 0xffff,
 ];
 
 /*
@@ -2209,7 +2206,7 @@ static cache_masks: [uint16_t; 20] = [
  * Returns 1 if the cache buffer is full.
  * Returns 0 if the cache buffer is not full; input buffer is empty.
  */
-unsafe fn lzh_br_fillup(mut strm: &mut lzh_stream, mut br: &mut lzh_br) -> i32 {
+unsafe fn lzh_br_fillup(strm: &mut lzh_stream, br: &mut lzh_br) -> i32 {
     let mut n: i32 = ARCHIVE_LHA_DEFINED_PARAM.cache_bits - br.cache_avail;
     loop {
         let x: i32 = n >> 3;
@@ -2288,8 +2285,8 @@ unsafe fn lzh_br_fillup(mut strm: &mut lzh_stream, mut br: &mut lzh_br) -> i32 {
     }
 }
 
-unsafe fn lzh_decode(mut strm: &mut lzh_stream, mut last: i32) -> i32 {
-    let mut ds = unsafe { &mut *strm.ds };
+unsafe fn lzh_decode(strm: &mut lzh_stream, last: i32) -> i32 {
+    let ds = unsafe { &mut *strm.ds };
     let mut avail_in: i32 = 0;
     let mut r: i32 = 0;
     if ds.error != 0 {
@@ -2310,7 +2307,7 @@ unsafe fn lzh_decode(mut strm: &mut lzh_stream, mut last: i32) -> i32 {
     return r;
 }
 
-unsafe fn lzh_emit_window(mut strm: *mut lzh_stream, mut s: size_t) {
+fn lzh_emit_window(strm: *mut lzh_stream, s: size_t) {
     let strm_safe = unsafe { &mut *strm };
     let ds = unsafe { &mut *strm_safe.ds };
     strm_safe.ref_ptr = ds.w_buff;
@@ -2338,14 +2335,24 @@ unsafe fn lzh_emit_window(mut strm: *mut lzh_stream, mut s: size_t) {
  *    zeros are treated as the mark of the end of the data although the zeros
  *    is dummy, not the file data.
  */
-unsafe fn lzh_read_blocks(mut strm: *mut lzh_stream, mut last: i32) -> i32 {
+unsafe fn lzh_read_blocks(strm: *mut lzh_stream, last: i32) -> i32 {
     let strm_safe = unsafe { &mut *strm };
-    let mut current_block: u64;
     let mut ds = unsafe { &mut *strm_safe.ds };
     let mut br = &mut ds.br;
     let mut c: i32 = 0;
     let mut i: i32 = 0;
     let mut rbits: u32 = 0;
+    /* condition flow control */
+    let mut current_block: u64;
+    let ST_RD_BLOCK_AND_ST_RD_PT_1 = 0;
+    let ST_RD_PT_2 = 2;
+    let ST_RD_PT_3 = 3;
+    let ST_RD_PT_4 = 4;
+    let ST_RD_LITERAL_1 = 5;
+    let ST_RD_LITERAL_2 = 6;
+    let ST_RD_LITERAL_3 = 7;
+    let ST_RD_POS_DATA_1 = 8;
+
     's_19: loop {
         if ds.state == ARCHIVE_LHA_DEFINED_PARAM.st_rd_block {
             /*
@@ -2394,329 +2401,314 @@ unsafe fn lzh_read_blocks(mut strm: *mut lzh_stream, mut last: i32) -> i32 {
                 ds.pt.len_bits = ds.literal_pt_len_bits;
                 ds.reading_position = 0
             }
-            current_block = 16334903743006538945;
+            current_block = ST_RD_BLOCK_AND_ST_RD_PT_1;
         } else if ds.state == ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_1 {
-            current_block = 16334903743006538945;
+            current_block = ST_RD_BLOCK_AND_ST_RD_PT_1;
         } else if ds.state == ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_2 {
-            current_block = 15806087812640832660;
+            current_block = ST_RD_PT_2;
         } else if ds.state == ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_3 {
-            current_block = 14809079967989167248;
+            current_block = ST_RD_PT_3;
         } else if ds.state == ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_4 {
-            current_block = 11402235509028400542;
+            current_block = ST_RD_PT_4;
         } else if ds.state == ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_1 {
-            current_block = 8266133950150071838;
+            current_block = ST_RD_LITERAL_1;
         } else if ds.state == ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_2 {
-            current_block = 340123238355120661;
+            current_block = ST_RD_LITERAL_2;
         } else if ds.state == ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_3 {
-            current_block = 4937514680701116003;
+            current_block = ST_RD_LITERAL_3;
         } else if ds.state == ARCHIVE_LHA_DEFINED_PARAM.st_rd_pos_data_1 {
-            current_block = 16871217396860862036;
+            current_block = ST_RD_POS_DATA_1;
         } else if ds.state == ARCHIVE_LHA_DEFINED_PARAM.st_get_literal {
             return 100;
         } else {
             continue;
         }
 
-        match current_block {
-            16334903743006538945 =>
-            /* Note: ST_RD_PT_1, ST_RD_PT_2 and ST_RD_PT_4 are
-             * used in reading both a literal table and a
-             * position table. */
+        if current_block == ST_RD_BLOCK_AND_ST_RD_PT_1
+        /* Note: ST_RD_PT_1, ST_RD_PT_2 and ST_RD_PT_4 are
+         * used in reading both a literal table and a
+         * position table. */
+        {
+            if !(br.cache_avail >= ds.pt.len_bits
+                || lzh_br_fillup(strm_safe, br) != 0
+                || br.cache_avail >= ds.pt.len_bits)
             {
+                if last != 0 {
+                    break; /* Truncated data. */
+                }
+                ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_1;
+                return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+            } else {
+                ds.pt.len_avail = (br.cache_buffer >> br.cache_avail - ds.pt.len_bits) as uint16_t
+                    as i32
+                    & cache_masks[ds.pt.len_bits as usize] as i32;
+                br.cache_avail -= ds.pt.len_bits
+            }
+            current_block = ST_RD_PT_2;
+        }
+
+        if current_block == ST_RD_PT_2
+        /* FALL THROUGH */
+        {
+            if ds.pt.len_avail == 0 {
+                /* Invalid data. */
+                /* There is no bitlen. */
                 if !(br.cache_avail >= ds.pt.len_bits
                     || lzh_br_fillup(strm_safe, br) != 0
                     || br.cache_avail >= ds.pt.len_bits)
                 {
                     if last != 0 {
-                        break; /* Truncated data. */
-                    }
-                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_1;
-                    return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                } else {
-                    ds.pt.len_avail = (br.cache_buffer >> br.cache_avail - ds.pt.len_bits)
-                        as uint16_t as i32
-                        & cache_masks[ds.pt.len_bits as usize] as i32;
-                    br.cache_avail -= ds.pt.len_bits
-                }
-                current_block = 15806087812640832660;
-            }
-            _ => {}
-        }
-        match current_block {
-            15806087812640832660 =>
-            /* FALL THROUGH */
-            {
-                if ds.pt.len_avail == 0 {
-                    /* Invalid data. */
-                    /* There is no bitlen. */
-                    if !(br.cache_avail >= ds.pt.len_bits
-                        || lzh_br_fillup(strm_safe, br) != 0
-                        || br.cache_avail >= ds.pt.len_bits)
-                    {
-                        if last != 0 {
-                            break; /* Truncated data.*/
-                        } /* Invalid data. */
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_2;
-                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                    } else {
-                        let len_bits = ds.pt.len_bits;
-                        if lzh_make_fake_table(
-                            &mut ds.pt,
-                            ((br.cache_buffer >> br.cache_avail - len_bits) as uint16_t as i32
-                                & cache_masks[len_bits as usize] as i32)
-                                as uint16_t,
-                        ) == 0
-                        {
-                            break;
-                        }
-                        br.cache_avail -= ds.pt.len_bits;
-                        if ds.reading_position != 0 {
-                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal
-                        } else {
-                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_1
-                        }
-                        continue;
-                    }
-                } else {
-                    if ds.pt.len_avail > ds.pt.len_size {
-                        break;
-                    }
-                    ds.loop_0 = 0;
-                    memset_safe(
-                        ds.pt.freq.as_mut_ptr() as *mut (),
-                        0 as i32,
-                        ::std::mem::size_of::<[i32; 17]>() as u64,
-                    );
-                    if ds.pt.len_avail < 3 || ds.pt.len_size == ds.pos_pt_len_size {
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_4;
-                        continue;
-                    }
-                }
-                current_block = 14809079967989167248;
-            }
-            _ => {}
-        }
-        match current_block {
-            14809079967989167248 =>
-            /* FALL THROUGH */
-            {
-                ds.loop_0 = lzh_read_pt_bitlen(strm_safe, ds.loop_0, 3 as i32); /* Invalid data. */
-                if ds.loop_0 < 3 {
-                    if ds.loop_0 < 0 || last != 0 {
-                        break;
-                    }
-                    /* Not completed, get following data. */
-                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_3;
-                    return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                } else if !(br.cache_avail >= 2
-                    || lzh_br_fillup(strm_safe, br) != 0
-                    || br.cache_avail >= 2 as i32)
-                {
-                    /* There are some null in bitlen of the literal. */
-                    if last != 0 {
-                        break; /* Truncated data. */
+                        break; /* Truncated data.*/
                     } /* Invalid data. */
-                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_3;
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_2;
                     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
                 } else {
-                    c = (br.cache_buffer >> br.cache_avail - 2 as i32) as uint16_t as i32
-                        & cache_masks[2] as i32;
-                    br.cache_avail -= 2;
-                    if c > ds.pt.len_avail - 3 {
+                    let len_bits = ds.pt.len_bits;
+                    if lzh_make_fake_table(
+                        &mut ds.pt,
+                        ((br.cache_buffer >> br.cache_avail - len_bits) as uint16_t as i32
+                            & cache_masks[len_bits as usize] as i32)
+                            as uint16_t,
+                    ) == 0
+                    {
                         break;
                     }
-                    i = 3;
-                    loop {
-                        let fresh8 = c;
-                        c = c - 1;
-                        if !(fresh8 > 0 as i32) {
-                            break;
-                        }
-                        let fresh9 = i;
-                        i = i + 1;
-                        unsafe { *ds.pt.bitlen.offset(fresh9 as isize) = 0 as i32 as u8 }
-                    }
-                    ds.loop_0 = i
-                }
-                current_block = 11402235509028400542;
-            }
-            _ => {}
-        }
-        match current_block {
-            11402235509028400542 =>
-            /* FALL THROUGH */
-            {
-                ds.loop_0 = lzh_read_pt_bitlen(strm_safe, ds.loop_0, ds.pt.len_avail); /* Invalid data. */
-                if ds.loop_0 < ds.pt.len_avail {
-                    if ds.loop_0 < 0 || last != 0 {
-                        break;
-                    }
-                    /* Not completed, get following data. */
-                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_4; /* Invalid data */
-                    return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                } else {
-                    if lzh_make_huffman_table(&mut ds.pt) == 0 {
-                        break;
-                    }
+                    br.cache_avail -= ds.pt.len_bits;
                     if ds.reading_position != 0 {
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal;
-                        continue;
+                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal
+                    } else {
+                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_1
                     }
+                    continue;
                 }
-                current_block = 8266133950150071838;
+            } else {
+                if ds.pt.len_avail > ds.pt.len_size {
+                    break;
+                }
+                ds.loop_0 = 0;
+                memset_safe(
+                    ds.pt.freq.as_mut_ptr() as *mut (),
+                    0,
+                    ::std::mem::size_of::<[i32; 17]>() as u64,
+                );
+                if ds.pt.len_avail < 3 || ds.pt.len_size == ds.pos_pt_len_size {
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_4;
+                    continue;
+                }
             }
-            _ => {}
+            current_block = ST_RD_PT_3;
         }
-        match current_block {
-            8266133950150071838 =>
-            /* FALL THROUGH */
+
+        if current_block == ST_RD_PT_3
+        /* FALL THROUGH */
+        {
+            ds.loop_0 = lzh_read_pt_bitlen(strm_safe, ds.loop_0, 3 as i32); /* Invalid data. */
+            if ds.loop_0 < 3 {
+                if ds.loop_0 < 0 || last != 0 {
+                    break;
+                }
+                /* Not completed, get following data. */
+                ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_3;
+                return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+            } else if !(br.cache_avail >= 2
+                || lzh_br_fillup(strm_safe, br) != 0
+                || br.cache_avail >= 2 as i32)
             {
+                /* There are some null in bitlen of the literal. */
+                if last != 0 {
+                    break; /* Truncated data. */
+                } /* Invalid data. */
+                ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_3;
+                return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+            } else {
+                c = (br.cache_buffer >> br.cache_avail - 2 as i32) as uint16_t as i32
+                    & cache_masks[2] as i32;
+                br.cache_avail -= 2;
+                if c > ds.pt.len_avail - 3 {
+                    break;
+                }
+                i = 3;
+                loop {
+                    let fresh8 = c;
+                    c = c - 1;
+                    if !(fresh8 > 0) {
+                        break;
+                    }
+                    let fresh9 = i;
+                    i = i + 1;
+                    unsafe { *ds.pt.bitlen.offset(fresh9 as isize) = 0 as u8 }
+                }
+                ds.loop_0 = i
+            }
+            current_block = ST_RD_PT_4;
+        }
+
+        if current_block == ST_RD_PT_4
+        /* FALL THROUGH */
+        {
+            ds.loop_0 = lzh_read_pt_bitlen(strm_safe, ds.loop_0, ds.pt.len_avail); /* Invalid data. */
+            if ds.loop_0 < ds.pt.len_avail {
+                if ds.loop_0 < 0 || last != 0 {
+                    break;
+                }
+                /* Not completed, get following data. */
+                ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pt_4; /* Invalid data */
+                return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+            } else {
+                if lzh_make_huffman_table(&mut ds.pt) == 0 {
+                    break;
+                }
+                if ds.reading_position != 0 {
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_get_literal;
+                    continue;
+                }
+            }
+            current_block = ST_RD_LITERAL_1;
+        }
+
+        if current_block == ST_RD_LITERAL_1
+        /* FALL THROUGH */
+        {
+            if !(br.cache_avail >= ds.lt.len_bits
+                || lzh_br_fillup(strm_safe, br) != 0
+                || br.cache_avail >= ds.lt.len_bits)
+            {
+                if last != 0 {
+                    break; /* Truncated data. */
+                }
+                ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_1;
+                return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+            } else {
+                ds.lt.len_avail = (br.cache_buffer >> br.cache_avail - ds.lt.len_bits) as uint16_t
+                    as i32
+                    & cache_masks[ds.lt.len_bits as usize] as i32;
+                br.cache_avail -= ds.lt.len_bits
+            }
+            current_block = ST_RD_LITERAL_2;
+        }
+
+        if current_block == ST_RD_LITERAL_2
+        /* FALL THROUGH */
+        {
+            if ds.lt.len_avail == 0 {
+                /* Invalid data */
+                /* There is no bitlen. */
                 if !(br.cache_avail >= ds.lt.len_bits
                     || lzh_br_fillup(strm_safe, br) != 0
                     || br.cache_avail >= ds.lt.len_bits)
                 {
                     if last != 0 {
-                        break; /* Truncated data. */
-                    }
-                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_1;
+                        break; /* Truncated data.*/
+                    } /* Invalid data */
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_2;
                     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
                 } else {
-                    ds.lt.len_avail = (br.cache_buffer >> br.cache_avail - ds.lt.len_bits)
-                        as uint16_t as i32
-                        & cache_masks[ds.lt.len_bits as usize] as i32;
-                    br.cache_avail -= ds.lt.len_bits
-                }
-                current_block = 340123238355120661;
-            }
-            _ => {}
-        }
-        match current_block {
-            340123238355120661 =>
-            /* FALL THROUGH */
-            {
-                if ds.lt.len_avail == 0 {
-                    /* Invalid data */
-                    /* There is no bitlen. */
-                    if !(br.cache_avail >= ds.lt.len_bits
-                        || lzh_br_fillup(strm_safe, br) != 0
-                        || br.cache_avail >= ds.lt.len_bits)
+                    let len_bits = ds.lt.len_bits;
+                    if lzh_make_fake_table(
+                        &mut ds.lt,
+                        ((br.cache_buffer >> br.cache_avail - len_bits) as uint16_t as i32
+                            & cache_masks[len_bits as usize] as i32)
+                            as uint16_t,
+                    ) == 0
                     {
-                        if last != 0 {
-                            break; /* Truncated data.*/
-                        } /* Invalid data */
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_2;
-                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                    } else {
-                        let len_bits = ds.lt.len_bits;
-                        if lzh_make_fake_table(
-                            &mut ds.lt,
-                            ((br.cache_buffer >> br.cache_avail - len_bits) as uint16_t as i32
-                                & cache_masks[len_bits as usize] as i32)
-                                as uint16_t,
-                        ) == 0
-                        {
-                            break;
-                        }
-                        br.cache_avail -= ds.lt.len_bits;
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pos_data_1;
-                        continue;
-                    }
-                } else {
-                    if ds.lt.len_avail > ds.lt.len_size {
                         break;
                     }
-                    ds.loop_0 = 0;
-                    memset_safe(
-                        ds.lt.freq.as_mut_ptr() as *mut (),
-                        0 as i32,
-                        ::std::mem::size_of::<[i32; 17]>() as u64,
-                    );
+                    br.cache_avail -= ds.lt.len_bits;
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_pos_data_1;
+                    continue;
                 }
-                current_block = 4937514680701116003;
+            } else {
+                if ds.lt.len_avail > ds.lt.len_size {
+                    break;
+                }
+                ds.loop_0 = 0;
+                memset_safe(
+                    ds.lt.freq.as_mut_ptr() as *mut (),
+                    0,
+                    ::std::mem::size_of::<[i32; 17]>() as u64,
+                );
             }
-            _ => {}
+            current_block = ST_RD_LITERAL_3;
         }
-        match current_block {
-            4937514680701116003 =>
-            /* FALL THROUGH */
-            {
-                i = ds.loop_0; /* Truncated data.*/
-                while i < ds.lt.len_avail {
-                    if !(br.cache_avail >= ds.pt.max_bits
-                        || lzh_br_fillup(strm_safe, br) != 0
-                        || br.cache_avail >= ds.pt.max_bits)
-                    {
-                        if last != 0 {
-                            break 's_19;
-                        }
-                        ds.loop_0 = i;
-                        ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_3;
-                        return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+
+        if current_block == ST_RD_LITERAL_3
+        /* FALL THROUGH */
+        {
+            i = ds.loop_0; /* Truncated data.*/
+            while i < ds.lt.len_avail {
+                if !(br.cache_avail >= ds.pt.max_bits
+                    || lzh_br_fillup(strm_safe, br) != 0
+                    || br.cache_avail >= ds.pt.max_bits)
+                {
+                    if last != 0 {
+                        break 's_19;
+                    }
+                    ds.loop_0 = i;
+                    ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_3;
+                    return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+                } else {
+                    rbits = ((br.cache_buffer >> br.cache_avail - ds.pt.max_bits) as uint16_t
+                        as i32
+                        & cache_masks[ds.pt.max_bits as usize] as i32)
+                        as u32;
+                    c = lzh_decode_huffman(&mut ds.pt, rbits);
+                    if c > 2 {
+                        /* Note: 'c' will never be more than
+                         * eighteen since it's limited by
+                         * PT_BITLEN_SIZE, which is being set
+                         * to ds->pt.len_size through
+                         * ds->literal_pt_len_size. */
+                        br.cache_avail -= unsafe { *ds.pt.bitlen.offset(c as isize) } as i32;
+                        c -= 2;
+                        ds.lt.freq[c as usize] += 1;
+                        let fresh10 = i;
+                        i = i + 1;
+                        unsafe { *ds.lt.bitlen.offset(fresh10 as isize) = c as u8 }
+                    } else if c == 0 {
+                        br.cache_avail -= unsafe { *ds.pt.bitlen.offset(c as isize) } as i32;
+                        let fresh11 = i;
+                        i = i + 1;
+                        unsafe { *ds.lt.bitlen.offset(fresh11 as isize) = 0 as u8 }
                     } else {
-                        rbits = ((br.cache_buffer >> br.cache_avail - ds.pt.max_bits) as uint16_t
-                            as i32
-                            & cache_masks[ds.pt.max_bits as usize] as i32)
-                            as u32;
-                        c = lzh_decode_huffman(&mut ds.pt, rbits);
-                        if c > 2 {
-                            /* Note: 'c' will never be more than
-                             * eighteen since it's limited by
-                             * PT_BITLEN_SIZE, which is being set
-                             * to ds->pt.len_size through
-                             * ds->literal_pt_len_size. */
-                            br.cache_avail -= unsafe { *ds.pt.bitlen.offset(c as isize) } as i32;
-                            c -= 2;
-                            ds.lt.freq[c as usize] += 1;
-                            let fresh10 = i;
-                            i = i + 1;
-                            unsafe { *ds.lt.bitlen.offset(fresh10 as isize) = c as u8 }
-                        } else if c == 0 {
-                            br.cache_avail -= unsafe { *ds.pt.bitlen.offset(c as isize) } as i32;
-                            let fresh11 = i;
-                            i = i + 1;
-                            unsafe { *ds.lt.bitlen.offset(fresh11 as isize) = 0 as i32 as u8 }
-                        } else {
-                            /* c == 1 or c == 2 */
-                            let mut n: i32 = if c == 1 { 4 } else { 9 }; /* Invalid data */
-                            if !(br.cache_avail
-                                >= unsafe { *ds.pt.bitlen.offset(c as isize) } as i32 + n
-                                || lzh_br_fillup(strm_safe, br) != 0
-                                || br.cache_avail
-                                    >= unsafe { *ds.pt.bitlen.offset(c as isize) } as i32 + n)
-                            {
-                                if last != 0 {
-                                    break 's_19; /* Invalid data */
-                                }
-                                ds.loop_0 = i;
-                                ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_3;
-                                return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
-                            } else {
-                                br.cache_avail -=
-                                    unsafe { *ds.pt.bitlen.offset(c as isize) } as i32;
-                                c = (br.cache_buffer >> br.cache_avail - n) as uint16_t as i32
-                                    & cache_masks[n as usize] as i32;
-                                br.cache_avail -= n;
-                                c += if n == 4 { 3 } else { 20 };
-                                if i + c > ds.lt.len_avail {
-                                    break 's_19;
-                                }
-                                memset_safe(
-                                    unsafe { &mut *ds.lt.bitlen.offset(i as isize) } as *mut u8
-                                        as *mut (),
-                                    0 as i32,
-                                    c as u64,
-                                );
-                                i += c
+                        /* c == 1 or c == 2 */
+                        let mut n: i32 = if c == 1 { 4 } else { 9 }; /* Invalid data */
+                        if !(br.cache_avail
+                            >= unsafe { *ds.pt.bitlen.offset(c as isize) } as i32 + n
+                            || lzh_br_fillup(strm_safe, br) != 0
+                            || br.cache_avail
+                                >= unsafe { *ds.pt.bitlen.offset(c as isize) } as i32 + n)
+                        {
+                            if last != 0 {
+                                break 's_19; /* Invalid data */
                             }
+                            ds.loop_0 = i;
+                            ds.state = ARCHIVE_LHA_DEFINED_PARAM.st_rd_literal_3;
+                            return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
+                        } else {
+                            br.cache_avail -= unsafe { *ds.pt.bitlen.offset(c as isize) } as i32;
+                            c = (br.cache_buffer >> br.cache_avail - n) as uint16_t as i32
+                                & cache_masks[n as usize] as i32;
+                            br.cache_avail -= n;
+                            c += if n == 4 { 3 } else { 20 };
+                            if i + c > ds.lt.len_avail {
+                                break 's_19;
+                            }
+                            memset_safe(
+                                unsafe { &mut *ds.lt.bitlen.offset(i as isize) } as *mut u8
+                                    as *mut (),
+                                0,
+                                c as u64,
+                            );
+                            i += c
                         }
                     }
                 }
-                if i > ds.lt.len_avail || lzh_make_huffman_table(&mut ds.lt) == 0 {
-                    break;
-                }
             }
-            _ => {}
+            if i > ds.lt.len_avail || lzh_make_huffman_table(&mut ds.lt) == 0 {
+                break;
+            }
         }
+
         /* FALL THROUGH */
         /*
          * Read a position table compressed in huffman
@@ -2824,7 +2816,7 @@ unsafe fn lzh_decode_blocks(mut strm: *mut lzh_stream, mut last: i32) -> i32 {
                         /* 'c' is the length of a match pattern we have
                          * already extracted, which has be stored in
                          * window(ds->w_buff). */
-                        copy_len = c - (ARCHIVE_LHA_DEFINED_PARAM.uchar_max + 1 as i32)
+                        copy_len = c - (ARCHIVE_LHA_DEFINED_PARAM.uchar_max + 1)
                             + ARCHIVE_LHA_DEFINED_PARAM.minmatch;
                         /* FALL THROUGH */
                         current_block = 11885127744888120434;
@@ -2869,7 +2861,7 @@ unsafe fn lzh_decode_blocks(mut strm: *mut lzh_stream, mut last: i32) -> i32 {
                             current_block = 13987783605104790504;
                             break 's_43;
                         } else {
-                            copy_pos = ((1 as i32) << p)
+                            copy_pos = ((1) << p)
                                 + ((bre.cache_buffer >> bre.cache_avail - p) as uint16_t as i32
                                     & cache_masks[p as usize] as i32);
                             bre.cache_avail -= p
@@ -3009,7 +3001,7 @@ unsafe fn lzh_decode_blocks(mut strm: *mut lzh_stream, mut last: i32) -> i32 {
     };
 }
 
-unsafe fn lzh_huffman_init(mut hf: &mut huffman, mut len_size: size_t, mut tbl_bits: i32) -> i32 {
+unsafe fn lzh_huffman_init(hf: &mut huffman, len_size: size_t, tbl_bits: i32) -> i32 {
     let mut bits: i32 = 0;
     if hf.bitlen.is_null() {
         hf.bitlen = malloc_safe(len_size * (::std::mem::size_of::<u8>() as u64)) as *mut u8;
@@ -3024,14 +3016,14 @@ unsafe fn lzh_huffman_init(mut hf: &mut huffman, mut len_size: size_t, mut tbl_b
             bits = ARCHIVE_LHA_DEFINED_PARAM.htbl_bits
         }
         hf.tbl = malloc_safe(
-            ((1 as i32 as size_t) << bits).wrapping_mul(::std::mem::size_of::<uint16_t>() as u64),
+            ((1 as size_t) << bits).wrapping_mul(::std::mem::size_of::<uint16_t>() as u64),
         ) as *mut uint16_t;
         if hf.tbl.is_null() {
             return ARCHIVE_LHA_DEFINED_PARAM.archive_fatal;
         }
     }
     if hf.tree.is_null() && tbl_bits > ARCHIVE_LHA_DEFINED_PARAM.htbl_bits {
-        hf.tree_avail = (1 as i32) << tbl_bits - ARCHIVE_LHA_DEFINED_PARAM.htbl_bits + 4;
+        hf.tree_avail = (1) << tbl_bits - ARCHIVE_LHA_DEFINED_PARAM.htbl_bits + 4;
         hf.tree = malloc_safe((hf.tree_avail as u64) * (::std::mem::size_of::<htree_t>() as u64))
             as *mut htree_t;
         if hf.tree.is_null() {
@@ -3043,7 +3035,7 @@ unsafe fn lzh_huffman_init(mut hf: &mut huffman, mut len_size: size_t, mut tbl_b
     return ARCHIVE_LHA_DEFINED_PARAM.archive_ok;
 }
 
-unsafe fn lzh_huffman_free(mut hf: &mut huffman) {
+unsafe fn lzh_huffman_free(hf: &mut huffman) {
     free_safe(hf.bitlen as *mut ());
     free_safe(hf.tbl as *mut ());
     free_safe(hf.tree as *mut ());
@@ -3086,9 +3078,9 @@ static bitlen_tbl: [i8; 1024] = [
     14, 14, 14, 14, 15, 15, 16, 0,
 ];
 
-unsafe fn lzh_read_pt_bitlen(mut strm: &mut lzh_stream, mut start: i32, mut end: i32) -> i32 {
-    let mut ds = unsafe { &mut *strm.ds };
-    let mut br = &mut ds.br;
+unsafe fn lzh_read_pt_bitlen(strm: &mut lzh_stream, start: i32, end: i32) -> i32 {
+    let ds = unsafe { &mut *strm.ds };
+    let br = &mut ds.br;
     let mut c: i32 = 0;
     let mut i: i32 = 0;
     i = start;
@@ -3123,7 +3115,7 @@ unsafe fn lzh_read_pt_bitlen(mut strm: &mut lzh_stream, mut start: i32, mut end:
             if c != 0 {
                 br.cache_avail -= c - 3
             } else {
-                return -(1 as i32);
+                return -1;
             }
             /* Invalid data. */
         } else {
@@ -3137,7 +3129,7 @@ unsafe fn lzh_read_pt_bitlen(mut strm: &mut lzh_stream, mut start: i32, mut end:
     return i;
 }
 
-unsafe fn lzh_make_fake_table(mut hf: &mut huffman, mut c: uint16_t) -> i32 {
+unsafe fn lzh_make_fake_table(hf: &mut huffman, c: uint16_t) -> i32 {
     if c as i32 >= hf.len_size {
         return 0;
     }
@@ -3155,7 +3147,7 @@ unsafe fn lzh_make_fake_table(mut hf: &mut huffman, mut c: uint16_t) -> i32 {
 /*
  * Make a huffman coding table.
  */
-unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
+unsafe fn lzh_make_huffman_table(hf: &mut huffman) -> i32 {
     let mut tbl: *mut uint16_t = 0 as *mut uint16_t;
     let mut bitlen: *const u8 = 0 as *const u8;
     let mut bitptn: [i32; 17] = [0; 17];
@@ -3172,7 +3164,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
      */
     ptn = 0; /* Invalid */
     i = 1;
-    w = (1 as i32) << 15;
+    w = 1 << 15;
     while i <= 16 {
         bitptn[i as usize] = ptn;
         weight[i as usize] = w;
@@ -3183,7 +3175,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
         i += 1;
         w >>= 1
     }
-    if ptn != 0x10000 as i32 || maxbits > hf.tbl_bits {
+    if ptn != 0x10000 || maxbits > hf.tbl_bits {
         return 0;
     }
     hf.max_bits = maxbits;
@@ -3225,7 +3217,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
             unsafe {
                 p = p.offset(1);
             }
-            *fresh13 = 0 as i32 as uint16_t
+            *fresh13 = 0
         }
     } else {
         diffbits = 0
@@ -3234,7 +3226,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
     /*
      * Make the table.
      */
-    tbl_size = (1 as i32) << ARCHIVE_LHA_DEFINED_PARAM.htbl_bits;
+    tbl_size = (1) << ARCHIVE_LHA_DEFINED_PARAM.htbl_bits;
     tbl = hf.tbl;
     bitlen = hf.bitlen;
     len_avail = hf.len_avail;
@@ -3247,7 +3239,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
         let mut bit: uint16_t = 0;
         let mut extlen: i32 = 0;
         let mut ht = unsafe { &mut *(0 as *mut htree_t) };
-        if !(unsafe { *bitlen.offset(i as isize) } == 0 as u8) {
+        if !(unsafe { *bitlen.offset(i as isize) } == 0) {
             /* Get a bit pattern */
             len = unsafe { *bitlen.offset(i as isize) } as i32;
             ptn = bitptn[len as usize];
@@ -3319,7 +3311,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
                  * so we use a tree model for its extra bits.
                  */
                 bitptn[len as usize] = ptn + cnt; /* Invalid */
-                bit = ((1 as u32) << diffbits - 1 as i32) as uint16_t; /* Invalid */
+                bit = (1 << diffbits - 1) as uint16_t; /* Invalid */
                 extlen = len - ARCHIVE_LHA_DEFINED_PARAM.htbl_bits; /* Invalid */
                 p_0 = unsafe { &mut *tbl.offset((ptn >> diffbits) as isize) } as *mut uint16_t; /* Invalid */
                 let safe_p_0 = unsafe { &mut *p_0 };
@@ -3331,8 +3323,8 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
                     if hf.tree_used > hf.tree_avail {
                         return 0;
                     }
-                    ht.left = 0 as i32 as uint16_t;
-                    ht.right = 0 as i32 as uint16_t
+                    ht.left = 0;
+                    ht.right = 0
                 } else {
                     if (*safe_p_0 as i32) < len_avail
                         || *safe_p_0 as i32 >= len_avail + hf.tree_used
@@ -3346,7 +3338,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
                 }
                 loop {
                     extlen -= 1;
-                    if !(extlen > 0 as i32) {
+                    if !(extlen > 0) {
                         break;
                     }
                     if ptn & bit as i32 != 0 {
@@ -3360,8 +3352,8 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
                             if hf.tree_used > hf.tree_avail {
                                 return 0;
                             }
-                            ht.left = 0 as i32 as uint16_t;
-                            ht.right = 0 as i32 as uint16_t
+                            ht.left = 0;
+                            ht.right = 0
                         } else {
                             ht = unsafe {
                                 &mut *(&mut *hf.tree.offset((ht.left as i32 - len_avail) as isize)
@@ -3378,15 +3370,15 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
                         if hf.tree_used > hf.tree_avail {
                             return 0;
                         }
-                        ht.left = 0 as i32 as uint16_t;
-                        ht.right = 0 as i32 as uint16_t
+                        ht.left = 0;
+                        ht.right = 0
                     } else {
                         ht = unsafe {
                             &mut *(&mut *hf.tree.offset((ht.right as i32 - len_avail) as isize)
                                 as *mut htree_t)
                         }
                     }
-                    bit = (bit as i32 >> 1 as i32) as uint16_t
+                    bit = bit >> 1
                 }
                 if ptn & bit as i32 != 0 {
                     if ht.left != 0 {
@@ -3406,7 +3398,7 @@ unsafe fn lzh_make_huffman_table(mut hf: &mut huffman) -> i32 {
     return 1;
 }
 
-unsafe fn lzh_decode_huffman_tree(mut hf: *mut huffman, mut rbits: u32, mut c: i32) -> i32 {
+unsafe fn lzh_decode_huffman_tree(hf: *mut huffman, rbits: u32, mut c: i32) -> i32 {
     let hf_safe = unsafe { &mut *hf };
     let mut ht: *mut htree_t = 0 as *mut htree_t;
     let mut extlen: i32 = 0;
@@ -3428,7 +3420,7 @@ unsafe fn lzh_decode_huffman_tree(mut hf: *mut huffman, mut rbits: u32, mut c: i
     return c;
 }
 
-unsafe fn lzh_decode_huffman(mut hf: &mut huffman, mut rbits: u32) -> i32 {
+unsafe fn lzh_decode_huffman(hf: &mut huffman, rbits: u32) -> i32 {
     let mut c: i32 = 0;
     /*
      * At first search an index table for a bit pattern.
@@ -3453,22 +3445,22 @@ pub unsafe fn archive_test_archive_read_support_format_lha() {
 }
 
 #[no_mangle]
-unsafe fn archive_test_lha_check_header_format(mut h: *const ()) {
+unsafe fn archive_test_lha_check_header_format(h: *const ()) {
     lha_check_header_format(h);
 }
 
 #[no_mangle]
 unsafe fn archive_test_archive_read_format_lha_options(
-    mut _a: *mut archive,
-    mut key: *const i8,
-    mut val: *const i8,
+    _a: *mut archive,
+    key: *const i8,
+    val: *const i8,
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     archive_read_format_lha_options(a, key, val);
 }
 
 #[no_mangle]
-unsafe fn archive_test_lha_skip_sfx(mut _a: *mut archive) {
+unsafe fn archive_test_lha_skip_sfx(_a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     lha_skip_sfx(a);
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
@@ -3481,7 +3473,7 @@ unsafe fn archive_test_lha_skip_sfx(mut _a: *mut archive) {
 }
 
 #[no_mangle]
-unsafe fn archive_test_lha_read_data_none(mut _a: *mut archive) {
+unsafe fn archive_test_lha_read_data_none(_a: *mut archive) {
     let mut size: size_t = 2;
     let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
     let mut offset: int64_t = 1;
@@ -3498,7 +3490,7 @@ unsafe fn archive_test_lha_read_data_none(mut _a: *mut archive) {
 }
 
 #[no_mangle]
-unsafe fn archive_test_lha_read_data_lzh(mut _a: *mut archive) {
+unsafe fn archive_test_lha_read_data_lzh(_a: *mut archive) {
     let mut size: size_t = 2;
     let mut size2: *mut size_t = &size as *const size_t as *mut size_t;
     let mut offset: int64_t = 1;
@@ -3541,7 +3533,7 @@ pub unsafe fn archive_test_lzh_decode_huffman_tree() {
 }
 
 #[no_mangle]
-unsafe fn archive_test_truncated_error(mut _a: *mut archive) {
+unsafe fn archive_test_truncated_error(_a: *mut archive) {
     let mut a: *mut archive_read = _a as *mut archive_read;
     truncated_error(a);
 }
