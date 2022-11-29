@@ -202,7 +202,7 @@ static mut compression_name: [*const u8; 4] = [
     b"LZX\x00" as *const u8,
 ];
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_cab(mut _a: *mut archive) -> i32 {
+pub fn archive_read_support_format_cab(mut _a: *mut archive) -> i32 {
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut cab: *mut cab;
     let mut r: i32;

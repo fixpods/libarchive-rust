@@ -248,7 +248,7 @@ pub struct archive_string_conv {
     pub cd_w: iconv_t,
     pub utftmp: archive_string,
     pub converter: [Option<
-        unsafe extern "C" fn(
+        unsafe fn(
             _: *mut archive_string,
             _: *const (),
             _: size_t,

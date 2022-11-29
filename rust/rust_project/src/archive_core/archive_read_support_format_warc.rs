@@ -22,7 +22,7 @@ fn _mkgmtime_safe(__tp: *mut tm) -> time_t {
     return unsafe { _mkgmtime(__tp) };
 }
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_warc(_a: *mut archive) -> i32 {
+pub fn archive_read_support_format_warc(_a: *mut archive) -> i32 {
     let a: *mut archive_read = _a as *mut archive_read;
     let w: *mut warc_s;
     let r: i32;

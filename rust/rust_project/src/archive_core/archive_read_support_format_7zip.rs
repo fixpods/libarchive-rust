@@ -353,7 +353,7 @@ fn archive_read_format_7zip_bid(a: *mut archive_read, best_bid: i32) -> i32 {
     return 0;
 }
 fn check_7zip_header_in_sfx(p: *const u8) -> i32 {
-    match unsafe { *p.offset(5 as i32 as isize) as u8 as i32 } {
+    match unsafe { *p.offset(5 as isize) as i32 } {
         28 => {
             if unsafe {
                 memcmp_safe(
@@ -371,11 +371,8 @@ fn check_7zip_header_in_sfx(p: *const u8) -> i32 {
              * make a mis-detection.
              */
             if unsafe {
-                crc32_safe(
-                    0 as i32 as uLong,
-                    (p as *const u8).offset(12),
-                    20 as i32 as uInt,
-                ) != archive_le32dec(p.offset(8) as *const ()) as u64
+                crc32_safe(0 as uLong, (p as *const u8).offset(12), 20 as uInt)
+                    != archive_le32dec(p.offset(8) as *const ()) as u64
             } {
                 return 6;
             }
@@ -535,12 +532,13 @@ fn archive_read_format_7zip_read_header(a: *mut archive_read, entry: *mut archiv
         fidx = 0;
         unsafe {
             while !folder.is_null() && fidx < (*folder).numCoders {
-                match (*(*folder).coders.offset(fidx as isize)).codec {
-                    116457729 | 116458243 | 116459265 => {
-                        archive_entry_set_is_data_encrypted(entry, 1);
-                        (safe_zip).has_encrypted_entries = 1
-                    }
-                    _ => {}
+                let codec = (*(*folder).coders.offset(fidx as isize)).codec;
+                if codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_crypto_main_zip as u64
+                    || codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_crypto_rar_29 as u64
+                    || codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_crypto_aes_256_sha_256 as u64
+                {
+                    archive_entry_set_is_data_encrypted(entry, 1);
+                    (safe_zip).has_encrypted_entries = 1;
                 }
                 fidx = fidx.wrapping_add(1)
             }
@@ -845,60 +843,64 @@ fn read_consume(a: *mut archive_read) {
 #[cfg(HAVE_LZMA_H)]
 fn set_error(a: *mut archive_read, ret: i32) {
     let safe_a = unsafe { &mut *a };
-    unsafe {
-        match ret {
-            1 => {}
-            0 => {}
-            5 => {
-                archive_set_error(
-                    &mut safe_a.archive as *mut archive,
-                    ARCHIVE_7ZIP_DEFINED_PARAM.enomem,
-                    b"Lzma library error: Cannot allocate memory\x00" as *const u8,
-                );
-            }
-            6 => {
-                archive_set_error(
-                    &mut safe_a.archive as *mut archive,
-                    ARCHIVE_7ZIP_DEFINED_PARAM.enomem,
-                    b"Lzma library error: Out of memory\x00" as *const u8,
-                );
-            }
-            7 => {
-                archive_set_error(
-                    &mut safe_a.archive as *mut archive,
-                    ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                    b"Lzma library error: format not recognized\x00" as *const u8,
-                );
-            }
-            8 => {
-                archive_set_error(
-                    &mut safe_a.archive as *mut archive,
-                    ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                    b"Lzma library error: Invalid options\x00" as *const u8,
-                );
-            }
-            9 => {
-                archive_set_error(
-                    &mut safe_a.archive as *mut archive,
-                    ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                    b"Lzma library error: Corrupted input data\x00" as *const u8,
-                );
-            }
-            10 => {
-                archive_set_error(
-                    &mut safe_a.archive as *mut archive,
-                    ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                    b"Lzma library error:  No progress is possible\x00" as *const u8,
-                );
-            }
-            _ => {
-                /* Return an error. */
-                archive_set_error(
-                    &mut safe_a.archive as *mut archive,
-                    ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                    b"Lzma decompression failed:  Unknown error\x00" as *const u8,
-                );
-            }
+    if ret == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_stream_end
+        || ret == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_ok
+    {
+    } else if ret == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_mem_error {
+        unsafe {
+            archive_set_error(
+                &mut safe_a.archive as *mut archive,
+                ARCHIVE_7ZIP_DEFINED_PARAM.enomem,
+                b"Lzma library error: Cannot allocate memory\x00" as *const u8,
+            )
+        };
+    } else if ret == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_memlimit_error {
+        unsafe {
+            archive_set_error(
+                &mut safe_a.archive as *mut archive,
+                ARCHIVE_7ZIP_DEFINED_PARAM.enomem,
+                b"Lzma library error: Out of memory\x00" as *const u8,
+            );
+        };
+    } else if ret == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_format_error {
+        unsafe {
+            archive_set_error(
+                &mut safe_a.archive as *mut archive,
+                ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                b"Lzma library error: format not recognized\x00" as *const u8,
+            )
+        };
+    } else if ret == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_options_error {
+        unsafe {
+            archive_set_error(
+                &mut safe_a.archive as *mut archive,
+                ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                b"Lzma library error: Invalid options\x00" as *const u8,
+            )
+        };
+    } else if ret == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_data_error {
+        unsafe {
+            archive_set_error(
+                &mut safe_a.archive as *mut archive,
+                ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                b"Lzma library error: Corrupted input data\x00" as *const u8,
+            )
+        };
+    } else if ret == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_buf_error {
+        unsafe {
+            archive_set_error(
+                &mut safe_a.archive as *mut archive,
+                ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                b"Lzma library error:  No progress is possible\x00" as *const u8,
+            )
+        };
+    } else {
+        unsafe {
+            archive_set_error(
+                &mut safe_a.archive as *mut archive,
+                ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                b"Lzma decompression failed:  Unknown error\x00" as *const u8,
+            )
         };
     }
 }
@@ -977,173 +979,159 @@ fn init_decompression(
             }
         }
     }
-    match (safe_zip).codec {
-        0 => {}
-
-        196865 | 33 => {
-            match () {
-                #[cfg(HAVE_LZMA_H)]
-                _ => {
-                    {
-                        /* Effectively disable the limiter. */
-                        let mut delta_opt: lzma_options_delta = lzma_options_delta {
-                            type_0: LZMA_DELTA_TYPE_BYTE,
-                            dist: 0,
-                            reserved_int1: 0,
-                            reserved_int2: 0,
-                            reserved_int3: 0,
-                            reserved_int4: 0,
-                            reserved_ptr1: 0 as *mut (),
-                            reserved_ptr2: 0 as *mut (),
-                        };
-                        let mut filters: [lzma_filter; 4] = [lzma_filter {
-                            id: 0,
-                            options: 0 as *mut (),
-                        }; 4];
-                        let mut ff: *mut lzma_filter = 0 as *mut lzma_filter;
-                        let mut fi: i32 = 0;
-                        if (safe_zip).lzstream_valid != 0 {
-                            unsafe { lzma_end_safe(&mut (safe_zip).lzstream) };
-                            (safe_zip).lzstream_valid = 0
-                        }
-
-                        if !coder2.is_null() {
-                            (safe_zip).codec2 = (safe_coder2).codec;
-                            filters[fi as usize].options = 0 as *mut ();
-                            match (safe_zip).codec2 {
-                                50528515 => {
-                                    if (safe_zip).codec
-                                        == ARCHIVE_7ZIP_DEFINED_PARAM._7z_lzma2 as u64
-                                    {
-                                        filters[fi as usize].id = 0x4 as u64;
-                                        fi += 1
-                                    } else {
-                                        /* Use our filter. */
-                                        unsafe { x86_Init(zip) };
-                                    }
-                                }
-                                50528539 => {
-                                    /* Use our filter. */
-                                    (safe_zip).bcj_state = 0
-                                }
-                                3 => {
-                                    if (safe_coder2).propertiesSize != 1 {
-                                        unsafe {
-                                            archive_set_error(
-                                                &mut (safe_a).archive as *mut archive,
-                                                ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                                                b"Invalid Delta parameter\x00" as *const u8
-                                                    as *const u8,
-                                            )
-                                        };
-                                        return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-                                    }
-                                    filters[fi as usize].id = 0x3 as u64;
-                                    unsafe {
-                                        memset_safe(
-                                            &mut delta_opt as *mut lzma_options_delta as *mut (),
-                                            0 as i32,
-                                            size_of::<lzma_options_delta>() as u64,
-                                        )
-                                    };
-                                    delta_opt.type_0 = LZMA_DELTA_TYPE_BYTE;
-                                    delta_opt.dist = unsafe {
-                                        (*(safe_coder2).properties.offset(0 as i32 as isize)
-                                            as uint32_t)
-                                            .wrapping_add(1)
-                                    };
-                                    filters[fi as usize].options =
-                                        &mut delta_opt as *mut lzma_options_delta as *mut ();
-                                    fi += 1
-                                }
-                                50528773 => {
-                                    /* Following filters have not been tested yet. */
-                                    filters[fi as usize].id = 0x5 as u64;
-                                    fi += 1
-                                }
-                                50529281 => {
-                                    filters[fi as usize].id = 0x6 as u64;
-                                    fi += 1
-                                }
-                                50529537 => {
-                                    filters[fi as usize].id = 0x7 as u64;
-                                    fi += 1
-                                }
-                                50530049 => {
-                                    filters[fi as usize].id = 0x8 as u64;
-                                    fi += 1
-                                }
-                                50530309 => {
-                                    filters[fi as usize].id = 0x9 as u64;
-                                    fi += 1
-                                }
-                                _ => {
-                                    unsafe {
-                                        archive_set_error(
-                                            &mut (safe_a).archive as *mut archive,
-                                            -(1 as i32),
-                                            b"Unexpected codec ID: %lX\x00" as *const u8
-                                                as *const u8,
-                                            (safe_zip).codec2,
-                                        )
-                                    };
-                                    return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-                                }
-                            }
-                        }
-                        if (safe_zip).codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_lzma2 as u64 {
-                            filters[fi as usize].id = 0x21 as u64
-                        } else {
-                            filters[fi as usize].id = 0x4000000000000001 as u64
-                        }
-                        filters[fi as usize].options = 0 as *mut ();
-                        ff = unsafe {
-                            &mut *filters.as_mut_ptr().offset(fi as isize) as *mut lzma_filter
-                        };
-                        r = unsafe {
-                            lzma_properties_decode_safe(
-                                unsafe { &mut *filters.as_mut_ptr().offset(fi as isize) },
-                                0 as *const lzma_allocator,
-                                (safe_coder1).properties,
-                                (safe_coder1).propertiesSize,
-                            )
-                        } as i32;
-                        if r != LZMA_OK as i32 {
-                            set_error(a, r);
-                            return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-                        }
-                        fi += 1;
-                        filters[fi as usize].id = 18446744073709551615 as u64;
-                        filters[fi as usize].options = 0 as *mut ();
-                        r = unsafe {
-                            lzma_raw_decoder_safe(&mut (safe_zip).lzstream, filters.as_mut_ptr())
-                        } as i32;
-                        unsafe { free((*ff).options) };
-                        if r != LZMA_OK as i32 {
-                            set_error(a, r);
-                            return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-                        }
-                        (safe_zip).lzstream_valid = 1;
-                        (safe_zip).lzstream.total_in = 0;
-                        (safe_zip).lzstream.total_out = 0
-                    }
-                }
-
-                #[cfg(not(HAVE_LZMA_H))]
-                _ => {
-                    unsafe {
-                        archive_set_error(
-                            &mut (safe_a).archive as *mut archive,
-                            -(1 as i32),
-                            b"LZMA codec is unsupported.\x00" as *const u8,
-                        )
+    if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_copy as u64 {
+    } else if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_lzma as u64
+        || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_lzma2 as u64
+    {
+        match () {
+            #[cfg(HAVE_LZMA_H)]
+            _ => {
+                {
+                    /* Effectively disable the limiter. */
+                    let mut delta_opt: lzma_options_delta = lzma_options_delta {
+                        type_0: LZMA_DELTA_TYPE_BYTE,
+                        dist: 0,
+                        reserved_int1: 0,
+                        reserved_int2: 0,
+                        reserved_int3: 0,
+                        reserved_int4: 0,
+                        reserved_ptr1: 0 as *mut (),
+                        reserved_ptr2: 0 as *mut (),
                     };
-                    return -25;
+                    let mut filters: [lzma_filter; 4] = [lzma_filter {
+                        id: 0,
+                        options: 0 as *mut (),
+                    }; 4];
+                    let mut ff: *mut lzma_filter = 0 as *mut lzma_filter;
+                    let mut fi: i32 = 0;
+                    if (safe_zip).lzstream_valid != 0 {
+                        unsafe { lzma_end_safe(&mut (safe_zip).lzstream) };
+                        (safe_zip).lzstream_valid = 0
+                    }
+
+                    if !coder2.is_null() {
+                        (safe_zip).codec2 = (safe_coder2).codec;
+                        filters[fi as usize].options = 0 as *mut ();
+                        if safe_zip.codec2 == ARCHIVE_7ZIP_DEFINED_PARAM._7z_x86 as u64 {
+                            if (safe_zip).codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_lzma2 as u64 {
+                                filters[fi as usize].id = 0x4 as u64;
+                                fi += 1
+                            } else {
+                                /* Use our filter. */
+                                unsafe { x86_Init(zip) };
+                            }
+                        } else if safe_zip.codec2 == ARCHIVE_7ZIP_DEFINED_PARAM._7z_x86_bcj2 as u64
+                        {
+                            /* Use our filter. */
+                            (safe_zip).bcj_state = 0
+                        } else if safe_zip.codec2 == ARCHIVE_7ZIP_DEFINED_PARAM._7z_delta as u64 {
+                            if (safe_coder2).propertiesSize != 1 {
+                                unsafe {
+                                    archive_set_error(
+                                        &mut (safe_a).archive as *mut archive,
+                                        ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                                        b"Invalid Delta parameter\x00" as *const u8 as *const u8,
+                                    )
+                                };
+                                return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+                            }
+                            filters[fi as usize].id = 0x3 as u64;
+                            unsafe {
+                                memset_safe(
+                                    &mut delta_opt as *mut lzma_options_delta as *mut (),
+                                    0 as i32,
+                                    size_of::<lzma_options_delta>() as u64,
+                                )
+                            };
+                            delta_opt.type_0 = LZMA_DELTA_TYPE_BYTE;
+                            delta_opt.dist = unsafe {
+                                (*(safe_coder2).properties.offset(0 as i32 as isize) as uint32_t)
+                                    .wrapping_add(1)
+                            };
+                            filters[fi as usize].options =
+                                &mut delta_opt as *mut lzma_options_delta as *mut ();
+                            fi += 1
+                        } else if safe_zip.codec2 == ARCHIVE_7ZIP_DEFINED_PARAM._7z_powerpc as u64 {
+                            /* Following filters have not been tested yet. */
+                            filters[fi as usize].id = 0x5 as u64;
+                            fi += 1
+                        } else if safe_zip.codec2 == ARCHIVE_7ZIP_DEFINED_PARAM._7z_ia64 as u64 {
+                            filters[fi as usize].id = 0x6 as u64;
+                            fi += 1
+                        } else if safe_zip.codec2 == ARCHIVE_7ZIP_DEFINED_PARAM._7z_arm as u64 {
+                            filters[fi as usize].id = 0x7 as u64;
+                            fi += 1
+                        } else if safe_zip.codec2 == ARCHIVE_7ZIP_DEFINED_PARAM._7z_armthumb as u64
+                        {
+                            filters[fi as usize].id = 0x8 as u64;
+                            fi += 1
+                        } else if safe_zip.codec2 == ARCHIVE_7ZIP_DEFINED_PARAM._7z_sparc as u64 {
+                            filters[fi as usize].id = 0x9 as u64;
+                            fi += 1
+                        } else {
+                            unsafe {
+                                archive_set_error(
+                                    &mut (safe_a).archive as *mut archive,
+                                    -(1 as i32),
+                                    b"Unexpected codec ID: %lX\x00" as *const u8 as *const u8,
+                                    (safe_zip).codec2,
+                                )
+                            };
+                            return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+                        }
+                    }
+                    if (safe_zip).codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_lzma2 as u64 {
+                        filters[fi as usize].id = 0x21 as u64
+                    } else {
+                        filters[fi as usize].id = 0x4000000000000001 as u64
+                    }
+                    filters[fi as usize].options = 0 as *mut ();
+                    ff = unsafe {
+                        &mut *filters.as_mut_ptr().offset(fi as isize) as *mut lzma_filter
+                    };
+                    r = unsafe {
+                        lzma_properties_decode_safe(
+                            unsafe { &mut *filters.as_mut_ptr().offset(fi as isize) },
+                            0 as *const lzma_allocator,
+                            (safe_coder1).properties,
+                            (safe_coder1).propertiesSize,
+                        )
+                    } as i32;
+                    if r != LZMA_OK as i32 {
+                        set_error(a, r);
+                        return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+                    }
+                    fi += 1;
+                    filters[fi as usize].id = 18446744073709551615 as u64;
+                    filters[fi as usize].options = 0 as *mut ();
+                    r = unsafe {
+                        lzma_raw_decoder_safe(&mut (safe_zip).lzstream, filters.as_mut_ptr())
+                    } as i32;
+                    unsafe { free((*ff).options) };
+                    if r != LZMA_OK as i32 {
+                        set_error(a, r);
+                        return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+                    }
+                    (safe_zip).lzstream_valid = 1;
+                    (safe_zip).lzstream.total_in = 0;
+                    (safe_zip).lzstream.total_out = 0
                 }
             }
-        }
 
-        262658 => match () {
+            #[cfg(not(HAVE_LZMA_H))]
+            _ => {
+                unsafe {
+                    archive_set_error(
+                        &mut (safe_a).archive as *mut archive,
+                        -(1 as i32),
+                        b"LZMA codec is unsupported.\x00" as *const u8,
+                    )
+                };
+                return -25;
+            }
+        }
+    } else if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_bz2 as u64 {
+        match () {
             #[cfg(all(HAVE_BZLIB_H, BZ_CONFIG_ERROR))]
             _ => {
                 if (safe_zip).bzstream_valid != 0 {
@@ -1161,15 +1149,15 @@ fn init_decompression(
                 if r != 0 {
                     let mut err: i32 = ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc;
                     let mut detail: *const u8 = 0 as *const u8;
-                    match r {
-                        -2 => detail = b"invalid setup parameter\x00" as *const u8,
-                        -3 => {
-                            err = 12 as i32;
-                            detail = b"out of memory\x00" as *const u8
-                        }
-                        -9 => detail = b"mis-compiled library\x00" as *const u8,
-                        _ => {}
+                    if r == ARCHIVE_7ZIP_DEFINED_PARAM.bz_param_error {
+                        detail = b"invalid setup parameter\x00" as *const u8;
+                    } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.bz_mem_error {
+                        err = 12 as i32;
+                        detail = b"out of memory\x00" as *const u8
+                    } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.bz_config_error {
+                        detail = b"mis-compiled library\x00" as *const u8;
                     }
+
                     unsafe {
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
@@ -1204,178 +1192,179 @@ fn init_decompression(
                 };
                 return -25;
             }
-        },
-
-        262408 => {
-            match () {
-                #[cfg(HAVE_ZLIB_H)]
-                _ => {
-                    {
-                        if (safe_zip).stream_valid != 0 {
-                            r = unsafe { inflateReset_safe(&mut (safe_zip).stream) }
-                        } else {
-                            r = unsafe {
-                                inflateInit2__safe(
-                                    &mut (safe_zip).stream,
-                                    -(15 as i32),
-                                    b"1.2.11\x00" as *const u8,
-                                    size_of::<z_stream>() as u64 as i32,
-                                )
-                            }
-                        }
-                        /* Don't check for zlib header */
-                        if r != 0 as i32 {
-                            unsafe {
-                                archive_set_error(
-                                    &mut (safe_a).archive as *mut archive,
-                                    -ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                                    b"Couldn\'t initialize zlib stream.\x00" as *const u8
-                                        as *const u8,
-                                )
-                            };
-                            return ARCHIVE_7ZIP_DEFINED_PARAM.archive_fatal;
-                        }
-                        (safe_zip).stream_valid = 1;
-                        (safe_zip).stream.total_in = 0;
-                        (safe_zip).stream.total_out = 0
-                    }
-                }
-
-                #[cfg(not(HAVE_ZLIB_H))]
-                _ => {
-                    unsafe {
-                        archive_set_error(
-                            &mut (safe_a).archive as *mut archive,
-                            -(1 as i32),
-                            b"DEFLATE codec is unsupported\x00" as *const u8,
-                        )
-                    };
-                    return -25;
-                }
-            }
         }
+    } else if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_deflate as u64 {
+        match () {
+            #[cfg(HAVE_ZLIB_H)]
+            _ => {
+                {
+                    if (safe_zip).stream_valid != 0 {
+                        r = unsafe { inflateReset_safe(&mut (safe_zip).stream) }
+                    } else {
+                        r = unsafe {
+                            inflateInit2__safe(
+                                &mut (safe_zip).stream,
+                                -(15 as i32),
+                                b"1.2.11\x00" as *const u8,
+                                size_of::<z_stream>() as u64 as i32,
+                            )
+                        }
+                    }
+                    /* Don't check for zlib header */
+                    if r != 0 as i32 {
+                        unsafe {
+                            archive_set_error(
+                                &mut (safe_a).archive as *mut archive,
+                                -ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                                b"Couldn\'t initialize zlib stream.\x00" as *const u8 as *const u8,
+                            )
+                        };
+                        return ARCHIVE_7ZIP_DEFINED_PARAM.archive_fatal;
+                    }
+                    (safe_zip).stream_valid = 1;
+                    (safe_zip).stream.total_in = 0;
+                    (safe_zip).stream.total_out = 0
+                }
+            }
 
-        197633 => {
-            let mut order: u32;
-            let mut msize: uint32_t;
-            if (safe_zip).ppmd7_valid != 0 {
-                unsafe {
-                    __archive_ppmd7_functions
-                        .Ppmd7_Free
-                        .expect("non-null function pointer")(
-                        &mut (*zip).ppmd7_context
-                    )
-                };
-                (safe_zip).ppmd7_valid = 0
-            }
-            if (safe_coder1).propertiesSize < 5 {
-                unsafe {
-                    archive_set_error(
-                        &mut (safe_a).archive as *mut archive,
-                        ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                        b"Malformed PPMd parameter\x00" as *const u8,
-                    )
-                };
-                return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-            }
-            order = unsafe { *(safe_coder1).properties.offset(0) as u32 };
-            msize = archive_le32dec(unsafe {
-                &mut *(safe_coder1).properties.offset(1) as *mut u8 as *const ()
-            });
-            if order < 2 as i32 as u32
-                || order > 64 as i32 as u32
-                || msize < ((1 as i32) << 11 as i32) as u32
-                || msize > (0xffffffff as u32).wrapping_sub((12 as i32 * 3 as i32) as u32)
-            {
+            #[cfg(not(HAVE_ZLIB_H))]
+            _ => {
                 unsafe {
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         -(1 as i32),
-                        b"Malformed PPMd parameter\x00" as *const u8,
+                        b"DEFLATE codec is unsupported\x00" as *const u8,
                     )
                 };
-                return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+                return -25;
             }
+        }
+    } else if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_ppmd as u64 {
+        let mut order: u32;
+        let mut msize: uint32_t;
+        if (safe_zip).ppmd7_valid != 0 {
             unsafe {
                 __archive_ppmd7_functions
-                    .Ppmd7_Construct
+                    .Ppmd7_Free
                     .expect("non-null function pointer")(&mut (*zip).ppmd7_context)
             };
-            r = unsafe {
-                __archive_ppmd7_functions
-                    .Ppmd7_Alloc
-                    .expect("non-null function pointer")(
-                    &mut (safe_zip).ppmd7_context, msize
-                )
-            };
-            if r == 0 {
-                unsafe {
-                    archive_set_error(
-                        &mut (safe_a).archive as *mut archive,
-                        12,
-                        b"Coludn\'t allocate memory for PPMd\x00" as *const u8,
-                    )
-                };
-                return ARCHIVE_7ZIP_DEFINED_PARAM.archive_fatal;
-            }
-            unsafe {
-                __archive_ppmd7_functions
-                    .Ppmd7_Init
-                    .expect("non-null function pointer")(
-                    &mut (safe_zip).ppmd7_context, order
-                )
-            };
-            unsafe {
-                __archive_ppmd7_functions
-                    .Ppmd7z_RangeDec_CreateVTable
-                    .expect("non-null function pointer")(&mut (safe_zip).range_dec)
-            };
-            (safe_zip).ppmd7_valid = 1 as i32;
-            (safe_zip).ppmd7_stat = 0 as i32;
-            (safe_zip).ppstream.overconsumed = 0 as i32;
-            (safe_zip).ppstream.total_in = 0 as i32 as int64_t;
-            (safe_zip).ppstream.total_out = 0 as i32 as int64_t
+            (safe_zip).ppmd7_valid = 0
         }
-        50528515 | 50528539 | 50528773 | 50529281 | 50529537 | 50530049 | 50530309 | 3 => {
+        if (safe_coder1).propertiesSize < 5 {
             unsafe {
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
-                    -(1 as i32),
-                    b"Unexpected codec ID: %lX\x00" as *const u8,
-                    (safe_zip).codec,
-                )
-            };
-            ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-        }
-        116457729 | 116458243 | 116459265 => {
-            if !(safe_a).entry.is_null() {
-                unsafe {
-                    archive_entry_set_is_metadata_encrypted_safe((safe_a).entry, 1 as i32 as u8);
-                    archive_entry_set_is_data_encrypted_safe((safe_a).entry, 1 as i32 as u8);
-                }
-                (safe_zip).has_encrypted_entries = 1 as i32
-            }
-            unsafe {
-                archive_set_error(
-                    &mut (safe_a).archive as *mut archive,
-                    -(1 as i32),
-                    b"Crypto codec not supported yet (ID: 0x%lX)\x00" as *const u8,
-                    (safe_zip).codec,
+                    ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                    b"Malformed PPMd parameter\x00" as *const u8,
                 )
             };
             return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
         }
-        _ => {
+        order = unsafe { *(safe_coder1).properties.offset(0) as u32 };
+        msize = archive_le32dec(unsafe {
+            &mut *(safe_coder1).properties.offset(1) as *mut u8 as *const ()
+        });
+        if order < 2 as i32 as u32
+            || order > 64 as i32 as u32
+            || msize < ((1 as i32) << 11 as i32) as u32
+            || msize > (0xffffffff as u32).wrapping_sub((12 as i32 * 3 as i32) as u32)
+        {
             unsafe {
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
                     -(1 as i32),
-                    b"Unknown codec ID: %lX\x00" as *const u8,
-                    (safe_zip).codec,
+                    b"Malformed PPMd parameter\x00" as *const u8,
                 )
             };
             return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
         }
+        unsafe {
+            __archive_ppmd7_functions
+                .Ppmd7_Construct
+                .expect("non-null function pointer")(&mut (*zip).ppmd7_context)
+        };
+        r = unsafe {
+            __archive_ppmd7_functions
+                .Ppmd7_Alloc
+                .expect("non-null function pointer")(
+                &mut (safe_zip).ppmd7_context, msize
+            )
+        };
+        if r == 0 {
+            unsafe {
+                archive_set_error(
+                    &mut (safe_a).archive as *mut archive,
+                    12,
+                    b"Coludn\'t allocate memory for PPMd\x00" as *const u8,
+                )
+            };
+            return ARCHIVE_7ZIP_DEFINED_PARAM.archive_fatal;
+        }
+        unsafe {
+            __archive_ppmd7_functions
+                .Ppmd7_Init
+                .expect("non-null function pointer")(
+                &mut (safe_zip).ppmd7_context, order
+            )
+        };
+        unsafe {
+            __archive_ppmd7_functions
+                .Ppmd7z_RangeDec_CreateVTable
+                .expect("non-null function pointer")(&mut (safe_zip).range_dec)
+        };
+        (safe_zip).ppmd7_valid = 1 as i32;
+        (safe_zip).ppmd7_stat = 0 as i32;
+        (safe_zip).ppstream.overconsumed = 0 as i32;
+        (safe_zip).ppstream.total_in = 0 as i32 as int64_t;
+        (safe_zip).ppstream.total_out = 0 as i32 as int64_t
+    } else if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_x86 as u64
+        || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_x86_bcj2 as u64
+        || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_powerpc as u64
+        || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_ia64 as u64
+        || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_arm as u64
+        || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_armthumb as u64
+        || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_sparc as u64
+        || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_delta as u64
+    {
+        unsafe {
+            archive_set_error(
+                &mut (safe_a).archive as *mut archive,
+                -(1 as i32),
+                b"Unexpected codec ID: %lX\x00" as *const u8,
+                (safe_zip).codec,
+            )
+        };
+        return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+    } else if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_crypto_main_zip as u64
+        || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_crypto_rar_29 as u64
+        || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_crypto_aes_256_sha_256 as u64
+    {
+        if !(safe_a).entry.is_null() {
+            unsafe {
+                archive_entry_set_is_metadata_encrypted_safe((safe_a).entry, 1 as i32 as u8);
+                archive_entry_set_is_data_encrypted_safe((safe_a).entry, 1 as i32 as u8);
+            }
+            (safe_zip).has_encrypted_entries = 1 as i32
+        }
+        unsafe {
+            archive_set_error(
+                &mut (safe_a).archive as *mut archive,
+                -(1 as i32),
+                b"Crypto codec not supported yet (ID: 0x%lX)\x00" as *const u8,
+                (safe_zip).codec,
+            )
+        };
+        return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+    } else {
+        unsafe {
+            archive_set_error(
+                &mut (safe_a).archive as *mut archive,
+                -(1 as i32),
+                b"Unknown codec ID: %lX\x00" as *const u8,
+                (safe_zip).codec,
+            )
+        };
+        return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
     }
     return ARCHIVE_7ZIP_DEFINED_PARAM.archive_ok;
 }
@@ -1499,28 +1488,26 @@ fn decompress(
             (safe_zip).lzstream.next_out = t_next_out;
             (safe_zip).lzstream.avail_out = t_avail_out;
             r = unsafe { lzma_code_safe(&mut (safe_zip).lzstream, LZMA_RUN) } as i32;
-            match r {
-                1 => {
-                    /* Found end of stream. */
-                    unsafe {
-                        lzma_end_safe(&mut (safe_zip).lzstream);
-                    }
-                    (safe_zip).lzstream_valid = 0 as i32;
-                    ret = ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof;
+            if r == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_stream_end {
+                /* Found end of stream. */
+                unsafe {
+                    lzma_end_safe(&mut (safe_zip).lzstream);
                 }
-                0 => {}
-                _ => {
-                    unsafe {
-                        archive_set_error(
-                            &mut (safe_a).archive as *mut archive,
-                            -(1 as i32),
-                            b"Decompression failed(%d)\x00" as *const u8,
-                            r,
-                        )
-                    };
-                    return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-                }
+                (safe_zip).lzstream_valid = 0 as i32;
+                ret = ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof;
+            } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_ok {
+            } else {
+                unsafe {
+                    archive_set_error(
+                        &mut (safe_a).archive as *mut archive,
+                        -(1 as i32),
+                        b"Decompression failed(%d)\x00" as *const u8,
+                        r,
+                    )
+                };
+                return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
             }
+
             t_avail_in = (safe_zip).lzstream.avail_in;
             t_avail_out = (safe_zip).lzstream.avail_out
         }
@@ -1532,37 +1519,34 @@ fn decompress(
             (safe_zip).bzstream.next_out = t_next_out as uintptr_t as *mut u8;
             (safe_zip).bzstream.avail_out = t_avail_out as u32;
             r = unsafe { BZ2_bzDecompress_safe(&mut (safe_zip).bzstream) };
-            match r {
-                4 => {
-                    /* Found end of stream. */
-                    match unsafe { BZ2_bzDecompressEnd_safe(&mut (safe_zip).bzstream) } {
-                        0 => {}
-                        _ => {
-                            unsafe {
-                                archive_set_error(
-                                    &mut (safe_a).archive as *mut archive,
-                                    ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                                    b"Failed to clean up decompressor\x00" as *const u8
-                                        as *const u8,
-                                )
-                            };
-                            return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-                        }
-                    }
-                    (safe_zip).bzstream_valid = 0;
-                    ret = ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof
-                }
-                0 => {}
-                _ => {
+            if r == ARCHIVE_7ZIP_DEFINED_PARAM.bz_stream_end {
+                /* Found end of stream. */
+                let BZ2_bzDecompressEnd_result =
+                    unsafe { BZ2_bzDecompressEnd_safe(&mut (safe_zip).bzstream) };
+                if BZ2_bzDecompressEnd_result == ARCHIVE_7ZIP_DEFINED_PARAM.bz_ok {
+                } else {
                     unsafe {
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
-                            ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof,
-                            b"bzip decompression failed\x00" as *const u8,
+                            ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                            b"Failed to clean up decompressor\x00" as *const u8 as *const u8,
                         )
                     };
                     return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
                 }
+
+                (safe_zip).bzstream_valid = 0;
+                ret = ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof
+            } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.bz_ok {
+            } else {
+                unsafe {
+                    archive_set_error(
+                        &mut (safe_a).archive as *mut archive,
+                        ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof,
+                        b"bzip decompression failed\x00" as *const u8,
+                    )
+                };
+                return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
             }
             t_avail_in = (safe_zip).bzstream.avail_in as size_t;
             t_avail_out = (safe_zip).bzstream.avail_out as size_t
@@ -1575,24 +1559,22 @@ fn decompress(
             safe_zip.stream.next_out = t_next_out;
             safe_zip.stream.avail_out = t_avail_out as uInt;
             r = unsafe { inflate_safe(&mut safe_zip.stream, 0) };
-            match r {
-                1 => {
-                    /* Found end of stream. */
-                    ret = 1 as i32
-                }
-                0 => {}
-                _ => {
-                    unsafe {
-                        archive_set_error(
-                            &mut (safe_a).archive as *mut archive,
-                            ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof,
-                            b"File decompression failed (%d)\x00" as *const u8,
-                            r,
-                        )
-                    };
-                    return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-                }
+            if r == ARCHIVE_7ZIP_DEFINED_PARAM.z_stream_end {
+                /* Found end of stream. */
+                ret = 1 as i32
+            } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.z_ok {
+            } else {
+                unsafe {
+                    archive_set_error(
+                        &mut (safe_a).archive as *mut archive,
+                        ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof,
+                        b"File decompression failed (%d)\x00" as *const u8,
+                        r,
+                    )
+                };
+                return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
             }
+
             t_avail_in = (safe_zip).stream.avail_in as size_t;
             t_avail_out = (safe_zip).stream.avail_out as size_t
         }
@@ -2287,14 +2269,14 @@ unsafe fn read_CodersInfo(a: *mut archive_read, ci: *mut _7z_coders_info) -> i32
                             i = 0;
                             loop {
                                 if !((i as u64) < (safe_ci).numFolders) {
-                                    current_block = 4068382217303356765;
+                                    current_block = 1;
                                     break;
                                 }
                                 if unsafe {
                                     read_Folder(a, &mut *(safe_ci).folders.offset(i as isize))
                                         < 0 as i32
                                 } {
-                                    current_block = 14585062455194940643;
+                                    current_block = 0;
                                     break;
                                 }
                                 i = i.wrapping_add(1)
@@ -2315,9 +2297,9 @@ unsafe fn read_CodersInfo(a: *mut archive_read, ci: *mut _7z_coders_info) -> i32
                                         b"Malformed 7-Zip archive\x00" as *const u8,
                                     )
                                 };
-                                current_block = 14585062455194940643;
+                                current_block = 0;
                             } else {
-                                current_block = 4068382217303356765;
+                                current_block = 1;
                             }
                         }
                         _ => {
@@ -2328,11 +2310,11 @@ unsafe fn read_CodersInfo(a: *mut archive_read, ci: *mut _7z_coders_info) -> i32
                                     b"Malformed 7-Zip archive\x00" as *const u8,
                                 )
                             };
-                            current_block = 14585062455194940643;
+                            current_block = 0;
                         }
                     }
                     match current_block {
-                        14585062455194940643 => {}
+                        0 => {}
                         _ => {
                             p = header_bytes(a, 1 as i32 as size_t);
                             if !p.is_null() {
@@ -2340,7 +2322,7 @@ unsafe fn read_CodersInfo(a: *mut archive_read, ci: *mut _7z_coders_info) -> i32
                                     i = 0 as i32 as u32;
                                     's_148: loop {
                                         if !((i as u64) < (safe_ci).numFolders) {
-                                            current_block = 7746103178988627676;
+                                            current_block = 1;
                                             break;
                                         }
                                         let mut folder: *mut _7z_folder = unsafe {
@@ -2355,7 +2337,7 @@ unsafe fn read_CodersInfo(a: *mut archive_read, ci: *mut _7z_coders_info) -> i32
                                         )
                                             as *mut uint64_t;
                                         if (safe_folder).unPackSize.is_null() {
-                                            current_block = 14585062455194940643;
+                                            current_block = 0;
                                             break;
                                         }
                                         j = 0 as i32 as u32;
@@ -2368,7 +2350,7 @@ unsafe fn read_CodersInfo(a: *mut archive_read, ci: *mut _7z_coders_info) -> i32
                                                         .offset(j as isize),
                                                 ) < 0 as i32
                                             } {
-                                                current_block = 14585062455194940643;
+                                                current_block = 0;
                                                 break 's_148;
                                             }
                                             j = j.wrapping_add(1)
@@ -2376,7 +2358,7 @@ unsafe fn read_CodersInfo(a: *mut archive_read, ci: *mut _7z_coders_info) -> i32
                                         i = i.wrapping_add(1)
                                     }
                                     match current_block {
-                                        14585062455194940643 => {}
+                                        0 => {}
                                         _ =>
                                         /*
                                          * Read CRCs.
