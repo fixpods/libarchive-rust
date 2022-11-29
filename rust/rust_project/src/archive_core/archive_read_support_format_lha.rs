@@ -3497,8 +3497,7 @@ fn archive_test_lha_read_data_none(_a: *mut archive) {
     let mut offset: int64_t = 1;
     let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
     let mut buff: *mut () = 0 as *const () as *mut ();
-    let mut buff2: *mut *const () =
-        &buff as *const *mut () as *mut *mut () as *mut *const ();
+    let mut buff2: *mut *const () = &buff as *const *mut () as *mut *mut () as *mut *const ();
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut lha: *mut lha = 0 as *mut lha;
     lha = unsafe { calloc_safe(1, size_of::<lha>() as u64) } as *mut lha;
@@ -3514,8 +3513,7 @@ fn archive_test_lha_read_data_lzh(_a: *mut archive) {
     let mut offset: int64_t = 1;
     let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
     let mut buff: *mut () = 0 as *const () as *mut ();
-    let mut buff2: *mut *const () =
-        &buff as *const *mut () as *mut *mut () as *mut *const ();
+    let mut buff2: *mut *const () = &buff as *const *mut () as *mut *mut () as *mut *const ();
     let mut a: *mut archive_read = _a as *mut archive_read;
     let mut lha: *mut lha = 0 as *mut lha;
     lha = unsafe { calloc_safe(1, size_of::<lha>() as u64) } as *mut lha;
@@ -3540,7 +3538,8 @@ pub fn archive_test_lzh_emit_window() {
 pub fn archive_test_lzh_decode_huffman_tree() {
     let mut huffman: *mut huffman = 0 as *mut huffman;
     huffman = unsafe { calloc_safe(1, size_of::<huffman>() as u64) } as *mut huffman;
-    let htree_t: *mut htree_t = unsafe { calloc_safe(1, size_of::<htree_t>() as u64) } as *mut htree_t;
+    let htree_t: *mut htree_t =
+        unsafe { calloc_safe(1, size_of::<htree_t>() as u64) } as *mut htree_t;
     unsafe { (*huffman).tree = htree_t as *mut htree_t };
     unsafe { (*huffman).shift_bits = 1 };
     unsafe { (*huffman).len_avail = 1 };
