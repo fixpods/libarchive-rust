@@ -675,10 +675,12 @@ fn process_extra(
                                                 // Interpret MSDOS directory bit
                                                 if 0x10 == external_attributes & 0x10 {
                                                     safe_zip_entry.mode =
-                                                        (ARCHIVE_ZIP_DEFINED_PARAM.ae_ifdir | 0o775) as uint16_t
+                                                        (ARCHIVE_ZIP_DEFINED_PARAM.ae_ifdir | 0o775)
+                                                            as uint16_t
                                                 } else {
                                                     safe_zip_entry.mode =
-                                                        (ARCHIVE_ZIP_DEFINED_PARAM.ae_ifreg | 0o664) as uint16_t
+                                                        (ARCHIVE_ZIP_DEFINED_PARAM.ae_ifreg | 0o664)
+                                                            as uint16_t
                                                 }
                                                 if 0x1 == external_attributes & 0x1 {
                                                     /* Read-only bit;
@@ -1002,7 +1004,9 @@ fn zip_read_local_file_header(
     version = unsafe { *p.offset(4 as isize) };
     safe_zip_entry.system = unsafe { *p.offset(5 as isize) as u8 };
     safe_zip_entry.zip_flags = archive_le16dec(unsafe { p.offset(6 as isize) as *const () });
-    if safe_zip_entry.zip_flags as i32 & ((1) << 0 | ARCHIVE_ZIP_DEFINED_PARAM.zip_strong_encrypted) != 0 {
+    if safe_zip_entry.zip_flags as i32 & ((1) << 0 | ARCHIVE_ZIP_DEFINED_PARAM.zip_strong_encrypted)
+        != 0
+    {
         safe_zip.has_encrypted_entries = 1;
         unsafe { archive_entry_set_is_data_encrypted_safe(entry, 1 as u8) };
         if safe_zip_entry.zip_flags as i32 & (1 << 13) as i32 != 0
@@ -1103,9 +1107,14 @@ fn zip_read_local_file_header(
     unsafe { __archive_read_consume_safe(a, extra_length as int64_t) };
     /* Work around a bug in Info-Zip: When reading from a pipe, it
      * stats the pipe instead of synthesizing a file entry. */
-    if safe_zip_entry.mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t == ARCHIVE_ZIP_DEFINED_PARAM.ae_ififo as mode_t {
-        safe_zip_entry.mode = (safe_zip_entry.mode as u32 & !(ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t)) as uint16_t;
-        safe_zip_entry.mode = (safe_zip_entry.mode as u32 | ARCHIVE_ZIP_DEFINED_PARAM.ae_ifreg as mode_t) as uint16_t
+    if safe_zip_entry.mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t
+        == ARCHIVE_ZIP_DEFINED_PARAM.ae_ififo as mode_t
+    {
+        safe_zip_entry.mode = (safe_zip_entry.mode as u32
+            & !(ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t))
+            as uint16_t;
+        safe_zip_entry.mode =
+            (safe_zip_entry.mode as u32 | ARCHIVE_ZIP_DEFINED_PARAM.ae_ifreg as mode_t) as uint16_t
     }
     /* If the mode is totally empty, set some sane default. */
     if safe_zip_entry.mode as i32 == 0 {
@@ -1151,7 +1160,9 @@ fn zip_read_local_file_header(
     /* Make sure that entries with a trailing '/' are marked as directories
      * even if the External File Attributes contains bogus values.  If this
      * is not a directory and there is no type, assume a regular file. */
-    if safe_zip_entry.mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t != ARCHIVE_ZIP_DEFINED_PARAM.ae_ififo as mode_t {
+    if safe_zip_entry.mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t
+        != ARCHIVE_ZIP_DEFINED_PARAM.ae_ififo as mode_t
+    {
         let has_slash: i32;
         wp = unsafe { archive_entry_pathname_w_safe(entry) };
         if !wp.is_null() {
@@ -1171,15 +1182,23 @@ fn zip_read_local_file_header(
         }
         /* Correct file type as needed. */
         if has_slash != 0 {
-            safe_zip_entry.mode = (safe_zip_entry.mode as u32 & !(ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t)) as uint16_t;
-            safe_zip_entry.mode = (safe_zip_entry.mode as u32 | ARCHIVE_ZIP_DEFINED_PARAM.ae_ifdir as mode_t) as uint16_t;
+            safe_zip_entry.mode = (safe_zip_entry.mode as u32
+                & !(ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t))
+                as uint16_t;
+            safe_zip_entry.mode = (safe_zip_entry.mode as u32
+                | ARCHIVE_ZIP_DEFINED_PARAM.ae_ifdir as mode_t)
+                as uint16_t;
             safe_zip_entry.mode = (safe_zip_entry.mode as i32 | 0o111) as uint16_t
         } else if safe_zip_entry.mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t == 0 {
-            safe_zip_entry.mode = (safe_zip_entry.mode as u32 | ARCHIVE_ZIP_DEFINED_PARAM.ae_ifreg as mode_t) as uint16_t
+            safe_zip_entry.mode = (safe_zip_entry.mode as u32
+                | ARCHIVE_ZIP_DEFINED_PARAM.ae_ifreg as mode_t)
+                as uint16_t
         }
     }
     /* Make sure directories end in '/' */
-    if safe_zip_entry.mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t == ARCHIVE_ZIP_DEFINED_PARAM.ae_ifdir as mode_t {
+    if safe_zip_entry.mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t
+        == ARCHIVE_ZIP_DEFINED_PARAM.ae_ifdir as mode_t
+    {
         wp = unsafe { archive_entry_pathname_w_safe(entry) };
         if !wp.is_null() {
             len = unsafe { wcslen_safe(wp) };
@@ -1224,10 +1243,13 @@ fn zip_read_local_file_header(
             }
         }
     }
-    if safe_zip_entry.flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.la_from_central_directory as i32 != 0 {
+    if safe_zip_entry.flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.la_from_central_directory as i32 != 0
+    {
         /* If this came from the central dir, its size info
          * is definitive, so ignore the length-at-end flag. */
-        safe_zip_entry.zip_flags = (safe_zip_entry.zip_flags as i32 & !ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end) as uint16_t;
+        safe_zip_entry.zip_flags = (safe_zip_entry.zip_flags as i32
+            & !ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end)
+            as uint16_t;
         /* If local header is missing a value, use the one from
         the central directory.  If both have it, warn about
         mismatches. */
@@ -1284,7 +1306,10 @@ fn zip_read_local_file_header(
         archive_entry_set_ctime_safe(entry, safe_zip_entry.ctime, 0);
         archive_entry_set_atime_safe(entry, safe_zip_entry.atime, 0)
     };
-    if unsafe { (*(safe_zip).entry).mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t == ARCHIVE_ZIP_DEFINED_PARAM.ae_iflnk as mode_t } {
+    if unsafe {
+        (*(safe_zip).entry).mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t
+            == ARCHIVE_ZIP_DEFINED_PARAM.ae_iflnk as mode_t
+    } {
         let mut linkname_length: size_t = 0;
         if safe_zip_entry.compressed_size > (64 * 1024) as i64 {
             unsafe {
@@ -3492,7 +3517,10 @@ fn archive_read_format_zip_read_data(
         return 1;
     }
     /* Return EOF immediately if this is a non-regular file. */
-    if unsafe { ARCHIVE_ZIP_DEFINED_PARAM.ae_ifreg as mode_t != (*(safe_zip).entry).mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t } {
+    if unsafe {
+        ARCHIVE_ZIP_DEFINED_PARAM.ae_ifreg as mode_t
+            != (*(safe_zip).entry).mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t
+    } {
         return 1;
     }
     unsafe { __archive_read_consume_safe(a, (safe_zip).unconsumed as int64_t) };
@@ -4123,7 +4151,7 @@ pub fn archive_read_support_format_zip_streamable(_a: *mut archive) -> i32 {
 */
 fn archive_read_support_format_zip_capabilities_seekable(a: *mut archive_read) -> i32 {
     /* UNUSED */
-    return (1 << 0) | ARCHIVE_ZIP_DEFINED_PARAM .archive_read_format_caps_encrypt_metadata;
+    return (1 << 0) | ARCHIVE_ZIP_DEFINED_PARAM.archive_read_format_caps_encrypt_metadata;
 }
 /*
 * TODO: This is a performance sink because it forces the read core to
@@ -4565,7 +4593,9 @@ fn slurp_central_directory(a: *mut archive_read, entry: *mut archive_entry, zip:
         }
 
         safe_zip_entry.next = (safe_zip).zip_entries;
-        safe_zip_entry.flags = (safe_zip_entry.flags as i32 | ARCHIVE_ZIP_DEFINED_PARAM .la_from_central_directory) as u8;
+        safe_zip_entry.flags = (safe_zip_entry.flags as i32
+            | ARCHIVE_ZIP_DEFINED_PARAM.la_from_central_directory)
+            as u8;
         (safe_zip).zip_entries = zip_entry;
         (safe_zip).central_directory_entries_total = (safe_zip).central_directory_entries_total + 1;
         /* version = p[4]; */
@@ -4606,9 +4636,11 @@ fn slurp_central_directory(a: *mut archive_read, entry: *mut archive_entry, zip:
         } else if safe_zip_entry.system as i32 == 0 {
             // Interpret MSDOS directory bit
             if 0x10 == external_attributes & 0x10 {
-                safe_zip_entry.mode = (ARCHIVE_ZIP_DEFINED_PARAM.ae_ifdir as mode_t | 0o775) as uint16_t
+                safe_zip_entry.mode =
+                    (ARCHIVE_ZIP_DEFINED_PARAM.ae_ifdir as mode_t | 0o775) as uint16_t
             } else {
-                safe_zip_entry.mode = (ARCHIVE_ZIP_DEFINED_PARAM.ae_ifreg as mode_t | 0o664) as uint16_t
+                safe_zip_entry.mode =
+                    (ARCHIVE_ZIP_DEFINED_PARAM.ae_ifreg as mode_t | 0o664) as uint16_t
             }
             if 0x1 == external_attributes & 0x1 {
                 // Read-only bit; strip write permissions
