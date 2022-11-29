@@ -1084,7 +1084,7 @@ pub extern "C" fn archive_acl_to_text_l(
                     && flags & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_style_mark_default
                         != 0 as i32
                 {
-                    prefix = b"default:\x00" as *const u8 as *const u8
+                    prefix = b"default:\x00" as *const u8
                 } else {
                     prefix = 0 as *const u8
                 }
@@ -1195,17 +1195,17 @@ fn append_entry(
             unsafe { strcpy_safe(*p, b"group\x00" as *const u8) };
         }
     } else if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group {
-        unsafe { strcpy_safe(*p, b"group\x00" as *const u8 as *const u8) };
+        unsafe { strcpy_safe(*p, b"group\x00" as *const u8) };
     } else if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_mask {
-        unsafe { strcpy_safe(*p, b"mask\x00" as *const u8 as *const u8) };
+        unsafe { strcpy_safe(*p, b"mask\x00" as *const u8) };
         name = 0 as *const u8;
         id = -1;
     } else if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other {
-        unsafe { strcpy_safe(*p, b"other\x00" as *const u8 as *const u8) };
+        unsafe { strcpy_safe(*p, b"other\x00" as *const u8) };
         name = 0 as *const u8;
         id = -1;
     } else if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_everyone {
-        unsafe { strcpy_safe(*p, b"everyone@\x00" as *const u8 as *const u8) };
+        unsafe { strcpy_safe(*p, b"everyone@\x00" as *const u8) };
         name = 0 as *const u8;
         id = -1;
     }
@@ -1302,13 +1302,13 @@ fn append_entry(
             *fresh32 = ':' as u8
         };
         if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_allow {
-            unsafe { strcpy_safe(*p, b"allow\x00" as *const u8 as *const u8) };
+            unsafe { strcpy_safe(*p, b"allow\x00" as *const u8) };
         } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_deny {
-            unsafe { strcpy_safe(*p, b"deny\x00" as *const u8 as *const u8) };
+            unsafe { strcpy_safe(*p, b"deny\x00" as *const u8) };
         } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_audit {
-            unsafe { strcpy_safe(*p, b"audit\x00" as *const u8 as *const u8) };
+            unsafe { strcpy_safe(*p, b"audit\x00" as *const u8) };
         } else if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_alram {
-            unsafe { strcpy_safe(*p, b"alarm\x00" as *const u8 as *const u8) };
+            unsafe { strcpy_safe(*p, b"alarm\x00" as *const u8) };
         }
 
         unsafe { *p = (*p).offset(strlen_safe(*p) as isize) }
@@ -1362,6 +1362,8 @@ pub extern "C" fn archive_acl_from_text_w(
     let mut id: i32;
     let mut len: size_t;
     let mut sep: wchar_t = 0;
+    let mut s_char: wchar_t;
+
     ret = 0;
     types = 0;
     if want_type == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_posix1e {
@@ -1469,44 +1471,34 @@ pub extern "C" fn archive_acl_from_text_w(
             s = field[n as usize].start;
             unsafe { st = field[n as usize].start.offset(1 as i32 as isize) };
             len = unsafe { field[n as usize].end.offset_from(field[n as usize].start) } as size_t;
-            match unsafe { *s } {
-                117 => {
-                    if len == 1 as u64
-                        || len == 4 as u64
-                            && unsafe { wmemcmp_safe(st, wchar::wchz!("ser").as_ptr(), 3 as u64) }
-                                == 0 as i32
-                    {
-                        tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user_obj
-                    }
+            s_char = unsafe { *s as wchar_t };
+            if s_char == 'u' as wchar_t {
+                if len == 1
+                    || len == 4 && unsafe { wmemcmp_safe(st, wchar::wchz!("ser").as_ptr(), 3) } == 0
+                {
+                    tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user_obj
                 }
-                103 => {
-                    if len == 1 as u64
-                        || len == 5 as u64
-                            && unsafe { wmemcmp_safe(st, wchar::wchz!("roup").as_ptr(), 4 as u64) }
-                                == 0 as i32
-                    {
-                        tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group_obj
-                    }
+            } else if s_char == 'g' as wchar_t {
+                if len == 1
+                    || len == 5
+                        && unsafe { wmemcmp_safe(st, wchar::wchz!("roup").as_ptr(), 4) } == 0
+                {
+                    tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group_obj
                 }
-                111 => {
-                    if len == 1 as u64
-                        || len == 5 as u64
-                            && unsafe { wmemcmp_safe(st, wchar::wchz!("ther").as_ptr(), 4 as u64) }
-                                == 0 as i32
-                    {
-                        tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other
-                    }
+            } else if s_char == 'o' as wchar_t {
+                if len == 1
+                    || len == 5
+                        && unsafe { wmemcmp_safe(st, wchar::wchz!("ther").as_ptr(), 4) } == 0
+                {
+                    tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other
                 }
-                109 => {
-                    if len == 1 as u64
-                        || len == 4 as u64
-                            && unsafe { wmemcmp_safe(st, wchar::wchz!("ask").as_ptr(), 3 as u64) }
-                                == 0 as i32
-                    {
-                        tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_mask
-                    }
+            } else if s_char == 'm' as wchar_t {
+                if len == 1
+                    || len == 4 && unsafe { wmemcmp_safe(st, wchar::wchz!("ask").as_ptr(), 3) } == 0
+                {
+                    tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_mask
                 }
-                _ => {}
+            } else {
             }
             if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other
                 || tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_mask
@@ -1750,14 +1742,17 @@ extern "C" fn ismode_w(start: *const wchar_t, end: *const wchar_t, permset: *mut
     p = start;
     unsafe { *permset = 0 };
     while p < end {
-        let fresh34 = p;
+        let p_char = unsafe { *p };
         p = unsafe { p.offset(1) };
-        match unsafe { *fresh34 } {
-            114 | 82 => unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read },
-            119 | 87 => unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write },
-            120 | 88 => unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_execute },
-            45 => {}
-            _ => return 0,
+        if p_char == 'r' as wchar_t || p_char == 'R' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read };
+        } else if p_char == 'w' as wchar_t || p_char == 'W' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write };
+        } else if p_char == 'x' as wchar_t || p_char == 'X' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_execute };
+        } else if p_char == '-' as wchar_t {
+        } else {
+            return 0;
         }
     }
     return 1;
@@ -1774,27 +1769,39 @@ extern "C" fn is_nfs4_perms_w(
 ) -> i32 {
     let mut p: *const wchar_t = start;
     while p < end {
-        let fresh35 = p;
+        let p_char = unsafe { *p };
         unsafe { p = p.offset(1) };
-        unsafe {
-            match *fresh35 {
-                114 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_data,
-                119 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_data,
-                120 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_execute,
-                112 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_append_data,
-                68 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_delete_child,
-                100 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_delete,
-                97 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_attributes,
-                65 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_attributes,
-                82 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_named_attrs,
-                87 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_named_attrs,
-                99 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_acl,
-                67 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_acl,
-                111 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_owner,
-                115 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_synchronize,
-                45 => {}
-                _ => return 0 as i32,
-            }
+        if p_char == 'r' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_data };
+        } else if p_char == 'w' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_data };
+        } else if p_char == 'x' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_execute };
+        } else if p_char == 'p' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_append_data };
+        } else if p_char == 'D' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_delete_child };
+        } else if p_char == 'd' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_delete };
+        } else if p_char == 'a' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_attributes };
+        } else if p_char == 'A' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_attributes };
+        } else if p_char == 'R' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_named_attrs };
+        } else if p_char == 'W' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_named_attrs };
+        } else if p_char == 'c' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_acl };
+        } else if p_char == 'C' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_acl };
+        } else if p_char == 'o' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_owner };
+        } else if p_char == 's' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_synchronize };
+        } else if p_char == '-' as wchar_t {
+        } else {
+            return 0;
         }
     }
     return 1 as i32;
@@ -1811,27 +1818,31 @@ extern "C" fn is_nfs4_flags_w(
 ) -> i32 {
     let mut p: *const wchar_t = start;
     while p < end {
-        let fresh36 = p;
-        unsafe {
-            p = p.offset(1);
-            match *fresh36 {
-                102 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_file_inherit,
-                100 => {
-                    *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_directory_inherit
-                }
-                105 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_inherit_only,
-                110 => {
-                    *permset |=
-                        ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_no_propagate_inherit
-                }
-                83 => {
-                    *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_successful_access
-                }
-                70 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_failed_access,
-                73 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_inherited,
-                45 => {}
-                _ => return 0 as i32,
-            }
+        let p_char = unsafe { *p };
+        unsafe { p = p.offset(1) };
+        if p_char == 'f' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_file_inherit };
+        } else if p_char == 'd' as wchar_t {
+            unsafe {
+                *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_directory_inherit
+            };
+        } else if p_char == 'i' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_inherit_only };
+        } else if p_char == 'n' as wchar_t {
+            unsafe {
+                *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_no_propagate_inherit
+            };
+        } else if p_char == 'S' as wchar_t {
+            unsafe {
+                *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_successful_access
+            };
+        } else if p_char == 'F' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_failed_access };
+        } else if p_char == 'I' as wchar_t {
+            unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_inherited };
+        } else if p_char == '-' as wchar_t {
+        } else {
+            return 0;
         }
     }
     return 1 as i32;
@@ -2042,7 +2053,7 @@ pub extern "C" fn archive_acl_from_text_l(
                         && unsafe {
                             memcmp_safe(
                                 s.offset(1 as isize) as *const (),
-                                b"efault\x00" as *const u8 as *const u8 as *const (),
+                                b"efault\x00" as *const u8 as *const (),
                                 6 as u64,
                             )
                         } == 0 as i32)
@@ -2082,14 +2093,15 @@ pub extern "C" fn archive_acl_from_text_l(
                 ret = ARCHIVE_ACL_DEFINED_PARAM.archive_warn;
                 continue;
             } else {
-                match unsafe { *s } as i32 {
-                    117 => {
+                let s_char = unsafe { *s as char};
+                match s_char {
+                    'u' => {
                         if len == 1 as u64
                             || len == 4 as u64
                                 && unsafe {
                                     memcmp_safe(
                                         st as *const (),
-                                        b"ser\x00" as *const u8 as *const u8 as *const (),
+                                        b"ser\x00" as *const u8 as *const (),
                                         3 as u64,
                                     )
                                 } == 0 as i32
@@ -2097,13 +2109,13 @@ pub extern "C" fn archive_acl_from_text_l(
                             tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user_obj
                         }
                     }
-                    103 => {
+                    'g' => {
                         if len == 1 as u64
                             || len == 5 as u64
                                 && unsafe {
                                     memcmp_safe(
                                         st as *const (),
-                                        b"roup\x00" as *const u8 as *const u8 as *const (),
+                                        b"roup\x00" as *const u8 as *const (),
                                         4 as u64,
                                     )
                                 } == 0 as i32
@@ -2111,13 +2123,13 @@ pub extern "C" fn archive_acl_from_text_l(
                             tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group_obj
                         }
                     }
-                    111 => {
+                    'o' => {
                         if len == 1 as u64
                             || len == 5 as i32 as u64
                                 && unsafe {
                                     memcmp_safe(
                                         st as *const (),
-                                        b"ther\x00" as *const u8 as *const u8 as *const (),
+                                        b"ther\x00" as *const u8 as *const (),
                                         4 as u64,
                                     )
                                 } == 0 as i32
@@ -2125,13 +2137,13 @@ pub extern "C" fn archive_acl_from_text_l(
                             tag = ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other
                         }
                     }
-                    109 => {
+                    'm' => {
                         if len == 1 as u64
                             || len == 4 as u64
                                 && unsafe {
                                     memcmp_safe(
                                         st as *const (),
-                                        b"ask\x00" as *const u8 as *const u8 as *const (),
+                                        b"ask\x00" as *const u8 as *const (),
                                         3 as u64,
                                     )
                                 } == 0 as i32
@@ -2209,7 +2221,7 @@ pub extern "C" fn archive_acl_from_text_l(
                     if unsafe {
                         memcmp_safe(
                             s as *const (),
-                            b"user\x00" as *const u8 as *const u8 as *const (),
+                            b"user\x00" as *const u8 as *const (),
                             4 as u64,
                         )
                     } == 0 as i32
@@ -2221,7 +2233,7 @@ pub extern "C" fn archive_acl_from_text_l(
                     if unsafe {
                         memcmp_safe(
                             s as *const (),
-                            b"group\x00" as *const u8 as *const u8 as *const (),
+                            b"group\x00" as *const u8 as *const (),
                             5 as i32 as u64,
                         )
                     } == 0 as i32
@@ -2233,7 +2245,7 @@ pub extern "C" fn archive_acl_from_text_l(
                     if unsafe {
                         memcmp_safe(
                             s as *const (),
-                            b"owner@\x00" as *const u8 as *const u8 as *const (),
+                            b"owner@\x00" as *const u8 as *const (),
                             6 as u64,
                         )
                     } == 0 as i32
@@ -2242,7 +2254,7 @@ pub extern "C" fn archive_acl_from_text_l(
                     } else if unsafe {
                         memcmp_safe(
                             s as *const (),
-                            b"group@\x00" as *const u8 as *const u8 as *const (),
+                            b"group@\x00" as *const u8 as *const (),
                             6 as u64,
                         )
                     } == 0 as i32
@@ -2254,7 +2266,7 @@ pub extern "C" fn archive_acl_from_text_l(
                     if unsafe {
                         memcmp_safe(
                             s as *const (),
-                            b"everyone@\x00" as *const u8 as *const u8 as *const (),
+                            b"everyone@\x00" as *const u8 as *const (),
                             9 as u64,
                         )
                     } == 0 as i32
@@ -2303,7 +2315,7 @@ pub extern "C" fn archive_acl_from_text_l(
                         if len == 4 as u64 {
                             if memcmp_safe(
                                 s as *const (),
-                                b"deny\x00" as *const u8 as *const u8 as *const (),
+                                b"deny\x00" as *const u8 as *const (),
                                 4 as u64,
                             ) == 0 as i32
                             {
@@ -2312,21 +2324,21 @@ pub extern "C" fn archive_acl_from_text_l(
                         } else if len == 5 as i32 as u64 {
                             if memcmp_safe(
                                 s as *const (),
-                                b"allow\x00" as *const u8 as *const u8 as *const (),
+                                b"allow\x00" as *const u8 as *const (),
                                 5 as u64,
                             ) == 0 as i32
                             {
                                 type_0 = 0x400 as i32
                             } else if memcmp_safe(
                                 s as *const (),
-                                b"audit\x00" as *const u8 as *const u8 as *const (),
+                                b"audit\x00" as *const u8 as *const (),
                                 5 as u64,
                             ) == 0 as i32
                             {
                                 type_0 = 0x1000 as i32
                             } else if memcmp_safe(
                                 s as *const (),
-                                b"alarm\x00" as *const u8 as *const u8 as *const (),
+                                b"alarm\x00" as *const u8 as *const (),
                                 5 as u64,
                             ) == 0 as i32
                             {
@@ -2414,13 +2426,13 @@ extern "C" fn ismode(start: *const u8, end: *const u8, permset: *mut i32) -> i32
         *permset = 0 as i32;
     }
     while p < end {
-        let fresh37 = p;
+        let p_char = unsafe {*p as char};
         p = unsafe { p.offset(1) };
-        match unsafe { *fresh37 } as i32 {
-            114 | 82 => unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read },
-            119 | 87 => unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write },
-            120 | 88 => unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_execute },
-            45 => {}
+        match p_char {
+            'r' | 'R' => unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read },
+            'w' | 'W' => unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write },
+            'x' | 'X' => unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_execute },
+            '-' => {}
             _ => return 0,
         }
     }
@@ -2434,25 +2446,25 @@ extern "C" fn ismode(start: *const u8, end: *const u8, permset: *mut i32) -> i32
 extern "C" fn is_nfs4_perms(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
     let mut p: *const u8 = start;
     while p < end {
-        let fresh38 = p;
+        let p_char = unsafe {*p as char};
         unsafe {
             p = p.offset(1);
-            match *fresh38 as i32 {
-                114 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_data,
-                119 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_data,
-                120 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_execute,
-                112 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_append_data,
-                68 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_delete_child,
-                100 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_delete,
-                97 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_attributes,
-                65 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_attributes,
-                82 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_named_attrs,
-                87 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_named_attrs,
-                99 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_acl,
-                67 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_acl,
-                111 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_owner,
-                115 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_synchronize,
-                45 => {}
+            match p_char {
+                'r' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_data,
+                'w' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_data,
+                'x' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_execute,
+                'p' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_append_data,
+                'D' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_delete_child,
+                'd' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_delete,
+                'a' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_attributes,
+                'A' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_attributes,
+                'R' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_named_attrs,
+                'W' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_named_attrs,
+                'c' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read_acl,
+                'C' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_acl,
+                'o' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_write_owner,
+                's' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_synchronize,
+                '-' => {}
                 _ => return 0,
             }
         }
@@ -2467,25 +2479,25 @@ extern "C" fn is_nfs4_perms(start: *const u8, end: *const u8, permset: *mut i32)
 extern "C" fn is_nfs4_flags(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
     let mut p: *const u8 = start;
     while p < end {
-        let fresh39 = p;
         unsafe {
+            let p_char = *p as char;
             p = p.offset(1);
-            match *fresh39 as i32 {
-                102 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_file_inherit,
-                100 => {
+            match p_char {
+                'f' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_file_inherit,
+                'd' => {
                     *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_directory_inherit
                 }
-                105 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_inherit_only,
-                110 => {
+                'i' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_inherit_only,
+                'n' => {
                     *permset |=
                         ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_no_propagate_inherit
                 }
-                83 => {
+                'S' => {
                     *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_successful_access
                 }
-                70 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_failed_access,
-                73 => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_inherited,
-                45 => {}
+                'F' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_failed_access,
+                'I' => *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_entry_inherited,
+                '-' => {}
                 _ => return 0,
             }
         }
