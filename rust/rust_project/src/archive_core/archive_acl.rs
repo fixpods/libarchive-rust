@@ -2093,7 +2093,7 @@ pub extern "C" fn archive_acl_from_text_l(
                 ret = ARCHIVE_ACL_DEFINED_PARAM.archive_warn;
                 continue;
             } else {
-                let s_char = unsafe { *s as char};
+                let s_char = unsafe { *s as char };
                 match s_char {
                     'u' => {
                         if len == 1 as u64
@@ -2426,7 +2426,7 @@ extern "C" fn ismode(start: *const u8, end: *const u8, permset: *mut i32) -> i32
         *permset = 0 as i32;
     }
     while p < end {
-        let p_char = unsafe {*p as char};
+        let p_char = unsafe { *p as char };
         p = unsafe { p.offset(1) };
         match p_char {
             'r' | 'R' => unsafe { *permset |= ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_read },
@@ -2446,7 +2446,7 @@ extern "C" fn ismode(start: *const u8, end: *const u8, permset: *mut i32) -> i32
 extern "C" fn is_nfs4_perms(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
     let mut p: *const u8 = start;
     while p < end {
-        let p_char = unsafe {*p as char};
+        let p_char = unsafe { *p as char };
         unsafe {
             p = p.offset(1);
             match p_char {
