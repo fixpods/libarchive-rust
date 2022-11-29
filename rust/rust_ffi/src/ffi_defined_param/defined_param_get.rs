@@ -198,9 +198,13 @@ pub struct archive_7zip_defined_param {
     pub lzma_options_error: i32,
     pub lzma_data_error: i32,
     pub lzma_buf_error: i32,
+    pub bz_stream_end: i32,
+    pub bz_ok: i32,
     pub bz_param_error: i32,
     pub bz_mem_error: i32,
     pub bz_config_error: i32,
+    pub z_stream_end: i32,
+    pub z_ok: i32,
 }
 
 #[derive(Debug, Copy, Clone)]
