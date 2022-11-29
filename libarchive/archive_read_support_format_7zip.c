@@ -198,7 +198,22 @@ struct archive_7zip_defined_param
   int knumbitmodeltotalbits;
   int kbitmodeltotal;
   int knummovebits;
-  int archive_failed
+  int archive_failed;
+#ifdef HAVE_LZMA_H
+  int lzma_stream_end;
+  int lzma_ok;
+  int lzma_mem_error;
+  int lzma_memlimit_error;
+  int lzma_format_error;
+  int lzma_options_error;
+  int lzma_data_error;
+  int lzma_buf_error;
+#endif
+#if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
+  int bz_param_error;
+  int bz_mem_error;
+  int bz_config_error;
+#endif
 };
 
 struct archive_7zip_defined_param get_archive_7zip_defined_param();
@@ -270,6 +285,21 @@ struct archive_7zip_defined_param get_archive_7zip_defined_param(){
   param.kbitmodeltotal = kBitModelTotal;
   param.knummovebits = kNumMoveBits;
   param.archive_failed = ARCHIVE_FAILED;
+#ifdef HAVE_LZMA_H
+  param.lzma_stream_end = LZMA_STREAM_END;
+  param.lzma_ok = LZMA_OK;
+  param.lzma_mem_error = LZMA_MEM_ERROR;
+  param.lzma_memlimit_error = LZMA_MEMLIMIT_ERROR;
+  param.lzma_format_error = LZMA_FORMAT_ERROR;
+  param.lzma_options_error = LZMA_OPTIONS_ERROR;
+  param.lzma_data_error = LZMA_DATA_ERROR;
+  param.lzma_buf_error = LZMA_BUF_ERROR;
+#endif
+#if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
+  param.bz_param_error = BZ_PARAM_ERROR;
+  param.bz_mem_error = BZ_MEM_ERROR;
+  param.bz_config_error = BZ_CONFIG_ERROR;
+#endif
   return param;
 }
 
