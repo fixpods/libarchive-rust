@@ -17,7 +17,7 @@ fn archive_string_append(
     }
     if s != 0 {
         unsafe {
-            memmove_safe(
+            memmove(
                 (*as_0).s.offset((*as_0).length as isize) as *mut (),
                 p as *const (),
                 s,
@@ -78,7 +78,7 @@ pub fn archive_string_free(as_0: *mut archive_string) {
     let safe_as_0 = unsafe { &mut *as_0 };
     (safe_as_0).length = 0;
     (safe_as_0).buffer_length = 0;
-    unsafe { free_safe((safe_as_0).s as *mut ()) };
+    unsafe { free((safe_as_0).s as *mut ()) };
     (safe_as_0).s = 0 as *mut u8;
 }
 
@@ -87,15 +87,12 @@ pub fn archive_wstring_free(as_0: *mut archive_wstring) {
     let safe_as_0 = unsafe { &mut *as_0 };
     (safe_as_0).length = 0;
     (safe_as_0).buffer_length = 0;
-    unsafe { free_safe((safe_as_0).s as *mut ()) };
+    unsafe { free((safe_as_0).s as *mut ()) };
     (safe_as_0).s = 0 as *mut wchar_t;
 }
 
 #[no_mangle]
-pub fn archive_wstring_ensure(
-    as_0: *mut archive_wstring,
-    s: size_t,
-) -> *mut archive_wstring {
+pub fn archive_wstring_ensure(as_0: *mut archive_wstring, s: size_t) -> *mut archive_wstring {
     return unsafe {
         archive_string_ensure(
             as_0 as *mut archive_string,
@@ -106,10 +103,7 @@ pub fn archive_wstring_ensure(
 /* Returns NULL on any allocation failure. */
 
 #[no_mangle]
-pub fn archive_string_ensure(
-    mut as_0: *mut archive_string,
-    mut s: size_t,
-) -> *mut archive_string {
+pub fn archive_string_ensure(mut as_0: *mut archive_string, mut s: size_t) -> *mut archive_string {
     let safe_as_0 = unsafe { &mut *as_0 };
     let mut p: *mut u8 = 0 as *mut u8;
     let mut new_length: size_t = 0;
@@ -138,7 +132,7 @@ pub fn archive_string_ensure(
         if new_length < safe_as_0.buffer_length {
             /* On failure, wipe the string and return NULL. */
             archive_string_free(as_0); /* Make sure errno has ENOMEM. */
-            unsafe { *__errno_location_safe() = 12 };
+            unsafe { *__errno_location() = 12 };
             return 0 as *mut archive_string;
         }
     }
@@ -151,11 +145,11 @@ pub fn archive_string_ensure(
         new_length = s
     }
     /* Now we can reallocate the buffer. */
-    p = unsafe { realloc_safe(safe_as_0.s as *mut (), new_length) } as *mut u8;
+    p = unsafe { realloc(safe_as_0.s as *mut (), new_length) } as *mut u8;
     if p.is_null() {
         /* On failure, wipe the string and return NULL. */
         archive_string_free(as_0); /* Make sure errno has ENOMEM. */
-        unsafe { *__errno_location_safe() = 12 };
+        unsafe { *__errno_location() = 12 };
         return 0 as *mut archive_string;
     }
     safe_as_0.s = p;
@@ -228,19 +222,13 @@ pub fn archive_strcat(as_0: *mut archive_string, p: *const ()) -> *mut archive_s
 }
 
 #[no_mangle]
-pub fn archive_wstrcat(
-    as_0: *mut archive_wstring,
-    p: *const wchar_t,
-) -> *mut archive_wstring {
+pub fn archive_wstrcat(as_0: *mut archive_wstring, p: *const wchar_t) -> *mut archive_wstring {
     /* Ditto. */
     return archive_wstrncat(as_0, p, 0x1000000 as size_t);
 }
 
 #[no_mangle]
-pub fn archive_strappend_char(
-    mut as_0: *mut archive_string,
-    mut c: u8,
-) -> *mut archive_string {
+pub fn archive_strappend_char(mut as_0: *mut archive_string, mut c: u8) -> *mut archive_string {
     as_0 = archive_string_append(as_0, &mut c, 1);
     if as_0.is_null() {
         unsafe { __archive_errx(1 as i32, "Out of memory\x00") };
@@ -276,7 +264,7 @@ fn default_iconv_charset(mut charset: *const u8) -> *const u8 {
     if !charset.is_null() && unsafe { *charset.offset(0 as isize) } as i32 != '\u{0}' as i32 {
         return charset;
     }
-    return unsafe { nl_langinfo_safe(CODESET as i32) };
+    return unsafe { nl_langinfo(CODESET as i32) };
 }
 /*
 * Convert MBS to WCS.
@@ -304,7 +292,7 @@ pub fn archive_wstring_append_from_mbs(
         __value: archive_string_shift_state { __wch: 0 },
     };
     unsafe {
-        memset_safe(
+        memset(
             &mut shift_state as *mut mbstate_t as *mut (),
             0 as i32,
             size_of::<mbstate_t>() as u64,
@@ -386,7 +374,7 @@ pub fn archive_string_append_from_wcs(
         __value: archive_string_shift_state { __wch: 0 },
     };
     unsafe {
-        memset_safe(
+        memset(
             &mut shift_state as *mut mbstate_t as *mut (),
             0 as i32,
             size_of::<mbstate_t>() as u64,
@@ -406,7 +394,7 @@ pub fn archive_string_append_from_wcs(
         safe_as_0
             .s
             .offset(safe_as_0.buffer_length as isize)
-            .offset(-(__ctype_get_mb_cur_max_safe() as isize))
+            .offset(-(__ctype_get_mb_cur_max() as isize))
             .offset(-(1))
     };
     while unsafe { *w } != '\u{0}' as wchar_t && len > 0 as u64 {
@@ -417,10 +405,10 @@ pub fn archive_string_append_from_wcs(
             if archive_string_ensure(
                 as_0,
                 safe_as_0.length.wrapping_add(
-                    (if len * 2 > unsafe { __ctype_get_mb_cur_max_safe() } {
+                    (if len * 2 > unsafe { __ctype_get_mb_cur_max() } {
                         len * 2
                     } else {
-                        unsafe { __ctype_get_mb_cur_max_safe() }
+                        unsafe { __ctype_get_mb_cur_max() }
                     }),
                 ) + 1,
             )
@@ -433,7 +421,7 @@ pub fn archive_string_append_from_wcs(
                 safe_as_0
                     .s
                     .offset(safe_as_0.buffer_length as isize)
-                    .offset(-(__ctype_get_mb_cur_max_safe() as isize))
+                    .offset(-(__ctype_get_mb_cur_max() as isize))
                     .offset(-(1))
             }
         }
@@ -441,7 +429,7 @@ pub fn archive_string_append_from_wcs(
         w = unsafe { w.offset(1) };
         n = unsafe { wcrtomb(p, *fresh0, &mut shift_state) as i32 };
         if n == -1 {
-            if unsafe { *__errno_location_safe() } == 84 as i32 {
+            if unsafe { *__errno_location() } == 84 as i32 {
                 /* Skip an illegal wide char. */
                 let fresh1 = p;
                 p = unsafe { p.offset(1) };
@@ -467,11 +455,7 @@ pub fn archive_string_append_from_wcs(
 * and 'to' charset name from an archive object.
 * Return NULL if not found.
 */
-fn find_sconv_object(
-    a: *mut archive,
-    fc: *const u8,
-    tc: *const u8,
-) -> *mut archive_string_conv {
+fn find_sconv_object(a: *mut archive, fc: *const u8, tc: *const u8) -> *mut archive_string_conv {
     let mut sc: *mut archive_string_conv = 0 as *mut archive_string_conv;
     if a.is_null() {
         return 0 as *mut archive_string_conv;
@@ -711,22 +695,22 @@ fn create_sconv_object(
 ) -> *mut archive_string_conv {
     let mut sc: *mut archive_string_conv = 0 as *mut archive_string_conv;
     sc = unsafe {
-        calloc_safe(1 as u64, size_of::<archive_string_conv>() as u64) as *mut archive_string_conv
+        calloc(1 as u64, size_of::<archive_string_conv>() as u64) as *mut archive_string_conv
     };
     if sc.is_null() {
         return 0 as *mut archive_string_conv;
     }
     let safe_sc = unsafe { &mut *sc };
     safe_sc.next = 0 as *mut archive_string_conv;
-    safe_sc.from_charset = unsafe { strdup_safe(fc) };
+    safe_sc.from_charset = unsafe { strdup(fc) };
     if safe_sc.from_charset.is_null() {
-        unsafe { free_safe(sc as *mut ()) };
+        unsafe { free(sc as *mut ()) };
         return 0 as *mut archive_string_conv;
     }
-    safe_sc.to_charset = unsafe { strdup_safe(tc) };
+    safe_sc.to_charset = unsafe { strdup(tc) };
     if safe_sc.to_charset.is_null() {
-        unsafe { free_safe(safe_sc.from_charset as *mut ()) };
-        unsafe { free_safe(sc as *mut ()) };
+        unsafe { free(safe_sc.from_charset as *mut ()) };
+        unsafe { free(sc as *mut ()) };
         return 0 as *mut archive_string_conv;
     }
     safe_sc.utftmp.s = 0 as *mut u8;
@@ -802,18 +786,18 @@ fn create_sconv_object(
         /* This case we won't use iconv. */
         safe_sc.cd = -(1 as i32) as iconv_t
     } else {
-        safe_sc.cd = unsafe { iconv_open_safe(tc, fc) };
+        safe_sc.cd = unsafe { iconv_open(tc, fc) };
         if safe_sc.cd == -(1 as i32) as iconv_t && safe_sc.flag & (1 as i32) << 2 as i32 != 0 {
             /* _WIN32 && !__CYGWIN__ */
             /*
              * Unfortunately, all of iconv implements do support
              * "CP932" character-set, so we should use "SJIS"
-             * instead if iconv_open_safe failed.
+             * instead if iconv_open failed.
              */
             if unsafe { strcmp(tc, b"CP932\x00" as *const u8) == 0 } {
-                safe_sc.cd = unsafe { iconv_open_safe(b"SJIS\x00" as *const u8, fc) }
+                safe_sc.cd = unsafe { iconv_open(b"SJIS\x00" as *const u8, fc) }
             } else if unsafe { strcmp(fc, b"CP932\x00" as *const u8) == 0 } {
-                safe_sc.cd = unsafe { iconv_open_safe(tc, b"SJIS\x00" as *const u8) }
+                safe_sc.cd = unsafe { iconv_open(tc, b"SJIS\x00" as *const u8) }
             }
         }
     }
@@ -830,16 +814,16 @@ fn create_sconv_object(
 */
 fn free_sconv_object(sc: *mut archive_string_conv) {
     let safe_sc = unsafe { &mut *sc };
-    unsafe { free_safe(safe_sc.from_charset as *mut ()) };
-    unsafe { free_safe(safe_sc.to_charset as *mut ()) };
+    unsafe { free(safe_sc.from_charset as *mut ()) };
+    unsafe { free(safe_sc.to_charset as *mut ()) };
     archive_string_free(&mut safe_sc.utftmp);
     if safe_sc.cd != -(1 as i32) as iconv_t {
-        unsafe { iconv_close_safe((*sc).cd) };
+        unsafe { iconv_close((*sc).cd) };
     }
     if safe_sc.cd_w != -(1 as i32) as iconv_t {
-        unsafe { iconv_close_safe(safe_sc.cd_w) };
+        unsafe { iconv_close(safe_sc.cd_w) };
     }
-    unsafe { free_safe(sc as *mut ()) };
+    unsafe { free(sc as *mut ()) };
 }
 /*
 * POSIX platform does not use CodePage.
@@ -908,8 +892,7 @@ fn get_sconv_object(
                 archive_set_error(
                     a,
                     -1,
-                    b"iconv_open_safe failed : Cannot handle ``%s\'\'\x00" as *const u8
-                        as *const u8,
+                    b"iconv_open failed : Cannot handle ``%s\'\'\x00" as *const u8 as *const u8,
                     if flag & 1 as i32 != 0 { tc } else { fc },
                 )
             };
@@ -934,7 +917,7 @@ fn get_current_charset(a: *mut archive) -> *const u8 {
     } else {
         cur_charset = default_iconv_charset(safe_a.current_code);
         if safe_a.current_code.is_null() {
-            safe_a.current_code = unsafe { strdup_safe(cur_charset) };
+            safe_a.current_code = unsafe { strdup(cur_charset) };
             safe_a.current_codepage = get_current_codepage();
             safe_a.current_oemcp = get_current_oemcp()
         }
@@ -985,17 +968,13 @@ pub fn archive_string_conversion_from_charset(
 * for compatibility.
 */
 #[no_mangle]
-pub fn archive_string_default_conversion_for_read(
-    a: *mut archive,
-) -> *mut archive_string_conv {
+pub fn archive_string_default_conversion_for_read(a: *mut archive) -> *mut archive_string_conv {
     /* UNUSED */
     return 0 as *mut archive_string_conv;
 }
 
 #[no_mangle]
-pub fn archive_string_default_conversion_for_write(
-    a: *mut archive,
-) -> *mut archive_string_conv {
+pub fn archive_string_default_conversion_for_write(a: *mut archive) -> *mut archive_string_conv {
     /* UNUSED */
     return 0 as *mut archive_string_conv;
 }
@@ -1015,7 +994,7 @@ pub fn archive_string_conversion_free(mut a: *mut archive) {
         sc = sc_next
     }
     safe_a.sconv = 0 as *mut archive_string_conv;
-    unsafe { free_safe(safe_a.current_code as *mut ()) };
+    unsafe { free(safe_a.current_code as *mut ()) };
     safe_a.current_code = 0 as *mut u8;
 }
 /*
@@ -1023,9 +1002,7 @@ pub fn archive_string_conversion_free(mut a: *mut archive) {
 */
 
 #[no_mangle]
-pub fn archive_string_conversion_charset_name(
-    sc: *mut archive_string_conv,
-) -> *const u8 {
+pub fn archive_string_conversion_charset_name(sc: *mut archive_string_conv) -> *const u8 {
     let safe_sc = unsafe { &mut *sc };
     if safe_sc.flag & 1 as i32 != 0 {
         return safe_sc.to_charset;
@@ -1186,7 +1163,7 @@ pub fn archive_strncat_l(
                 sc,
             )
         };
-        if r2 != 0 as i32 && unsafe { *__errno_location_safe() == 12 as i32 } {
+        if r2 != 0 as i32 && unsafe { *__errno_location() == 12 as i32 } {
             return r2;
         }
         if r > r2 {
@@ -1244,12 +1221,11 @@ fn iconv_strncat_in_locale(
     avail = safe_as_0.buffer_length - safe_as_0.length - (to_size as u64);
     while remaining >= from_size as size_t {
         let mut result: size_t =
-            unsafe { iconv_safe(cd, &mut itp, &mut remaining, &mut outp, &mut avail) };
+            unsafe { iconv(cd, &mut itp, &mut remaining, &mut outp, &mut avail) };
         if result != -(1 as i32) as size_t {
             break;
         }
-        if unsafe { *__errno_location_safe() == 84 as i32 || *__errno_location_safe() == 22 as i32 }
-        {
+        if unsafe { *__errno_location() == 84 as i32 || *__errno_location() == 22 as i32 } {
             /*
              * If an output charset is UTF-8 or UTF-16BE/LE,
              * unknown character should be U+FFFD
@@ -1276,7 +1252,7 @@ fn iconv_strncat_in_locale(
                 }
                 if safe_sc.flag & (1) << 8 != 0 {
                     unsafe {
-                        memcpy_safe(
+                        memcpy(
                             outp as *mut (),
                             utf8_replacement_char.as_ptr() as *const (),
                             size_of::<[u8; 3]>() as u64,
@@ -1323,11 +1299,7 @@ fn iconv_strncat_in_locale(
 /*
 * Test whether MBS ==> WCS is okay.
 */
-fn invalid_mbs(
-    mut _p: *const (),
-    mut n: size_t,
-    mut sc: *mut archive_string_conv,
-) -> i32 {
+fn invalid_mbs(mut _p: *const (), mut n: size_t, mut sc: *mut archive_string_conv) -> i32 {
     let mut p: *const u8 = _p as *const u8; /* Invalid. */
     let mut r: size_t;
     let mut shift_state: mbstate_t = mbstate_t {
@@ -1335,7 +1307,7 @@ fn invalid_mbs(
         __value: archive_string_shift_state { __wch: 0 },
     };
     unsafe {
-        memset_safe(
+        memset(
             &mut shift_state as *mut mbstate_t as *mut (),
             0,
             size_of::<mbstate_t>() as u64,
@@ -1869,7 +1841,7 @@ fn strncat_from_utf8_to_utf8(
                         .offset(-1)
                 }
             }
-            unsafe { memcpy_safe(p as *mut (), ss as *const (), s.offset_from(ss) as u64) };
+            unsafe { memcpy(p as *mut (), ss as *const (), s.offset_from(ss) as u64) };
             p = unsafe { p.offset(s.offset_from(ss) as isize) }
         }
         /*
@@ -1931,10 +1903,8 @@ fn archive_string_append_unicode(
     let mut ret: i32 = 0 as i32;
     let mut ts: i32;
     let mut tm: i32;
-    let mut parse: Option<unsafe fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32> =
-        None;
-    let mut unparse: Option<unsafe fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t> =
-        None;
+    let mut parse: Option<unsafe fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32> = None;
+    let mut unparse: Option<unsafe fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t> = None;
     let safe_sc = unsafe { &mut *sc };
     if safe_sc.flag & (1) << 10 != 0 {
         unparse = Some(unicode_to_utf16be);
@@ -2096,10 +2066,8 @@ fn archive_string_normalize_C(
     let spair: i32;
     let mut ts: i32;
     let tm: i32;
-    let mut parse: Option<unsafe fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32> =
-        None;
-    let mut unparse: Option<unsafe fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t> =
-        None;
+    let mut parse: Option<unsafe fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32> = None;
+    let mut unparse: Option<unsafe fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t> = None;
     always_replace = 1;
     ts = 1;
     let safe_sc = unsafe { &mut *sc };
@@ -3433,10 +3401,8 @@ fn archive_string_normalize_D(
     let mut spair: i32;
     let mut ts: i32;
     let mut tm: i32;
-    let mut parse: Option<unsafe fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32> =
-        None;
-    let mut unparse: Option<unsafe fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t> =
-        None;
+    let mut parse: Option<unsafe fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32> = None;
+    let mut unparse: Option<unsafe fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t> = None;
     always_replace = 1;
     ts = 1;
     let safe_sc = unsafe { &mut *sc };
@@ -4328,7 +4294,7 @@ fn strncat_from_utf8_libarchive2(
         __value: archive_string_shift_state { __wch: 0 },
     };
     unsafe {
-        memset_safe(
+        memset(
             &mut shift_state as *mut mbstate_t as *mut (),
             0 as i32,
             size_of::<mbstate_t>() as u64,
@@ -4350,7 +4316,7 @@ fn strncat_from_utf8_libarchive2(
         safe_as_0
             .s
             .offset(safe_as_0.buffer_length as isize)
-            .offset(-(__ctype_get_mb_cur_max_safe() as isize))
+            .offset(-(__ctype_get_mb_cur_max() as isize))
             .offset(-(1))
     };
     loop {
@@ -4365,10 +4331,10 @@ fn strncat_from_utf8_libarchive2(
             if archive_string_ensure(
                 as_0,
                 safe_as_0.length.wrapping_add(
-                    (if len * (2) > unsafe { __ctype_get_mb_cur_max_safe() } {
+                    (if len * (2) > unsafe { __ctype_get_mb_cur_max() } {
                         len * (2)
                     } else {
-                        unsafe { __ctype_get_mb_cur_max_safe() }
+                        unsafe { __ctype_get_mb_cur_max() }
                     }),
                 ) + (1),
             )
@@ -4381,7 +4347,7 @@ fn strncat_from_utf8_libarchive2(
                 safe_as_0
                     .s
                     .offset(safe_as_0.buffer_length as isize)
-                    .offset(-(__ctype_get_mb_cur_max_safe() as isize))
+                    .offset(-(__ctype_get_mb_cur_max() as isize))
                     .offset(-(1))
             }
         }
@@ -4578,10 +4544,7 @@ pub fn archive_mstring_clean(aes: *mut archive_mstring) {
 }
 
 #[no_mangle]
-pub fn archive_mstring_copy(
-    mut dest: *mut archive_mstring,
-    mut src: *mut archive_mstring,
-) {
+pub fn archive_mstring_copy(mut dest: *mut archive_mstring, mut src: *mut archive_mstring) {
     let safe_dest = unsafe { &mut *dest };
     let safe_src = unsafe { &mut *src };
     safe_dest.aes_set = safe_src.aes_set;
@@ -4802,11 +4765,7 @@ pub fn archive_mstring_copy_mbs(aes: *mut archive_mstring, mbs: *const u8) -> i3
 }
 
 #[no_mangle]
-pub fn archive_mstring_copy_mbs_len(
-    aes: *mut archive_mstring,
-    mbs: *const u8,
-    len: size_t,
-) -> i32 {
+pub fn archive_mstring_copy_mbs_len(aes: *mut archive_mstring, mbs: *const u8, len: size_t) -> i32 {
     let safe_aes = unsafe { &mut *aes };
     if mbs.is_null() {
         safe_aes.aes_set = 0;
@@ -4823,7 +4782,7 @@ pub fn archive_mstring_copy_mbs_len(
 #[no_mangle]
 pub fn archive_mstring_copy_wcs(aes: *mut archive_mstring, wcs: *const wchar_t) -> i32 {
     return unsafe {
-        archive_mstring_copy_wcs_len(aes, wcs, if wcs.is_null() { 0 } else { wcslen_safe(wcs) })
+        archive_mstring_copy_wcs_len(aes, wcs, if wcs.is_null() { 0 } else { wcslen(wcs) })
     };
 }
 
@@ -4968,10 +4927,10 @@ pub fn archive_mstring_update_utf8(
 pub fn archive_test_best_effort_strncat_utf16(_p: *const (), bytes: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
     archive_string =
-        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
+        unsafe { calloc(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
-        as *mut archive_string_conv;
+    archive_string_conv =
+        unsafe { calloc(1, size_of::<archive_string_conv>() as u64) } as *mut archive_string_conv;
     best_effort_strncat_from_utf16be(archive_string, _p, bytes, archive_string_conv);
     unsafe { best_effort_strncat_from_utf16le(archive_string, _p, bytes, archive_string_conv) };
     best_effort_strncat_to_utf16be(archive_string, _p, bytes, archive_string_conv);
@@ -4982,10 +4941,10 @@ pub fn archive_test_best_effort_strncat_utf16(_p: *const (), bytes: size_t) {
 pub fn archive_test_strncat_from_utf8_libarchive2(_p: *const (), bytes: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
     archive_string =
-        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
+        unsafe { calloc(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
-        as *mut archive_string_conv;
+    archive_string_conv =
+        unsafe { calloc(1, size_of::<archive_string_conv>() as u64) } as *mut archive_string_conv;
     strncat_from_utf8_libarchive2(archive_string, _p, bytes, archive_string_conv);
 }
 
@@ -4993,10 +4952,10 @@ pub fn archive_test_strncat_from_utf8_libarchive2(_p: *const (), bytes: size_t) 
 pub fn archive_test_archive_string_append_unicode(_p: *const (), bytes: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
     archive_string =
-        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
+        unsafe { calloc(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
-        as *mut archive_string_conv;
+    archive_string_conv =
+        unsafe { calloc(1, size_of::<archive_string_conv>() as u64) } as *mut archive_string_conv;
     archive_string_append_unicode(archive_string, _p, bytes, archive_string_conv);
 }
 
@@ -5004,28 +4963,20 @@ pub fn archive_test_archive_string_append_unicode(_p: *const (), bytes: size_t) 
 pub fn archive_test_invalid_mbs(_p: *const (), bytes: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
     archive_string =
-        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
+        unsafe { calloc(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
-        as *mut archive_string_conv;
+    archive_string_conv =
+        unsafe { calloc(1, size_of::<archive_string_conv>() as u64) } as *mut archive_string_conv;
     invalid_mbs(_p, bytes, archive_string_conv);
 }
 
 #[no_mangle]
-pub fn archive_test_unicode_to_utf16be(
-    p: *mut u8,
-    remaining: size_t,
-    uc: uint32_t,
-) -> size_t {
+pub fn archive_test_unicode_to_utf16be(p: *mut u8, remaining: size_t, uc: uint32_t) -> size_t {
     return unicode_to_utf16be(p, remaining, uc);
 }
 
 #[no_mangle]
-pub fn archive_test_unicode_to_utf16le(
-    p: *mut u8,
-    remaining: size_t,
-    uc: uint32_t,
-) -> size_t {
+pub fn archive_test_unicode_to_utf16le(p: *mut u8, remaining: size_t, uc: uint32_t) -> size_t {
     return unicode_to_utf16le(p, remaining, uc);
 }
 
@@ -5033,10 +4984,10 @@ pub fn archive_test_unicode_to_utf16le(
 pub fn archive_test_best_effort_strncat_in_locale(_p: *const (), length: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
     archive_string =
-        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
+        unsafe { calloc(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
-        as *mut archive_string_conv;
+    archive_string_conv =
+        unsafe { calloc(1, size_of::<archive_string_conv>() as u64) } as *mut archive_string_conv;
     unsafe { (*archive_string_conv).same = 1 };
     best_effort_strncat_in_locale(archive_string, _p, length, archive_string_conv);
     unsafe { (*archive_string_conv).same = 0 };
@@ -5048,8 +4999,8 @@ pub fn archive_test_best_effort_strncat_in_locale(_p: *const (), length: size_t)
 #[no_mangle]
 pub fn archive_test_setup_converter() {
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
-        as *mut archive_string_conv;
+    archive_string_conv =
+        unsafe { calloc(1, size_of::<archive_string_conv>() as u64) } as *mut archive_string_conv;
     unsafe { (*archive_string_conv).flag = (1 << 4) };
     setup_converter(archive_string_conv);
 }
@@ -5058,10 +5009,10 @@ pub fn archive_test_setup_converter() {
 pub fn archive_test_archive_string_normalize_D(_p: *const (), len: size_t) {
     let mut archive_string: *mut archive_string = 0 as *mut archive_string;
     archive_string =
-        unsafe { calloc_safe(1, size_of::<archive_string>() as u64) } as *mut archive_string;
+        unsafe { calloc(1, size_of::<archive_string>() as u64) } as *mut archive_string;
     let mut archive_string_conv: *mut archive_string_conv = 0 as *mut archive_string_conv;
-    archive_string_conv = unsafe { calloc_safe(1, size_of::<archive_string_conv>() as u64) }
-        as *mut archive_string_conv;
+    archive_string_conv =
+        unsafe { calloc(1, size_of::<archive_string_conv>() as u64) } as *mut archive_string_conv;
     unsafe { (*archive_string_conv).flag = (1 << 10) | (1 << 11) };
     archive_string_normalize_D(archive_string, _p, len, archive_string_conv);
     unsafe { (*archive_string_conv).flag = (1 << 12) | (1 << 13) };
@@ -5073,11 +5024,6 @@ pub fn archive_test_archive_string_normalize_D(_p: *const (), len: size_t) {
 }
 
 #[no_mangle]
-pub fn archive_test_utf16_to_unicode(
-    pwc: *mut uint32_t,
-    s: *const u8,
-    n: size_t,
-    be: i32,
-) -> i32 {
+pub fn archive_test_utf16_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t, be: i32) -> i32 {
     return utf16_to_unicode(pwc, s, n, be);
 }

@@ -1767,11 +1767,7 @@ fn ismode_w(start: *const wchar_t, end: *const wchar_t, permset: *mut i32) -> i3
  * Returns true if the string is non-empty and consists only of NFS4 ACL
  * permission characters, false otherwise
  */
-fn is_nfs4_perms_w(
-    start: *const wchar_t,
-    end: *const wchar_t,
-    permset: *mut i32,
-) -> i32 {
+fn is_nfs4_perms_w(start: *const wchar_t, end: *const wchar_t, permset: *mut i32) -> i32 {
     let mut p: *const wchar_t = start;
     while p < end {
         let fresh35 = p;
@@ -1804,11 +1800,7 @@ fn is_nfs4_perms_w(
  * Returns true if the string is non-empty and consists only of NFS4 ACL
  * flag characters, false otherwise
  */
-fn is_nfs4_flags_w(
-    start: *const wchar_t,
-    end: *const wchar_t,
-    permset: *mut i32,
-) -> i32 {
+fn is_nfs4_flags_w(start: *const wchar_t, end: *const wchar_t, permset: *mut i32) -> i32 {
     let mut p: *const wchar_t = start;
     while p < end {
         let fresh36 = p;
@@ -2500,12 +2492,7 @@ fn is_nfs4_flags(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
  * is the length of the field body, not including leading or trailing
  * whitespace.
  */
-fn next_field(
-    p: *mut *const u8,
-    start: *mut *const u8,
-    end: *mut *const u8,
-    sep: *mut u8,
-) {
+fn next_field(p: *mut *const u8, start: *mut *const u8, end: *mut *const u8, sep: *mut u8) {
     /* Skip leading whitespace to find start of field. */
     unsafe {
         while **p as i32 == ' ' as i32 || **p as i32 == '\t' as i32 || **p as i32 == '\n' as i32 {
