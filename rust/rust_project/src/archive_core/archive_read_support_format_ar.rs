@@ -5,7 +5,7 @@ use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use std::mem::size_of;
 #[no_mangle]
-pub extern "C" fn archive_read_support_format_ar(_a: *mut archive) -> i32 {
+pub fn archive_read_support_format_ar(_a: *mut archive) -> i32 {
     let a: *mut archive_read = _a as *mut archive_read;
     let ar: *mut ar;
     let mut r: i32;
