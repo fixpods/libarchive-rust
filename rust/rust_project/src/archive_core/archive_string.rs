@@ -529,18 +529,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
      * made by libarchive2.x.
      */
     if safe_sc.flag & (1 as i32) << 4 as i32 != 0 {
-        add_converter(
-            sc,
-            Some(
-                strncat_from_utf8_libarchive2
-                    as unsafe extern "C" fn(
-                        _: *mut archive_string,
-                        _: *const (),
-                        _: size_t,
-                        _: *mut archive_string_conv,
-                    ) -> i32,
-            ),
-        );
+        add_converter(sc, Some(strncat_from_utf8_libarchive2));
         return;
     }
     /*
@@ -552,62 +541,18 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
          * a UTF-8 string into a UTF-16BE string.
          */
         if safe_sc.flag & (1 as i32) << 9 as i32 != 0 {
-            add_converter(
-                sc,
-                Some(
-                    archive_string_append_unicode
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
-            );
+            add_converter(sc, Some(archive_string_append_unicode));
             return;
         }
         if safe_sc.cd != -(1 as i32) as iconv_t {
-            add_converter(
-                sc,
-                Some(
-                    iconv_strncat_in_locale
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
-            );
+            add_converter(sc, Some(iconv_strncat_in_locale));
             return;
         }
         if safe_sc.flag & (1 as i32) << 2 as i32 != 0 {
             if safe_sc.flag & (1 as i32) << 10 as i32 != 0 {
-                add_converter(
-                    sc,
-                    Some(
-                        best_effort_strncat_to_utf16be
-                            as unsafe extern "C" fn(
-                                _: *mut archive_string,
-                                _: *const (),
-                                _: size_t,
-                                _: *mut archive_string_conv,
-                            ) -> i32,
-                    ),
-                );
+                add_converter(sc, Some(best_effort_strncat_to_utf16be));
             } else {
-                add_converter(
-                    sc,
-                    Some(
-                        best_effort_strncat_to_utf16le
-                            as unsafe extern "C" fn(
-                                _: *mut archive_string,
-                                _: *const (),
-                                _: size_t,
-                                _: *mut archive_string_conv,
-                            ) -> i32,
-                    ),
-                );
+                add_converter(sc, Some(best_effort_strncat_to_utf16le));
             }
         } else {
             /* Make sure we have no converter. */
@@ -623,31 +568,9 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
          * At least we should normalize a UTF-16BE string.
          */
         if safe_sc.flag & (1 as i32) << 7 as i32 != 0 {
-            add_converter(
-                sc,
-                Some(
-                    archive_string_normalize_D
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
-            );
+            add_converter(sc, Some(archive_string_normalize_D));
         } else if safe_sc.flag & (1 as i32) << 6 as i32 != 0 {
-            add_converter(
-                sc,
-                Some(
-                    archive_string_normalize_C
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
-            );
+            add_converter(sc, Some(archive_string_normalize_C));
         }
         if safe_sc.flag & (1 as i32) << 8 as i32 != 0 {
             /*
@@ -655,62 +578,18 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
              * a UTF-16BE/LE string into a UTF-8 string directly.
              */
             if safe_sc.flag & ((1 as i32) << 7 as i32 | (1 as i32) << 6 as i32) == 0 {
-                add_converter(
-                    sc,
-                    Some(
-                        archive_string_append_unicode
-                            as unsafe extern "C" fn(
-                                _: *mut archive_string,
-                                _: *const (),
-                                _: size_t,
-                                _: *mut archive_string_conv,
-                            ) -> i32,
-                    ),
-                );
+                add_converter(sc, Some(archive_string_append_unicode));
             }
             return;
         }
         if safe_sc.cd != -(1 as i32) as iconv_t {
-            add_converter(
-                sc,
-                Some(
-                    iconv_strncat_in_locale
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
-            );
+            add_converter(sc, Some(iconv_strncat_in_locale));
             return;
         }
         if safe_sc.flag & ((1) << 2 | (1) << 11) == (1) << 2 | (1) << 11 {
-            add_converter(
-                sc,
-                Some(
-                    best_effort_strncat_from_utf16be
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
-            );
+            add_converter(sc, Some(best_effort_strncat_from_utf16be));
         } else if safe_sc.flag & ((1) << 2 | (1) << 13) == (1) << 2 | (1) << 13 {
-            add_converter(
-                sc,
-                Some(
-                    best_effort_strncat_from_utf16le
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
-            );
+            add_converter(sc, Some(best_effort_strncat_from_utf16le));
         } else {
             /* Make sure we have no converter. */
             safe_sc.nconverter = 0
@@ -722,31 +601,9 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
          * At least we should normalize a UTF-8 string.
          */
         if safe_sc.flag & (1) << 7 != 0 {
-            add_converter(
-                sc,
-                Some(
-                    archive_string_normalize_D
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
-            );
+            add_converter(sc, Some(archive_string_normalize_D));
         } else if safe_sc.flag & (1) << 6 != 0 {
-            add_converter(
-                sc,
-                Some(
-                    archive_string_normalize_C
-                        as unsafe extern "C" fn(
-                            _: *mut archive_string,
-                            _: *const (),
-                            _: size_t,
-                            _: *mut archive_string_conv,
-                        ) -> i32,
-                ),
-            );
+            add_converter(sc, Some(archive_string_normalize_C));
         }
         /*
          * Copy UTF-8 string with a check of CESU-8.
@@ -760,35 +617,13 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
              * a UTF-16BE string into a UTF-8 string directly.
              */
             if safe_sc.flag & ((1) << 7 | (1) << 6) == 0 {
-                add_converter(
-                    sc,
-                    Some(
-                        strncat_from_utf8_to_utf8
-                            as unsafe extern "C" fn(
-                                _: *mut archive_string,
-                                _: *const (),
-                                _: size_t,
-                                _: *mut archive_string_conv,
-                            ) -> i32,
-                    ),
-                );
+                add_converter(sc, Some(strncat_from_utf8_to_utf8));
             }
             return;
         }
     }
     if safe_sc.cd != -(1 as i32) as iconv_t {
-        add_converter(
-            sc,
-            Some(
-                iconv_strncat_in_locale
-                    as unsafe extern "C" fn(
-                        _: *mut archive_string,
-                        _: *const (),
-                        _: size_t,
-                        _: *mut archive_string_conv,
-                    ) -> i32,
-            ),
-        );
+        add_converter(sc, Some(iconv_strncat_in_locale));
         /*
          * iconv generally does not support UTF-8-MAC and so
          * we have to the output of iconv from NFC to NFD if
@@ -796,18 +631,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
          */
         if safe_sc.flag & (1) << 1 != 0 && safe_sc.flag & (1) << 8 != 0 {
             if safe_sc.flag & (1) << 7 != 0 {
-                add_converter(
-                    sc,
-                    Some(
-                        archive_string_normalize_D
-                            as unsafe extern "C" fn(
-                                _: *mut archive_string,
-                                _: *const (),
-                                _: size_t,
-                                _: *mut archive_string_conv,
-                            ) -> i32,
-                    ),
-                );
+                add_converter(sc, Some(archive_string_normalize_D));
             }
         }
         return;
@@ -816,18 +640,7 @@ extern "C" fn setup_converter(sc: *mut archive_string_conv) {
      * Try conversion in the best effort or no conversion.
      */
     if safe_sc.flag & (1) << 2 != 0 || safe_sc.same != 0 {
-        add_converter(
-            sc,
-            Some(
-                best_effort_strncat_in_locale
-                    as unsafe extern "C" fn(
-                        _: *mut archive_string,
-                        _: *const (),
-                        _: size_t,
-                        _: *mut archive_string_conv,
-                    ) -> i32,
-            ),
-        );
+        add_converter(sc, Some(best_effort_strncat_in_locale));
     } else {
         /* Make sure we have no converter. */
         safe_sc.nconverter = 0
@@ -1620,34 +1433,16 @@ extern "C" fn best_effort_strncat_in_locale(
 * Recommended Practice for Replacement Characters.
 */
 extern "C" fn _utf8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i32 {
-    let mut current_block: u64;
     static mut utf8_count: [u8; 256] = [
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8,
-        1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 1 as u8, 0 as u8, 0 as u8,
-        0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8,
-        0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8,
-        0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8,
-        0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8,
-        0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8,
-        0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8,
-        0 as u8, 0 as u8, 0 as u8, 0 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8,
-        2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8,
-        2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8, 2 as u8,
-        2 as u8, 2 as u8, 2 as u8, 2 as u8, 3 as u8, 3 as u8, 3 as u8, 3 as u8, 3 as u8, 3 as u8,
-        3 as u8, 3 as u8, 3 as u8, 3 as u8, 3 as u8, 3 as u8, 3 as u8, 3 as u8, 3 as u8, 3 as u8,
-        4 as u8, 4 as u8, 4 as u8, 4 as u8, 4 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8,
-        0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ];
     let ch: i32;
     let mut i: i32;
@@ -1696,25 +1491,25 @@ extern "C" fn _utf8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i
                     };
                     return cnt;
                 }
-                current_block = 10888481095818132869;
             }
             3 => {
                 /* 3 bytes sequence. */
                 if unsafe { *s.offset(1) as i32 } & 0xc0 as i32 != 0x80 as i32 {
                     cnt = 1; /* Overlong sequence. */
-                    current_block = 10888481095818132869;
                 } else if unsafe { *s.offset(2) } as i32 & 0xc0 as i32 != 0x80 as i32 {
                     cnt = 2;
-                    current_block = 10888481095818132869;
                 } else {
                     wc = ((ch & 0xf as i32) << 12 as i32
                         | (unsafe { *s.offset(1) } as i32 & 0x3f as i32) << 6 as i32
                         | unsafe { *s.offset(2) } as i32 & 0x3f as i32)
                         as uint32_t;
                     if wc < 0x800 as u32 {
-                        current_block = 10888481095818132869;
                     } else {
-                        current_block = 2520131295878969859;
+                        if !(wc > 0x10ffff as u32) {
+                            /* Correctly gets a Unicode, returns used bytes. */
+                            unsafe { *pwc = wc }; /* set the Replacement Character instead. */
+                            return cnt;
+                        }
                     }
                 }
             }
@@ -1722,13 +1517,10 @@ extern "C" fn _utf8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i
                 /* 4 bytes sequence. */
                 if unsafe { *s.offset(1) as i32 & 0xc0 as i32 != 0x80 as i32 } {
                     cnt = 1; /* Overlong sequence. */
-                    current_block = 10888481095818132869;
                 } else if unsafe { *s.offset(2) as i32 & 0xc0 as i32 != 0x80 as i32 } {
                     cnt = 2;
-                    current_block = 10888481095818132869;
                 } else if unsafe { *s.offset(3) as i32 & 0xc0 as i32 != 0x80 as i32 } {
                     cnt = 3;
-                    current_block = 10888481095818132869;
                 } else {
                     wc = ((ch & 0x7 as i32) << 18 as i32
                         | (unsafe { *s.offset(1) as i32 } & 0x3f as i32) << 12 as i32
@@ -1736,9 +1528,12 @@ extern "C" fn _utf8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i
                         | unsafe { *s.offset(3) as i32 } & 0x3f as i32)
                         as uint32_t;
                     if wc < 0x10000 as u32 {
-                        current_block = 10888481095818132869;
                     } else {
-                        current_block = 2520131295878969859;
+                        if !(wc > 0x10ffff as u32) {
+                            /* Correctly gets a Unicode, returns used bytes. */
+                            unsafe { *pwc = wc }; /* set the Replacement Character instead. */
+                            return cnt;
+                        }
                     }
                 }
             }
@@ -1766,20 +1561,6 @@ extern "C" fn _utf8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i
                     } else {
                         i += 1
                     }
-                }
-                current_block = 10888481095818132869;
-            }
-        }
-        match current_block {
-            10888481095818132869 => {}
-            _ =>
-            /* The code point larger than 0x10FFFF is not legal
-             * Unicode values. */
-            {
-                if !(wc > 0x10ffff as u32) {
-                    /* Correctly gets a Unicode, returns used bytes. */
-                    unsafe { *pwc = wc }; /* set the Replacement Character instead. */
-                    return cnt;
                 }
             }
         }
@@ -1814,7 +1595,6 @@ extern "C" fn combine_surrogate_pair(mut uc: uint32_t, uc2: uint32_t) -> uint32_
 * a unicode character is replaced with U+FFFD.
 */
 extern "C" fn cesu8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i32 {
-    let mut current_block: u64;
     let mut wc: uint32_t = 0 as uint32_t;
     let mut cnt: i32;
     cnt = _utf8_to_unicode(&mut wc, s, n);
@@ -1822,37 +1602,39 @@ extern "C" fn cesu8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i
         let mut wc2: uint32_t = 0 as uint32_t;
         if n - 3 < 3 {
             /* Invalid byte sequence. */
-            current_block = 2846206098543151513;
-        } else {
-            cnt = _utf8_to_unicode(&mut wc2, unsafe { s.offset(3) }, n - 3);
-            if cnt != 3 || !(wc2 >= 0xdc00 as u32 && wc2 <= 0xdfff as u32) {
-                /* Invalid byte sequence. */
-                current_block = 2846206098543151513;
-            } else {
-                wc = combine_surrogate_pair(wc, wc2);
-                cnt = 6;
-                current_block = 12209867499936983673;
-            }
-        }
-    } else if cnt == 3 && (wc >= 0xdc00 as u32 && wc <= 0xdfff as u32) {
-        /* Invalid byte sequence. */
-        current_block = 2846206098543151513; /* set the Replacement Character instead. */
-    } else {
-        current_block = 12209867499936983673;
-    }
-    match current_block {
-        2846206098543151513 => {
             unsafe { *pwc = 0xfffd as uint32_t };
             if cnt > 0 {
                 cnt *= -(1 as i32)
             }
             return cnt;
+        } else {
+            cnt = _utf8_to_unicode(&mut wc2, unsafe { s.offset(3) }, n - 3);
+            if cnt != 3 || !(wc2 >= 0xdc00 as u32 && wc2 <= 0xdfff as u32) {
+                /* Invalid byte sequence. */
+                unsafe { *pwc = 0xfffd as uint32_t };
+                if cnt > 0 {
+                    cnt *= -(1 as i32)
+                }
+                return cnt;
+            } else {
+                wc = combine_surrogate_pair(wc, wc2);
+                cnt = 6;
+                unsafe { *pwc = wc };
+                return cnt;
+            }
         }
-        _ => {
-            unsafe { *pwc = wc };
-            return cnt;
+    } else if cnt == 3 && (wc >= 0xdc00 as u32 && wc <= 0xdfff as u32) {
+        /* Invalid byte sequence. */
+        unsafe { *pwc = 0xfffd as uint32_t };
+        if cnt > 0 {
+            cnt *= -(1 as i32)
         }
-    };
+        return cnt;
+        /* set the Replacement Character instead. */
+    } else {
+        unsafe { *pwc = wc };
+        return cnt;
+    }
 }
 /*
 * Convert a Unicode code point to a single UTF-8 sequence.
@@ -2155,57 +1937,32 @@ extern "C" fn archive_string_append_unicode(
         None;
     let safe_sc = unsafe { &mut *sc };
     if safe_sc.flag & (1) << 10 != 0 {
-        unparse = Some(
-            unicode_to_utf16be
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16be);
         ts = 2
     } else if safe_sc.flag & (1) << 12 != 0 {
-        unparse = Some(
-            unicode_to_utf16le
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16le);
         ts = 2
     } else if safe_sc.flag & (1) << 8 != 0 {
-        unparse = Some(
-            unicode_to_utf8 as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf8);
         ts = 1
     } else if safe_sc.flag & (1) << 11 != 0 {
-        unparse = Some(
-            unicode_to_utf16be
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16be);
         ts = 2
     } else if safe_sc.flag & (1) << 13 != 0 {
-        unparse = Some(
-            unicode_to_utf16le
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16le);
         ts = 2
     } else {
-        unparse = Some(
-            unicode_to_utf8 as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf8);
         ts = 1
     }
     if safe_sc.flag & (1) << 11 != 0 {
-        parse = Some(
-            utf16be_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16be_to_unicode);
         tm = 1
     } else if safe_sc.flag & (1) << 13 != 0 {
-        parse = Some(
-            utf16le_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16le_to_unicode);
         tm = 1
     } else {
-        parse = Some(
-            cesu8_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(cesu8_to_unicode);
         tm = ts
     }
     let safe_as_0 = unsafe { &mut *as_0 };
@@ -2347,27 +2104,19 @@ extern "C" fn archive_string_normalize_C(
     ts = 1;
     let safe_sc = unsafe { &mut *sc };
     if safe_sc.flag & (1) << 10 != 0 {
-        unparse = Some(
-            unicode_to_utf16be
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16be);
         ts = 2;
         if safe_sc.flag & (1) << 11 != 0 {
             always_replace = 0
         }
     } else if safe_sc.flag & (1) << 12 != 0 {
-        unparse = Some(
-            unicode_to_utf16le
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16le);
         ts = 2;
         if safe_sc.flag & (1) << 13 != 0 {
             always_replace = 0
         }
     } else if safe_sc.flag & (1) << 8 != 0 {
-        unparse = Some(
-            unicode_to_utf8 as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf8);
         if safe_sc.flag & (1) << 9 != 0 {
             always_replace = 0
         }
@@ -2381,39 +2130,24 @@ extern "C" fn archive_string_normalize_C(
             unparse = Some(unicode_to_utf16be);
             ts = 2
         } else if safe_sc.flag & (1) << 13 != 0 {
-            unparse = Some(
-                unicode_to_utf16le
-                    as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-            );
+            unparse = Some(unicode_to_utf16le);
             ts = 2
         } else {
-            unparse = Some(
-                unicode_to_utf8
-                    as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-            )
+            unparse = Some(unicode_to_utf8)
         }
     }
     if safe_sc.flag & (1) << 11 != 0 {
-        parse = Some(
-            utf16be_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16be_to_unicode);
         tm = 1;
         spair = 4
         /* surrogate pair size in UTF-16. */
     } else if safe_sc.flag & (1) << 13 != 0 {
-        parse = Some(
-            utf16le_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16le_to_unicode);
         tm = 1;
         spair = 4
         /* surrogate pair size in UTF-16. */
     } else {
-        parse = Some(
-            cesu8_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(cesu8_to_unicode);
         tm = ts;
         spair = 6
         /* surrogate pair size in UTF-8. */
@@ -2533,7 +2267,7 @@ extern "C" fn archive_string_normalize_C(
                                     .offset(-(ts as isize))
                             }
                         }
-                        let mut current_block_85: u64;
+                        let mut current_block: u64;
                         match n {
                             4 => {
                                 let fresh17 = ucptr;
@@ -2541,45 +2275,45 @@ extern "C" fn archive_string_normalize_C(
                                 let fresh18 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh18 = *fresh17 };
-                                current_block_85 = 7097572078640228219;
+                                current_block = 4;
                             }
                             3 => {
-                                current_block_85 = 7097572078640228219;
+                                current_block = 3;
                             }
                             2 => {
-                                current_block_85 = 3239503646190857518;
+                                current_block = 2;
                             }
                             1 => {
-                                current_block_85 = 4212176911995692010;
+                                current_block = 1;
                             }
                             _ => {
-                                current_block_85 = 7301440000599063274;
+                                current_block = 0;
                             }
                         }
-                        match current_block_85 {
-                            7097572078640228219 => {
+                        match current_block {
+                            4 | 3 => {
                                 let fresh19 = ucptr;
                                 ucptr = unsafe { ucptr.offset(1) };
                                 let fresh20 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh20 = *fresh19 };
-                                current_block_85 = 3239503646190857518;
+                                current_block = 2;
                             }
                             _ => {}
                         }
-                        match current_block_85 {
-                            3239503646190857518 => {
+                        match current_block {
+                            2 => {
                                 let fresh21 = ucptr;
                                 ucptr = unsafe { ucptr.offset(1) };
                                 let fresh22 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh22 = *fresh21 };
-                                current_block_85 = 4212176911995692010;
+                                current_block = 1;
                             }
                             _ => {}
                         }
-                        match current_block_85 {
-                            4212176911995692010 => {
+                        match current_block {
+                            1 => {
                                 let fresh23 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh23 = *ucptr }
@@ -2659,7 +2393,7 @@ extern "C" fn archive_string_normalize_C(
                                             .offset(-(ts as isize))
                                     }
                                 }
-                                let mut current_block_126: u64;
+                                let mut current_block: u64;
                                 match n {
                                     4 => {
                                         let fresh24 = ucptr;
@@ -2667,45 +2401,45 @@ extern "C" fn archive_string_normalize_C(
                                         let fresh25 = p;
                                         p = unsafe { p.offset(1) };
                                         unsafe { *fresh25 = *fresh24 };
-                                        current_block_126 = 4836364342735439733;
+                                        current_block = 4;
                                     }
                                     3 => {
-                                        current_block_126 = 4836364342735439733;
+                                        current_block = 3;
                                     }
                                     2 => {
-                                        current_block_126 = 9831359549883350336;
+                                        current_block = 2;
                                     }
                                     1 => {
-                                        current_block_126 = 7853011364949082690;
+                                        current_block = 1;
                                     }
                                     _ => {
-                                        current_block_126 = 7293850626974290116;
+                                        current_block = 0;
                                     }
                                 }
-                                match current_block_126 {
-                                    4836364342735439733 => {
+                                match current_block {
+                                    4 | 3 => {
                                         let fresh26 = ucptr;
                                         ucptr = unsafe { ucptr.offset(1) };
                                         let fresh27 = p;
                                         p = unsafe { p.offset(1) };
                                         unsafe { *fresh27 = *fresh26 };
-                                        current_block_126 = 9831359549883350336;
+                                        current_block = 2;
                                     }
                                     _ => {}
                                 }
-                                match current_block_126 {
-                                    9831359549883350336 => {
+                                match current_block {
+                                    2 => {
                                         let fresh28 = ucptr;
                                         ucptr = unsafe { ucptr.offset(1) };
                                         let fresh29 = p;
                                         p = unsafe { p.offset(1) };
                                         unsafe { *fresh29 = *fresh28 };
-                                        current_block_126 = 7853011364949082690;
+                                        current_block = 1;
                                     }
                                     _ => {}
                                 }
-                                match current_block_126 {
-                                    7853011364949082690 => {
+                                match current_block {
+                                    1 => {
                                         let fresh30 = p;
                                         p = unsafe { p.offset(1) };
                                         unsafe { *fresh30 = *ucptr }
@@ -2782,7 +2516,7 @@ extern "C" fn archive_string_normalize_C(
                                                 .offset(-(ts as isize))
                                         }
                                     }
-                                    let mut current_block_169: u64;
+                                    let mut current_block: u64;
                                     match n {
                                         4 => {
                                             let fresh31 = ucptr;
@@ -2790,45 +2524,45 @@ extern "C" fn archive_string_normalize_C(
                                             let fresh32 = p;
                                             p = unsafe { p.offset(1) };
                                             unsafe { *fresh32 = *fresh31 };
-                                            current_block_169 = 12324466122364098067;
+                                            current_block = 4;
                                         }
                                         3 => {
-                                            current_block_169 = 12324466122364098067;
+                                            current_block = 3;
                                         }
                                         2 => {
-                                            current_block_169 = 2793525517544005515;
+                                            current_block = 2;
                                         }
                                         1 => {
-                                            current_block_169 = 14954118662474697770;
+                                            current_block = 1;
                                         }
                                         _ => {
-                                            current_block_169 = 857031028540284188;
+                                            current_block = 0;
                                         }
                                     }
-                                    match current_block_169 {
-                                        12324466122364098067 => {
+                                    match current_block {
+                                        4 | 3 => {
                                             let fresh33 = ucptr;
                                             ucptr = unsafe { ucptr.offset(1) };
                                             let fresh34 = p;
                                             p = unsafe { p.offset(1) };
                                             unsafe { *fresh34 = *fresh33 };
-                                            current_block_169 = 2793525517544005515;
+                                            current_block = 2;
                                         }
                                         _ => {}
                                     }
-                                    match current_block_169 {
-                                        2793525517544005515 => {
+                                    match current_block {
+                                        2 => {
                                             let fresh35 = ucptr;
                                             ucptr = unsafe { ucptr.offset(1) };
                                             let fresh36 = p;
                                             p = unsafe { p.offset(1) };
                                             unsafe { *fresh36 = *fresh35 };
-                                            current_block_169 = 14954118662474697770;
+                                            current_block = 1;
                                         }
                                         _ => {}
                                     }
-                                    match current_block_169 {
-                                        14954118662474697770 => {
+                                    match current_block {
+                                        1 => {
                                             let fresh37 = p;
                                             p = unsafe { p.offset(1) };
                                             unsafe { *fresh37 = *ucptr }
@@ -2921,7 +2655,7 @@ extern "C" fn archive_string_normalize_C(
                                                     .offset(-(ts as isize))
                                             }
                                         }
-                                        let mut current_block_211: u64;
+                                        let mut current_block: u64;
                                         match n {
                                             4 => {
                                                 let fresh38 = ucptr;
@@ -2929,45 +2663,45 @@ extern "C" fn archive_string_normalize_C(
                                                 let fresh39 = p;
                                                 p = unsafe { p.offset(1) };
                                                 unsafe { *fresh39 = *fresh38 };
-                                                current_block_211 = 17815729426413574898;
+                                                current_block = 4;
                                             }
                                             3 => {
-                                                current_block_211 = 17815729426413574898;
+                                                current_block = 3;
                                             }
                                             2 => {
-                                                current_block_211 = 1622300673798121472;
+                                                current_block = 2;
                                             }
                                             1 => {
-                                                current_block_211 = 11107048155855281638;
+                                                current_block = 1;
                                             }
                                             _ => {
-                                                current_block_211 = 10644040035716118461;
+                                                current_block = 0;
                                             }
                                         }
-                                        match current_block_211 {
-                                            17815729426413574898 => {
+                                        match current_block {
+                                            4 | 3 => {
                                                 let fresh40 = ucptr;
                                                 ucptr = unsafe { ucptr.offset(1) };
                                                 let fresh41 = p;
                                                 p = unsafe { p.offset(1) };
                                                 unsafe { *fresh41 = *fresh40 };
-                                                current_block_211 = 1622300673798121472;
+                                                current_block = 2;
                                             }
                                             _ => {}
                                         }
-                                        match current_block_211 {
-                                            1622300673798121472 => {
+                                        match current_block {
+                                            2 => {
                                                 let fresh42 = ucptr;
                                                 ucptr = unsafe { ucptr.offset(1) };
                                                 let fresh43 = p;
                                                 p = unsafe { p.offset(1) };
                                                 unsafe { *fresh43 = *fresh42 };
-                                                current_block_211 = 11107048155855281638;
+                                                current_block = 1;
                                             }
                                             _ => {}
                                         }
-                                        match current_block_211 {
-                                            11107048155855281638 => {
+                                        match current_block {
+                                            1 => {
                                                 let fresh44 = p;
                                                 p = unsafe { p.offset(1) };
                                                 unsafe { *fresh44 = *ucptr }
@@ -3178,7 +2912,7 @@ extern "C" fn archive_string_normalize_C(
                                                     .offset(-(ts as isize))
                                             }
                                         }
-                                        let mut current_block_297: u64;
+                                        let mut current_block: u64;
                                         match n {
                                             4 => {
                                                 let fresh45 = ucptr;
@@ -3186,45 +2920,45 @@ extern "C" fn archive_string_normalize_C(
                                                 let fresh46 = p;
                                                 p = unsafe { p.offset(1) };
                                                 unsafe { *fresh46 = *fresh45 };
-                                                current_block_297 = 13074264284986775319;
+                                                current_block = 1;
                                             }
                                             3 => {
-                                                current_block_297 = 13074264284986775319;
+                                                current_block = 1;
                                             }
                                             2 => {
-                                                current_block_297 = 7422398550536973736;
+                                                current_block = 2;
                                             }
                                             1 => {
-                                                current_block_297 = 17173725837442240300;
+                                                current_block = 3;
                                             }
                                             _ => {
-                                                current_block_297 = 6632235551759984864;
+                                                current_block = 4;
                                             }
                                         }
-                                        match current_block_297 {
-                                            13074264284986775319 => {
+                                        match current_block {
+                                            1 => {
                                                 let fresh47 = ucptr;
                                                 ucptr = unsafe { ucptr.offset(1) };
                                                 let fresh48 = p;
                                                 p = unsafe { p.offset(1) };
                                                 unsafe { *fresh48 = *fresh47 };
-                                                current_block_297 = 7422398550536973736;
+                                                current_block = 2;
                                             }
                                             _ => {}
                                         }
-                                        match current_block_297 {
-                                            7422398550536973736 => {
+                                        match current_block {
+                                            2 => {
                                                 let fresh49 = ucptr;
                                                 ucptr = unsafe { ucptr.offset(1) };
                                                 let fresh50 = p;
                                                 p = unsafe { p.offset(1) };
                                                 unsafe { *fresh50 = *fresh49 };
-                                                current_block_297 = 17173725837442240300;
+                                                current_block = 3;
                                             }
                                             _ => {}
                                         }
-                                        match current_block_297 {
-                                            17173725837442240300 => {
+                                        match current_block {
+                                            3 => {
                                                 let fresh51 = p;
                                                 p = unsafe { p.offset(1) };
                                                 unsafe { *fresh51 = *ucptr }
@@ -3403,7 +3137,7 @@ extern "C" fn archive_string_normalize_C(
                                 .offset(-(ts as isize))
                         }
                     }
-                    let mut current_block_362: u64;
+                    let mut current_block: u64;
                     match n {
                         4 => {
                             let fresh52 = ucptr;
@@ -3411,45 +3145,45 @@ extern "C" fn archive_string_normalize_C(
                             let fresh53 = p;
                             p = unsafe { p.offset(1) };
                             unsafe { *fresh53 = *fresh52 };
-                            current_block_362 = 3991391797406386710;
+                            current_block = 1;
                         }
                         3 => {
-                            current_block_362 = 3991391797406386710;
+                            current_block = 1;
                         }
                         2 => {
-                            current_block_362 = 14279400483080654501;
+                            current_block = 2;
                         }
                         1 => {
-                            current_block_362 = 12619937364747372903;
+                            current_block = 3;
                         }
                         _ => {
-                            current_block_362 = 16953886395775657100;
+                            current_block = 4;
                         }
                     }
-                    match current_block_362 {
-                        3991391797406386710 => {
+                    match current_block {
+                        1 => {
                             let fresh54 = ucptr;
                             ucptr = unsafe { ucptr.offset(1) };
                             let fresh55 = p;
                             p = unsafe { p.offset(1) };
                             unsafe { *fresh55 = *fresh54 };
-                            current_block_362 = 14279400483080654501;
+                            current_block = 2;
                         }
                         _ => {}
                     }
-                    match current_block_362 {
-                        14279400483080654501 => {
+                    match current_block {
+                        2 => {
                             let fresh56 = ucptr;
                             ucptr = unsafe { ucptr.offset(1) };
                             let fresh57 = p;
                             p = unsafe { p.offset(1) };
                             unsafe { *fresh57 = *fresh56 };
-                            current_block_362 = 12619937364747372903;
+                            current_block = 3;
                         }
                         _ => {}
                     }
-                    match current_block_362 {
-                        12619937364747372903 => {
+                    match current_block {
+                        3 => {
                             let fresh58 = p;
                             p = unsafe { p.offset(1) };
                             unsafe { *fresh58 = *ucptr }
@@ -3541,7 +3275,7 @@ extern "C" fn archive_string_normalize_C(
                                 .offset(-(ts as isize))
                         }
                     }
-                    let mut current_block_408: u64;
+                    let mut current_block: u64;
                     match n {
                         4 => {
                             let fresh59 = ucptr;
@@ -3549,45 +3283,45 @@ extern "C" fn archive_string_normalize_C(
                             let fresh60 = p;
                             p = unsafe { p.offset(1) };
                             unsafe { *fresh60 = *fresh59 };
-                            current_block_408 = 804933807915524214;
+                            current_block = 4;
                         }
                         3 => {
-                            current_block_408 = 804933807915524214;
+                            current_block = 3;
                         }
                         2 => {
-                            current_block_408 = 16839940683546283140;
+                            current_block = 2;
                         }
                         1 => {
-                            current_block_408 = 9498948812011783314;
+                            current_block = 1;
                         }
                         _ => {
-                            current_block_408 = 4637513635194184052;
+                            current_block = 0;
                         }
                     }
-                    match current_block_408 {
-                        804933807915524214 => {
+                    match current_block {
+                        4 | 3 => {
                             let fresh61 = ucptr;
                             ucptr = unsafe { ucptr.offset(1) };
                             let fresh62 = p;
                             p = unsafe { p.offset(1) };
                             unsafe { *fresh62 = *fresh61 };
-                            current_block_408 = 16839940683546283140;
+                            current_block = 2;
                         }
                         _ => {}
                     }
-                    match current_block_408 {
-                        16839940683546283140 => {
+                    match current_block {
+                        2 => {
                             let fresh63 = ucptr;
                             ucptr = unsafe { ucptr.offset(1) };
                             let fresh64 = p;
                             p = unsafe { p.offset(1) };
                             unsafe { *fresh64 = *fresh63 };
-                            current_block_408 = 9498948812011783314;
+                            current_block = 1;
                         }
                         _ => {}
                     }
-                    match current_block_408 {
-                        9498948812011783314 => {
+                    match current_block {
+                        1 => {
                             let fresh65 = p;
                             p = unsafe { p.offset(1) };
                             unsafe { *fresh65 = *ucptr }
@@ -3707,27 +3441,19 @@ extern "C" fn archive_string_normalize_D(
     ts = 1;
     let safe_sc = unsafe { &mut *sc };
     if safe_sc.flag & (1) << 10 != 0 {
-        unparse = Some(
-            unicode_to_utf16be
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16be);
         ts = 2;
         if safe_sc.flag & (1) << 11 != 0 {
             always_replace = 0
         }
     } else if safe_sc.flag & (1) << 12 != 0 {
-        unparse = Some(
-            unicode_to_utf16le
-                as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf16le);
         ts = 2;
         if safe_sc.flag & (1) << 13 != 0 {
             always_replace = 0
         }
     } else if safe_sc.flag & (1) << 8 != 0 {
-        unparse = Some(
-            unicode_to_utf8 as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-        );
+        unparse = Some(unicode_to_utf8);
         if safe_sc.flag & (1) << 9 != 0 {
             always_replace = 0
         }
@@ -3741,39 +3467,24 @@ extern "C" fn archive_string_normalize_D(
             unparse = Some(unicode_to_utf16be);
             ts = 2
         } else if safe_sc.flag & (1) << 13 != 0 {
-            unparse = Some(
-                unicode_to_utf16le
-                    as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-            );
+            unparse = Some(unicode_to_utf16le);
             ts = 2
         } else {
-            unparse = Some(
-                unicode_to_utf8
-                    as unsafe extern "C" fn(_: *mut u8, _: size_t, _: uint32_t) -> size_t,
-            )
+            unparse = Some(unicode_to_utf8)
         }
     }
     if safe_sc.flag & (1) << 11 != 0 {
-        parse = Some(
-            utf16be_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16be_to_unicode);
         tm = 1;
         spair = 4
         /* surrogate pair size in UTF-16. */
     } else if safe_sc.flag & (1) << 13 != 0 {
-        parse = Some(
-            utf16le_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(utf16le_to_unicode);
         tm = 1;
         spair = 4
         /* surrogate pair size in UTF-16. */
     } else {
-        parse = Some(
-            cesu8_to_unicode
-                as unsafe extern "C" fn(_: *mut uint32_t, _: *const u8, _: size_t) -> i32,
-        );
+        parse = Some(cesu8_to_unicode);
         tm = ts;
         spair = 6
         /* surrogate pair size in UTF-8. */
@@ -3876,7 +3587,7 @@ extern "C" fn archive_string_normalize_D(
                                     .offset(-(ts as isize))
                             }
                         }
-                        let mut current_block_84: u64;
+                        let mut current_block: u64;
                         match n {
                             4 => {
                                 let fresh66 = ucptr;
@@ -3884,45 +3595,45 @@ extern "C" fn archive_string_normalize_D(
                                 let fresh67 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh67 = *fresh66 };
-                                current_block_84 = 10535158022184288841;
+                                current_block = 4;
                             }
                             3 => {
-                                current_block_84 = 10535158022184288841;
+                                current_block = 3;
                             }
                             2 => {
-                                current_block_84 = 15881180934339525083;
+                                current_block = 2;
                             }
                             1 => {
-                                current_block_84 = 17578101850656618887;
+                                current_block = 1;
                             }
                             _ => {
-                                current_block_84 = 16313536926714486912;
+                                current_block = 0;
                             }
                         }
-                        match current_block_84 {
-                            10535158022184288841 => {
+                        match current_block {
+                            4 | 3 => {
                                 let fresh68 = ucptr;
                                 ucptr = unsafe { ucptr.offset(1) };
                                 let fresh69 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh69 = *fresh68 };
-                                current_block_84 = 15881180934339525083;
+                                current_block = 2;
                             }
                             _ => {}
                         }
-                        match current_block_84 {
-                            15881180934339525083 => {
+                        match current_block {
+                            2 => {
                                 let fresh70 = ucptr;
                                 ucptr = unsafe { ucptr.offset(1) };
                                 let fresh71 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh71 = *fresh70 };
-                                current_block_84 = 17578101850656618887;
+                                current_block = 1;
                             }
                             _ => {}
                         }
-                        match current_block_84 {
-                            17578101850656618887 => {
+                        match current_block {
+                            1 => {
                                 let fresh72 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh72 = *ucptr }
@@ -3980,7 +3691,7 @@ extern "C" fn archive_string_normalize_D(
                                     .offset(-(ts as isize))
                             }
                         }
-                        let mut current_block_119: u64;
+                        let mut current_block: u64;
                         match n {
                             4 => {
                                 let fresh73 = ucptr;
@@ -3988,45 +3699,45 @@ extern "C" fn archive_string_normalize_D(
                                 let fresh74 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh74 = *fresh73 };
-                                current_block_119 = 652883618805845336;
+                                current_block = 4;
                             }
                             3 => {
-                                current_block_119 = 652883618805845336;
+                                current_block = 3;
                             }
                             2 => {
-                                current_block_119 = 10885381508539941565;
+                                current_block = 2;
                             }
                             1 => {
-                                current_block_119 = 1748720607929988918;
+                                current_block = 1;
                             }
                             _ => {
-                                current_block_119 = 17212496701767205014;
+                                current_block = 0;
                             }
                         }
-                        match current_block_119 {
-                            652883618805845336 => {
+                        match current_block {
+                            4 | 3 => {
                                 let fresh75 = ucptr;
                                 ucptr = unsafe { ucptr.offset(1) };
                                 let fresh76 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh76 = *fresh75 };
-                                current_block_119 = 10885381508539941565;
+                                current_block = 2;
                             }
                             _ => {}
                         }
-                        match current_block_119 {
-                            10885381508539941565 => {
+                        match current_block {
+                            2 => {
                                 let fresh77 = ucptr;
                                 ucptr = unsafe { ucptr.offset(1) };
                                 let fresh78 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh78 = *fresh77 };
-                                current_block_119 = 1748720607929988918;
+                                current_block = 1;
                             }
                             _ => {}
                         }
-                        match current_block_119 {
-                            1748720607929988918 => {
+                        match current_block {
+                            1 => {
                                 let fresh79 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh79 = *ucptr }
@@ -4085,7 +3796,7 @@ extern "C" fn archive_string_normalize_D(
                                         .offset(-(ts as isize))
                                 }
                             }
-                            let mut current_block_154: u64;
+                            let mut current_block: u64;
                             match n {
                                 4 => {
                                     let fresh80 = ucptr;
@@ -4093,45 +3804,45 @@ extern "C" fn archive_string_normalize_D(
                                     let fresh81 = p;
                                     p = unsafe { p.offset(1) };
                                     unsafe { *fresh81 = *fresh80 };
-                                    current_block_154 = 11334115477782272202;
+                                    current_block = 4;
                                 }
                                 3 => {
-                                    current_block_154 = 11334115477782272202;
+                                    current_block = 3;
                                 }
                                 2 => {
-                                    current_block_154 = 13290801189948907371;
+                                    current_block = 2;
                                 }
                                 1 => {
-                                    current_block_154 = 3884795544804557996;
+                                    current_block = 1;
                                 }
                                 _ => {
-                                    current_block_154 = 4183419379601546972;
+                                    current_block = 0;
                                 }
                             }
-                            match current_block_154 {
-                                11334115477782272202 => {
+                            match current_block {
+                                4 | 3 => {
                                     let fresh82 = ucptr;
                                     ucptr = unsafe { ucptr.offset(1) };
                                     let fresh83 = p;
                                     p = unsafe { p.offset(1) };
                                     unsafe { *fresh83 = *fresh82 };
-                                    current_block_154 = 13290801189948907371;
+                                    current_block = 2;
                                 }
                                 _ => {}
                             }
-                            match current_block_154 {
-                                13290801189948907371 => {
+                            match current_block {
+                                2 => {
                                     let fresh84 = ucptr;
                                     ucptr = unsafe { ucptr.offset(1) };
                                     let fresh85 = p;
                                     p = unsafe { p.offset(1) };
                                     unsafe { *fresh85 = *fresh84 };
-                                    current_block_154 = 3884795544804557996;
+                                    current_block = 1;
                                 }
                                 _ => {}
                             }
-                            match current_block_154 {
-                                3884795544804557996 => {
+                            match current_block {
+                                1 => {
                                     let fresh86 = p;
                                     p = unsafe { p.offset(1) };
                                     unsafe { *fresh86 = *ucptr }
@@ -4202,7 +3913,7 @@ extern "C" fn archive_string_normalize_D(
                                     .offset(-(ts as isize))
                             }
                         }
-                        let mut current_block_187: u64;
+                        let mut current_block: u64;
                         match n {
                             4 => {
                                 let fresh87 = ucptr;
@@ -4210,45 +3921,45 @@ extern "C" fn archive_string_normalize_D(
                                 let fresh88 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh88 = *fresh87 };
-                                current_block_187 = 15076157755807638962;
+                                current_block = 4;
                             }
                             3 => {
-                                current_block_187 = 15076157755807638962;
+                                current_block = 3;
                             }
                             2 => {
-                                current_block_187 = 8544706183542245510;
+                                current_block = 2;
                             }
                             1 => {
-                                current_block_187 = 13594670467416856355;
+                                current_block = 1;
                             }
                             _ => {
-                                current_block_187 = 11577926782275222206;
+                                current_block = 0;
                             }
                         }
-                        match current_block_187 {
-                            15076157755807638962 => {
+                        match current_block {
+                            4 | 3 => {
                                 let fresh89 = ucptr;
                                 ucptr = unsafe { ucptr.offset(1) };
                                 let fresh90 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh90 = *fresh89 };
-                                current_block_187 = 8544706183542245510;
+                                current_block = 2;
                             }
                             _ => {}
                         }
-                        match current_block_187 {
-                            8544706183542245510 => {
+                        match current_block {
+                            2 => {
                                 let fresh91 = ucptr;
                                 ucptr = unsafe { ucptr.offset(1) };
                                 let fresh92 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh92 = *fresh91 };
-                                current_block_187 = 13594670467416856355;
+                                current_block = 1;
                             }
                             _ => {}
                         }
-                        match current_block_187 {
-                            13594670467416856355 => {
+                        match current_block {
+                            1 => {
                                 let fresh93 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh93 = *ucptr }
@@ -4378,7 +4089,7 @@ extern "C" fn archive_string_normalize_D(
                                     .offset(-(ts as isize))
                             }
                         }
-                        let mut current_block_248: u64;
+                        let mut current_block: u64;
                         match n {
                             4 => {
                                 let fresh94 = ucptr;
@@ -4386,45 +4097,45 @@ extern "C" fn archive_string_normalize_D(
                                 let fresh95 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh95 = *fresh94 };
-                                current_block_248 = 5730170476962647712;
+                                current_block = 4;
                             }
                             3 => {
-                                current_block_248 = 5730170476962647712;
+                                current_block = 3;
                             }
                             2 => {
-                                current_block_248 = 6046738488882787953;
+                                current_block = 2;
                             }
                             1 => {
-                                current_block_248 = 14641881900868759609;
+                                current_block = 1;
                             }
                             _ => {
-                                current_block_248 = 5564518856185825108;
+                                current_block = 0;
                             }
                         }
-                        match current_block_248 {
-                            5730170476962647712 => {
+                        match current_block {
+                            4 | 3 => {
                                 let fresh96 = ucptr;
                                 ucptr = unsafe { ucptr.offset(1) };
                                 let fresh97 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh97 = *fresh96 };
-                                current_block_248 = 6046738488882787953;
+                                current_block = 2;
                             }
                             _ => {}
                         }
-                        match current_block_248 {
-                            6046738488882787953 => {
+                        match current_block {
+                            2 => {
                                 let fresh98 = ucptr;
                                 ucptr = unsafe { ucptr.offset(1) };
                                 let fresh99 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh99 = *fresh98 };
-                                current_block_248 = 14641881900868759609;
+                                current_block = 1;
                             }
                             _ => {}
                         }
-                        match current_block_248 {
-                            14641881900868759609 => {
+                        match current_block {
+                            1 => {
                                 let fresh100 = p;
                                 p = unsafe { p.offset(1) };
                                 unsafe { *fresh100 = *ucptr }
@@ -4484,7 +4195,7 @@ extern "C" fn archive_string_normalize_D(
                                         .offset(-(ts as isize))
                                 }
                             }
-                            let mut current_block_284: u64;
+                            let mut current_block: u64;
                             match n {
                                 4 => {
                                     let fresh101 = ucptr;
@@ -4492,45 +4203,45 @@ extern "C" fn archive_string_normalize_D(
                                     let fresh102 = p;
                                     p = unsafe { p.offset(1) };
                                     unsafe { *fresh102 = *fresh101 };
-                                    current_block_284 = 2175997127793452133;
+                                    current_block = 4;
                                 }
                                 3 => {
-                                    current_block_284 = 2175997127793452133;
+                                    current_block = 3;
                                 }
                                 2 => {
-                                    current_block_284 = 16996603591816194332;
+                                    current_block = 2;
                                 }
                                 1 => {
-                                    current_block_284 = 3495754285402390224;
+                                    current_block = 1;
                                 }
                                 _ => {
-                                    current_block_284 = 16070719095729554596;
+                                    current_block = 0;
                                 }
                             }
-                            match current_block_284 {
-                                2175997127793452133 => {
+                            match current_block {
+                                4 | 3 => {
                                     let fresh103 = ucptr;
                                     ucptr = unsafe { ucptr.offset(1) };
                                     let fresh104 = p;
                                     p = unsafe { p.offset(1) };
                                     unsafe { *fresh104 = *fresh103 };
-                                    current_block_284 = 16996603591816194332;
+                                    current_block = 2;
                                 }
                                 _ => {}
                             }
-                            match current_block_284 {
-                                16996603591816194332 => {
+                            match current_block {
+                                2 => {
                                     let fresh105 = ucptr;
                                     ucptr = unsafe { ucptr.offset(1) };
                                     let fresh106 = p;
                                     p = unsafe { p.offset(1) };
                                     unsafe { *fresh106 = *fresh105 };
-                                    current_block_284 = 3495754285402390224;
+                                    current_block = 1;
                                 }
                                 _ => {}
                             }
-                            match current_block_284 {
-                                3495754285402390224 => {
+                            match current_block {
+                                1 => {
                                     let fresh107 = p;
                                     p = unsafe { p.offset(1) };
                                     unsafe { *fresh107 = *ucptr }

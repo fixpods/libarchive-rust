@@ -3908,25 +3908,15 @@ pub fn archive_read_support_format_rar5(mut _a: *mut archive) -> i32 {
             ar,
             rar as *mut (),
             b"rar5\x00" as *const u8,
-            Some(rar5_bid as unsafe fn(_: *mut archive_read, _: i32) -> i32),
-            Some(
-                rar5_options as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
-            ),
-            Some(rar5_read_header as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32),
-            Some(
-                rar5_read_data
-                    as unsafe fn(
-                        _: *mut archive_read,
-                        _: *mut *const (),
-                        _: *mut size_t,
-                        _: *mut int64_t,
-                    ) -> i32,
-            ),
-            Some(rar5_read_data_skip as unsafe fn(_: *mut archive_read) -> i32),
-            Some(rar5_seek_data as unsafe fn(_: *mut archive_read, _: int64_t, _: i32) -> int64_t),
-            Some(rar5_cleanup as unsafe fn(_: *mut archive_read) -> i32),
-            Some(rar5_capabilities as unsafe fn(_: *mut archive_read) -> i32),
-            Some(rar5_has_encrypted_entries as unsafe fn(_: *mut archive_read) -> i32),
+            Some(rar5_bid),
+            Some(rar5_options),
+            Some(rar5_read_header),
+            Some(rar5_read_data),
+            Some(rar5_read_data_skip),
+            Some(rar5_seek_data),
+            Some(rar5_cleanup),
+            Some(rar5_capabilities),
+            Some(rar5_has_encrypted_entries),
         )
     };
     if ret != ARCHIVE_RAR5_DEFINED_PARAM.archive_ok {

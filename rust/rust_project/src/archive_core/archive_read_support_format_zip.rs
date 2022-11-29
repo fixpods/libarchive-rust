@@ -424,7 +424,7 @@ fn process_extra(
             }
             return -25;
         }
-        let mut current_block_140: u64;
+        let mut current_block: u64;
         match headerid as i32 {
             1 => {
                 /* Zip64 extended information extra field. */
@@ -507,37 +507,37 @@ fn process_extra(
                 /* Flag bits indicate which dates are present. */
                 if flags & 0x1 != 0 {
                     if datasize < 4 {
-                        current_block_140 = 6893286596494697181;
+                        current_block = 1;
                     } else {
                         safe_zip_entry.mtime =
                             archive_le32dec(unsafe { p.offset(offset as isize) as *const () })
                                 as time_t;
                         offset = offset + 4;
                         datasize = (datasize - 4) as u16;
-                        current_block_140 = 6072622540298447352;
+                        current_block = 2;
                     }
                 } else {
-                    current_block_140 = 6072622540298447352;
+                    current_block = 2;
                 }
-                match current_block_140 {
-                    6893286596494697181 => {}
+                match current_block {
+                    1 => {}
                     _ => {
                         if flags & 0x2 != 0 {
                             if datasize < 4 {
-                                current_block_140 = 6893286596494697181;
+                                current_block = 1;
                             } else {
                                 safe_zip_entry.atime = archive_le32dec(unsafe {
                                     p.offset(offset as isize) as *const ()
                                 }) as time_t;
                                 offset = offset + 4;
                                 datasize = (datasize - 4) as u16;
-                                current_block_140 = 17075014677070940716;
+                                current_block = 3;
                             }
                         } else {
-                            current_block_140 = 17075014677070940716;
+                            current_block = 3;
                         }
-                        match current_block_140 {
-                            6893286596494697181 => {}
+                        match current_block {
+                            1 => {}
                             _ => {
                                 if flags & 0x4 as i32 != 0 {
                                     if !(datasize < 4) {
@@ -621,7 +621,7 @@ fn process_extra(
                     if bitmap & 1 != 0 {
                         /* 2 byte "version made by" */
                         if datasize < 2 {
-                            current_block_140 = 6893286596494697181;
+                            current_block = 1;
                         } else {
                             safe_zip_entry.system =
                                 (archive_le16dec(unsafe { p.offset(offset as isize) as *const () })
@@ -629,19 +629,19 @@ fn process_extra(
                                     >> 8) as u8;
                             offset = offset + 2;
                             datasize = (datasize - 2) as u16;
-                            current_block_140 = 6471821049853688503;
+                            current_block = 4;
                         }
                     } else {
-                        current_block_140 = 6471821049853688503;
+                        current_block = 4;
                     }
-                    match current_block_140 {
-                        6893286596494697181 => {}
+                    match current_block {
+                        1 => {}
                         _ => {
                             if bitmap & 2 != 0 {
                                 /* 2 byte "internal file attributes" */
                                 let mut internal_attributes: uint32_t = 0;
                                 if datasize < 2 {
-                                    current_block_140 = 6893286596494697181;
+                                    current_block = 1;
                                 } else {
                                     internal_attributes = archive_le16dec(unsafe {
                                         p.offset(offset as isize) as *const ()
@@ -651,19 +651,19 @@ fn process_extra(
                                     /* UNUSED */
                                     offset = offset + 2;
                                     datasize = (datasize - 2) as u16;
-                                    current_block_140 = 6712462580143783635;
+                                    current_block = 5;
                                 }
                             } else {
-                                current_block_140 = 6712462580143783635;
+                                current_block = 5;
                             }
-                            match current_block_140 {
-                                6893286596494697181 => {}
+                            match current_block {
+                                1 => {}
                                 _ => {
                                     if bitmap & 4 as i32 != 0 {
                                         /* 4 byte "external file attributes" */
                                         let mut external_attributes: uint32_t = 0;
                                         if datasize < 4 {
-                                            current_block_140 = 6893286596494697181;
+                                            current_block = 1;
                                         } else {
                                             external_attributes = archive_le32dec(unsafe {
                                                 p.offset(offset as isize) as *const ()
@@ -691,13 +691,13 @@ fn process_extra(
                                             }
                                             offset = offset + 4;
                                             datasize = (datasize - 4) as u16;
-                                            current_block_140 = 1013506999122146761;
+                                            current_block = 6;
                                         }
                                     } else {
-                                        current_block_140 = 1013506999122146761;
+                                        current_block = 6;
                                     }
-                                    match current_block_140 {
-                                        6893286596494697181 => {}
+                                    match current_block {
+                                        1 => {}
                                         _ => {
                                             if bitmap & 8 != 0 {
                                                 /* 2 byte comment length + comment */
@@ -745,15 +745,15 @@ fn process_extra(
                          * available, then the path name from the main
                          * field will more likely be correct. */
                         if safe_zip.sconv_utf8.is_null() {
-                            current_block_140 = 6893286596494697181;
+                            current_block = 1;
                         } else {
-                            current_block_140 = 914440069034635393;
+                            current_block = 7;
                         }
                     } else {
-                        current_block_140 = 914440069034635393;
+                        current_block = 7;
                     }
-                    match current_block_140 {
-                        6893286596494697181 => {}
+                    match current_block {
+                        1 => {}
                         _ =>
                         /* Make sure the CRC32 of the filename matches. */
                         {
@@ -773,18 +773,18 @@ fn process_extra(
                                     })
                                         as u64;
                                     if file_crc != utf_crc {
-                                        current_block_140 = 6893286596494697181;
+                                        current_block = 1;
                                     } else {
-                                        current_block_140 = 4235089732467486934;
+                                        current_block = 8;
                                     }
                                 } else {
-                                    current_block_140 = 4235089732467486934;
+                                    current_block = 8;
                                 }
                             } else {
-                                current_block_140 = 4235089732467486934;
+                                current_block = 8;
                             }
-                            match current_block_140 {
-                                6893286596494697181 => {}
+                            match current_block {
+                                1 => {}
                                 _ => {
                                     unsafe {
                                         (_archive_entry_copy_pathname_l_safe(
@@ -2173,7 +2173,7 @@ fn zipx_ppmd8_init(a: *mut archive_read, zip: *mut zip) -> i32 {
      * and will increment the 'zip->zipx_ppmd_read_compressed' counter. */
     safe_zip.ppmd8.Stream.In = &mut safe_zip.zipx_ppmd_stream;
     safe_zip.zipx_ppmd_stream.a = a;
-    safe_zip.zipx_ppmd_stream.Read = Some(ppmd_read as unsafe fn(_: *mut ()) -> Byte);
+    safe_zip.zipx_ppmd_stream.Read = Some(ppmd_read);
     /* Reset number of read bytes to 0. */
     safe_zip.zipx_ppmd_read_compressed = 0;
     /* Read Ppmd8 header (2 bytes). */
@@ -2801,15 +2801,15 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
             if safe_zip.iv.is_null() {
                 safe_zip.iv = unsafe { malloc_safe(safe_zip.iv_size as u64) as *mut uint8_t };
                 if safe_zip.iv.is_null() {
-                    current_block = 14633142221952416065;
+                    current_block = 1;
                 } else {
-                    current_block = 13056961889198038528;
+                    current_block = 2;
                 }
             } else {
-                current_block = 13056961889198038528;
+                current_block = 2;
             }
             match current_block {
-                13056961889198038528 => {
+                2 => {
                     unsafe {
                         memcpy_safe(
                             safe_zip.iv as *mut (),
@@ -2824,11 +2824,11 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                     p = unsafe { __archive_read_ahead_safe(a, 14 as size_t, 0 as *mut ssize_t) }
                         as *const u8;
                     if p.is_null() {
-                        current_block = 16563619814557583723;
+                        current_block = 3;
                     } else {
                         remaining_size = archive_le32dec(p as *const ());
                         if remaining_size < 16 || remaining_size > (1 << 18) as u32 {
-                            current_block = 4407371520091252421;
+                            current_block = 4;
                         } else {
                             /* Check if format version is supported. */
                             if archive_le16dec(unsafe { p.offset(4 as isize) as *const () }) as i32
@@ -2852,42 +2852,9 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                             (safe_zip).alg_id =
                                 archive_le16dec(unsafe { p.offset(6 as isize) as *const () })
                                     as u32;
-                            let mut current_block_20: u64;
                             match (safe_zip).alg_id {
-                                26113 => {
-                                    current_block_20 = 11636175345244025579;
-                                }
-                                26114 => {
-                                    /* RC2 */
-                                    current_block_20 = 5409782791074593849;
-                                }
-                                26115 => {
-                                    current_block_20 = 5409782791074593849;
-                                }
-                                26121 => {
-                                    current_block_20 = 3163237960477416714;
-                                }
-                                26126 => {
-                                    current_block_20 = 4677108676130123712;
-                                }
-                                26127 => {
-                                    current_block_20 = 4623291255589883848;
-                                }
-                                26128 => {
-                                    current_block_20 = 15825984478691188700;
-                                }
-                                26370 => {
-                                    current_block_20 = 14754940632251487685;
-                                }
-                                26400 => {
-                                    current_block_20 = 6104266330355589855;
-                                }
-                                26401 => {
-                                    current_block_20 = 3676109814153713962;
-                                }
-                                26625 => {
-                                    current_block_20 = 1742328038269932741;
-                                }
+                                26113 | 26114 | 26115 | 26121 | 26126 | 26127 | 26128 | 26370
+                                | 26400 | 26401 | 26625 => {}
                                 _ => {
                                     unsafe {
                                         archive_set_error(
@@ -2901,77 +2868,6 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                     return -25;
                                 }
                             }
-                            match current_block_20 {
-                                5409782791074593849 =>
-                                /* 3DES 168 */
-                                {
-                                    current_block_20 = 3163237960477416714;
-                                }
-                                _ => {}
-                            }
-                            match current_block_20 {
-                                3163237960477416714 =>
-                                /* 3DES 112 */
-                                {
-                                    current_block_20 = 4677108676130123712;
-                                }
-                                _ => {}
-                            }
-                            match current_block_20 {
-                                4677108676130123712 =>
-                                /* AES 128 */
-                                {
-                                    current_block_20 = 4623291255589883848;
-                                }
-                                _ => {}
-                            }
-                            match current_block_20 {
-                                4623291255589883848 =>
-                                /* AES 192 */
-                                {
-                                    current_block_20 = 15825984478691188700;
-                                }
-                                _ => {}
-                            }
-                            match current_block_20 {
-                                15825984478691188700 =>
-                                /* AES 256 */
-                                {
-                                    current_block_20 = 14754940632251487685;
-                                }
-                                _ => {}
-                            }
-                            match current_block_20 {
-                                14754940632251487685 =>
-                                /* RC2 (version >= 5.2) */
-                                {
-                                    current_block_20 = 6104266330355589855;
-                                }
-                                _ => {}
-                            }
-                            match current_block_20 {
-                                6104266330355589855 =>
-                                /* Blowfish */
-                                {
-                                    current_block_20 = 3676109814153713962;
-                                }
-                                _ => {}
-                            }
-                            match current_block_20 {
-                                3676109814153713962 =>
-                                /* Twofish */
-                                {
-                                    current_block_20 = 1742328038269932741;
-                                }
-                                _ => {}
-                            }
-                            match current_block_20 {
-                                1742328038269932741 =>
-                                    /* RC4 */
-                                /* Supported encryption algorithm. */
-                                    {}
-                                _ => {}
-                            }
                             /*
                              * Read a bit length field.
                              */
@@ -2984,18 +2880,9 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                             (safe_zip).flags =
                                 archive_le16dec(unsafe { p.offset(10 as isize) as *const () })
                                     as u32;
-                            let mut current_block_25: u64;
+                            let mut current_block: u64;
                             match (safe_zip).flags & 0xf000 {
-                                1 => {
-                                    current_block_25 = 8180496224585318153;
-                                }
-                                2 => {
-                                    /* Certificates only. */
-                                    current_block_25 = 1828496969429441299;
-                                }
-                                3 => {
-                                    current_block_25 = 1828496969429441299;
-                                }
+                                1 | 2 | 3 => {}
                                 _ => {
                                     unsafe {
                                         archive_set_error(
@@ -3008,12 +2895,6 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                     };
                                     return -25;
                                 }
-                            }
-                            match current_block_25 {
-                                1828496969429441299 =>
-                                    /* Password or certificate required to decrypt. */
-                                    {}
-                                _ => {}
                             }
                             if (safe_zip).flags & 0xf000 == 0
                                 || (safe_zip).flags & 0xf000 == 0x4000 as u32
@@ -3041,7 +2922,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                 || (safe_zip).erd_size + 16 > remaining_size
                                 || (safe_zip).erd_size + 16 < (safe_zip).erd_size
                             {
-                                current_block = 4407371520091252421;
+                                current_block = 4;
                             } else {
                                 if ts < (safe_zip).erd_size {
                                     unsafe { free_safe((safe_zip).erd as *mut ()) };
@@ -3055,22 +2936,22 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                     )
                                 } as *const u8;
                                 if p.is_null() {
-                                    current_block = 16563619814557583723;
+                                    current_block = 3;
                                 } else {
                                     if (safe_zip).erd.is_null() {
                                         (safe_zip).erd = unsafe {
                                             malloc_safe((safe_zip).erd_size as u64) as *mut uint8_t
                                         };
                                         if (safe_zip).erd.is_null() {
-                                            current_block = 14633142221952416065;
+                                            current_block = 1;
                                         } else {
-                                            current_block = 8151474771948790331;
+                                            current_block = 5;
                                         }
                                     } else {
-                                        current_block = 8151474771948790331;
+                                        current_block = 5;
                                     }
                                     match current_block {
-                                        14633142221952416065 => {}
+                                        1 => {}
                                         _ => {
                                             unsafe {
                                                 memcpy_safe(
@@ -3091,9 +2972,9 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                             }
                                                 as *const u8;
                                             if p.is_null() {
-                                                current_block = 16563619814557583723;
+                                                current_block = 3;
                                             } else if archive_le32dec(p as *const ()) != 0 {
-                                                current_block = 4407371520091252421;
+                                                current_block = 4;
                                             } else {
                                                 unsafe { __archive_read_consume_safe(a, 4) };
                                                 /* Reserved data size should be zero. */
@@ -3109,7 +2990,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                                         as *const u8
                                                 };
                                                 if p.is_null() {
-                                                    current_block = 16563619814557583723;
+                                                    current_block = 3;
                                                 } else {
                                                     ts = (safe_zip).v_size;
                                                     (safe_zip).v_size =
@@ -3125,7 +3006,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                                             + 16
                                                             < (safe_zip).erd_size + safe_zip.v_size
                                                     {
-                                                        current_block = 4407371520091252421;
+                                                        current_block = 4;
                                                     } else {
                                                         if ts < safe_zip.v_size {
                                                             unsafe {
@@ -3144,7 +3025,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                                         }
                                                             as *const u8;
                                                         if p.is_null() {
-                                                            current_block = 16563619814557583723;
+                                                            current_block = 3;
                                                         } else {
                                                             if safe_zip.v_data.is_null() {
                                                                 safe_zip.v_data = unsafe {
@@ -3154,17 +3035,15 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                                                 }
                                                                     as *mut uint8_t;
                                                                 if safe_zip.v_data.is_null() {
-                                                                    current_block =
-                                                                        14633142221952416065;
+                                                                    current_block = 1;
                                                                 } else {
-                                                                    current_block =
-                                                                        9437375157805982253;
+                                                                    current_block = 6;
                                                                 }
                                                             } else {
-                                                                current_block = 9437375157805982253;
+                                                                current_block = 6;
                                                             }
                                                             match current_block {
-                                                                14633142221952416065 => {}
+                                                                1 => {}
                                                                 _ => {
                                                                     unsafe {
                                                                         memcpy_safe(
@@ -3186,8 +3065,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                                                                         as *const u8
                                                                     };
                                                                     if p.is_null() {
-                                                                        current_block =
-                                                                            16563619814557583723;
+                                                                        current_block = 3;
                                                                     } else {
                                                                         safe_zip.v_crc32 =
                                                                             archive_le32dec(
@@ -3228,8 +3106,8 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                             }
                         }
                         match current_block {
-                            16563619814557583723 => {}
-                            14633142221952416065 => {}
+                            3 => {}
+                            1 => {}
                             _ => {
                                 unsafe {
                                     archive_set_error(
@@ -3246,7 +3124,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                 _ => {}
             }
             match current_block {
-                16563619814557583723 => {}
+                3 => {}
                 _ => {
                     unsafe {
                         archive_set_error(
@@ -3411,24 +3289,24 @@ fn init_WinZip_AES_decryption(a: *mut archive_read) -> i32 {
         1 => {
             salt_len = 8;
             key_len = 16;
-            current_block = 8236137900636309791;
+            current_block = 1;
         }
         2 => {
             salt_len = 12;
             key_len = 24;
-            current_block = 8236137900636309791;
+            current_block = 2;
         }
         3 => {
             salt_len = 16;
             key_len = 32;
-            current_block = 8236137900636309791;
+            current_block = 3;
         }
         _ => {
-            current_block = 10271104688625216027;
+            current_block = 0;
         }
     }
     match current_block {
-        8236137900636309791 => {
+        1 | 2 | 3 => {
             p = unsafe { __archive_read_ahead_safe(a, salt_len + 2, 0 as *mut ssize_t) };
             if p == 0 as *mut () {
                 unsafe {
@@ -3854,12 +3732,10 @@ fn archive_read_format_zip_options(a: *mut archive_read, key: *const u8, val: *c
             if unsafe { strcmp_safe(key, b"ignorecrc32\x00" as *const u8) } == 0 {
                 /* Mostly useful for testing. */
                 if unsafe { val.is_null() || *val.offset(0 as isize) as i32 == 0 } {
-                    (safe_zip).crc32func =
-                        Some(real_crc32 as unsafe fn(_: u64, _: *const (), _: size_t) -> u64);
+                    (safe_zip).crc32func = Some(real_crc32);
                     (safe_zip).ignore_crc32 = 0
                 } else {
-                    (safe_zip).crc32func =
-                        Some(fake_crc32 as unsafe fn(_: u64, _: *const (), _: size_t) -> u64);
+                    (safe_zip).crc32func = Some(fake_crc32);
                     (safe_zip).ignore_crc32 = 1
                 }
                 return 0;
@@ -4219,44 +4095,21 @@ pub fn archive_read_support_format_zip_streamable(_a: *mut archive) -> i32 {
      * any encrypted entries yet.
      */
     (safe_zip).has_encrypted_entries = -1;
-    (safe_zip).crc32func = Some(real_crc32 as unsafe fn(_: u64, _: *const (), _: size_t) -> u64);
+    (safe_zip).crc32func = Some(real_crc32);
     r = unsafe {
         __archive_read_register_format_safe(
             a,
             zip as *mut (),
             b"zip\x00" as *const u8,
             Some(archive_read_format_zip_streamable_bid),
-            Some(
-                archive_read_format_zip_options
-                    as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_streamable_read_header
-                    as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_read_data
-                    as unsafe fn(
-                        _: *mut archive_read,
-                        _: *mut *const (),
-                        _: *mut size_t,
-                        _: *mut int64_t,
-                    ) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_read_data_skip_streamable
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
+            Some(archive_read_format_zip_options),
+            Some(archive_read_format_zip_streamable_read_header),
+            Some(archive_read_format_zip_read_data),
+            Some(archive_read_format_zip_read_data_skip_streamable),
             None,
-            Some(archive_read_format_zip_cleanup as unsafe fn(_: *mut archive_read) -> i32),
-            Some(
-                archive_read_support_format_zip_capabilities_streamable
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_has_encrypted_entries
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
+            Some(archive_read_format_zip_cleanup),
+            Some(archive_read_support_format_zip_capabilities_streamable),
+            Some(archive_read_format_zip_has_encrypted_entries),
         )
     };
     if r != 0 {
@@ -4479,12 +4332,8 @@ fn cmp_key(n: *const archive_rb_node, key: *const ()) -> i32 {
 }
 static mut rb_ops: archive_rb_tree_ops = {
     let init = archive_rb_tree_ops {
-        rbto_compare_nodes: Some(
-            cmp_node as unsafe fn(_: *const archive_rb_node, _: *const archive_rb_node) -> i32,
-        ),
-        rbto_compare_key: Some(
-            cmp_key as unsafe fn(_: *const archive_rb_node, _: *const ()) -> i32,
-        ),
+        rbto_compare_nodes: Some(cmp_node),
+        rbto_compare_key: Some(cmp_key),
     };
     init
 };
@@ -4502,12 +4351,8 @@ fn rsrc_cmp_key(n: *const archive_rb_node, key: *const ()) -> i32 {
 }
 static mut rb_rsrc_ops: archive_rb_tree_ops = {
     let mut init = archive_rb_tree_ops {
-        rbto_compare_nodes: Some(
-            rsrc_cmp_node as unsafe fn(_: *const archive_rb_node, _: *const archive_rb_node) -> i32,
-        ),
-        rbto_compare_key: Some(
-            rsrc_cmp_key as unsafe fn(_: *const archive_rb_node, _: *const ()) -> i32,
-        ),
+        rbto_compare_nodes: Some(rsrc_cmp_node),
+        rbto_compare_key: Some(rsrc_cmp_key),
     };
     init
 };
@@ -5042,7 +4887,7 @@ fn zip_read_mac_metadata(
         eof = 0;
         loop {
             if !(eof == 0 && remaining_bytes != 0) {
-                current_block = 16029476503615101993;
+                current_block = 1;
                 break;
             }
             let mut p: *const u8 = 0 as *const u8;
@@ -5058,7 +4903,7 @@ fn zip_read_mac_metadata(
                     )
                 };
                 ret = -20;
-                current_block = 16603869168916147688;
+                current_block = 2;
                 break;
             } else {
                 if bytes_avail as size_t > remaining_bytes {
@@ -5084,7 +4929,7 @@ fn zip_read_mac_metadata(
                         let mut r: i32 = 0;
                         ret = zip_deflate_init(a, zip);
                         if ret != 0 {
-                            current_block = 16603869168916147688;
+                            current_block = 2;
                             break;
                         }
                         (safe_zip).stream.next_in = p as *const () as uintptr_t as *mut Bytef;
@@ -5107,7 +4952,7 @@ fn zip_read_mac_metadata(
                                     )
                                 };
                                 ret = -30;
-                                current_block = 16603869168916147688;
+                                current_block = 2;
                                 break;
                             }
                             _ => {
@@ -5121,7 +4966,7 @@ fn zip_read_mac_metadata(
                                     )
                                 };
                                 ret = -30;
-                                current_block = 16603869168916147688;
+                                current_block = 2;
                                 break;
                             }
                         }
@@ -5137,7 +4982,7 @@ fn zip_read_mac_metadata(
             }
         }
         match current_block {
-            16029476503615101993 => {
+            1 => {
                 archive_entry_copy_mac_metadata(
                     entry,
                     metadata as *const (),
@@ -5308,47 +5153,21 @@ pub fn archive_read_support_format_zip_seekable(_a: *mut archive) -> i32 {
      * any encrypted entries yet.
      */
     (safe_zip).has_encrypted_entries = -1;
-    (safe_zip).crc32func = Some(real_crc32 as unsafe fn(_: u64, _: *const (), _: size_t) -> u64);
+    (safe_zip).crc32func = Some(real_crc32);
     r = unsafe {
         __archive_read_register_format_safe(
             a,
             zip as *mut (),
             b"zip\x00" as *const u8,
-            Some(
-                archive_read_format_zip_seekable_bid
-                    as unsafe fn(_: *mut archive_read, _: i32) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_options
-                    as unsafe fn(_: *mut archive_read, _: *const u8, _: *const u8) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_seekable_read_header
-                    as unsafe fn(_: *mut archive_read, _: *mut archive_entry) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_read_data
-                    as unsafe fn(
-                        _: *mut archive_read,
-                        _: *mut *const (),
-                        _: *mut size_t,
-                        _: *mut int64_t,
-                    ) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_read_data_skip_seekable
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
+            Some(archive_read_format_zip_seekable_bid),
+            Some(archive_read_format_zip_options),
+            Some(archive_read_format_zip_seekable_read_header),
+            Some(archive_read_format_zip_read_data),
+            Some(archive_read_format_zip_read_data_skip_seekable),
             None,
-            Some(archive_read_format_zip_cleanup as unsafe fn(_: *mut archive_read) -> i32),
-            Some(
-                archive_read_support_format_zip_capabilities_seekable
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
-            Some(
-                archive_read_format_zip_has_encrypted_entries
-                    as unsafe fn(_: *mut archive_read) -> i32,
-            ),
+            Some(archive_read_format_zip_cleanup),
+            Some(archive_read_support_format_zip_capabilities_seekable),
+            Some(archive_read_format_zip_has_encrypted_entries),
         )
     };
     if r != 0 {

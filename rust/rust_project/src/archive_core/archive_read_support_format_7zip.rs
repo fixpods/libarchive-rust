@@ -1617,7 +1617,7 @@ fn decompress(
             (safe_zip).ppstream.avail_out = t_avail_out as int64_t;
             if (safe_zip).ppmd7_stat == 0 {
                 (safe_zip).bytein.a = a;
-                (safe_zip).bytein.Read = Some(ppmd_read as unsafe fn(_: *mut ()) -> Byte);
+                (safe_zip).bytein.Read = Some(ppmd_read);
                 (safe_zip).range_dec.Stream = &mut (safe_zip).bytein;
                 r = unsafe {
                     __archive_ppmd7_functions
@@ -4116,7 +4116,7 @@ fn read_stream(
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
                         84 as i32,
-                        b"Truncated 7-Zip file body\x00" as *const u8 as *const u8,
+                        b"Truncated 7-Zip file body\x00" as *const u8,
                     )
                 };
                 return ARCHIVE_7ZIP_DEFINED_PARAM.archive_fatal as ssize_t;

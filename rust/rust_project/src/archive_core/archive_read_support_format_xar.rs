@@ -797,7 +797,6 @@ fn xar_read_data(
     size: *mut size_t,
     offset: *mut int64_t,
 ) -> i32 {
-    let current_block: u64;
     let mut xar: *mut xar = 0 as *mut xar;
     let mut used: size_t = 0 as size_t;
     let mut r: i32 = 0;
@@ -842,7 +841,6 @@ fn xar_read_data(
                         b"Decompressed size error\x00" as *const u8
                     );
                     r = ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
-                    current_block = 1800826227261287704;
                 } else {
                     r = unsafe {
                         checksum_final(
@@ -854,17 +852,12 @@ fn xar_read_data(
                         )
                     };
                     if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
-                        current_block = 1800826227261287704;
                     } else {
-                        current_block = 7205609094909031804;
+                        return 0 as i32;
                     }
                 }
             } else {
-                current_block = 7205609094909031804;
-            }
-            match current_block {
-                1800826227261287704 => {}
-                _ => return 0 as i32,
+                return 0 as i32;
             }
         }
     }
