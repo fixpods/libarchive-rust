@@ -1350,6 +1350,7 @@ pub extern "C" fn archive_acl_from_text_w(
     let mut s: *const wchar_t = 0 as *const wchar_t;
     let mut st: *const wchar_t = 0 as *const wchar_t;
     let mut numfields: i32 = 0;
+
     let mut fields: i32;
     let mut n: i32;
     let mut r: i32;
