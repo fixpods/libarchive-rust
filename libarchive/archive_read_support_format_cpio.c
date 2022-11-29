@@ -322,7 +322,7 @@ struct archive_cpio_defined_param
     int archive_format_cpio_bin_le;
     int archive_format_cpio_bin_be;
 
-    int size_max;
+    unsigned long size_max;
 };
 
 #ifndef COMPILE_WITH_RUST

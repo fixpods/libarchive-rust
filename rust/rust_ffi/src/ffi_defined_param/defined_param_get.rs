@@ -940,7 +940,7 @@ pub struct archive_cpio_defined_param {
     pub archive_format_cpio_bin_le: i32,
     pub archive_format_cpio_bin_be: i32,
 
-    pub size_max: i32,
+    pub size_max: u64,
 }
 
 lazy_static! {
