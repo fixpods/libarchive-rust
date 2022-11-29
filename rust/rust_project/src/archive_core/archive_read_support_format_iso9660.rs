@@ -371,8 +371,8 @@ fn archive_read_format_iso9660_bid(a: *mut archive_read, best_bid: i32) -> i32 {
 
 fn archive_read_format_iso9660_options(
     a: *mut archive_read,
-    key: *const i8,
-    val: *const i8,
+    key: *const u8,
+    val: *const u8,
 ) -> i32 {
     let iso9660 = unsafe { &mut *((*(*a).format).data as *mut iso9660) };
     if unsafe { strcmp_safe(key, b"joliet\x00" as *const u8 as *const u8) } == 0 {
@@ -1271,7 +1271,7 @@ fn archive_read_format_iso9660_read_header(a: *mut archive_read, entry: *mut arc
             rd_r = ARCHIVE_ISO9660_DEFINED_PARAM.archive_warn
         }
     } else {
-        let mut path: *const i8 = unsafe { build_pathname(&mut iso9660.pathname, file, 0) };
+        let mut path: *const u8 = unsafe { build_pathname(&mut iso9660.pathname, file, 0) };
         if path.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
@@ -2997,7 +2997,7 @@ unsafe fn parse_rockridge_TF1(mut file: *mut file_info, mut data: *const u8, mut
 
 unsafe fn parse_rockridge_SL1(mut file: *mut file_info, mut data: *const u8, mut data_length: i32) {
     let mut file = unsafe { &mut *file };
-    let mut separator: *const i8 = b"\x00" as *const u8 as *const u8;
+    let mut separator: *const u8 = b"\x00" as *const u8 as *const u8;
     if file.symlink_continues == 0 || file.symlink.length < 1 as i32 as u64 {
         file.symlink.length = 0 as i32 as size_t
     }
@@ -3837,7 +3837,7 @@ unsafe fn build_pathname(
     mut as_0: *mut archive_string,
     mut file: *mut file_info,
     mut depth: i32,
-) -> *const i8 {
+) -> *const u8 {
     let mut file = unsafe { &mut *file };
     // Plain ISO9660 only allows 8 dir levels; if we get
     // to 1000, then something is very, very wrong.
