@@ -210,9 +210,15 @@ struct archive_7zip_defined_param
   int lzma_buf_error;
 #endif
 #if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
+  int bz_stream_end;
+  int bz_ok;
   int bz_param_error;
   int bz_mem_error;
   int bz_config_error;
+#endif
+#ifdef HAVE_ZLIB_H
+  int z_stream_end;
+  int z_ok;
 #endif
 };
 
@@ -296,9 +302,15 @@ struct archive_7zip_defined_param get_archive_7zip_defined_param(){
   param.lzma_buf_error = LZMA_BUF_ERROR;
 #endif
 #if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
+  param.bz_stream_end = BZ_STREAM_END;
+  param.bz_ok = BZ_OK;
   param.bz_param_error = BZ_PARAM_ERROR;
   param.bz_mem_error = BZ_MEM_ERROR;
   param.bz_config_error = BZ_CONFIG_ERROR;
+#endif
+#ifdef HAVE_ZLIB_H
+  param.z_stream_end = Z_STREAM_END;
+  param.z_ok = Z_OK;
 #endif
   return param;
 }
