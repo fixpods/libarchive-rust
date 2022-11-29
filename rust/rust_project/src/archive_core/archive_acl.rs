@@ -2,11 +2,10 @@ use rust_ffi::ffi_alias::alias_set::*;
 use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
-use std::ffi::CStr;
 use std::mem::size_of;
 
 #[no_mangle]
-pub extern "C" fn archive_acl_clear(acl: *mut archive_acl) {
+pub fn archive_acl_clear(acl: *mut archive_acl) {
     let safe_acl = unsafe { &mut *acl };
     let mut ap: *mut archive_acl_entry = 0 as *mut archive_acl_entry;
     while !(safe_acl).acl_head.is_null() {
@@ -26,7 +25,7 @@ pub extern "C" fn archive_acl_clear(acl: *mut archive_acl) {
 }
 
 #[no_mangle]
-pub extern "C" fn archive_acl_copy(dest: *mut archive_acl, src: *mut archive_acl) {
+pub fn archive_acl_copy(dest: *mut archive_acl, src: *mut archive_acl) {
     let safe_dest = unsafe { &mut *dest };
     let safe_src = unsafe { &mut *src };
     let mut ap: *mut archive_acl_entry = 0 as *mut archive_acl_entry;
@@ -44,7 +43,7 @@ pub extern "C" fn archive_acl_copy(dest: *mut archive_acl, src: *mut archive_acl
 }
 
 #[no_mangle]
-pub extern "C" fn archive_acl_add_entry(
+pub fn archive_acl_add_entry(
     acl: *mut archive_acl,
     type_0: i32,
     permset: i32,
@@ -72,7 +71,7 @@ pub extern "C" fn archive_acl_add_entry(
 }
 
 #[no_mangle]
-pub extern "C" fn archive_acl_add_entry_w_len(
+pub fn archive_acl_add_entry_w_len(
     acl: *mut archive_acl,
     type_0: i32,
     permset: i32,
@@ -274,7 +273,7 @@ fn acl_new_entry(
  */
 
 #[no_mangle]
-pub extern "C" fn archive_acl_count(acl: *mut archive_acl, want_type: i32) -> i32 {
+pub fn archive_acl_count(acl: *mut archive_acl, want_type: i32) -> i32 {
     let mut count: i32 = 0;
     let mut ap: *mut archive_acl_entry = 0 as *mut archive_acl_entry;
 
@@ -297,7 +296,7 @@ pub extern "C" fn archive_acl_count(acl: *mut archive_acl, want_type: i32) -> i3
  */
 
 #[no_mangle]
-pub extern "C" fn archive_acl_types(acl: *mut archive_acl) -> i32 {
+pub fn archive_acl_types(acl: *mut archive_acl) -> i32 {
     let safe_acl = unsafe { &mut *acl };
     return safe_acl.acl_types;
 }
@@ -308,7 +307,7 @@ pub extern "C" fn archive_acl_types(acl: *mut archive_acl) -> i32 {
  */
 
 #[no_mangle]
-pub extern "C" fn archive_acl_reset(acl: *mut archive_acl, want_type: i32) -> i32 {
+pub fn archive_acl_reset(acl: *mut archive_acl, want_type: i32) -> i32 {
     let safe_acl = unsafe { &mut *acl };
     let mut count: i32;
     let mut cutoff: i32;
@@ -337,7 +336,7 @@ pub extern "C" fn archive_acl_reset(acl: *mut archive_acl, want_type: i32) -> i3
  */
 
 #[no_mangle]
-pub extern "C" fn archive_acl_next(
+pub fn archive_acl_next(
     a: *mut archive,
     acl: *mut archive_acl,
     want_type: i32,
@@ -613,7 +612,7 @@ fn archive_acl_text_len(
  * the type and style of the generated ACL.
  */
 #[no_mangle]
-pub extern "C" fn archive_acl_to_text_w(
+pub fn archive_acl_to_text_w(
     acl: *mut archive_acl,
     text_len: *mut ssize_t,
     mut flags: i32,
@@ -974,7 +973,7 @@ pub fn append_entry_w(
  */
 
 #[no_mangle]
-pub extern "C" fn archive_acl_to_text_l(
+pub fn archive_acl_to_text_l(
     mut acl: *mut archive_acl,
     text_len: *mut ssize_t,
     mut flags: i32,
@@ -1147,7 +1146,7 @@ pub extern "C" fn archive_acl_to_text_l(
     }
     return s;
 }
-unsafe extern "C" fn append_id(mut p: *mut *mut u8, mut id: i32) {
+unsafe fn append_id(mut p: *mut *mut u8, mut id: i32) {
     if id < 0 {
         id = 0
     }
@@ -1334,7 +1333,7 @@ fn append_entry(
  * ARCHIVE_ENTRY_ACL_TYPE_DEFAULT unless type is ARCHIVE_ENTRY_ACL_TYPE_NFS4
  */
 #[no_mangle]
-pub extern "C" fn archive_acl_from_text_w(
+pub fn archive_acl_from_text_w(
     acl: *mut archive_acl,
     mut text: *const wchar_t,
     mut want_type: i32,
@@ -1705,7 +1704,7 @@ pub extern "C" fn archive_acl_from_text_w(
  * the string is non-empty and consists only of decimal digits,
  * false otherwise.
  */
-extern "C" fn isint_w(mut start: *const wchar_t, end: *const wchar_t, result: *mut i32) -> i32 {
+fn isint_w(mut start: *const wchar_t, end: *const wchar_t, result: *mut i32) -> i32 {
     let mut n: i32 = 0;
     if start >= end {
         return 0;
@@ -1735,7 +1734,7 @@ extern "C" fn isint_w(mut start: *const wchar_t, end: *const wchar_t, result: *m
  * the string is non-empty and consists only of mode characters,
  * false otherwise.
  */
-extern "C" fn ismode_w(start: *const wchar_t, end: *const wchar_t, permset: *mut i32) -> i32 {
+fn ismode_w(start: *const wchar_t, end: *const wchar_t, permset: *mut i32) -> i32 {
     let mut p: *const wchar_t = 0 as *const wchar_t;
     if start >= end {
         return 0;
@@ -1763,11 +1762,7 @@ extern "C" fn ismode_w(start: *const wchar_t, end: *const wchar_t, permset: *mut
  * Returns true if the string is non-empty and consists only of NFS4 ACL
  * permission characters, false otherwise
  */
-extern "C" fn is_nfs4_perms_w(
-    start: *const wchar_t,
-    end: *const wchar_t,
-    permset: *mut i32,
-) -> i32 {
+fn is_nfs4_perms_w(start: *const wchar_t, end: *const wchar_t, permset: *mut i32) -> i32 {
     let mut p: *const wchar_t = start;
     while p < end {
         let p_char = unsafe { *p };
@@ -1812,11 +1807,7 @@ extern "C" fn is_nfs4_perms_w(
  * Returns true if the string is non-empty and consists only of NFS4 ACL
  * flag characters, false otherwise
  */
-extern "C" fn is_nfs4_flags_w(
-    start: *const wchar_t,
-    end: *const wchar_t,
-    permset: *mut i32,
-) -> i32 {
+fn is_nfs4_flags_w(start: *const wchar_t, end: *const wchar_t, permset: *mut i32) -> i32 {
     let mut p: *const wchar_t = start;
     while p < end {
         let p_char = unsafe { *p };
@@ -1856,7 +1847,7 @@ extern "C" fn is_nfs4_flags_w(
  * is the length of the field body, not including leading or trailing
  * whitespace.
  */
-extern "C" fn next_field_w(
+fn next_field_w(
     wp: *mut *const wchar_t,
     start: *mut *const wchar_t,
     end: *mut *const wchar_t,
@@ -1950,7 +1941,7 @@ extern "C" fn next_field_w(
  * ARCHIVE_ENTRY_ACL_TYPE_DEFAULT unless type is ARCHIVE_ENTRY_ACL_TYPE_NFS4
  */
 #[no_mangle]
-pub extern "C" fn archive_acl_from_text_l(
+pub fn archive_acl_from_text_l(
     acl: *mut archive_acl,
     mut text: *const u8,
     mut want_type: i32,
@@ -2389,7 +2380,7 @@ pub extern "C" fn archive_acl_from_text_l(
  * the string is non-empty and consists only of decimal digits,
  * false otherwise.
  */
-extern "C" fn isint(mut start: *const u8, end: *const u8, result: *mut i32) -> i32 {
+fn isint(mut start: *const u8, end: *const u8, result: *mut i32) -> i32 {
     let mut n: i32 = 0 as i32;
     if start >= end {
         return 0 as i32;
@@ -2417,7 +2408,7 @@ extern "C" fn isint(mut start: *const u8, end: *const u8, result: *mut i32) -> i
  * the string is non-empty and consists only of mode characters,
  * false otherwise.
  */
-extern "C" fn ismode(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
+fn ismode(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     if start >= end {
         return 0;
@@ -2444,7 +2435,7 @@ extern "C" fn ismode(start: *const u8, end: *const u8, permset: *mut i32) -> i32
  * Returns true if the string is non-empty and consists only of NFS4 ACL
  * permission characters, false otherwise
  */
-extern "C" fn is_nfs4_perms(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
+fn is_nfs4_perms(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
     let mut p: *const u8 = start;
     while p < end {
         let p_char = unsafe { *p as char };
@@ -2477,7 +2468,7 @@ extern "C" fn is_nfs4_perms(start: *const u8, end: *const u8, permset: *mut i32)
  * Returns true if the string is non-empty and consists only of NFS4 ACL
  * flag characters, false otherwise
  */
-extern "C" fn is_nfs4_flags(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
+fn is_nfs4_flags(start: *const u8, end: *const u8, permset: *mut i32) -> i32 {
     let mut p: *const u8 = start;
     while p < end {
         unsafe {
@@ -2513,12 +2504,7 @@ extern "C" fn is_nfs4_flags(start: *const u8, end: *const u8, permset: *mut i32)
  * is the length of the field body, not including leading or trailing
  * whitespace.
  */
-extern "C" fn next_field(
-    p: *mut *const u8,
-    start: *mut *const u8,
-    end: *mut *const u8,
-    sep: *mut u8,
-) {
+fn next_field(p: *mut *const u8, start: *mut *const u8, end: *mut *const u8, sep: *mut u8) {
     /* Skip leading whitespace to find start of field. */
     unsafe {
         while **p as i32 == ' ' as i32 || **p as i32 == '\t' as i32 || **p as i32 == '\n' as i32 {

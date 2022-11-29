@@ -56,14 +56,14 @@ pub fn archive_le64dec(pp: *const ()) -> uint64_t {
 }
 
 #[inline]
-pub extern "C" fn archive_be64dec(pp: *const ()) -> uint64_t {
+pub fn archive_be64dec(pp: *const ()) -> uint64_t {
     let p: *const u8 = pp as *const u8;
     return (archive_be32dec(p as *const ()) as uint64_t) << 32
         | archive_be32dec(unsafe { p.offset(4) as *const () }) as u64;
 }
 
 #[inline]
-pub extern "C" fn archive_le16enc(pp: *mut (), u: uint16_t) {
+pub fn archive_le16enc(pp: *mut (), u: uint16_t) {
     let p: *mut u8 = pp as *mut u8;
     unsafe {
         *p.offset(0) = (u as i32 & 0xff) as u8;
@@ -72,7 +72,7 @@ pub extern "C" fn archive_le16enc(pp: *mut (), u: uint16_t) {
 }
 
 #[inline]
-pub extern "C" fn archive_le32enc(pp: *mut (), u: uint32_t) {
+pub fn archive_le32enc(pp: *mut (), u: uint32_t) {
     let p: *mut u8 = pp as *mut u8;
     unsafe {
         *p.offset(0) = (u & 0xff) as u8;
@@ -83,7 +83,7 @@ pub extern "C" fn archive_le32enc(pp: *mut (), u: uint32_t) {
 }
 
 #[inline]
-pub extern "C" fn archive_be16enc(pp: *mut (), u: uint16_t) {
+pub fn archive_be16enc(pp: *mut (), u: uint16_t) {
     let p: *mut u8 = pp as *mut u8;
     unsafe {
         *p.offset(0) = (u as i32 >> 8 & 0xff) as u8;
