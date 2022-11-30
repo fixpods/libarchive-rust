@@ -4,43 +4,6 @@ use rust_ffi::ffi_defined_param::defined_param_get::*;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use std::mem::size_of;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct mtree {
-    pub line: archive_string,
-    pub buffsize: size_t,
-    pub buff: *mut u8,
-    pub offset: int64_t,
-    pub fd: i32,
-    pub archive_format: i32,
-    pub archive_format_name: *const u8,
-    pub entries: *mut mtree_entry,
-    pub this_entry: *mut mtree_entry,
-    pub entry_rbtree: archive_rb_tree,
-    pub current_dir: archive_string,
-    pub contents_name: archive_string,
-    pub resolver: *mut archive_entry_linkresolver,
-    pub rbtree: archive_rb_tree,
-    pub cur_size: int64_t,
-    pub checkfs: u8,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct mtree_entry {
-    pub rbnode: archive_rb_node,
-    pub next_dup: *mut mtree_entry,
-    pub next: *mut mtree_entry,
-    pub options: *mut mtree_option,
-    pub name: *mut u8,
-    pub full: u8,
-    pub used: u8,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct mtree_option {
-    pub next: *mut mtree_option,
-    pub value: *mut u8,
-}
 
 fn get_time_t_max() -> int64_t {
     /* ISO C allows time_t to be a floating-point type,
@@ -86,7 +49,6 @@ fn get_time_t_min() -> int64_t {
         }
     }
 }
-
 fn mtree_strnlen(p: *const u8, maxlen: size_t) -> size_t {
     match () {
         #[cfg(HAVE_STRLEN)]
@@ -1997,7 +1959,7 @@ fn parse_keyword(
     }
     *val_safe = '\u{0}' as u8;
     val = unsafe { val.offset(1) };
-    let mut current_block_120: u64;
+    let mut current_block: u64;
     match unsafe { *key.offset(0) as i32 } {
         99 => {
             if unsafe { strcmp_safe(key, b"content\x00" as *const u8) } == 0
@@ -2012,53 +1974,53 @@ fn parse_keyword(
                         (if val.is_null() { 0 } else { strlen_safe(val) }),
                     )
                 };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else if unsafe { strcmp_safe(key, b"cksum\x00" as *const u8) } == 0 {
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else {
-                current_block_120 = 15612923873456120061;
+                current_block = 100;
             }
         }
         100 => {
-            current_block_120 = 15612923873456120061;
+            current_block = 100;
         }
         102 => {
-            current_block_120 = 2516300604401959109;
+            current_block = 102;
         }
         103 => {
-            current_block_120 = 6285744289709947169;
+            current_block = 103;
         }
         105 => {
-            current_block_120 = 8078319602943683960;
+            current_block = 105;
         }
         108 => {
-            current_block_120 = 14398214535289615461;
+            current_block = 108;
         }
         109 => {
-            current_block_120 = 2086966976840294615;
+            current_block = 109;
         }
         110 => {
-            current_block_120 = 2945138788423298433;
+            current_block = 110;
         }
         114 => {
-            current_block_120 = 3583232612309986830;
+            current_block = 114;
         }
         115 => {
-            current_block_120 = 6521175633009022335;
+            current_block = 115;
         }
         116 => {
-            current_block_120 = 13294178446195614068;
+            current_block = 116;
         }
         117 => {
-            current_block_120 = 534366734980114256;
+            current_block = 117;
         }
         _ => {
-            current_block_120 = 2983046246157475477;
+            current_block = 0;
         }
     }
     let a_safe = unsafe { &mut *a };
-    match current_block_120 {
-        15612923873456120061 => {
+    match current_block {
+        100 => {
             if unsafe { strcmp_safe(key, b"device\x00" as *const u8) } == 0 {
                 /* stat(2) st_rdev field, e.g. the major/minor IDs
                  * of a char/block special file */
@@ -2071,62 +2033,62 @@ fn parse_keyword(
                 }
                 return r;
             }
-            current_block_120 = 2516300604401959109;
+            current_block = 102;
         }
         _ => {}
     }
-    match current_block_120 {
-        2516300604401959109 => {
+    match current_block {
+        102 => {
             if unsafe { strcmp_safe(key, b"flags\x00" as *const u8) } == 0 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_fflags;
                 unsafe { archive_entry_copy_fflags_text_safe(entry, val) };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else {
-                current_block_120 = 6285744289709947169;
+                current_block = 103;
             }
         }
         _ => {}
     }
-    match current_block_120 {
-        6285744289709947169 => {
+    match current_block {
+        103 => {
             if unsafe { strcmp_safe(key, b"gid\x00" as *const u8) } == 0 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_gid;
                 unsafe { archive_entry_set_gid_safe(entry, mtree_atol(&mut val, 10)) };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else if unsafe { strcmp_safe(key, b"gname\x00" as *const u8) } == 0 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_gname;
                 unsafe { archive_entry_copy_gname_safe(entry, val) };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else {
-                current_block_120 = 8078319602943683960;
+                current_block = 105;
             }
         }
         _ => {}
     }
-    match current_block_120 {
-        8078319602943683960 => {
+    match current_block {
+        105 => {
             if unsafe { strcmp_safe(key, b"inode\x00" as *const u8) } == 0 {
                 unsafe { archive_entry_set_ino_safe(entry, mtree_atol(&mut val, 10)) };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else {
-                current_block_120 = 14398214535289615461;
+                current_block = 108;
             }
         }
         _ => {}
     }
-    match current_block_120 {
-        14398214535289615461 => {
+    match current_block {
+        108 => {
             if unsafe { strcmp_safe(key, b"link\x00" as *const u8) } == 0 {
                 unsafe { archive_entry_copy_symlink_safe(entry, val) };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else {
-                current_block_120 = 2086966976840294615;
+                current_block = 109;
             }
         }
         _ => {}
     }
-    match current_block_120 {
-        2086966976840294615 => {
+    match current_block {
+        109 => {
             if unsafe { strcmp_safe(key, b"md5\x00" as *const u8) } == 0
                 || unsafe { strcmp_safe(key, b"md5digest\x00" as *const u8) } == 0
             {
@@ -2153,27 +2115,27 @@ fn parse_keyword(
                     );
                     return ARCHIVE_MTREE_DEFINED_PARAM.archive_warn;
                 }
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else {
-                current_block_120 = 2945138788423298433;
+                current_block = 110;
             }
         }
         _ => {}
     }
-    match current_block_120 {
-        2945138788423298433 => {
+    match current_block {
+        110 => {
             if unsafe { strcmp_safe(key, b"nlink\x00" as *const u8) } == 0 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_nlink;
                 unsafe { archive_entry_set_nlink_safe(entry, mtree_atol(&mut val, 10) as u32) };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else {
-                current_block_120 = 3583232612309986830;
+                current_block = 114;
             }
         }
         _ => {}
     }
-    match current_block_120 {
-        3583232612309986830 => {
+    match current_block {
+        114 => {
             if unsafe { strcmp_safe(key, b"resdevice\x00" as *const u8) } == 0 {
                 /* stat(2) st_dev field, e.g. the device ID where the
                  * inode resides */
@@ -2195,12 +2157,12 @@ fn parse_keyword(
                     ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_rmd160,
                 );
             }
-            current_block_120 = 6521175633009022335;
+            current_block = 115;
         }
         _ => {}
     }
-    match current_block_120 {
-        6521175633009022335 => {
+    match current_block {
+        115 => {
             if unsafe { strcmp_safe(key, b"sha1\x00" as *const u8) } == 0
                 || unsafe { strcmp_safe(key, b"sha1digest\x00" as *const u8) } == 0
             {
@@ -2243,17 +2205,17 @@ fn parse_keyword(
             }
             if unsafe { strcmp_safe(key, b"size\x00" as *const u8) } == 0 {
                 unsafe { archive_entry_set_size_safe(entry, mtree_atol(&mut val, 10)) };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else {
-                current_block_120 = 13294178446195614068;
+                current_block = 116;
             }
         }
         _ => {}
     }
-    match current_block_120 {
-        13294178446195614068 => {
+    match current_block {
+        116 => {
             if unsafe { strcmp_safe(key, b"tags\x00" as *const u8) } == 0 {
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else if unsafe { strcmp_safe(key, b"time\x00" as *const u8) } == 0 {
                 let mut m: int64_t = 0;
                 let my_time_t_max: int64_t = get_time_t_max();
@@ -2283,7 +2245,7 @@ fn parse_keyword(
                     m = my_time_t_min
                 }
                 unsafe { archive_entry_set_mtime_safe(entry, m, ns) };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else if unsafe { strcmp_safe(key, b"type\x00" as *const u8) } == 0 {
                 let mut current_block_110: u64;
                 match unsafe { *val.offset(0) as i32 } {
@@ -2295,29 +2257,29 @@ fn parse_keyword(
                                     ARCHIVE_MTREE_DEFINED_PARAM.ae_ifblk as mode_t,
                                 )
                             };
-                            current_block_110 = 14579489411542934868;
+                            current_block_110 = 1;
                         } else {
-                            current_block_110 = 9913677422114762036;
+                            current_block_110 = 99;
                         }
                     }
                     99 => {
-                        current_block_110 = 9913677422114762036;
+                        current_block_110 = 99;
                     }
                     100 => {
-                        current_block_110 = 16822926593281005087;
+                        current_block_110 = 100;
                     }
                     102 => {
-                        current_block_110 = 1613355923386801241;
+                        current_block_110 = 102;
                     }
                     108 => {
-                        current_block_110 = 1673727746689388553;
+                        current_block_110 = 108;
                     }
                     _ => {
-                        current_block_110 = 11264357029779558864;
+                        current_block_110 = 0;
                     }
                 }
                 match current_block_110 {
-                    9913677422114762036 => {
+                    99 => {
                         if unsafe { strcmp_safe(val, b"char\x00" as *const u8) } == 0 {
                             unsafe {
                                 archive_entry_set_filetype_safe(
@@ -2325,15 +2287,15 @@ fn parse_keyword(
                                     ARCHIVE_MTREE_DEFINED_PARAM.ae_ifchr as mode_t,
                                 )
                             };
-                            current_block_110 = 14579489411542934868;
+                            current_block_110 = 1;
                         } else {
-                            current_block_110 = 16822926593281005087;
+                            current_block_110 = 100;
                         }
                     }
                     _ => {}
                 }
                 match current_block_110 {
-                    16822926593281005087 => {
+                    100 => {
                         if unsafe { strcmp_safe(val, b"dir\x00" as *const u8) } == 0 {
                             unsafe {
                                 archive_entry_set_filetype_safe(
@@ -2341,15 +2303,15 @@ fn parse_keyword(
                                     ARCHIVE_MTREE_DEFINED_PARAM.ae_ifdir as mode_t,
                                 )
                             };
-                            current_block_110 = 14579489411542934868;
+                            current_block_110 = 1;
                         } else {
-                            current_block_110 = 1613355923386801241;
+                            current_block_110 = 102;
                         }
                     }
                     _ => {}
                 }
                 match current_block_110 {
-                    1613355923386801241 => {
+                    102 => {
                         if unsafe { strcmp_safe(val, b"fifo\x00" as *const u8) } == 0 {
                             unsafe {
                                 archive_entry_set_filetype_safe(
@@ -2357,7 +2319,7 @@ fn parse_keyword(
                                     ARCHIVE_MTREE_DEFINED_PARAM.ae_ififo as mode_t,
                                 )
                             };
-                            current_block_110 = 14579489411542934868;
+                            current_block_110 = 1;
                         } else if unsafe { strcmp_safe(val, b"file\x00" as *const u8) } == 0 {
                             unsafe {
                                 archive_entry_set_filetype_safe(
@@ -2365,15 +2327,15 @@ fn parse_keyword(
                                     ARCHIVE_MTREE_DEFINED_PARAM.ae_ifreg as mode_t,
                                 )
                             };
-                            current_block_110 = 14579489411542934868;
+                            current_block_110 = 1;
                         } else {
-                            current_block_110 = 1673727746689388553;
+                            current_block_110 = 108;
                         }
                     }
                     _ => {}
                 }
                 match current_block_110 {
-                    1673727746689388553 => {
+                    108 => {
                         if unsafe { strcmp_safe(val, b"link\x00" as *const u8) } == 0 {
                             unsafe {
                                 archive_entry_set_filetype_safe(
@@ -2381,15 +2343,15 @@ fn parse_keyword(
                                     ARCHIVE_MTREE_DEFINED_PARAM.ae_iflnk as mode_t,
                                 )
                             };
-                            current_block_110 = 14579489411542934868;
+                            current_block_110 = 1;
                         } else {
-                            current_block_110 = 11264357029779558864;
+                            current_block_110 = 0;
                         }
                     }
                     _ => {}
                 }
                 match current_block_110 {
-                    14579489411542934868 => {}
+                    1 => {}
                     _ => {
                         archive_set_error_safe!(
                             &mut (*a).archive as *mut archive,
@@ -2408,31 +2370,31 @@ fn parse_keyword(
                     }
                 }
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_type;
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else {
-                current_block_120 = 534366734980114256;
+                current_block = 117;
             }
         }
         _ => {}
     }
-    match current_block_120 {
-        534366734980114256 => {
+    match current_block {
+        117 => {
             if unsafe { strcmp_safe(key, b"uid\x00" as *const u8) } == 0 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_uid;
                 unsafe { archive_entry_set_uid_safe(entry, mtree_atol(&mut val, 10)) };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else if unsafe { strcmp_safe(key, b"uname\x00" as *const u8) } == 0 {
                 *parsed_kws_safe |= ARCHIVE_MTREE_DEFINED_PARAM.mtree_has_uname;
                 unsafe { archive_entry_copy_uname_safe(entry, val) };
-                current_block_120 = 14133002253412689704;
+                current_block = 1;
             } else {
-                current_block_120 = 2983046246157475477;
+                current_block = 0;
             }
         }
         _ => {}
     }
-    match current_block_120 {
-        14133002253412689704 =>
+    match current_block {
+        1 =>
             /*
          * Comma delimited list of tags.
          * Ignore the tags for now, but the interface
@@ -2560,65 +2522,65 @@ fn parse_escapes(mut src: *mut u8, mentry: *mut mtree_entry) {
                     } {
                         c = 0;
                         src = unsafe { src.offset(1) };
-                        current_block_30 = 3934796541983872331;
+                        current_block_30 = 10;
                     } else {
-                        current_block_30 = 16439418194823959314;
+                        current_block_30 = 9;
                     }
                 }
                 49 | 50 | 51 => {
-                    current_block_30 = 16439418194823959314;
+                    current_block_30 = 9;
                 }
                 97 => {
                     c = '\u{7}' as u8;
                     src = unsafe { src.offset(1) };
-                    current_block_30 = 3934796541983872331;
+                    current_block_30 = 10;
                 }
                 98 => {
                     c = '\u{8}' as u8;
                     src = unsafe { src.offset(1) };
-                    current_block_30 = 3934796541983872331;
+                    current_block_30 = 10;
                 }
                 102 => {
                     c = '\u{c}' as u8;
                     src = unsafe { src.offset(1) };
-                    current_block_30 = 3934796541983872331;
+                    current_block_30 = 10;
                 }
                 110 => {
                     c = '\n' as u8;
                     src = unsafe { src.offset(1) };
-                    current_block_30 = 3934796541983872331;
+                    current_block_30 = 10;
                 }
                 114 => {
                     c = '\r' as u8;
                     src = unsafe { src.offset(1) };
-                    current_block_30 = 3934796541983872331;
+                    current_block_30 = 10;
                 }
                 115 => {
                     c = ' ' as u8;
                     src = unsafe { src.offset(1) };
-                    current_block_30 = 3934796541983872331;
+                    current_block_30 = 10;
                 }
                 116 => {
                     c = '\t' as u8;
                     src = unsafe { src.offset(1) };
-                    current_block_30 = 3934796541983872331;
+                    current_block_30 = 10;
                 }
                 118 => {
                     c = '\u{b}' as u8;
                     src = unsafe { src.offset(1) };
-                    current_block_30 = 3934796541983872331;
+                    current_block_30 = 10;
                 }
                 92 => {
                     c = '\\' as u8;
                     src = unsafe { src.offset(1) };
-                    current_block_30 = 3934796541983872331;
+                    current_block_30 = 10;
                 }
                 _ => {
-                    current_block_30 = 3934796541983872331;
+                    current_block_30 = 10;
                 }
             }
             match current_block_30 {
-                16439418194823959314 =>
+                9 =>
                 /* FALLTHROUGH */
                 unsafe {
                     if *src.offset(1) >= '0' as u8
