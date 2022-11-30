@@ -218,4 +218,26 @@ int archive_mstring_copy_wcs(struct archive_mstring *aes, const wchar_t *wcs) { 
 int archive_mstring_copy_wcs_len(struct archive_mstring *aes, const wchar_t *wcs, size_t len) { return 0; }
 int archive_mstring_copy_mbs_len_l(struct archive_mstring *aes, const char *mbs, size_t len, struct archive_string_conv *sc) { return 0; }
 int archive_mstring_update_utf8(struct archive *a, struct archive_mstring *aes, const char *utf8) { return 0; }
+
+struct archive_string_defined_param
+{
+	unsigned int unicode_r_char;
+	unsigned int unicode_max;
+};
+
+
+struct archive_string_defined_param get_archive_string_defined_param();
+struct archive_string_defined_param get_archive_string_defined_param()
+{
+	struct archive_string_defined_param defined_param;
+	defined_param.unicode_r_char = UNICODE_R_CHAR;
+	defined_param.unicode_max = UNICODE_MAX;
+	return defined_param;
+}
+
+int archive_string(struct archive *_a)
+{
+	return 0;
+}
+
 #endif
