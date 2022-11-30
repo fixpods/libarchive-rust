@@ -236,7 +236,7 @@ pub struct archive_zip_defined_param {
     pub ae_ififo: u32,
     pub ae_iflnk: u32,
     pub ae_ifreg: u32,
-    pub uint32_max: i64,
+    pub uint32_max: u32,
     pub enomem: i32,
     pub archive_ok: i32,
     pub archive_fatal: i32,
