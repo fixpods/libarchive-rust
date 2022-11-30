@@ -39,6 +39,7 @@ struct archive_empty_defined_param
 	unsigned int archive_state_new;
 	int archive_format_empty;
 	int archive_eof;
+	int archive_fatal;
 };
 
 struct archive_empty_defined_param get_archive_empty_defined_param();
@@ -50,6 +51,7 @@ struct archive_empty_defined_param get_archive_empty_defined_param()
 	defined_param.archive_state_new = ARCHIVE_STATE_NEW;
 	defined_param.archive_format_empty = ARCHIVE_FORMAT_EMPTY;
 	defined_param.archive_eof = ARCHIVE_EOF;
+	defined_param.archive_fatal = ARCHIVE_FATAL;
 	return defined_param;
 }
 
