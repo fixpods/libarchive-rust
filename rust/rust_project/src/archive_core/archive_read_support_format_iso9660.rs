@@ -1404,11 +1404,11 @@ fn archive_read_format_iso9660_read_header(a: *mut archive_read, entry: *mut arc
             archive_strncat_safe(
                 &mut iso9660.previous_pathname,
                 iso9660.pathname.s as *const (),
-                (if iso9660.pathname.s.is_null() {
+                if iso9660.pathname.s.is_null() {
                     0
                 } else {
                     strlen_safe(iso9660.pathname.s)
-                }),
+                },
             )
         };
     }
@@ -1477,18 +1477,15 @@ fn zisofs_read_data(
         let mut xsize: size_t;
         /* We need more data. */
         /* Allocate block pointers buffer. */
-        ceil = zisofs
-            .pz_uncompressed_size
-            .wrapping_add(((1 as int64_t) << zisofs.pz_log2_bs) as u64)
-            .wrapping_sub(1 as u64)
+        ceil = zisofs.pz_uncompressed_size + (((1 as int64_t) << zisofs.pz_log2_bs) as u64 - 1)
             >> zisofs.pz_log2_bs;
-        xsize = ceil.wrapping_add(1 as u64).wrapping_mul(4 as u64);
+        xsize = (ceil + 1) * 4;
         if zisofs.block_pointers_alloc < xsize {
             let mut alloc: size_t = 0;
             if !zisofs.block_pointers.is_null() {
                 unsafe { free_safe(zisofs.block_pointers as *mut ()) };
             }
-            alloc = (xsize >> 10).wrapping_add(1 as u64) << 10;
+            alloc = ((xsize >> 10) + 1) << 10;
             zisofs.block_pointers = unsafe { malloc_safe(alloc) } as *mut u8;
             if zisofs.block_pointers.is_null() {
                 archive_set_error_safe!(
@@ -1522,7 +1519,7 @@ fn zisofs_read_data(
          * Read the file header, and check the magic code of zisofs.
          */
         if zisofs.header_avail < size_of::<[u8; 16]>() as u64 {
-            xsize = (size_of::<[u8; 16]>() as u64).wrapping_sub(zisofs.header_avail);
+            xsize = (size_of::<[u8; 16]>() as u64) - zisofs.header_avail;
             if avail < xsize {
                 xsize = avail
             }
@@ -1536,8 +1533,8 @@ fn zisofs_read_data(
                     xsize,
                 )
             };
-            zisofs.header_avail = (zisofs.header_avail as u64).wrapping_add(xsize) as size_t;
-            avail = (avail as u64).wrapping_sub(xsize) as size_t;
+            zisofs.header_avail = zisofs.header_avail + xsize;
+            avail = avail - xsize;
             unsafe { p = p.offset(xsize as isize) }
         }
         if zisofs.header_passed == 0 && zisofs.header_avail == size_of::<[u8; 16]>() as u64 {
@@ -1578,9 +1575,7 @@ fn zisofs_read_data(
          * Read block pointers.
          */
         if zisofs.header_passed != 0 && zisofs.block_pointers_avail < zisofs.block_pointers_size {
-            xsize = zisofs
-                .block_pointers_size
-                .wrapping_sub(zisofs.block_pointers_avail);
+            xsize = zisofs.block_pointers_size - zisofs.block_pointers_avail;
             if avail < xsize {
                 xsize = avail
             }
@@ -1594,9 +1589,8 @@ fn zisofs_read_data(
                     xsize,
                 )
             };
-            zisofs.block_pointers_avail =
-                (zisofs.block_pointers_avail as u64).wrapping_add(xsize) as size_t;
-            avail = (avail as u64).wrapping_sub(xsize) as size_t;
+            zisofs.block_pointers_avail = zisofs.block_pointers_avail + xsize;
+            avail = avail - xsize;
             unsafe {
                 p = p.offset(xsize as isize);
             }
@@ -1625,7 +1619,7 @@ fn zisofs_read_data(
             if zisofs.block_avail == 0 as u32 {
                 let bst: uint32_t;
                 let bed: uint32_t;
-                if zisofs.block_off.wrapping_add(4 as u64) >= zisofs.block_pointers_size {
+                if zisofs.block_off + 4 >= zisofs.block_pointers_size {
                     /* There isn't a pair of offsets. */
                     archive_set_error_safe!(
                         &mut (*a).archive as *mut archive,
@@ -1637,10 +1631,7 @@ fn zisofs_read_data(
                 bst = archive_le32dec(unsafe {
                     zisofs.block_pointers.offset(zisofs.block_off as isize)
                 } as *const ());
-                if bst as u64
-                    != (zisofs.pz_offset as u64)
-                        .wrapping_add((bytes_read as u64).wrapping_sub(avail))
-                {
+                if bst as u64 != (zisofs.pz_offset as u64) + (bytes_read as u64) - avail {
                     /* TODO: Should we seek offset of current file
                      * by bst ? */
                     archive_set_error_safe!(
@@ -1664,8 +1655,8 @@ fn zisofs_read_data(
                     );
                     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
                 }
-                zisofs.block_avail = bed.wrapping_sub(bst);
-                zisofs.block_off = (zisofs.block_off as u64).wrapping_add(4 as u64) as size_t;
+                zisofs.block_avail = bed - bst;
+                zisofs.block_off = zisofs.block_off + 4;
                 /* Initialize compression library for new block. */
                 if zisofs.stream_valid != 0 {
                     r = unsafe { libz_sys::inflateReset(&mut zisofs.stream) }
@@ -1722,31 +1713,26 @@ fn zisofs_read_data(
                     );
                     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
                 }
-                uncompressed_size = zisofs
-                    .uncompressed_buffer_size
-                    .wrapping_sub(zisofs.stream.avail_out as u64);
-                avail = (avail as u64)
-                    .wrapping_sub(unsafe { zisofs.stream.next_in.offset_from(p) } as u64)
-                    as size_t;
-                zisofs.block_avail = (zisofs.block_avail as u32)
-                    .wrapping_sub(unsafe { zisofs.stream.next_in.offset_from(p) } as uint32_t)
+                uncompressed_size =
+                    zisofs.uncompressed_buffer_size - zisofs.stream.avail_out as u64;
+                avail = (avail - unsafe { zisofs.stream.next_in.offset_from(p) } as u64) as size_t;
+                zisofs.block_avail = (zisofs.block_avail
+                    - unsafe { zisofs.stream.next_in.offset_from(p) } as uint32_t)
                     as uint32_t
             }
         }
         _ => {}
     }
-    bytes_read = (bytes_read as u64).wrapping_sub(avail) as ssize_t;
+    bytes_read = ((bytes_read as u64) - avail) as ssize_t;
     *safe_buff = zisofs.uncompressed_buffer as *const ();
     *safe_size = uncompressed_size;
     *safe_offset = iso9660.entry_sparse_offset;
     iso9660.entry_sparse_offset =
-        (iso9660.entry_sparse_offset as u64).wrapping_add(uncompressed_size) as int64_t;
+        (iso9660.entry_sparse_offset as u64 + uncompressed_size) as int64_t;
     iso9660.entry_bytes_remaining -= bytes_read;
-    iso9660.current_position =
-        (iso9660.current_position as u64).wrapping_add(bytes_read as u64) as uint64_t;
-    zisofs.pz_offset = (zisofs.pz_offset as u32).wrapping_add(bytes_read as uint32_t) as uint32_t;
-    iso9660.entry_bytes_unconsumed =
-        (iso9660.entry_bytes_unconsumed as u64).wrapping_add(bytes_read as u64) as size_t;
+    iso9660.current_position = iso9660.current_position + bytes_read as u64;
+    zisofs.pz_offset = zisofs.pz_offset + bytes_read as uint32_t;
+    iso9660.entry_bytes_unconsumed = iso9660.entry_bytes_unconsumed + bytes_read as u64;
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
@@ -1796,9 +1782,7 @@ fn archive_read_format_iso9660_read_data(
         /* Seek forward to the start of the entry. */
         if iso9660.current_position < iso9660_entry_content.offset {
             let mut step: int64_t = 0;
-            step = iso9660_entry_content
-                .offset
-                .wrapping_sub(iso9660.current_position) as int64_t;
+            step = (iso9660_entry_content.offset - iso9660.current_position) as int64_t;
             step = unsafe { __archive_read_consume_safe(a, step) };
             if step < 0 {
                 return step as i32;
@@ -1843,8 +1827,7 @@ fn archive_read_format_iso9660_read_data(
     iso9660.entry_sparse_offset += bytes_read;
     iso9660.entry_bytes_remaining -= bytes_read;
     iso9660.entry_bytes_unconsumed = bytes_read as size_t;
-    iso9660.current_position =
-        (iso9660.current_position as u64).wrapping_add(bytes_read as u64) as uint64_t;
+    iso9660.current_position = iso9660.current_position + bytes_read as u64;
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
 
@@ -1940,7 +1923,7 @@ fn parse_file_info(
         )
     } as uint64_t;
     /* Sanity check that name_len doesn't exceed dr_len. */
-    if dr_len.wrapping_sub(33 as u64) < name_len || name_len == 0 {
+    if dr_len - 33 < name_len || name_len == 0 {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
             ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_misc,
@@ -1955,12 +1938,9 @@ fn parse_file_info(
      * do that.
      */
     if location > 0
-        && (location as u64).wrapping_add(
-            fsize
-                .wrapping_add(iso9660.logical_block_size as u64)
-                .wrapping_sub(1)
-                .wrapping_div(iso9660.logical_block_size as u64),
-        ) > iso9660.volume_block as uint32_t as u64
+        && (location as u64
+            + (fsize + iso9660.logical_block_size as u64 - 1) / iso9660.logical_block_size as u64)
+            > iso9660.volume_block as u64
     {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -1980,7 +1960,7 @@ fn parse_file_info(
         return 0 as *mut file_info;
     }
     /* Sanity check that this entry does not create a cycle. */
-    offset = (iso9660.logical_block_size as u64).wrapping_mul(location as uint64_t);
+    offset = iso9660.logical_block_size as u64 * location as uint64_t;
     filep = parent;
     while !filep.is_null() {
         let safe_filep = unsafe { &mut *filep };
@@ -2046,12 +2026,12 @@ fn parse_file_info(
          */
         /* Chop off trailing ';1' from files. */
         if name_len > 4
-            && unsafe { *p.offset(name_len.wrapping_sub(4) as isize) } as i32 == 0
-            && unsafe { *p.offset(name_len.wrapping_sub(3) as isize) } as i32 == ';' as i32
-            && unsafe { *p.offset(name_len.wrapping_sub(2) as isize) } as i32 == 0
-            && unsafe { *p.offset(name_len.wrapping_sub(1) as isize) } as i32 == '1' as i32
+            && unsafe { *p.offset((name_len - 4) as isize) } == 0
+            && unsafe { *p.offset((name_len - 3) as isize) } == ';' as u8
+            && unsafe { *p.offset((name_len - 2) as isize) } == 0
+            && unsafe { *p.offset((name_len - 1) as isize) } == '1' as u8
         {
-            name_len = (name_len as u64).wrapping_sub(4) as size_t
+            name_len = name_len - 4;
         }
         file.utf16be_name = unsafe { malloc_safe(name_len) } as *mut u8;
         if file.utf16be_name.is_null() {
@@ -2069,16 +2049,14 @@ fn parse_file_info(
     } else {
         /* Chop off trailing ';1' from files. */
         if name_len > 2
-            && unsafe { *p.offset(name_len.wrapping_sub(2) as isize) } as i32 == ';' as i32
-            && unsafe { *p.offset(name_len.wrapping_sub(1) as isize) } as i32 == '1' as i32
+            && unsafe { *p.offset((name_len - 2) as isize) } == ';' as u8
+            && unsafe { *p.offset((name_len - 1) as isize) } == '1' as u8
         {
-            name_len = (name_len as u64).wrapping_sub(2) as size_t as size_t
+            name_len = name_len - 2;
         }
         /* Chop off trailing '.' from filenames. */
-        if name_len > 1
-            && unsafe { *p.offset(name_len.wrapping_sub(1) as isize) } as i32 == '.' as i32
-        {
-            name_len = name_len.wrapping_sub(1)
+        if name_len > 1 && unsafe { *p.offset((name_len - 1) as isize) } == '.' as u8 {
+            name_len = name_len - 1;
         }
         file.name.length = 0;
         unsafe { archive_strncat_safe(&mut file.name, p as *const u8 as *const (), name_len) };
@@ -2290,7 +2268,7 @@ fn parse_file_info(
                                          * to appear before other dirs. "+1" to those is to
                                          * make sure to appear after "RE" entry which this
                                          * "CL" entry should be connected with. */
-                                        file.number = file.cl_offset.wrapping_add(1) as int64_t;
+                                        file.number = (file.cl_offset + 1) as int64_t;
                                         file.offset = file.number as uint64_t;
                                         /*
                                          * Sanity check: cl_offset does not point at its
@@ -2432,11 +2410,11 @@ unsafe fn parse_rockridge(
     let mut entry_seen: i32 = 0;
     let iso9660 = unsafe { &mut *((*(*a).format).data as *mut iso9660) };
     while unsafe { p.offset(4 as isize) } <= end
-        && unsafe { *p.offset(0 as isize) } as i32 >= 'A' as i32
-        && unsafe { *p.offset(0 as isize) } as i32 <= 'Z' as i32
-        && unsafe { *p.offset(1 as isize) } as i32 >= 'A' as i32
-        && unsafe { *p.offset(1 as isize) } as i32 <= 'Z' as i32
-        && unsafe { *p.offset(2 as isize) } as i32 >= 4
+        && unsafe { *p.offset(0 as isize) } >= 'A' as u8
+        && unsafe { *p.offset(0 as isize) } <= 'Z' as u8
+        && unsafe { *p.offset(1 as isize) } >= 'A' as u8
+        && unsafe { *p.offset(1 as isize) } <= 'Z' as u8
+        && unsafe { *p.offset(2 as isize) } >= 4
         && unsafe { p.offset(*p.offset(2 as isize) as i32 as isize) } <= end
     {
         /* Sanity-check length. */
@@ -2445,7 +2423,7 @@ unsafe fn parse_rockridge(
         let mut version: i32 = unsafe { *p.offset(3 as isize) } as i32;
         match unsafe { *p.offset(0 as isize) } as i32 {
             67 => {
-                if unsafe { *p.offset(1 as isize) } as i32 == 'E' as i32 {
+                if unsafe { *p.offset(1 as isize) } == 'E' as u8 {
                     if version == 1 && data_length == 24 {
                         /*
                          * CE extension comprises:
@@ -2464,16 +2442,16 @@ unsafe fn parse_rockridge(
                             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
                         }
                     }
-                } else if unsafe { *p.offset(1 as isize) } as i32 == 'L' as i32 {
+                } else if unsafe { *p.offset(1 as isize) } == 'L' as u8 {
                     if version == 1 && data_length == 8 {
                         file.cl_offset = (iso9660.logical_block_size as uint64_t)
-                            .wrapping_mul(archive_le32dec(data as *const ()) as uint64_t);
+                            * (archive_le32dec(data as *const ()) as uint64_t);
                         iso9660.seenRockridge = 1 as i8
                     }
                 }
             }
             78 => {
-                if unsafe { *p.offset(1 as isize) } as i32 == 'M' as i32 {
+                if unsafe { *p.offset(1 as isize) } == 'M' as u8 {
                     if version == 1 {
                         parse_rockridge_NM1(file, data, data_length);
                         iso9660.seenRockridge = 1 as i8
@@ -2488,14 +2466,14 @@ unsafe fn parse_rockridge(
                  * PL extension won't appear;
                  * contents are always ignored.
                  */
-                if unsafe { *p.offset(1 as isize) } as i32 == 'N' as i32 {
+                if unsafe { *p.offset(1 as isize) } == 'N' as u8 {
                     if version == 1 && data_length == 16 {
                         file.rdev = toi(data as *const (), 4) as uint64_t;
                         file.rdev <<= 32;
                         file.rdev |= toi(unsafe { data.offset(8 as isize) } as *const (), 4) as u64;
                         iso9660.seenRockridge = 1 as i8
                     }
-                } else if unsafe { *p.offset(1 as isize) } as i32 == 'X' as i32 {
+                } else if unsafe { *p.offset(1 as isize) } == 'X' as u8 {
                     /*
                      * PX extension comprises:
                      *   8 bytes for mode,
@@ -2527,20 +2505,20 @@ unsafe fn parse_rockridge(
                 }
             }
             82 => {
-                if unsafe { *p.offset(1 as isize) } as i32 == 'E' as i32 && version == 1 {
+                if unsafe { *p.offset(1 as isize) } == 'E' as u8 && version == 1 {
                     file.re = 1 as i8;
                     iso9660.seenRockridge = 1 as i8
                 } else {
-                    (unsafe { *p.offset(1 as isize) } as i32 == 'R' as i32) && version == 1;
+                    (unsafe { *p.offset(1 as isize) } == 'R' as u8) && version == 1;
                 }
             }
             83 => {
-                if unsafe { *p.offset(1 as isize) } as i32 == 'L' as i32 {
+                if unsafe { *p.offset(1 as isize) } == 'L' as u8 {
                     if version == 1 {
                         parse_rockridge_SL1(file, data, data_length);
                         iso9660.seenRockridge = 1 as i8
                     }
-                } else if unsafe { *p.offset(1 as isize) } as i32 == 'T' as i32
+                } else if unsafe { *p.offset(1 as isize) } == 'T' as u8
                     && data_length == 0
                     && version == 1
                 {
@@ -2559,7 +2537,7 @@ unsafe fn parse_rockridge(
                 }
             }
             84 => {
-                if unsafe { *p.offset(1 as isize) } as i32 == 'F' as i32 {
+                if unsafe { *p.offset(1 as isize) } == 'F' as u8 {
                     if version == 1 {
                         parse_rockridge_TF1(file, data, data_length);
                         iso9660.seenRockridge = 1 as i8
@@ -2567,7 +2545,7 @@ unsafe fn parse_rockridge(
                 }
             }
             90 => {
-                if unsafe { *p.offset(1 as isize) } as i32 == 'F' as i32 {
+                if unsafe { *p.offset(1 as isize) } == 'F' as u8 {
                     if version == 1 {
                         parse_rockridge_ZF1(file, data, data_length);
                     }
@@ -2606,17 +2584,14 @@ unsafe fn register_CE(
     let mut parent: i32 = 0;
     iso9660 = unsafe { (*(*a).format).data as *mut iso9660 };
     let safe_iso9660 = unsafe { &mut *iso9660 };
-    offset = (location as uint64_t).wrapping_mul(safe_iso9660.logical_block_size as uint64_t);
+    offset = (location as uint64_t) * (safe_iso9660.logical_block_size as uint64_t);
     if file.mode & ARCHIVE_ISO9660_DEFINED_PARAM.ae_ifmt as mode_t
         == ARCHIVE_ISO9660_DEFINED_PARAM.ae_ifreg as mode_t
         && offset >= file.offset
         || offset < safe_iso9660.current_position
-        || (file.ce_offset as uint64_t).wrapping_add(file.ce_size as u64)
+        || (file.ce_offset as uint64_t + file.ce_size as u64)
             > safe_iso9660.logical_block_size as uint64_t
-        || offset
-            .wrapping_add(file.ce_offset as u64)
-            .wrapping_add(file.ce_size as u64)
-            > safe_iso9660.volume_size
+        || offset + file.ce_offset as u64 + file.ce_size as u64 > safe_iso9660.volume_size
     {
         archive_set_error_safe!(
             &mut (*a).archive as *mut archive,
@@ -2656,7 +2631,7 @@ unsafe fn register_CE(
             memcpy_safe(
                 p as *mut (),
                 heap.reqs as *const (),
-                (heap.cnt as u64).wrapping_mul(size_of::<read_ce_req>() as u64),
+                (heap.cnt as u64) * (size_of::<read_ce_req>() as u64),
             );
             free_safe(heap.reqs as *mut ());
         }
@@ -2771,7 +2746,7 @@ unsafe fn read_CE(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> i32 {
         }
         loop {
             file = unsafe { &mut *(*heap.reqs.offset(0 as isize)).file };
-            if file.ce_offset.wrapping_add(file.ce_size) as u64 > step {
+            if (file.ce_offset + file.ce_size) as u64 > step {
                 archive_set_error_safe!(
                     &mut (*a).archive as *mut archive,
                     ARCHIVE_ISO9660_DEFINED_PARAM.archive_errno_file_format,
@@ -2798,8 +2773,7 @@ unsafe fn read_CE(mut a: *mut archive_read, mut iso9660: *mut iso9660) -> i32 {
          * do-while loop. Registration of nested CE extension
          * might cause error because of current position. */
         __archive_read_consume_safe(a, step as int64_t);
-        iso9660.current_position =
-            (iso9660.current_position as u64).wrapping_add(step) as uint64_t as uint64_t
+        iso9660.current_position = iso9660.current_position + step
     }
     return ARCHIVE_ISO9660_DEFINED_PARAM.archive_ok;
 }
@@ -3116,7 +3090,7 @@ unsafe fn next_entry_seek(
     /* Seek forward to the start of the entry. */
     if iso9660.current_position < file.offset {
         let mut step: int64_t = 0;
-        step = file.offset.wrapping_sub(iso9660.current_position) as int64_t;
+        step = (file.offset - iso9660.current_position) as int64_t;
         step = __archive_read_consume_safe(a, step);
         if step < 0 as i64 {
             return step as i32;
@@ -3523,9 +3497,8 @@ unsafe fn heap_add_entry(
             );
             return ARCHIVE_ISO9660_DEFINED_PARAM.archive_fatal;
         }
-        new_pending_files =
-            malloc_safe((new_size as u64).wrapping_mul(size_of::<*mut file_info>() as u64))
-                as *mut *mut file_info;
+        new_pending_files = malloc_safe((new_size as u64) * (size_of::<*mut file_info>() as u64))
+            as *mut *mut file_info;
         if new_pending_files.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
@@ -3538,7 +3511,7 @@ unsafe fn heap_add_entry(
             memcpy_safe(
                 new_pending_files as *mut (),
                 heap.files as *const (),
-                (heap.allocated as u64).wrapping_mul(size_of::<*mut file_info>() as u64),
+                (heap.allocated as u64) * (size_of::<*mut file_info>() as u64),
             );
         }
         free_safe(heap.files as *mut ());
@@ -3640,9 +3613,8 @@ unsafe fn heap_get_entry(mut heap: *mut heap_queue) -> *mut file_info {
 unsafe fn toi(mut p: *const (), mut n: i32) -> u32 {
     let mut v: *const u8 = p as *const u8;
     if n > 1 {
-        return (unsafe { *v.offset(0 as isize) } as u32).wrapping_add(
-            (256 as u32).wrapping_mul(toi(unsafe { v.offset(1 as isize) } as *const (), n - 1)),
-        );
+        return (unsafe { *v.offset(0 as isize) } as u32
+            + 256 * toi(unsafe { v.offset(1 as isize) } as *const (), n - 1));
     }
     if n == 1 {
         return unsafe { *v.offset(0 as isize) } as u32;
@@ -3703,24 +3675,24 @@ unsafe fn isodate17(mut v: *const u8) -> time_t {
     let mut offset: i32 = 0;
     let mut t: time_t = 0;
     memset_safe(&mut tm as *mut tm as *mut (), 0, size_of::<tm>() as u64);
-    tm.tm_year = (unsafe { *v.offset(0 as isize) } as i32 - '0' as i32) * 1000
-        + (unsafe { *v.offset(1 as isize) } as i32 - '0' as i32) * 100
-        + (unsafe { *v.offset(2 as isize) } as i32 - '0' as i32) * 10
-        + (unsafe { *v.offset(3 as isize) } as i32 - '0' as i32)
+    tm.tm_year = (unsafe { *v.offset(0 as isize) } - '0' as u8) as i32 * 1000
+        + (unsafe { *v.offset(1 as isize) } - '0' as u8) as i32 * 100
+        + (unsafe { *v.offset(2 as isize) } - '0' as u8) as i32 * 10
+        + (unsafe { *v.offset(3 as isize) } - '0' as u8) as i32
         - 1900;
-    tm.tm_mon = (unsafe { *v.offset(4 as isize) } as i32 - '0' as i32) * 10
-        + (unsafe { *v.offset(5 as isize) } as i32 - '0' as i32);
-    tm.tm_mday = (unsafe { *v.offset(6 as isize) } as i32 - '0' as i32) * 10
-        + (unsafe { *v.offset(7 as isize) } as i32 - '0' as i32);
-    tm.tm_hour = (unsafe { *v.offset(8 as isize) } as i32 - '0' as i32) * 10
-        + (unsafe { *v.offset(9 as isize) } as i32 - '0' as i32);
-    tm.tm_min = (unsafe { *v.offset(10 as isize) } as i32 - '0' as i32) * 10
-        + (unsafe { *v.offset(11 as isize) } as i32 - '0' as i32);
-    tm.tm_sec = (unsafe { *v.offset(12 as isize) } as i32 - '0' as i32) * 10
-        + (unsafe { *v.offset(13 as isize) } as i32 - '0' as i32);
+    tm.tm_mon = (unsafe { *v.offset(4 as isize) } - '0' as u8) as i32 * 10
+        + (unsafe { *v.offset(5 as isize) } - '0' as u8) as i32;
+    tm.tm_mday = (unsafe { *v.offset(6 as isize) } - '0' as u8) as i32 * 10
+        + (unsafe { *v.offset(7 as isize) } - '0' as u8) as i32;
+    tm.tm_hour = (unsafe { *v.offset(8 as isize) } - '0' as u8) as i32 * 10
+        + (unsafe { *v.offset(9 as isize) } - '0' as u8) as i32;
+    tm.tm_min = (unsafe { *v.offset(10 as isize) } - '0' as u8) as i32 * 10
+        + (unsafe { *v.offset(11 as isize) } - '0' as u8) as i32;
+    tm.tm_sec = (unsafe { *v.offset(12 as isize) } - '0' as u8) as i32 * 10
+        + (unsafe { *v.offset(13 as isize) } - '0' as u8) as i32;
     /* v[16] is the signed timezone offset, in 1/4-hour increments. */
     offset = unsafe { *(v as *const libc::c_schar).offset(16 as isize) } as i32;
-    if offset > -(48) && offset < 52 {
+    if offset > -48 && offset < 52 {
         tm.tm_hour -= offset / 4;
         tm.tm_min -= offset % 4 * 15
     }
@@ -3791,21 +3763,21 @@ unsafe fn build_pathname_utf16be(
         }
         unsafe {
             *p.offset(*len as isize) = 0 as u8;
-            *p.offset((*len).wrapping_add(1 as u64) as isize) = '/' as i32 as u8;
+            *p.offset(((*len) + 1) as isize) = '/' as u8;
         }
-        *len = (*len as u64).wrapping_add(2 as u64) as size_t as size_t
+        *len = (*len) + 2;
     }
     if (*file).utf16be_bytes == 0 as u64 {
-        if (*len).wrapping_add(2 as u64) > max {
+        if (*len) + 2 > max {
             return -1;
         }
         unsafe {
             *p.offset(*len as isize) = 0 as u8;
-            *p.offset((*len).wrapping_add(1 as u64) as isize) = '.' as i32 as u8;
+            *p.offset(((*len) + 1) as isize) = '.' as u8;
         }
-        *len = (*len as u64).wrapping_add(2 as u64) as size_t as size_t
+        *len = (*len) + 2;
     } else {
-        if (*len).wrapping_add((*file).utf16be_bytes) > max {
+        if (*len) + (*file).utf16be_bytes > max {
             return -1;
         }
         memcpy_safe(
@@ -3813,7 +3785,7 @@ unsafe fn build_pathname_utf16be(
             (*file).utf16be_name as *const (),
             (*file).utf16be_bytes,
         );
-        *len = (*len as u64).wrapping_add((*file).utf16be_bytes) as size_t as size_t
+        *len = (*len) + (*file).utf16be_bytes;
     }
     return 0;
 }
