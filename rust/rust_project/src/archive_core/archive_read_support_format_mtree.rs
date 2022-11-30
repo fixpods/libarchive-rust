@@ -98,7 +98,7 @@ fn mtree_strnlen(p: *const u8, maxlen: size_t) -> size_t {
             let i: size_t = 0;
             i = 0;
             while i <= maxlen {
-                if unsafe { *p.offset(i as isize) as i32 as size_t == 0 } {
+                if unsafe { *p.offset(i as isize) as size_t == 0 } {
                     break;
                 }
                 i += 1
@@ -867,7 +867,7 @@ fn add_option(
         return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
     unsafe { memcpy_safe(opt_safe.value as *mut (), value as *const (), len) };
-    unsafe { *(*opt).value.offset(len as isize) = '\u{0}' as u8 as u8 };
+    unsafe { *(*opt).value.offset(len as isize) = '\u{0}' as u8 };
     let global_safe = unsafe { &mut *global };
     opt_safe.next = *global_safe;
     *global_safe = opt;
@@ -928,14 +928,14 @@ fn process_global_set(
         eq = unsafe { strchr_safe(line, '=' as i32) };
         unsafe {
             if eq > next {
-                len = next.offset_from(line) as i64 as size_t
+                len = next.offset_from(line) as size_t
             } else {
-                len = eq.offset_from(line) as i64 as size_t
+                len = eq.offset_from(line) as size_t
             }
         }
         remove_option(global, line, len);
         unsafe {
-            r = add_option(a, global, line, next.offset_from(line) as i64 as size_t);
+            r = add_option(a, global, line, next.offset_from(line) as size_t);
         }
         if r != ARCHIVE_MTREE_DEFINED_PARAM.archive_ok {
             return r;
@@ -1056,7 +1056,7 @@ fn process_add_entry(
             }
             i += 1
         }
-        name_len = unsafe { line.offset(line_len as isize).offset_from(name) as i64 as size_t };
+        name_len = unsafe { line.offset(line_len as isize).offset_from(name) as size_t };
         end = name
     } else {
         /* Filename is first item on line */
@@ -1080,7 +1080,7 @@ fn process_add_entry(
     }
     unsafe { memcpy_safe(entry_safe.name as *mut (), name as *const (), name_len) };
     unsafe {
-        *(*entry).name.offset(name_len as isize) = '\u{0}' as u8 as u8;
+        *(*entry).name.offset(name_len as isize) = '\u{0}' as u8;
     }
     parse_escapes(entry_safe.name, entry);
     entry_safe.next_dup = 0 as *mut mtree_entry;
@@ -1133,9 +1133,9 @@ fn process_add_entry(
         eq = unsafe { strchr_safe(line, '=' as i32) };
         unsafe {
             if eq.is_null() || eq > next {
-                len = next.offset_from(line) as i64 as size_t
+                len = next.offset_from(line) as size_t
             } else {
-                len = eq.offset_from(line) as i64 as size_t
+                len = eq.offset_from(line) as size_t
             }
         }
         remove_option(&mut entry_safe.options, line, len);
@@ -1144,7 +1144,7 @@ fn process_add_entry(
                 a,
                 &mut (*entry).options,
                 line,
-                next.offset_from(line) as i64 as size_t,
+                next.offset_from(line) as size_t,
             );
         }
         if r != ARCHIVE_MTREE_DEFINED_PARAM.archive_ok {
@@ -1195,7 +1195,7 @@ fn read_mtree(a: *mut archive_read, mtree: *mut mtree) -> i32 {
                 s = p;
                 unsafe {
                     while s < p.offset(len as isize).offset(-1) {
-                        if unsafe { isprint(*s as u8 as i32) } == 0 {
+                        if unsafe { isprint(*s as i32) } == 0 {
                             r = ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
                             break;
                         } else {
@@ -1773,7 +1773,7 @@ fn la_strsep(sp: *mut *mut u8, sep: *const u8) -> *mut u8 {
         if *p != '\u{0}' as u8 {
             let fresh0 = p;
             p = p.offset(1);
-            *fresh0 = '\u{0}' as u8 as u8
+            *fresh0 = '\u{0}' as u8
         }
     }
     *sp_safe = p;
@@ -1797,7 +1797,7 @@ fn parse_device(pdev: *mut dev_t, a: *mut archive, mut val: *mut u8) -> i32 {
         let fresh1 = dev;
         unsafe {
             dev = dev.offset(1);
-            *fresh1 = '\u{0}' as u8 as u8;
+            *fresh1 = '\u{0}' as u8;
         }
         pack = unsafe { pack_find_safe(val) };
         if pack.is_none() {
@@ -1914,7 +1914,7 @@ fn parse_digest(
         );
         return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
-    len = (len as u64).wrapping_mul(2) as size_t as size_t;
+    len = (len as u64).wrapping_mul(2) as size_t;
     if mtree_strnlen(digest, len.wrapping_add(1)) != len {
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
@@ -1939,7 +1939,7 @@ fn parse_digest(
             return ARCHIVE_MTREE_DEFINED_PARAM.archive_warn;
         }
         digest_buf[j as usize] = (high << 4 | low) as u8;
-        i = (i as u64).wrapping_add(2) as size_t as size_t;
+        i = (i as u64).wrapping_add(2) as size_t;
         j = j.wrapping_add(1)
     }
     return unsafe { archive_entry_set_digest_safe(entry, type_0, digest_buf.as_mut_ptr()) };
@@ -1995,7 +1995,7 @@ fn parse_keyword(
         val_safe = &mut *val;
         mtree_safe = &mut *mtree;
     }
-    *val_safe = '\u{0}' as u8 as u8;
+    *val_safe = '\u{0}' as u8;
     val = unsafe { val.offset(1) };
     let mut current_block_120: u64;
     match unsafe { *key.offset(0) as i32 } {
@@ -2569,47 +2569,47 @@ fn parse_escapes(mut src: *mut u8, mentry: *mut mtree_entry) {
                     current_block_30 = 16439418194823959314;
                 }
                 97 => {
-                    c = '\u{7}' as u8 as u8;
+                    c = '\u{7}' as u8;
                     src = unsafe { src.offset(1) };
                     current_block_30 = 3934796541983872331;
                 }
                 98 => {
-                    c = '\u{8}' as u8 as u8;
+                    c = '\u{8}' as u8;
                     src = unsafe { src.offset(1) };
                     current_block_30 = 3934796541983872331;
                 }
                 102 => {
-                    c = '\u{c}' as u8 as u8;
+                    c = '\u{c}' as u8;
                     src = unsafe { src.offset(1) };
                     current_block_30 = 3934796541983872331;
                 }
                 110 => {
-                    c = '\n' as u8 as u8;
+                    c = '\n' as u8;
                     src = unsafe { src.offset(1) };
                     current_block_30 = 3934796541983872331;
                 }
                 114 => {
-                    c = '\r' as u8 as u8;
+                    c = '\r' as u8;
                     src = unsafe { src.offset(1) };
                     current_block_30 = 3934796541983872331;
                 }
                 115 => {
-                    c = ' ' as u8 as u8;
+                    c = ' ' as u8;
                     src = unsafe { src.offset(1) };
                     current_block_30 = 3934796541983872331;
                 }
                 116 => {
-                    c = '\t' as u8 as u8;
+                    c = '\t' as u8;
                     src = unsafe { src.offset(1) };
                     current_block_30 = 3934796541983872331;
                 }
                 118 => {
-                    c = '\u{b}' as u8 as u8;
+                    c = '\u{b}' as u8;
                     src = unsafe { src.offset(1) };
                     current_block_30 = 3934796541983872331;
                 }
                 92 => {
-                    c = '\\' as u8 as u8;
+                    c = '\\' as u8;
                     src = unsafe { src.offset(1) };
                     current_block_30 = 3934796541983872331;
                 }
@@ -2642,7 +2642,7 @@ fn parse_escapes(mut src: *mut u8, mentry: *mut mtree_entry) {
         }
     }
     unsafe {
-        *dest = '\u{0}' as u8 as u8;
+        *dest = '\u{0}' as u8;
     }
 }
 /* Parse a hex digit. */
@@ -2780,7 +2780,7 @@ fn readline(
         unsafe { __archive_read_consume_safe(a, bytes_read) };
         total_size += bytes_read;
         unsafe {
-            *(*mtree).line.s.offset(total_size as isize) = '\u{0}' as u8 as u8;
+            *(*mtree).line.s.offset(total_size as isize) = '\u{0}' as u8;
             u = (*mtree).line.s.offset(find_off as isize);
             while *u != 0 {
                 if *u.offset(0) == '\n' as u8 {
@@ -2797,7 +2797,7 @@ fn readline(
                         if *u.offset(1) == '\n' as u8 {
                             /* Trim escaped newline. */
                             total_size -= 2;
-                            *(*mtree).line.s.offset(total_size as isize) = '\u{0}' as u8 as u8;
+                            *(*mtree).line.s.offset(total_size as isize) = '\u{0}' as u8;
                             break;
                         } else if *u.offset(1) != '\u{0}' as u8 {
                             /* Skip the two-char escape sequence */
@@ -2887,25 +2887,12 @@ pub fn archive_test_read_header(_a: *mut archive, entry: *mut archive_entry) {
 fn archive_test_parse_device(a: *mut archive) {
     let pdevp: [dev_t; 4] = [1, 2, 3, 4];
     let pdev: *mut dev_t = &pdevp as *const [dev_t; 4] as *mut [dev_t; 4] as *mut dev_t;
-    let valp: [u8; 5] = [
-        '1' as u8 as u8,
-        '2' as u8 as u8,
-        ',' as u8 as u8,
-        '3' as u8 as u8,
-        '4' as u8 as u8,
-    ];
+    let valp: [u8; 5] = ['1' as u8, '2' as u8, ',' as u8, '3' as u8, '4' as u8];
     let val: *mut u8 = &valp as *const [u8; 5] as *mut [u8; 5] as *mut u8;
     parse_device(pdev, a, val);
     let valp2: [u8; 9] = [
-        '1' as u8 as u8,
-        '2' as u8 as u8,
-        ',' as u8 as u8,
-        '3' as u8 as u8,
-        '8' as u8 as u8,
-        '6' as u8 as u8,
-        'b' as u8 as u8,
-        's' as u8 as u8,
-        'd' as u8 as u8,
+        '1' as u8, '2' as u8, ',' as u8, '3' as u8, '8' as u8, '6' as u8, 'b' as u8, 's' as u8,
+        'd' as u8,
     ];
     let val2: *mut u8 = &valp2 as *const [u8; 9] as *mut [u8; 9] as *mut u8;
     parse_device(pdev, a, val2);
@@ -2932,7 +2919,7 @@ fn archive_test_bid_keyword_list() {
 
 #[no_mangle]
 fn archive_test_mtree_atol() {
-    let p1: [u8; 3] = ['0' as u8 as u8, 'x' as u8 as u8, 'x' as u8 as u8];
+    let p1: [u8; 3] = ['0' as u8, 'x' as u8, 'x' as u8];
     let p2: *mut u8 = &p1 as *const [u8; 3] as *mut [u8; 3] as *mut u8;
     let p: *mut *mut u8 = unsafe { &p2 as *const *mut u8 as *mut *mut u8 };
     mtree_atol(p, 0);
