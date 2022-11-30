@@ -644,7 +644,7 @@ fn header_newc(
         /* Pad name to 2 more than a multiple of 4. */
         *name_pad = 2 - (*namelength) & 3;
         /* Make sure that the padded name length fits into size_t. */
-        if *name_pad > (ARCHIVE_CPIO_DEFINED_PARAM.size_max as u64) - (*namelength) {
+        if *name_pad > (ARCHIVE_CPIO_DEFINED_PARAM.size_max) - (*namelength) {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
                 ARCHIVE_CPIO_DEFINED_PARAM.archive_errno_file_format,
