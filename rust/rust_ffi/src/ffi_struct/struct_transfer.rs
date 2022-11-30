@@ -1756,3 +1756,41 @@ pub struct links_entry {
     pub ino: int64_t,
     pub name: *mut u8,
 }
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct mtree {
+    pub line: archive_string,
+    pub buffsize: size_t,
+    pub buff: *mut u8,
+    pub offset: int64_t,
+    pub fd: i32,
+    pub archive_format: i32,
+    pub archive_format_name: *const u8,
+    pub entries: *mut mtree_entry,
+    pub this_entry: *mut mtree_entry,
+    pub entry_rbtree: archive_rb_tree,
+    pub current_dir: archive_string,
+    pub contents_name: archive_string,
+    pub resolver: *mut archive_entry_linkresolver,
+    pub rbtree: archive_rb_tree,
+    pub cur_size: int64_t,
+    pub checkfs: u8,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct mtree_entry {
+    pub rbnode: archive_rb_node,
+    pub next_dup: *mut mtree_entry,
+    pub next: *mut mtree_entry,
+    pub options: *mut mtree_option,
+    pub name: *mut u8,
+    pub full: u8,
+    pub used: u8,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct mtree_option {
+    pub next: *mut mtree_option,
+    pub value: *mut u8,
+}

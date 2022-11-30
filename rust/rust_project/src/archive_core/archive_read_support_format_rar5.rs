@@ -20,7 +20,7 @@ use std::mem::size_of;
 static mut rar5_signature_xor: [u8; 8] = [243, 192, 211, 128, 187, 166, 160, 161];
 static mut g_unpack_window_size: size_t = 0x20000 as size_t;
 /* Clears the contents of this circular deque. */
-fn cdeque_clear(mut d: *mut cdeque) {
+fn cdeque_clear(d: *mut cdeque) {
     let safe_d = unsafe { &mut *d };
     safe_d.size = 0;
     safe_d.beg_pos = 0;
@@ -50,7 +50,7 @@ fn cdeque_init(d: *mut cdeque, max_capacity_power_of_2: i32) -> i32 {
     };
 }
 /* Return the current size (not capacity) of circular deque `d`. */
-fn cdeque_size(mut d: *mut cdeque) -> size_t {
+fn cdeque_size(d: *mut cdeque) -> size_t {
     let safe_d = unsafe { &mut *d };
     return safe_d.size as size_t;
 }
@@ -115,7 +115,7 @@ fn cdeque_filter_p(f: *mut *mut filter_info) -> *mut *mut () {
     return f as *mut *mut ();
 }
 /* Convenience function to cast filter_info* to void *. */
-fn cdeque_filter(mut f: *mut filter_info) -> *mut () {
+fn cdeque_filter(f: *mut filter_info) -> *mut () {
     return f as size_t as *mut *mut () as *mut ();
 }
 /* Destroys this circular deque object. Deallocates the memory of the
@@ -159,15 +159,15 @@ fn get_context(a: *mut archive_read) -> *mut rar5 {
 }
 /* Convenience functions used by filter implementations. */
 fn circular_memcpy(
-    mut dst: *mut uint8_t,
-    mut window: *mut uint8_t,
+    dst: *mut uint8_t,
+    window: *mut uint8_t,
     mask: uint64_t,
-    mut start: int64_t,
-    mut end: int64_t,
+    start: int64_t,
+    end: int64_t,
 ) {
     if start as u64 & mask > end as u64 & mask {
-        let mut len1: ssize_t = (mask + 1 - (start as u64 & mask)) as ssize_t;
-        let mut len2: ssize_t = (end as u64 & mask) as ssize_t;
+        let len1: ssize_t = (mask + 1 - (start as u64 & mask)) as ssize_t;
+        let len2: ssize_t = (end as u64 & mask) as ssize_t;
         unsafe {
             memcpy_safe(
                 dst as *mut (),
@@ -217,7 +217,7 @@ fn write_filter_data(rar: *mut rar5, offset: uint32_t, value: uint32_t) {
 /* Allocates a new filter descriptor and adds it to the filter array. */
 fn add_new_filter(rar: *mut rar5) -> *mut filter_info {
     let safe_rar = unsafe { &mut *rar };
-    let mut f: *mut filter_info =
+    let f: *mut filter_info =
         unsafe { calloc_safe(1, size_of::<filter_info>() as u64) as *mut filter_info };
     if f.is_null() {
         return 0 as *mut filter_info;
@@ -318,7 +318,7 @@ fn run_arm_filter(rar: *mut rar5, flt: *mut filter_info) -> i32 {
     while i < safe_flt.block_length - 3 {
         let mut b: *mut uint8_t = unsafe {
             &mut *(*rar).cstate.window_buf.offset(
-                ((safe_rar.cstate.solid_offset + safe_flt.block_start + i + 3 as i32 as i64) as u64
+                ((safe_rar.cstate.solid_offset + safe_flt.block_start + i + 3) as u64
                     & (*rar).cstate.window_mask) as isize,
             ) as *mut uint8_t
         };
@@ -342,8 +342,8 @@ fn run_arm_filter(rar: *mut rar5, flt: *mut filter_info) -> i32 {
 }
 
 fn run_filter(a: *mut archive_read, flt: *mut filter_info) -> i32 {
-    let mut ret: i32;
-    let mut rar: *mut rar5 = get_context(a);
+    let ret: i32;
+    let rar: *mut rar5 = get_context(a);
     let safe_rar = unsafe { &mut *rar };
     let safe_flt = unsafe { &mut *flt };
     unsafe { free_safe(safe_rar.cstate.filtered_buf as *mut ()) };
@@ -467,7 +467,7 @@ fn push_window_data(a: *mut archive_read, rar: *mut rar5, idx_begin: int64_t, id
 
 fn apply_filters(mut a: *mut archive_read) -> i32 {
     let mut flt: *mut filter_info = 0 as *mut filter_info;
-    let mut rar: *mut rar5 = get_context(a);
+    let rar: *mut rar5 = get_context(a);
     let mut ret: i32 = 0;
     unsafe { (*rar).cstate.set_all_filters_applied(0) };
     /* Get the first filter that can be applied to our data. The data
@@ -527,9 +527,9 @@ fn dist_cache_push(rar: *mut rar5, value: i32) {
 
 fn dist_cache_touch(rar: *mut rar5, idx: i32) -> i32 {
     let safe_rar = unsafe { &mut *rar };
-    let mut q: *mut i32 = safe_rar.cstate.dist_cache.as_mut_ptr();
+    let q: *mut i32 = safe_rar.cstate.dist_cache.as_mut_ptr();
     let mut i: i32 = 0;
-    let mut dist: i32 = unsafe { *q.offset(idx as isize) };
+    let dist: i32 = unsafe { *q.offset(idx as isize) };
     i = idx;
     while i > 0 as i32 {
         unsafe { *q.offset(i as isize) = *q.offset((i - 1 as i32) as isize) };
@@ -862,7 +862,7 @@ fn init_header(a: *mut archive_read) {
     safe_a.archive.archive_format_name = b"RAR5\x00" as *const u8;
 }
 
-fn init_window_mask(mut rar: *mut rar5) {
+fn init_window_mask(rar: *mut rar5) {
     let safe_rar = unsafe { &mut *rar };
     if safe_rar.cstate.window_size != 0 {
         safe_rar.cstate.window_mask = (safe_rar.cstate.window_size - 1 as i32 as i64) as size_t
@@ -893,9 +893,9 @@ fn process_main_locator_extra_block(a: *mut archive_read, rar: *mut rar5) -> i32
 }
 
 fn parse_file_extra_hash(
-    mut a: *mut archive_read,
-    mut rar: *mut rar5,
-    mut extra_data_size: *mut ssize_t,
+    a: *mut archive_read,
+    rar: *mut rar5,
+    extra_data_size: *mut ssize_t,
 ) -> i32 {
     let mut hash_type: size_t = 0 as i32 as size_t;
     let mut value_len: size_t = 0;
@@ -1981,7 +1981,7 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
 
 fn skip_base_block(mut a: *mut archive_read) -> i32 {
     let mut ret: i32 = 0;
-    let mut rar: *mut rar5 = get_context(a);
+    let rar: *mut rar5 = get_context(a);
     let safe_rar = unsafe { &mut *rar };
     /* Create a new local archive_entry structure that will be operated on
      * by header reader; operations on this archive_entry will be discarded.
@@ -2004,7 +2004,7 @@ fn skip_base_block(mut a: *mut archive_read) -> i32 {
 }
 
 fn rar5_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
-    let mut rar: *mut rar5 = get_context(a);
+    let rar: *mut rar5 = get_context(a);
     let mut ret: i32 = 0;
     let safe_rar = unsafe { &mut *rar };
     if safe_rar.header_initialized == 0 {
@@ -2113,11 +2113,7 @@ fn update_crc(rar: *mut rar5, p: *const uint8_t, to_read: size_t) {
     };
 }
 
-fn create_decode_tables(
-    mut bit_length: *mut uint8_t,
-    mut table: *mut decode_table,
-    mut size: i32,
-) -> i32 {
+fn create_decode_tables(bit_length: *mut uint8_t, table: *mut decode_table, size: i32) -> i32 {
     let mut code: i32 = 0;
     let mut upper_limit: i32 = 0 as i32;
     let mut i: i32 = 0;

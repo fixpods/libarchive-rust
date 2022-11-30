@@ -21,8 +21,8 @@ pub fn archive_read_support_format_all(a: *mut archive) -> i32 {
             b"archive_read_support_format_all\x00" as *const u8,
         )
     };
-    if magic_test == -30 {
-        return -30;
+    if magic_test == ARCHIVE_ALL_DEFINED_PARAM.archive_fatal {
+        return ARCHIVE_ALL_DEFINED_PARAM.archive_fatal;
     }
 
     unsafe { archive_read_support_format_ar(a) };
@@ -40,5 +40,5 @@ pub fn archive_read_support_format_all(a: *mut archive) -> i32 {
     unsafe { archive_read_support_format_iso9660(a) };
     unsafe { archive_read_support_format_zip(a) };
     unsafe { archive_clear_error_safe(a) };
-    return 0;
+    return ARCHIVE_ALL_DEFINED_PARAM.archive_ok;
 }

@@ -1,5 +1,6 @@
 use archive_core::archive_endian::*;
 use rust_ffi::ffi_alias::alias_set::*;
+use rust_ffi::ffi_defined_param::defined_param_get::ARCHIVE_STRING_DEFINED_PARAM;
 use rust_ffi::ffi_method::method_call::*;
 use rust_ffi::ffi_struct::struct_transfer::*;
 use std::mem::size_of;
@@ -1259,9 +1260,15 @@ fn iconv_strncat_in_locale(
                         )
                     };
                 } else if safe_sc.flag & (1) << 10 != 0 {
-                    archive_be16enc(outp as *mut (), 0xfffd as uint16_t);
+                    archive_be16enc(
+                        outp as *mut (),
+                        ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint16_t,
+                    );
                 } else {
-                    archive_le16enc(outp as *mut (), 0xfffd as uint16_t);
+                    archive_le16enc(
+                        outp as *mut (),
+                        ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint16_t,
+                    );
                 }
                 outp = unsafe { outp.offset(rbytes as isize) };
                 avail = ((avail as u64) - rbytes) as size_t
@@ -1477,7 +1484,7 @@ fn _utf8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i32 {
                         as uint32_t;
                     if wc < 0x800 as u32 {
                     } else {
-                        if !(wc > 0x10ffff as u32) {
+                        if !(wc > ARCHIVE_STRING_DEFINED_PARAM.unicode_max as u32) {
                             /* Correctly gets a Unicode, returns used bytes. */
                             unsafe { *pwc = wc }; /* set the Replacement Character instead. */
                             return cnt;
@@ -1501,7 +1508,7 @@ fn _utf8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i32 {
                         as uint32_t;
                     if wc < 0x10000 as u32 {
                     } else {
-                        if !(wc > 0x10ffff as u32) {
+                        if !(wc > ARCHIVE_STRING_DEFINED_PARAM.unicode_max as u32) {
                             /* Correctly gets a Unicode, returns used bytes. */
                             unsafe { *pwc = wc }; /* set the Replacement Character instead. */
                             return cnt;
@@ -1537,7 +1544,7 @@ fn _utf8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i32 {
             }
         }
     }
-    unsafe { *pwc = 0xfffd as uint32_t };
+    unsafe { *pwc = ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint32_t };
     return cnt * -(1 as i32);
 }
 fn utf8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i32 {
@@ -1574,7 +1581,7 @@ fn cesu8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i32 {
         let mut wc2: uint32_t = 0 as uint32_t;
         if n - 3 < 3 {
             /* Invalid byte sequence. */
-            unsafe { *pwc = 0xfffd as uint32_t };
+            unsafe { *pwc = ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint32_t };
             if cnt > 0 {
                 cnt *= -(1 as i32)
             }
@@ -1583,7 +1590,7 @@ fn cesu8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i32 {
             cnt = _utf8_to_unicode(&mut wc2, unsafe { s.offset(3) }, n - 3);
             if cnt != 3 || !(wc2 >= 0xdc00 as u32 && wc2 <= 0xdfff as u32) {
                 /* Invalid byte sequence. */
-                unsafe { *pwc = 0xfffd as uint32_t };
+                unsafe { *pwc = ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint32_t };
                 if cnt > 0 {
                     cnt *= -(1 as i32)
                 }
@@ -1597,7 +1604,7 @@ fn cesu8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i32 {
         }
     } else if cnt == 3 && (wc >= 0xdc00 as u32 && wc <= 0xdfff as u32) {
         /* Invalid byte sequence. */
-        unsafe { *pwc = 0xfffd as uint32_t };
+        unsafe { *pwc = ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint32_t };
         if cnt > 0 {
             cnt *= -(1 as i32)
         }
@@ -1617,8 +1624,8 @@ fn cesu8_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t) -> i32 {
 fn unicode_to_utf8(mut p: *mut u8, mut remaining: size_t, mut uc: uint32_t) -> size_t {
     let mut _p: *mut u8 = p;
     /* Invalid Unicode char maps to Replacement character */
-    if uc > 0x10ffff as u32 {
-        uc = 0xfffd as uint32_t
+    if uc > ARCHIVE_STRING_DEFINED_PARAM.unicode_max as u32 {
+        uc = ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint32_t
     }
     /* Translate code point to UTF8 */
     if uc <= 0x7f as u32 {
@@ -1684,7 +1691,7 @@ fn utf16_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t, be: i32) -> i32
     }
     if n == 1 {
         /* set the Replacement Character instead. */
-        unsafe { *pwc = 0xfffd as uint32_t };
+        unsafe { *pwc = ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint32_t };
         return -1;
     }
     if be != 0 {
@@ -1711,7 +1718,7 @@ fn utf16_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t, be: i32) -> i32
         } else {
             /* Undescribed code point should be U+FFFD
              * (replacement character). */
-            unsafe { *pwc = 0xfffd as uint32_t };
+            unsafe { *pwc = ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint32_t };
             return -2;
         }
     }
@@ -1719,13 +1726,15 @@ fn utf16_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t, be: i32) -> i32
      * Surrogate pair values(0xd800 through 0xdfff) are only
      * used by UTF-16, so, after above calculation, the code
      * must not be surrogate values, and Unicode has no codes
-     * larger than 0x10ffff. Thus, those are not legal Unicode
+     * larger than ARCHIVE_STRING_DEFINED_PARAM.unicode_max. Thus, those are not legal Unicode
      * values.
      */
-    if uc >= 0xd800 as u32 && uc <= 0xdfff as u32 || uc > 0x10ffff as u32 {
+    if uc >= 0xd800 as u32 && uc <= 0xdfff as u32
+        || uc > ARCHIVE_STRING_DEFINED_PARAM.unicode_max as u32
+    {
         /* Undescribed code point should be U+FFFD
          * (replacement character). */
-        unsafe { *pwc = 0xfffd as uint32_t };
+        unsafe { *pwc = ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint32_t };
         return unsafe { utf16.offset_from(s) as i32 * -(1 as i32) };
     }
     unsafe { *pwc = uc };
@@ -4498,7 +4507,7 @@ fn best_effort_strncat_to_utf16(
         let mut c: u32 = unsafe { *fresh111 as u32 };
         if c > 127 {
             /* We cannot handle it. */
-            c = 0xfffd as u32;
+            c = ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as u32;
             ret = -1
         }
         if bigendian != 0 {
