@@ -115,7 +115,7 @@ fn ppmd_read(p: *mut ()) -> Byte {
         unsafe { __archive_read_ahead_safe(a, 1, &mut bytes_avail) as *const uint8_t };
     if bytes_avail < 1 {
         safe_zip.ppmd8_stream_failed = 1;
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok as u8;
+        return 0;
     }
     unsafe { __archive_read_consume_safe(a, 1) };
     /* Increment the counter. */
@@ -193,7 +193,7 @@ fn trad_enc_init(
     trad_enc_decrypt_update(ctx, key, 12, header.as_mut_ptr(), 12);
     /* Return the last byte for CRC check. */
     *safe_crcchk = header[11];
-    return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+    return 0;
 }
 /*
 * Common code for streaming or seeking modes.
@@ -207,7 +207,7 @@ fn real_crc32(crc: u64, buff: *const (), len: size_t) -> u64 {
 /* Used by "ignorecrc32" option to speed up tests. */
 fn fake_crc32(crc: u64, buff: *const (), len: size_t) -> u64 {
     /* UNUSED */
-    return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok as u64;
+    return 0;
 }
 static mut compression_methods: [obj2; 25] = [
     obj2 {
@@ -428,7 +428,8 @@ fn process_extra(
         match headerid as i32 {
             1 => {
                 /* Zip64 extended information extra field. */
-                safe_zip_entry.flags = (safe_zip_entry.flags as i32 | 1 << 0) as u8;
+                safe_zip_entry.flags =
+                    (safe_zip_entry.flags as i32 | ARCHIVE_ZIP_DEFINED_PARAM.la_used_zip64) as u8;
                 if safe_zip_entry.uncompressed_size == 0xffffffff {
                     let mut t: uint64_t = 0;
                     if datasize < 8 || {
@@ -969,8 +970,7 @@ fn zip_read_local_file_header(
     };
     /* Setup default conversion. */
     if safe_zip.sconv.is_null() && safe_zip.init_default_conversion == 0 {
-        safe_zip.sconv_default =
-            unsafe { archive_string_default_conversion_for_read(&mut safe_a.archive) };
+        safe_zip.sconv_default = archive_string_default_conversion_for_read(&mut safe_a.archive);
         safe_zip.init_default_conversion = 1
     }
     p = unsafe { __archive_read_ahead_safe(a, 30, 0 as *mut ssize_t) as *const u8 };
@@ -1004,25 +1004,29 @@ fn zip_read_local_file_header(
     version = unsafe { *p.offset(4 as isize) };
     safe_zip_entry.system = unsafe { *p.offset(5 as isize) as u8 };
     safe_zip_entry.zip_flags = archive_le16dec(unsafe { p.offset(6 as isize) as *const () });
-    if safe_zip_entry.zip_flags as i32 & ((1) << 0 | ARCHIVE_ZIP_DEFINED_PARAM.zip_strong_encrypted)
+    if safe_zip_entry.zip_flags as i32
+        & (ARCHIVE_ZIP_DEFINED_PARAM.zip_encrypted | ARCHIVE_ZIP_DEFINED_PARAM.zip_strong_encrypted)
         != 0
     {
         safe_zip.has_encrypted_entries = 1;
         unsafe { archive_entry_set_is_data_encrypted_safe(entry, 1 as u8) };
-        if safe_zip_entry.zip_flags as i32 & (1 << 13) as i32 != 0
-            && safe_zip_entry.zip_flags as i32 & (1 << 0) as i32 != 0
-            && safe_zip_entry.zip_flags as i32 & (1 << 6) as i32 != 0
+        if safe_zip_entry.zip_flags as i32
+            & ARCHIVE_ZIP_DEFINED_PARAM.zip_central_directory_encrypted
+            != 0
+            && safe_zip_entry.zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_encrypted != 0
+            && safe_zip_entry.zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_strong_encrypted != 0
         {
             unsafe { archive_entry_set_is_metadata_encrypted_safe(entry, 1) };
             return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
         }
     }
-    safe_zip.init_decryption = (safe_zip_entry.zip_flags as i32 & (1 << 0) as i32) as u8;
+    safe_zip.init_decryption =
+        (safe_zip_entry.zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_encrypted) as u8;
     safe_zip_entry.compression =
         archive_le16dec(unsafe { p.offset(8 as isize) as *const () }) as u8;
     safe_zip_entry.mtime = zip_time(unsafe { p.offset(10 as isize) });
     safe_zip_entry.crc32 = archive_le32dec(unsafe { p.offset(14 as isize) as *const () });
-    if safe_zip_entry.zip_flags as i32 & (1 << 3) as i32 != 0 {
+    if safe_zip_entry.zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end != 0 {
         safe_zip_entry.decdat = unsafe { *p.offset(11 as isize) as u8 }
     } else {
         safe_zip_entry.decdat = unsafe { *p.offset(17 as isize) as u8 }
@@ -1046,7 +1050,7 @@ fn zip_read_local_file_header(
         };
         return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
     }
-    if safe_zip_entry.zip_flags as i32 & (1 << 11) as i32 != 0 {
+    if safe_zip_entry.zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_utf8_name != 0 {
         /* The filename is stored to be UTF-8. */
         if safe_zip.sconv_utf8.is_null() {
             safe_zip.sconv_utf8 = unsafe {
@@ -1073,7 +1077,7 @@ fn zip_read_local_file_header(
             if *__errno_location() == 12 {
                 archive_set_error(
                     &mut safe_a.archive as *mut archive,
-                    12,
+                    ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                     b"Can\'t allocate memory for Pathname\x00" as *const u8,
                 );
                 return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
@@ -1327,7 +1331,7 @@ fn zip_read_local_file_header(
         let mut linkname_full_length: size_t = linkname_length;
         if unsafe { (*(safe_zip).entry).compression as i32 != 0 } {
             // symlink target string appeared to be compressed
-            let mut status: i32 = -30;
+            let mut status: i32 = ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
             let mut uncompressed_buffer: *const () = 0 as *const ();
             match unsafe { (*(safe_zip).entry).compression as i32 } {
                 #[cfg(HAVE_ZLIB_H)]
@@ -1388,7 +1392,11 @@ fn zip_read_local_file_header(
             return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
         }
         sconv = safe_zip.sconv;
-        if unsafe { sconv.is_null() && (*(safe_zip).entry).zip_flags as i32 & (1) << 11 != 0 } {
+        if unsafe {
+            sconv.is_null()
+                && (*(safe_zip).entry).zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_utf8_name
+                    != 0
+        } {
             sconv = (safe_zip).sconv_utf8
         }
         if sconv.is_null() {
@@ -1399,7 +1407,9 @@ fn zip_read_local_file_header(
             if unsafe {
                 *__errno_location() != 12
                     && sconv == safe_zip.sconv_utf8
-                    && (*(safe_zip).entry).zip_flags as i32 & (1) << 11 != 0
+                    && (*(safe_zip).entry).zip_flags as i32
+                        & ARCHIVE_ZIP_DEFINED_PARAM.zip_utf8_name
+                        != 0
             } {
                 unsafe {
                     _archive_entry_copy_symlink_l_safe(
@@ -1414,7 +1424,7 @@ fn zip_read_local_file_header(
                 if *__errno_location() == 12 {
                     archive_set_error(
                         &mut safe_a.archive as *mut archive,
-                        12,
+                        ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                         b"Can\'t allocate memory for Symlink\x00" as *const u8,
                     );
                     return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
@@ -1455,7 +1465,7 @@ fn zip_read_local_file_header(
             };
             return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
         }
-    } else if 0 == safe_zip_entry.zip_flags as i32 & (1 << 3)
+    } else if 0 == safe_zip_entry.zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end
         || safe_zip_entry.uncompressed_size > 0
     {
         /* Set the size only if it's meaningful. */
@@ -1463,7 +1473,9 @@ fn zip_read_local_file_header(
     }
     safe_zip.entry_bytes_remaining = safe_zip_entry.compressed_size;
     /* If there's no body, force read_data() to return EOF immediately. */
-    if 0 == safe_zip_entry.zip_flags as i32 & (1 << 3) && safe_zip.entry_bytes_remaining < 1 {
+    if 0 == safe_zip_entry.zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end
+        && safe_zip.entry_bytes_remaining < 1
+    {
         safe_zip.end_of_entry = 1
     }
     /* Set up a more descriptive format name. */
@@ -1504,7 +1516,13 @@ fn check_authentication_code(mut a: *mut archive_read, mut _p: *const ()) -> i32
         };
         if _p == 0 as *mut () {
             /* Read authentication code. */
-            p = unsafe { __archive_read_ahead_safe(a, 10, 0 as *mut ssize_t) };
+            p = unsafe {
+                __archive_read_ahead_safe(
+                    a,
+                    ARCHIVE_ZIP_DEFINED_PARAM.auth_code_size as u64,
+                    0 as *mut ssize_t,
+                )
+            };
             if p == 0 as *mut () {
                 unsafe {
                     archive_set_error(
@@ -1518,8 +1536,14 @@ fn check_authentication_code(mut a: *mut archive_read, mut _p: *const ()) -> i32
         } else {
             p = _p
         }
-        cmp = unsafe { memcmp_safe(hmac.as_mut_ptr() as *const (), p, 10) };
-        unsafe { __archive_read_consume_safe(a, 10) };
+        cmp = unsafe {
+            memcmp_safe(
+                hmac.as_mut_ptr() as *const (),
+                p,
+                ARCHIVE_ZIP_DEFINED_PARAM.auth_code_size as u64,
+            )
+        };
+        unsafe { __archive_read_consume_safe(a, ARCHIVE_ZIP_DEFINED_PARAM.auth_code_size as i64) };
         if cmp != 0 {
             unsafe {
                 archive_set_error(
@@ -1547,11 +1571,11 @@ fn zip_read_data_none(
         let r: i32;
         /* UNUSED */
         zip = (*(*a).format).data as *mut zip;
-        if (*(*zip).entry).zip_flags as i32 & (1 << 3) != 0 {
+        if (*(*zip).entry).zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end != 0 {
             let mut p: *const u8;
             let mut grabbing_bytes: ssize_t = 24 as ssize_t;
             if (*zip).hctx_valid != 0 {
-                grabbing_bytes += 10
+                grabbing_bytes += ARCHIVE_ZIP_DEFINED_PARAM.auth_code_size as i64
             }
             /* Grab at least 24 bytes. */
             buff = __archive_read_ahead(a, grabbing_bytes as size_t, &mut bytes_avail) as *const u8;
@@ -1571,7 +1595,7 @@ fn zip_read_data_none(
              * by the correct 4-byte CRC. */
             p = buff;
             if (*zip).hctx_valid != 0 {
-                p = p.offset(10 as isize)
+                p = p.offset(ARCHIVE_ZIP_DEFINED_PARAM.auth_code_size as isize)
             }
             if *p.offset(0 as isize) as i32 == 'P' as i32
                 && *p.offset(1 as isize) as i32 == 'K' as i32
@@ -1581,7 +1605,7 @@ fn zip_read_data_none(
                     || (*zip).ignore_crc32 != 0
                     || (*zip).hctx_valid as i32 != 0 && (*(*zip).entry).aes_extra.vendor == 0x2)
             {
-                if (*(*zip).entry).flags as i32 & (1 << 0) != 0 {
+                if (*(*zip).entry).flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.la_used_zip64 != 0 {
                     let mut compressed: uint64_t;
                     let mut uncompressed: uint64_t;
                     (*(*zip).entry).crc32 = archive_le32dec(p.offset(4 as isize) as *const ());
@@ -1634,7 +1658,7 @@ fn zip_read_data_none(
                     && *p.offset(0 as isize) as i32 == 'P' as i32
                 {
                     if (*zip).hctx_valid != 0 {
-                        p = p.offset(-(10 as isize))
+                        p = p.offset(-(ARCHIVE_ZIP_DEFINED_PARAM.auth_code_size as isize))
                     }
                     break;
                 } else {
@@ -1717,7 +1741,8 @@ fn consume_optional_marker(a: *mut archive_read, zip: *mut zip) -> i32 {
     let safe_zip = unsafe { &mut *zip };
 
     if unsafe {
-        safe_zip.end_of_entry as i32 != 0 && (*safe_zip.entry).zip_flags as i32 & (1 << 3) != 0
+        safe_zip.end_of_entry as i32 != 0
+            && (*safe_zip.entry).zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end != 0
     } {
         let mut p: *const u8;
         p = unsafe { __archive_read_ahead_safe(a, 24 as size_t, 0 as *mut ssize_t) as *const u8 };
@@ -1741,7 +1766,9 @@ fn consume_optional_marker(a: *mut archive_read, zip: *mut zip) -> i32 {
             unsafe { p = p.offset(4 as isize) };
             safe_zip.unconsumed = 4 as size_t
         }
-        if unsafe { (*(safe_zip).entry).flags as i32 & (1) << 0 != 0 } {
+        if unsafe {
+            (*(safe_zip).entry).flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.la_used_zip64 != 0
+        } {
             let mut compressed: uint64_t = 0;
             let mut uncompressed: uint64_t = 0;
             unsafe { (*(safe_zip).entry).crc32 = archive_le32dec(p as *const ()) };
@@ -1820,7 +1847,7 @@ fn zipx_xz_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         unsafe {
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
-                12,
+                ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                 b"No memory for xz decompression\x00" as *const u8,
             )
         };
@@ -1852,14 +1879,12 @@ fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         );
         r = lzma_alone_decoder_safe(&mut safe_zip.zipx_lzma_stream, 18446744073709551615);
         if r as u32 != LZMA_OK as u32 {
-            unsafe {
-                archive_set_error(
-                    &mut safe_a.archive as *mut archive,
-                    -1,
-                    b"lzma initialization failed(%d)\x00" as *const u8,
-                    r as u32,
-                )
-            };
+            archive_set_error(
+                &mut safe_a.archive as *mut archive,
+                -1,
+                b"lzma initialization failed(%d)\x00" as *const u8,
+                r as u32,
+            );
             return ARCHIVE_ZIP_DEFINED_PARAM.archive_failed;
         }
 
@@ -1867,13 +1892,11 @@ fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
 
         p = __archive_read_ahead_safe(a, 9, 0 as *mut ssize_t) as *const uint8_t;
         if p.is_null() {
-            unsafe {
-                archive_set_error(
-                    &mut (*a).archive as *mut archive,
-                    ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
-                    b"Truncated lzma data\x00" as *const u8,
-                )
-            };
+            archive_set_error(
+                &mut (*a).archive as *mut archive,
+                ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
+                b"Truncated lzma data\x00" as *const u8,
+            );
             return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
         }
         if unsafe { *p.offset(2 as isize) as i32 != 0x5 || *p.offset(3 as isize) as i32 != 0 } {
@@ -1901,13 +1924,11 @@ fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
             (safe_zip).uncompressed_buffer =
                 malloc_safe((safe_zip).uncompressed_buffer_size) as *mut uint8_t;
             if (safe_zip).uncompressed_buffer.is_null() {
-                unsafe {
-                    archive_set_error(
-                        &mut (safe_a).archive as *mut archive,
-                        12,
-                        b"No memory for lzma decompression\x00" as *const u8,
-                    )
-                };
+                archive_set_error(
+                    &mut (safe_a).archive as *mut archive,
+                    ARCHIVE_ZIP_DEFINED_PARAM.enomem,
+                    b"No memory for lzma decompression\x00" as *const u8,
+                );
                 return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
             }
         }
@@ -2242,7 +2263,7 @@ fn zipx_ppmd8_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         unsafe {
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
-                12,
+                ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                 b"Unable to allocate memory for PPMd8 stream: %d bytes\x00" as *const u8
                     as *const u8,
                 mem << 20,
@@ -2283,7 +2304,7 @@ fn zipx_ppmd8_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         unsafe {
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
-                12,
+                ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                 b"No memory for PPMd8 decompression\x00" as *const u8,
             )
         };
@@ -2442,7 +2463,7 @@ fn zipx_bzip2_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         unsafe {
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
-                12,
+                ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                 b"No memory for bzip2 decompression\x00" as *const u8,
             )
         };
@@ -2631,7 +2652,7 @@ fn zip_read_data_deflate(
             if (*zip).uncompressed_buffer.is_null() {
                 archive_set_error(
                     &mut (*a).archive as *mut archive,
-                    12,
+                    ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                     b"No memory for ZIP decompression\x00" as *const u8,
                 );
                 return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
@@ -2649,7 +2670,7 @@ fn zip_read_data_deflate(
          */
         sp = __archive_read_ahead(a, 1 as size_t, &mut bytes_avail);
         compressed_buff = sp;
-        if 0 == (*(*zip).entry).zip_flags as i32 & (1 << 3)
+        if 0 == (*(*zip).entry).zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end
             && bytes_avail > (*zip).entry_bytes_remaining
         {
             bytes_avail = (*zip).entry_bytes_remaining
@@ -2675,7 +2696,8 @@ fn zip_read_data_deflate(
                 if buff_remaining > bytes_avail as size_t {
                     buff_remaining = bytes_avail as size_t
                 }
-                if 0 == (*(*zip).entry).zip_flags as i32 & (1 << 3)
+                if 0 == (*(*zip).entry).zip_flags as i32
+                    & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end
                     && (*zip).entry_bytes_remaining > 0
                 {
                     if ((*zip).decrypted_bytes_remaining as int64_t + buff_remaining as int64_t)
@@ -2742,7 +2764,7 @@ fn zip_read_data_deflate(
             -4 => {
                 archive_set_error(
                     &mut (*a).archive as *mut archive,
-                    12,
+                    ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                     b"Out of memory for ZIP decompression\x00" as *const u8,
                 );
                 return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
@@ -3154,7 +3176,7 @@ fn read_decryption_header(a: *mut archive_read) -> i32 {
                     unsafe {
                         archive_set_error(
                             &mut (safe_a).archive as *mut archive,
-                            12,
+                            ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                             b"No memory for ZIP decryption\x00" as *const u8,
                         )
                     };
@@ -3186,7 +3208,7 @@ fn zip_alloc_decryption_buffer(a: *mut archive_read) -> i32 {
             unsafe {
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
-                    12,
+                    ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                     b"No memory for ZIP decryption\x00" as *const u8,
                 )
             };
@@ -3213,7 +3235,8 @@ fn init_traditional_PKWARE_decryption(a: *mut archive_read) -> i32 {
       the start of the data area.
     */
     if unsafe {
-        0 == (*safe_zip.entry).zip_flags as i32 & (1 << 3) && safe_zip.entry_bytes_remaining < 12
+        0 == (*safe_zip.entry).zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end
+            && safe_zip.entry_bytes_remaining < ARCHIVE_ZIP_DEFINED_PARAM.enc_header_size as i64
     } {
         unsafe {
             archive_set_error(
@@ -3226,7 +3249,13 @@ fn init_traditional_PKWARE_decryption(a: *mut archive_read) -> i32 {
         };
         return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
     }
-    p = unsafe { __archive_read_ahead_safe(a, 12, 0 as *mut ssize_t) };
+    p = unsafe {
+        __archive_read_ahead_safe(
+            a,
+            ARCHIVE_ZIP_DEFINED_PARAM.enc_header_size as u64,
+            0 as *mut ssize_t,
+        )
+    };
     if p == 0 as *mut () {
         unsafe {
             archive_set_error(
@@ -3264,7 +3293,7 @@ fn init_traditional_PKWARE_decryption(a: *mut archive_read) -> i32 {
             passphrase,
             unsafe { strlen_safe(passphrase) },
             p as *const uint8_t,
-            12,
+            ARCHIVE_ZIP_DEFINED_PARAM.enc_header_size as u64,
             &mut crcchk,
         ); /* The passphrase is OK. */
         if unsafe { r == 0 && crcchk as i32 == (*(safe_zip).entry).decdat as i32 } {
@@ -3283,13 +3312,15 @@ fn init_traditional_PKWARE_decryption(a: *mut archive_read) -> i32 {
         }
         retry += 1
     }
-    unsafe { __archive_read_consume_safe(a, 12) };
+    unsafe { __archive_read_consume_safe(a, ARCHIVE_ZIP_DEFINED_PARAM.enc_header_size as i64) };
     (safe_zip).tctx_valid = 1;
-    if unsafe { 0 == (*(safe_zip).entry).zip_flags as i32 & (1 << 3) } {
-        safe_zip.entry_bytes_remaining -= 12
+    if unsafe {
+        0 == (*(safe_zip).entry).zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end
+    } {
+        safe_zip.entry_bytes_remaining -= ARCHIVE_ZIP_DEFINED_PARAM.enc_header_size as i64
     }
     /*zip->entry_uncompressed_bytes_read += ENC_HEADER_SIZE;*/
-    safe_zip.entry_compressed_bytes_read += 12;
+    safe_zip.entry_compressed_bytes_read += ARCHIVE_ZIP_DEFINED_PARAM.enc_header_size as i64;
     safe_zip.decrypted_bytes_remaining = 0;
     return zip_alloc_decryption_buffer(a);
 }
@@ -3464,15 +3495,19 @@ fn init_WinZip_AES_decryption(a: *mut archive_read) -> i32 {
                 (safe_zip).cctx_valid = (safe_zip).hctx_valid;
                 unsafe { __archive_read_consume_safe(a, salt_len as i64 + 2) };
                 (safe_zip).entry_bytes_remaining = unsafe {
-                    ((safe_zip).entry_bytes_remaining as int64_t) - (salt_len + 2 + 10) as int64_t
+                    ((safe_zip).entry_bytes_remaining as int64_t)
+                        - (salt_len + 2 + ARCHIVE_ZIP_DEFINED_PARAM.auth_code_size as u64)
+                            as int64_t
                 };
                 if unsafe {
-                    !(0 == (*(safe_zip).entry).zip_flags as i32 & (1 << 3)
+                    !(0 == (*(safe_zip).entry).zip_flags as i32
+                        & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end
                         && (safe_zip).entry_bytes_remaining < 0)
                 } {
                     (safe_zip).entry_compressed_bytes_read = ((safe_zip).entry_compressed_bytes_read
                         as int64_t)
-                        + (salt_len + 2 + 10) as int64_t;
+                        + (salt_len + 2 + ARCHIVE_ZIP_DEFINED_PARAM.auth_code_size as u64)
+                            as int64_t;
                     (safe_zip).decrypted_bytes_remaining = 0;
                     unsafe {
                         (*(safe_zip).entry).compression = (*(safe_zip).entry).aes_extra.compression
@@ -3527,9 +3562,15 @@ fn archive_read_format_zip_read_data(
     (safe_zip).unconsumed = 0 as size_t;
     if (safe_zip).init_decryption != 0 {
         (safe_zip).has_encrypted_entries = 1;
-        if unsafe { (*(safe_zip).entry).zip_flags as i32 & (1 << 6) != 0 } {
+        if unsafe {
+            (*(safe_zip).entry).zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_strong_encrypted
+                != 0
+        } {
             r = read_decryption_header(a)
-        } else if unsafe { (*(safe_zip).entry).compression as i32 == 99 } {
+        } else if unsafe {
+            (*(safe_zip).entry).compression as i32
+                == ARCHIVE_ZIP_DEFINED_PARAM.winzip_aes_encryption
+        } {
             r = init_WinZip_AES_decryption(a)
         } else {
             r = init_traditional_PKWARE_decryption(a)
@@ -3618,8 +3659,9 @@ fn archive_read_format_zip_read_data(
         /* Size field only stores the lower 32 bits of the actual
          * size. */
         unsafe {
-            if (*(safe_zip).entry).uncompressed_size & 4294967295
-                != (safe_zip).entry_uncompressed_bytes_read & 4294967295
+            if (*(safe_zip).entry).uncompressed_size & ARCHIVE_ZIP_DEFINED_PARAM.uint32_max as i64
+                != (safe_zip).entry_uncompressed_bytes_read
+                    & ARCHIVE_ZIP_DEFINED_PARAM.uint32_max as i64
             {
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
@@ -3716,7 +3758,7 @@ fn archive_read_format_zip_has_encrypted_entries(_a: *mut archive_read) -> i32 {
             return (safe_zip).has_encrypted_entries;
         }
     }
-    return ARCHIVE_ZIP_DEFINED_PARAM.archive_read_format_encryption_dont_know;
+    return -1;
 }
 
 fn archive_read_format_zip_options(a: *mut archive_read, key: *const u8, val: *const u8) -> i32 {
@@ -3798,14 +3840,15 @@ pub fn archive_read_support_format_zip(a: *mut archive) -> i32 {
 */
 fn archive_read_support_format_zip_capabilities_streamable(a: *mut archive_read) -> i32 {
     /* UNUSED */
-    return (1 << 0) | (1 << 1);
+    return ARCHIVE_ZIP_DEFINED_PARAM.archive_read_format_caps_encrypt_data
+        | ARCHIVE_ZIP_DEFINED_PARAM.archive_read_format_caps_encrypt_metadata;
 }
 fn archive_read_format_zip_streamable_bid(a: *mut archive_read, best_bid: i32) -> i32 {
     let mut p: *const u8 = 0 as *const u8;
     /* UNUSED */
     p = unsafe { __archive_read_ahead_safe(a, 4 as size_t, 0 as *mut ssize_t) as *const u8 };
     if p.is_null() {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_read_format_encryption_dont_know;
+        return -1;
     }
     /*
      * Bid of 29 here comes from:
@@ -3838,7 +3881,7 @@ fn archive_read_format_zip_streamable_bid(a: *mut archive_read, best_bid: i32) -
          * PK signature.  In particular, that would make it possible
          * to read some UUEncoded SFX files or SFX files coming from
          * a network socket. */
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
 }
 
@@ -3876,7 +3919,7 @@ fn archive_read_format_zip_streamable_read_header(
             unsafe {
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
-                    12,
+                    ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                     b"Out  of memory\x00" as *const u8,
                 )
             };
@@ -3990,7 +4033,7 @@ fn archive_read_format_zip_read_data_skip_streamable(a: *mut archive_read) -> i3
     }
     /* So we know we're streaming... */
     if unsafe {
-        0 == (*(safe_zip).entry).zip_flags as i32 & (1 << 3)
+        0 == (*(safe_zip).entry).zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end
             || (*(safe_zip).entry).compressed_size > 0
     } {
         /* We know the compressed length, so we can just skip. */
@@ -4003,9 +4046,15 @@ fn archive_read_format_zip_read_data_skip_streamable(a: *mut archive_read) -> i3
     if (safe_zip).init_decryption != 0 {
         let mut r: i32 = 0;
         (safe_zip).has_encrypted_entries = 1;
-        if unsafe { (*(safe_zip).entry).zip_flags as i32 & (1 << 6) != 0 } {
+        if unsafe {
+            (*(safe_zip).entry).zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_strong_encrypted
+                != 0
+        } {
             r = read_decryption_header(a)
-        } else if unsafe { (*(safe_zip).entry).compression as i32 == 99 } {
+        } else if unsafe {
+            (*(safe_zip).entry).compression as i32
+                == ARCHIVE_ZIP_DEFINED_PARAM.winzip_aes_encryption
+        } {
             r = init_WinZip_AES_decryption(a)
         } else {
             r = init_traditional_PKWARE_decryption(a)
@@ -4069,7 +4118,10 @@ fn archive_read_format_zip_read_data_skip_streamable(a: *mut archive_read) -> i3
                             && *p.offset(1 as isize) as i32 == 'K' as i32
                             && *p.offset(0 as isize) as i32 == 'P' as i32
                         {
-                            if (*(*zip).entry).flags as i32 & (1 << 0) != 0 {
+                            if (*(*zip).entry).flags as i32
+                                & ARCHIVE_ZIP_DEFINED_PARAM.la_used_zip64
+                                != 0
+                            {
                                 __archive_read_consume(a, p.offset_from(buff_0) as i64 + 24);
                             } else {
                                 __archive_read_consume(a, p.offset_from(buff_0) as i64 + 16);
@@ -4110,7 +4162,7 @@ pub fn archive_read_support_format_zip_streamable(_a: *mut archive) -> i32 {
         unsafe {
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
-                12,
+                ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                 b"Can\'t allocate zip data\x00" as *const u8,
             )
         };
@@ -4151,7 +4203,8 @@ pub fn archive_read_support_format_zip_streamable(_a: *mut archive) -> i32 {
 */
 fn archive_read_support_format_zip_capabilities_seekable(a: *mut archive_read) -> i32 {
     /* UNUSED */
-    return (1 << 0) | ARCHIVE_ZIP_DEFINED_PARAM.archive_read_format_caps_encrypt_metadata;
+    return ARCHIVE_ZIP_DEFINED_PARAM.archive_read_format_caps_encrypt_data
+        | ARCHIVE_ZIP_DEFINED_PARAM.archive_read_format_caps_encrypt_metadata;
 }
 /*
 * TODO: This is a performance sink because it forces the read core to
@@ -4162,7 +4215,7 @@ fn archive_read_support_format_zip_capabilities_seekable(a: *mut archive_read) -
 * that later bidders can do nothing if they know they'll never
 * outbid.  But we can certainly do better...
 */
-unsafe fn read_eocd(zip: *mut zip, p: *const u8, current_offset: int64_t) -> i32 {
+fn read_eocd(zip: *mut zip, p: *const u8, current_offset: int64_t) -> i32 {
     let safe_p = unsafe { &*p };
     let safe_zip = unsafe { &mut *zip };
     let disk_num: uint16_t;
@@ -4174,21 +4227,21 @@ unsafe fn read_eocd(zip: *mut zip, p: *const u8, current_offset: int64_t) -> i32
     /* Sanity-check the EOCD we've found. */
     /* This must be the first volume. */
     if disk_num as i32 != 0 {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* Central directory must be on this volume. */
     if disk_num as i32 != archive_le16dec(unsafe { p.offset(6 as isize) as *const () }) as i32 {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* All central directory entries must be on this volume. */
     if archive_le16dec(unsafe { p.offset(10 as isize) as *const () }) as i32
         != archive_le16dec(unsafe { p.offset(8 as isize) as *const () }) as i32
     {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* Central directory can't extend beyond start of EOCD record. */
     if cd_offset as i64 + cd_size as i64 > current_offset {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* Save the central directory location for later use. */
     (safe_zip).central_directory_offset = cd_offset as int64_t;
@@ -4211,47 +4264,47 @@ fn read_zip64_eocd(a: *mut archive_read, zip: *mut zip, mut p: *const u8) -> i32
     /* Sanity-check the locator record. */
     /* Central dir must be on first volume. */
     if archive_le32dec(unsafe { p.offset(4 as isize) as *const () }) != 0 {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* Must be only a single volume. */
     if archive_le32dec(unsafe { p.offset(16 as isize) as *const () }) != 1 {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* Find the Zip64 EOCD record. */
     eocd64_offset = archive_le64dec(unsafe { p.offset(8 as isize) as *const () }) as int64_t;
     if unsafe { __archive_read_seek_safe(a, eocd64_offset, 0) < 0 } {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     p = unsafe { __archive_read_ahead_safe(a, 56, 0 as *mut ssize_t) as *const u8 };
     if p.is_null() {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* Make sure we can read all of it. */
     eocd64_size =
         archive_le64dec(unsafe { p.offset(4 as isize) as *const () }) as int64_t + 12 as int64_t;
     if eocd64_size < 56 || eocd64_size > 16384 {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     p = unsafe {
         __archive_read_ahead_safe(a, eocd64_size as size_t, 0 as *mut ssize_t) as *const u8
     };
     if p.is_null() {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* Sanity-check the EOCD64 */
     if archive_le32dec(unsafe { p.offset(16 as isize) as *const () }) != 0 {
         /* Must be disk #0 */
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     if archive_le32dec(unsafe { p.offset(20 as isize) as *const () }) != 0 {
         /* CD must be on disk #0 */
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* CD can't be split. */
     if archive_le64dec(unsafe { p.offset(24 as isize) as *const () })
         != archive_le64dec(unsafe { p.offset(32 as isize) as *const () })
     {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* Save the central directory offset for later use. */
     (safe_zip).central_directory_offset =
@@ -4272,11 +4325,11 @@ fn archive_read_format_zip_seekable_bid(a: *mut archive_read, best_bid: i32) -> 
     /* If someone has already bid more than 32, then avoid
     trashing the look-ahead buffers with a seek. */
     if best_bid > 32 {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_read_format_encryption_dont_know;
+        return -1;
     }
     file_size = unsafe { __archive_read_seek_safe(a, 0, 2) };
     if file_size <= 0 {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* Search last 16k of file for end-of-central-directory
      * record (which starts with PK\005\006) */
@@ -4287,11 +4340,11 @@ fn archive_read_format_zip_seekable_bid(a: *mut archive_read, best_bid: i32) -> 
     } as i32;
     current_offset = unsafe { __archive_read_seek_safe(a, -tail as int64_t, 2) };
     if current_offset < 0 {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     p = unsafe { __archive_read_ahead_safe(a, tail as size_t, 0 as *mut ssize_t) as *const u8 };
     if p.is_null() {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+        return 0;
     }
     /* Boyer-Moore search backwards from the end, since we want
      * to match the last EOCD in the file (there can be more than
@@ -4336,7 +4389,7 @@ fn archive_read_format_zip_seekable_bid(a: *mut archive_read, best_bid: i32) -> 
             }
         }
     }
-    return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+    return 0;
 }
 /* The red-black trees are only used in seeking mode to manage
 * the in-memory copy of the central directory. */
@@ -4346,12 +4399,12 @@ fn cmp_node(n1: *const archive_rb_node, n2: *const archive_rb_node) -> i32 {
     let safe_e1 = unsafe { &*e1 };
     let safe_e2 = unsafe { &*e2 };
     if (safe_e1).local_header_offset > (safe_e2).local_header_offset {
-        return ARCHIVE_ZIP_DEFINED_PARAM.archive_read_format_encryption_dont_know;
+        return -1;
     }
     if (safe_e1).local_header_offset < (safe_e2).local_header_offset {
         return 1;
     }
-    return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
+    return 0;
 }
 fn cmp_key(n: *const archive_rb_node, key: *const ()) -> i32 {
     /* This function won't be called */
@@ -4585,7 +4638,7 @@ fn slurp_central_directory(a: *mut archive_read, entry: *mut archive_entry, zip:
             unsafe {
                 archive_set_error(
                     &mut (safe_a).archive as *mut archive,
-                    12,
+                    ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                     b"Can\'t allocate zip entry\x00" as *const u8,
                 )
             };
@@ -4602,14 +4655,18 @@ fn slurp_central_directory(a: *mut archive_read, entry: *mut archive_entry, zip:
         safe_zip_entry.system = unsafe { *p.offset(5 as isize) as u8 };
         /* version_required = archive_le16dec(p + 6); */
         safe_zip_entry.zip_flags = archive_le16dec(unsafe { p.offset(8 as isize) as *const () });
-        if safe_zip_entry.zip_flags as i32 & ((1 << 0) | (1 << 6)) != 0 {
+        if safe_zip_entry.zip_flags as i32
+            & (ARCHIVE_ZIP_DEFINED_PARAM.zip_encrypted
+                | ARCHIVE_ZIP_DEFINED_PARAM.zip_strong_encrypted)
+            != 0
+        {
             (safe_zip).has_encrypted_entries = 1
         }
         safe_zip_entry.compression =
             archive_le16dec(unsafe { p.offset(10 as isize) as *const () }) as u8 as u8;
         safe_zip_entry.mtime = zip_time(unsafe { p.offset(12 as isize) });
         safe_zip_entry.crc32 = archive_le32dec(unsafe { p.offset(16 as isize) as *const () });
-        if safe_zip_entry.zip_flags as i32 & (1 << 3) != 0 {
+        if safe_zip_entry.zip_flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.zip_length_at_end != 0 {
             safe_zip_entry.decdat = unsafe { *p.offset(13 as isize) as u8 }
         } else {
             safe_zip_entry.decdat = unsafe { *p.offset(19 as isize) as u8 }
@@ -4837,21 +4894,19 @@ fn zip_read_mac_metadata(
         let mut hsize: ssize_t;
         let mut ret: i32 = 0;
         let mut eof: i32;
-        let safe_a = unsafe { &mut *a };
-        let safe_zip = unsafe { &mut *zip };
-        let safe_rsrc = unsafe { &mut *rsrc };
+        let safe_a = &mut *a;
+        let safe_zip = &mut *zip;
+        let safe_rsrc = &mut *rsrc;
         match safe_rsrc.compression as i32 {
             0 => {
                 /* No compression. */
                 if safe_rsrc.uncompressed_size != safe_rsrc.compressed_size {
-                    unsafe {
-                        archive_set_error(
-                            &mut (safe_a).archive as *mut archive,
-                            ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
-                            b"Malformed OS X metadata entry: inconsistent size\x00" as *const u8
-                                as *const u8,
-                        )
-                    };
+                    archive_set_error(
+                        &mut (safe_a).archive as *mut archive,
+                        ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
+                        b"Malformed OS X metadata entry: inconsistent size\x00" as *const u8
+                            as *const u8,
+                    );
                     return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
                 }
             }
@@ -4860,50 +4915,43 @@ fn zip_read_mac_metadata(
             _ => {
                 /* Unsupported compression. */
                 /* Return a warning. */
-                unsafe {
-                    archive_set_error(
-                        &mut (safe_a).archive as *mut archive,
-                        ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
-                        b"Unsupported ZIP compression method (%s)\x00" as *const u8,
-                        compression_name((*rsrc).compression as i32),
-                    )
-                };
+
+                archive_set_error(
+                    &mut (safe_a).archive as *mut archive,
+                    ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
+                    b"Unsupported ZIP compression method (%s)\x00" as *const u8,
+                    compression_name((*rsrc).compression as i32),
+                );
                 /* We can't decompress this entry, but we will
                  * be able to skip() it and try the next entry. */
                 return ARCHIVE_ZIP_DEFINED_PARAM.archive_warn;
             }
         }
         if (safe_rsrc).uncompressed_size > (4 * 1024 * 1024) as i64 {
-            unsafe {
-                archive_set_error(
-                    &mut (*a).archive as *mut archive,
-                    ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
-                    b"Mac metadata is too large: %jd > 4M bytes\x00" as *const u8,
-                    (*rsrc).uncompressed_size,
-                )
-            };
+            archive_set_error(
+                &mut (*a).archive as *mut archive,
+                ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
+                b"Mac metadata is too large: %jd > 4M bytes\x00" as *const u8,
+                (*rsrc).uncompressed_size,
+            );
             return ARCHIVE_ZIP_DEFINED_PARAM.archive_warn;
         }
         if (safe_rsrc).compressed_size > (4 * 1024 * 1024) as i64 {
-            unsafe {
-                archive_set_error(
-                    &mut (safe_a).archive as *mut archive,
-                    ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
-                    b"Mac metadata is too large: %jd > 4M bytes\x00" as *const u8,
-                    (safe_rsrc).compressed_size,
-                )
-            };
+            archive_set_error(
+                &mut (safe_a).archive as *mut archive,
+                ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
+                b"Mac metadata is too large: %jd > 4M bytes\x00" as *const u8,
+                (safe_rsrc).compressed_size,
+            );
             return ARCHIVE_ZIP_DEFINED_PARAM.archive_warn;
         }
         metadata = malloc_safe((safe_rsrc).uncompressed_size as size_t) as *mut u8;
         if metadata.is_null() {
-            unsafe {
-                archive_set_error(
-                    &mut (*a).archive as *mut archive,
-                    12,
-                    b"Can\'t allocate memory for Mac metadata\x00" as *const u8,
-                )
-            };
+            archive_set_error(
+                &mut (*a).archive as *mut archive,
+                ARCHIVE_ZIP_DEFINED_PARAM.enomem,
+                b"Can\'t allocate memory for Mac metadata\x00" as *const u8,
+            );
             return ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
         }
         if offset < (safe_rsrc).local_header_offset {
@@ -4927,13 +4975,11 @@ fn zip_read_mac_metadata(
             let mut bytes_used: size_t = 0;
             p = __archive_read_ahead_safe(a, 1 as size_t, &mut bytes_avail) as *const u8;
             if p.is_null() {
-                unsafe {
-                    archive_set_error(
-                        &mut (safe_a).archive as *mut archive,
-                        ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
-                        b"Truncated ZIP file header\x00" as *const u8,
-                    )
-                };
+                archive_set_error(
+                    &mut (safe_a).archive as *mut archive,
+                    ARCHIVE_ZIP_DEFINED_PARAM.archive_errno_file_format,
+                    b"Truncated ZIP file header\x00" as *const u8,
+                );
                 ret = ARCHIVE_ZIP_DEFINED_PARAM.archive_warn;
                 current_block = 2;
                 break;
@@ -4950,7 +4996,7 @@ fn zip_read_mac_metadata(
                         memcpy_safe(mp as *mut (), p as *const (), bytes_avail as u64);
                         bytes_used = bytes_avail as size_t;
                         metadata_bytes = ((metadata_bytes as u64) - (bytes_used)) as size_t;
-                        mp = unsafe { mp.offset(bytes_used as isize) };
+                        mp = mp.offset(bytes_used as isize);
                         if metadata_bytes == 0 {
                             eof = 1
                         }
@@ -4975,29 +5021,24 @@ fn zip_read_mac_metadata(
                             0 => {}
                             1 => eof = 1,
                             -4 => {
-                                unsafe {
-                                    archive_set_error(
-                                        &mut (safe_a).archive as *mut archive,
-                                        12,
-                                        b"Out of memory for ZIP decompression\x00" as *const u8
-                                            as *const u8,
-                                    )
-                                };
-                                ret = -30;
+                                archive_set_error(
+                                    &mut (safe_a).archive as *mut archive,
+                                    ARCHIVE_ZIP_DEFINED_PARAM.enomem,
+                                    b"Out of memory for ZIP decompression\x00" as *const u8
+                                        as *const u8,
+                                );
+                                ret = ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
                                 current_block = 2;
                                 break;
                             }
                             _ => {
-                                unsafe {
-                                    archive_set_error(
-                                        &mut (safe_a).archive as *mut archive,
-                                        -1,
-                                        b"ZIP decompression failed (%d)\x00" as *const u8
-                                            as *const u8,
-                                        r,
-                                    )
-                                };
-                                ret = -30;
+                                archive_set_error(
+                                    &mut (safe_a).archive as *mut archive,
+                                    -1,
+                                    b"ZIP decompression failed (%d)\x00" as *const u8 as *const u8,
+                                    r,
+                                );
+                                ret = ARCHIVE_ZIP_DEFINED_PARAM.archive_fatal;
                                 current_block = 2;
                                 break;
                             }
@@ -5029,7 +5070,7 @@ fn zip_read_mac_metadata(
         return ret;
     }
 }
-unsafe fn archive_read_format_zip_seekable_read_header(
+fn archive_read_format_zip_seekable_read_header(
     a: *mut archive_read,
     entry: *mut archive_entry,
 ) -> i32 {
@@ -5164,7 +5205,7 @@ pub fn archive_read_support_format_zip_seekable(_a: *mut archive) -> i32 {
         unsafe {
             archive_set_error(
                 &mut (safe_a).archive as *mut archive,
-                12,
+                ARCHIVE_ZIP_DEFINED_PARAM.enomem,
                 b"Can\'t allocate zip data\x00" as *const u8,
             )
         };
@@ -5305,7 +5346,6 @@ pub fn archive_test_read_format_zip_read_data(_a: *mut archive) {
     let mut offset: int64_t = 0;
     let mut offset2: *mut int64_t = &offset as *const int64_t as *mut int64_t;
     let mut buff: *mut () = 0 as *const () as *mut ();
-    let mut buff2: *mut *const () =
-        unsafe { &buff as *const *mut () as *mut *mut () as *mut *const () };
+    let mut buff2: *mut *const () = &buff as *const *mut () as *mut *mut () as *mut *const ();
     archive_read_format_zip_read_data(a, buff2, size2, offset2);
 }
