@@ -1995,11 +1995,11 @@ fn file_free(file: *mut xar_file) {
 }
 
 fn xattr_new(a: *mut archive_read, xar: *mut xar, list: *mut xmlattr_list) -> i32 {
-    let mut xattr: *mut xattr;
+    let xattr: *mut xattr;
     let mut nx: *mut *mut xattr;
     let mut attr: *mut xmlattr;
-    let mut safe_a = unsafe { &mut *a };
-    let mut safe_xar = unsafe { &mut *xar };
+    let safe_a = unsafe { &mut *a };
+    let safe_xar = unsafe { &mut *xar };
     xattr = unsafe { calloc_safe(1, size_of::<xattr>() as u64) } as *mut xattr;
     if xattr.is_null() {
         archive_set_error_safe!(
@@ -2120,15 +2120,15 @@ fn getsumalgorithm(list: *mut xmlattr_list) -> i32 {
 }
 
 fn unknowntag_start(a: *mut archive_read, xar: *mut xar, name: *const u8) -> i32 {
-    let mut tag: *mut unknown_tag;
+    let tag: *mut unknown_tag;
     tag = unsafe { malloc_safe(size_of::<unknown_tag>() as u64) } as *mut unknown_tag;
-    let mut safe_tag = unsafe { &mut *tag };
-    let mut safe_a = unsafe { &mut *a };
-    let mut safe_xar = unsafe { &mut *xar };
+    let safe_tag = unsafe { &mut *tag };
+    let safe_a = unsafe { &mut *a };
+    let safe_xar = unsafe { &mut *xar };
     if tag.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
-            12,
+            ARCHIVE_XAR_DEFINED_PARAM.enomem,
             b"Out of memory\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
@@ -2154,10 +2154,10 @@ fn unknowntag_start(a: *mut archive_read, xar: *mut xar, name: *const u8) -> i32
 }
 
 fn unknowntag_end(xar: *mut xar, name: *const u8) {
-    let mut tag: *mut unknown_tag;
-    let mut safe_xar = unsafe { &mut *xar };
+    let tag: *mut unknown_tag;
+    let safe_xar = unsafe { &mut *xar };
     tag = safe_xar.unknowntags;
-    let mut safe_tag = unsafe { &mut *tag };
+    let safe_tag = unsafe { &mut *tag };
     if tag.is_null() || name.is_null() {
         return;
     }
@@ -2172,12 +2172,12 @@ fn unknowntag_end(xar: *mut xar, name: *const u8) {
 }
 
 fn xml_start(a: *mut archive_read, name: *const u8, list: *mut xmlattr_list) -> i32 {
-    let mut xar: *mut xar;
+    let xar: *mut xar;
     let mut attr: *mut xmlattr;
     xar = unsafe { (*(*a).format).data as *mut xar };
-    let mut safe_xar = unsafe { &mut *xar };
-    let mut safe_file = unsafe { &mut *safe_xar.file };
-    let mut safe_xattr = unsafe { &mut *safe_xar.xattr };
+    let safe_xar = unsafe { &mut *xar };
+    let safe_file = unsafe { &mut *safe_xar.file };
+    let safe_xattr = unsafe { &mut *safe_xar.xattr };
     safe_xar.base64text = 0;
 
     match safe_xar.xmlsts as u32 {
@@ -2463,11 +2463,11 @@ fn xml_start(a: *mut archive_read, name: *const u8, list: *mut xmlattr_list) -> 
 }
 
 fn xml_end(userData: *mut (), name: *const u8) {
-    let mut a: *mut archive_read;
-    let mut xar: *mut xar;
+    let a: *mut archive_read;
+    let xar: *mut xar;
     a = userData as *mut archive_read;
     xar = unsafe { (*(*a).format) }.data as *mut xar;
-    let mut safe_xar = unsafe { &mut *xar };
+    let safe_xar = unsafe { &mut *xar };
     match safe_xar.xmlsts as u32 {
         XAR => {
             if unsafe { strcmp_safe(name, b"xar\x00" as *const u8) } == 0 {
@@ -2945,13 +2945,13 @@ fn is_string(known: *const u8, data: *const u8, len: size_t) -> i32 {
 }
 
 fn xml_data(userData: *mut (), s: *const u8, len: i32) {
-    let mut a: *mut archive_read;
+    let a: *mut archive_read;
     let mut xar: *mut xar;
     a = userData as *mut archive_read;
     xar = unsafe { (*(*a).format).data as *mut xar };
-    let mut safe_xar = unsafe { &mut *xar };
-    let mut safe_file = unsafe { &mut *safe_xar.file };
-    let mut safe_xattr = unsafe { &mut *safe_xar.xattr };
+    let safe_xar = unsafe { &mut *xar };
+    let safe_file = unsafe { &mut *safe_xar.file };
+    let safe_xattr = unsafe { &mut *safe_xar.xattr };
     match safe_xar.xmlsts as u32 {
         TOC_CHECKSUM_OFFSET => safe_xar.toc_chksum_offset = atol10(s, len as size_t),
         TOC_CHECKSUM_SIZE => safe_xar.toc_chksum_size = atol10(s, len as size_t),
@@ -2968,7 +2968,7 @@ fn xml_data(userData: *mut (), s: *const u8, len: i32) {
                         &mut (*safe_xar.file).pathname,
                         &mut (*(*safe_xar.file).parent).pathname,
                     );
-                    archive_strappend_char_safe(&mut (*safe_xar.file).pathname, '/' as i32 as u8);
+                    archive_strappend_char_safe(&mut (*safe_xar.file).pathname, '/' as u8);
                 }
             }
             safe_file.has |= HAS_PATHNAME as u32;
@@ -3041,7 +3041,7 @@ fn xml_data(userData: *mut (), s: *const u8, len: i32) {
         }
         FILE_GROUP => {
             safe_file.has |= HAS_GID as u32;
-            safe_file.gname.length = 0 as i32 as size_t;
+            safe_file.gname.length = 0 as size_t;
             unsafe { archive_strncat_safe(&mut safe_file.gname, s as *const (), len as size_t) };
         }
         FILE_GID => {
@@ -3050,7 +3050,7 @@ fn xml_data(userData: *mut (), s: *const u8, len: i32) {
         }
         FILE_USER => {
             safe_file.has |= HAS_UID as u32;
-            safe_file.uname.length = 0 as i32 as size_t;
+            safe_file.uname.length = 0 as size_t;
             unsafe { archive_strncat_safe(&mut safe_file.uname, s as *const (), len as size_t) };
         }
         FILE_UID => {
@@ -3195,7 +3195,7 @@ fn xml_data(userData: *mut (), s: *const u8, len: i32) {
  * BSD file flags.
  */
 fn xml_parse_file_flags(xar: *mut xar, name: *const u8) -> i32 {
-    let mut safe_xar = unsafe { &mut *xar };
+    let safe_xar = unsafe { &mut *xar };
     let mut flag: *const u8 = 0 as *const u8;
     if unsafe { strcmp_safe(name, b"UserNoDump\x00" as *const u8) } == 0 {
         safe_xar.xmlsts = FILE_FLAGS_USER_NODUMP;
@@ -3243,14 +3243,14 @@ fn xml_parse_file_flags(xar: *mut xar, name: *const u8) -> i32 {
             flag as *const (),
         )
     };
-    return ARCHIVE_XAR_DEFINED_PARAM.archive_eof;
+    return 1;
 }
 /*
  * Linux file flags.
  */
 fn xml_parse_file_ext2(xar: *mut xar, name: *const u8) -> i32 {
     let mut flag: *const u8 = 0 as *const u8;
-    let mut safe_xar = unsafe { &mut *xar };
+    let safe_xar = unsafe { &mut *xar };
     if unsafe { strcmp_safe(name, b"SecureDeletion\x00" as *const u8) } == 0 {
         safe_xar.xmlsts = FILE_EXT2_SecureDeletion;
         flag = b"securedeletion\x00" as *const u8
@@ -3326,7 +3326,7 @@ fn xml_parse_file_ext2(xar: *mut xar, name: *const u8) -> i32 {
             flag as *const (),
         )
     };
-    return ARCHIVE_XAR_DEFINED_PARAM.archive_eof;
+    return 1;
 }
 
 #[cfg(HAVE_LIBXML_XMLREADER_H)]
@@ -3342,7 +3342,7 @@ fn xml2_xmlattr_setup(
         (*list).first = 0 as *mut xmlattr;
         (*list).last = &mut (*list).first;
     }
-    let mut safe_a = unsafe { &mut *a };
+    let safe_a = unsafe { &mut *a };
     r = unsafe { xmlTextReaderMoveToFirstAttribute_safe(reader) };
     while r == 1 {
         attr = unsafe { malloc_safe(size_of::<xmlattr>() as u64) } as *mut xmlattr;
@@ -3375,7 +3375,7 @@ fn xml2_xmlattr_setup(
             unsafe { free_safe(attr as *mut ()) };
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
-                12,
+                ARCHIVE_XAR_DEFINED_PARAM.enomem,
                 b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
@@ -3392,15 +3392,15 @@ fn xml2_xmlattr_setup(
 
 #[cfg(HAVE_LIBXML_XMLREADER_H)]
 fn xml2_read_cb(context: *mut (), buffer: *mut u8, len: i32) -> i32 {
-    let mut a: *mut archive_read;
-    let mut xar: *mut xar;
+    let a: *mut archive_read;
+    let xar: *mut xar;
     let mut d: *const ();
     let mut outbytes: size_t;
     let mut used: size_t = 0;
     let mut r: i32;
     a = context as *mut archive_read;
     xar = unsafe { (*(*a).format).data as *mut xar };
-    let mut safe_xar = unsafe { &mut *xar };
+    let safe_xar = unsafe { &mut *xar };
     if safe_xar.toc_remaining == 0 {
         return 0;
     }
@@ -3431,7 +3431,7 @@ fn xml2_error_hdr(
     severity: xmlParserSeverities,
     locator: xmlTextReaderLocatorPtr,
 ) {
-    let mut a: *mut archive_read;
+    let a: *mut archive_read;
     /* UNUSED */
     a = arg as *mut archive_read;
     let mut safe_a = unsafe { &mut *a };
@@ -3628,7 +3628,7 @@ fn expat_read_toc(a: *mut archive_read) -> i32 {
     if parser.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
-            12,
+            ARCHIVE_XAR_DEFINED_PARAM.enomem,
             b"Couldn\'t allocate memory for xml parser\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;

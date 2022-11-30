@@ -401,6 +401,9 @@ struct archive_cab_defined_param
 	int cfdata_cbuncomp;
 	int comptype_none;
 	int z_ok;
+	int z_stream_end;
+	int z_mem_error;
+	int ifoldcontinued_to_next;
 	int ifoldcontinued_prev_and_next;
 	int ifoldcontinued_from_prev;
 	int slot_base;
@@ -481,6 +484,9 @@ struct archive_cab_defined_param get_archive_cab_defined_param()
 	defined_param.cfdata_cbuncomp = CFDATA_cbUncomp;
 	defined_param.comptype_none = COMPTYPE_NONE;
 	defined_param.z_ok = Z_OK;
+	defined_param.z_stream_end = Z_STREAM_END;
+	defined_param.z_mem_error = Z_MEM_ERROR;
+	defined_param.ifoldcontinued_to_next = iFoldCONTINUED_TO_NEXT;
 	defined_param.ifoldcontinued_prev_and_next = iFoldCONTINUED_PREV_AND_NEXT;
 	defined_param.ifoldcontinued_from_prev = iFoldCONTINUED_FROM_PREV;
 	defined_param.slot_base = SLOT_BASE;

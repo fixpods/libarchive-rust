@@ -89,13 +89,13 @@ fn _ar_read_header(
     unconsumed: *mut size_t,
 ) -> i32 {
     let mut filename: [u8; 17] = [0; 17];
-    let mut number: uint64_t;
-    let mut bsd_name_length: size_t;
-    let mut entry_size: size_t;
+    let number: uint64_t;
+    let bsd_name_length: size_t;
+    let entry_size: size_t;
     let mut p: *mut u8;
     let mut st: *mut u8;
     let mut b: *const ();
-    let mut r: i32;
+    let r: i32;
     let safe_a = unsafe { &mut *a };
     let safe_ar = unsafe { &mut *ar };
     let safe_unconsumed = unsafe { &mut *unconsumed };
@@ -188,7 +188,7 @@ fn _ar_read_header(
      * '//' is the GNU filename table.
      * Later entries can refer to names in this table.
      */
-    if unsafe { strcmp(filename.as_mut_ptr(), b"//\x00" as *const u8) } == 0 as i32 {
+    if unsafe { strcmp(filename.as_mut_ptr(), b"//\x00" as *const u8) } == 0 {
         /* This must come before any call to _read_ahead. */
         unsafe { ar_parse_common_header(ar, entry, h) };
         unsafe {
@@ -379,7 +379,7 @@ fn _ar_read_header(
      * "/" is the SVR4/GNU archive symbol table.
      * "/SYM64/" is the SVR4/GNU 64-bit variant archive symbol table.
      */
-    if unsafe { strcmp(filename.as_mut_ptr(), b"/\x00" as *const u8) } == 0 as i32
+    if unsafe { strcmp(filename.as_mut_ptr(), b"/\x00" as *const u8) } == 0
         || unsafe { strcmp(filename.as_mut_ptr(), b"/SYM64/\x00" as *const u8) } == 0
     {
         unsafe { archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr()) };
@@ -506,7 +506,7 @@ fn archive_read_format_ar_read_data(
         if bytes_read == 0 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
-                -1,
+                ARCHIVE_AR_DEFINED_PARAM.archive_errno_misc,
                 b"Truncated ar archive\x00" as *const u8
             );
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
@@ -620,8 +620,8 @@ fn ar_parse_gnu_filename_table(a: *mut archive_read) -> i32 {
 }
 fn ar_atol8(mut p: *const u8, mut char_cnt: u32) -> uint64_t {
     let mut l: uint64_t;
-    let mut limit: uint64_t;
-    let mut last_digit_limit: uint64_t;
+    let limit: uint64_t;
+    let last_digit_limit: uint64_t;
     let mut digit: u32;
     let mut base: u32;
     base = 8;
@@ -656,8 +656,8 @@ fn ar_atol8(mut p: *const u8, mut char_cnt: u32) -> uint64_t {
 
 fn ar_atol10(mut p: *const u8, mut char_cnt: u32) -> uint64_t {
     let mut l: uint64_t;
-    let mut limit: uint64_t;
-    let mut last_digit_limit: uint64_t;
+    let limit: uint64_t;
+    let last_digit_limit: uint64_t;
     let mut base: u32;
     let mut digit: u32;
     base = 10;
@@ -692,14 +692,14 @@ fn ar_atol10(mut p: *const u8, mut char_cnt: u32) -> uint64_t {
 
 #[no_mangle]
 pub unsafe fn archive_test_archive_read_format_ar_read_data(
-    mut _a: *mut archive,
-    mut buff: *mut *const (),
-    mut size: *mut size_t,
-    mut offset: *mut int64_t,
+    _a: *mut archive,
+    buff: *mut *const (),
+    size: *mut size_t,
+    offset: *mut int64_t,
 ) {
-    let mut a: *mut archive_read = _a as *mut archive_read;
-    let mut ar: *mut ar = 0 as *mut ar;
-    ar = unsafe { calloc_safe(1 as i32 as u64, size_of::<ar>() as u64) } as *mut ar;
+    let a: *mut archive_read = _a as *mut archive_read;
+    let ar: *mut ar;
+    ar = unsafe { calloc_safe(1 as u64, size_of::<ar>() as u64) } as *mut ar;
     (*ar).entry_bytes_remaining = 0 as int64_t;
     (*ar).entry_padding = 2147483647 as int64_t;
     (*(*a).format).data = ar as *mut ();
