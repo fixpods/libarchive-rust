@@ -370,7 +370,7 @@ fn read_toc(a: *mut archive_read) -> i32 {
             &mut safe_a.archive as *mut archive,
             ARCHIVE_XAR_DEFINED_PARAM.archive_errno_file_format,
             b"Unsupported header version(%d)\x00" as *const u8,
-            archive_be16dec(unsafe { b.offset(6) } as *const ()) as i32
+            archive_be16dec(b.offset(6) as *const ()) as i32
         );
 
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
@@ -386,11 +386,11 @@ fn read_toc(a: *mut archive_read) -> i32 {
      * Read TOC(Table of Contents).
      */
     /* Initialize reading contents. */
-    r = unsafe { move_reading_point(a, HEADER_SIZE as uint64_t) };
+    r = move_reading_point(a, HEADER_SIZE as uint64_t);
     if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
         return r;
     }
-    r = unsafe { rd_contents_init(a, GZIP, toc_chksum_alg as i32, CKSUM_NONE) };
+    r = rd_contents_init(a, GZIP, toc_chksum_alg as i32, CKSUM_NONE);
     if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
         return r;
     }
@@ -398,7 +398,7 @@ fn read_toc(a: *mut archive_read) -> i32 {
     match () {
         #[cfg(HAVE_LIBXML_XMLREADER_H)]
         _ => {
-            r = unsafe { xml2_read_toc(a) };
+            r = xml2_read_toc(a);
         }
         #[cfg(any(HAVE_EXPAT_H, HAVE_BSDXML_H))]
         _ => {
@@ -424,7 +424,7 @@ fn read_toc(a: *mut archive_read) -> i32 {
      * Checksum TOC
      */
     if toc_chksum_alg != CKSUM_NONE as u32 {
-        r = unsafe { move_reading_point(a, safe_xar.toc_chksum_offset) };
+        r = move_reading_point(a, safe_xar.toc_chksum_offset);
         if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
             return r;
         }
@@ -441,15 +441,13 @@ fn read_toc(a: *mut archive_read) -> i32 {
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
         }
-        r = unsafe {
-            checksum_final(
-                a,
-                b as *const (),
-                safe_xar.toc_chksum_size,
-                0 as *const (),
-                0,
-            )
-        };
+        r = checksum_final(
+            a,
+            b as *const (),
+            safe_xar.toc_chksum_size,
+            0 as *const (),
+            0,
+        );
         unsafe { __archive_read_consume_safe(a, safe_xar.toc_chksum_size as int64_t) };
         safe_xar.offset =
             ((safe_xar.offset as u64) + (safe_xar.toc_chksum_size) as uint64_t) as uint64_t;
@@ -527,7 +525,7 @@ fn xar_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
     }
     let mut safe_file = unsafe { &mut *file };
     loop {
-        safe_xar.file = unsafe { heap_get_entry(&mut safe_xar.file_queue) };
+        safe_xar.file = heap_get_entry(&mut safe_xar.file_queue);
         file = safe_xar.file;
         safe_file = unsafe { &mut *file };
         if file.is_null() {
@@ -546,7 +544,7 @@ fn xar_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
          * If a file type is a directory and it does not have
          * any metadata, do not export.
          */
-        unsafe { file_free(file) };
+        file_free(file);
     }
     if safe_file.has & HAS_ATIME_XAR as u32 != 0 {
         unsafe { archive_entry_set_atime_safe(entry, safe_file.atime, 0) };
@@ -713,23 +711,21 @@ fn xar_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         let mut d: *const () = 0 as *const ();
         let mut outbytes: size_t = 0;
         let mut used: size_t = 0;
-        r = unsafe { move_reading_point(a, safe_xattr.offset) };
+        r = move_reading_point(a, safe_xattr.offset);
         if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
             break;
         }
-        r = unsafe {
-            rd_contents_init(
-                a,
-                safe_xattr.encoding,
-                safe_xattr.a_sum.alg,
-                safe_xattr.e_sum.alg,
-            )
-        };
+        r = rd_contents_init(
+            a,
+            safe_xattr.encoding,
+            safe_xattr.a_sum.alg,
+            safe_xattr.e_sum.alg,
+        );
         if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
             break;
         }
         d = 0 as *const ();
-        r = unsafe { rd_contents(a, &mut d, &mut outbytes, &mut used, safe_xattr.length) };
+        r = rd_contents(a, &mut d, &mut outbytes, &mut used, safe_xattr.length);
         if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
             break;
         }
@@ -742,15 +738,13 @@ fn xar_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             r = ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
             break;
         } else {
-            r = unsafe {
-                checksum_final(
-                    a,
-                    safe_xattr.a_sum.val.as_mut_ptr() as *const (),
-                    safe_xattr.a_sum.len,
-                    safe_xattr.e_sum.val.as_mut_ptr() as *const (),
-                    safe_xattr.e_sum.len,
-                )
-            };
+            r = checksum_final(
+                a,
+                safe_xattr.a_sum.val.as_mut_ptr() as *const (),
+                safe_xattr.a_sum.len,
+                safe_xattr.e_sum.val.as_mut_ptr() as *const (),
+                safe_xattr.e_sum.len,
+            );
             if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 archive_set_error_safe!(
                     &mut safe_a.archive as *mut archive,
@@ -777,17 +771,17 @@ fn xar_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         }
     }
     if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
-        unsafe { file_free(file) };
+        file_free(file);
         return r;
     }
     if safe_xar.entry_remaining > 0 as u64 {
         /* Move reading point to the beginning of current
          * file contents. */
-        r = unsafe { move_reading_point(a, safe_file.offset) }
+        r = move_reading_point(a, safe_file.offset)
     } else {
         r = ARCHIVE_XAR_DEFINED_PARAM.archive_ok
     }
-    unsafe { file_free(file) };
+    file_free(file);
     return r;
 }
 
@@ -842,22 +836,20 @@ fn xar_read_data(
                     );
                     r = ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
                 } else {
-                    r = unsafe {
-                        checksum_final(
-                            a,
-                            safe_xar.entry_a_sum.val.as_mut_ptr() as *const (),
-                            safe_xar.entry_a_sum.len,
-                            safe_xar.entry_e_sum.val.as_mut_ptr() as *const (),
-                            safe_xar.entry_e_sum.len,
-                        )
-                    };
+                    r = checksum_final(
+                        a,
+                        safe_xar.entry_a_sum.val.as_mut_ptr() as *const (),
+                        safe_xar.entry_a_sum.len,
+                        safe_xar.entry_e_sum.val.as_mut_ptr() as *const (),
+                        safe_xar.entry_e_sum.len,
+                    );
                     if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                     } else {
-                        return 0 as i32;
+                        return 0;
                     }
                 }
             } else {
-                return 0 as i32;
+                return 0;
             }
         }
     }
@@ -898,8 +890,8 @@ fn xar_cleanup(a: *mut archive_read) -> i32 {
     let mut r: i32;
     xar = unsafe { (*(*a).format).data as *mut xar };
     let mut safe_xar = unsafe { &mut *xar };
-    unsafe { checksum_cleanup(a) };
-    r = unsafe { decompression_cleanup(a) };
+    checksum_cleanup(a);
+    r = decompression_cleanup(a);
     hdlink = safe_xar.hdlink_list;
     while !hdlink.is_null() {
         let mut next: *mut hdlink = unsafe { *hdlink }.next;
@@ -1928,10 +1920,11 @@ fn xmlattr_cleanup(list: *mut xmlattr_list) {
     let mut attr: *mut xmlattr;
     let mut next: *mut xmlattr;
     attr = unsafe { (*list).first };
+    let safe_attr: &xmlattr = unsafe { &*attr };
     while !attr.is_null() {
         next = unsafe { (*attr).next };
-        unsafe { free_safe(unsafe { (*attr).name as *mut () }) };
-        unsafe { free_safe(unsafe { (*attr).value as *mut () }) };
+        unsafe { free_safe(safe_attr.name as *mut ()) };
+        unsafe { free_safe(safe_attr.value as *mut ()) };
         unsafe { free_safe(attr as *mut ()) };
         attr = next
     }
@@ -1955,17 +1948,16 @@ fn file_new(a: *mut archive_read, xar: *mut xar, list: *mut xmlattr_list) -> i32
     let mut safe_file = unsafe { &mut *file };
     let mut safe_xar = unsafe { &mut *xar };
     safe_file.parent = safe_xar.file;
-    safe_file.mode = 0o777 as u32 | ARCHIVE_XAR_DEFINED_PARAM.ae_ifreg as mode_t;
+    safe_file.mode = 0o777 | ARCHIVE_XAR_DEFINED_PARAM.ae_ifreg as mode_t;
     safe_file.atime = 0 as time_t;
     safe_file.mtime = 0 as time_t;
     safe_xar.file = file;
     safe_xar.xattr = 0 as *mut xattr;
     attr = unsafe { *list }.first;
+    let attr_safe: &xmlattr = unsafe { &*attr };
     while !attr.is_null() {
-        if unsafe { strcmp_safe(unsafe { *attr }.name, b"id\x00" as *const u8) } == 0 {
-            safe_file.id = atol10(unsafe { *attr }.value, unsafe {
-                strlen_safe(unsafe { *attr }.value)
-            })
+        if unsafe { strcmp_safe(attr_safe.name, b"id\x00" as *const u8) } == 0 {
+            safe_file.id = atol10(attr_safe.value, unsafe { strlen_safe(attr_safe.value) })
         }
         attr = unsafe { *attr }.next
     }
@@ -1988,7 +1980,7 @@ fn file_free(file: *mut xar_file) {
     while !xattr.is_null() {
         let mut next: *mut xattr;
         next = unsafe { *xattr }.next;
-        unsafe { xattr_free(xattr) };
+        xattr_free(xattr);
         xattr = next
     }
     unsafe { free_safe(file as *mut ()) };
@@ -2012,10 +2004,10 @@ fn xattr_new(a: *mut archive_read, xar: *mut xar, list: *mut xmlattr_list) -> i3
     safe_xar.xattr = xattr;
     attr = unsafe { (*list).first };
     let mut safe_xattr = unsafe { &mut *xattr };
+    let safe_attr: &xmlattr = unsafe { &*attr };
     while !attr.is_null() {
-        if unsafe { strcmp_safe(unsafe { *attr }.name, b"id\x00" as *const u8) } == 0 {
-            safe_xattr.id =
-                unsafe { atol10(unsafe { *attr }.value, strlen_safe(unsafe { *attr }.value)) }
+        if unsafe { strcmp_safe(safe_attr.name, b"id\x00" as *const u8) } == 0 {
+            safe_xattr.id = unsafe { atol10(safe_attr.value, strlen_safe(safe_attr.value)) }
         }
         attr = unsafe { *attr }.next
     }
@@ -2033,7 +2025,8 @@ fn xattr_new(a: *mut archive_read, xar: *mut xar, list: *mut xmlattr_list) -> i3
 }
 
 fn xattr_free(xattr: *mut xattr) {
-    unsafe { archive_string_free_safe(&mut unsafe { *xattr }.name) };
+    let mut safe_xattr = unsafe { &mut *xattr };
+    unsafe { archive_string_free_safe(&mut safe_xattr.name) };
     unsafe { free_safe(xattr as *mut ()) };
 }
 
@@ -2041,43 +2034,34 @@ fn getencoding(list: *mut xmlattr_list) -> i32 {
     let mut attr: *mut xmlattr;
     let mut encoding: enctype = NONE;
     attr = unsafe { *list }.first;
+    let safe_attr: &xmlattr = unsafe { &*attr };
     while !attr.is_null() {
-        if unsafe { strcmp_safe(unsafe { *attr }.name, b"style\x00" as *const u8) } == 0 {
+        if unsafe { strcmp_safe(safe_attr.name, b"style\x00" as *const u8) } == 0 {
             if unsafe {
                 strcmp_safe(
-                    unsafe { *attr }.value,
+                    safe_attr.value,
                     b"application/octet-stream\x00" as *const u8,
                 )
             } == 0
             {
                 encoding = NONE
             } else if unsafe {
-                strcmp_safe(
-                    unsafe { *attr }.value,
-                    b"application/x-gzip\x00" as *const u8,
-                )
+                strcmp_safe(safe_attr.value, b"application/x-gzip\x00" as *const u8)
             } == 0
             {
                 encoding = GZIP
             } else if unsafe {
-                strcmp_safe(
-                    unsafe { *attr }.value,
-                    b"application/x-bzip2\x00" as *const u8,
-                )
+                strcmp_safe(safe_attr.value, b"application/x-bzip2\x00" as *const u8)
             } == 0
             {
                 encoding = BZIP2
             } else if unsafe {
-                strcmp_safe(
-                    unsafe { *attr }.value,
-                    b"application/x-lzma\x00" as *const u8,
-                )
+                strcmp_safe(safe_attr.value, b"application/x-lzma\x00" as *const u8)
             } == 0
             {
                 encoding = LZMA
-            } else if unsafe {
-                strcmp_safe(unsafe { *attr }.value, b"application/x-xz\x00" as *const u8)
-            } == 0
+            } else if unsafe { strcmp_safe(safe_attr.value, b"application/x-xz\x00" as *const u8) }
+                == 0
             {
                 encoding = XZ
             }
@@ -2093,9 +2077,10 @@ fn getsumalgorithm(list: *mut xmlattr_list) -> i32 {
     unsafe {
         attr = (*list).first;
     }
+    let safe_attr: &xmlattr = unsafe { &*attr };
     while !attr.is_null() {
-        if unsafe { strcmp_safe(unsafe { (*attr) }.name, b"style\x00" as *const u8) } == 0 {
-            let mut v: *const u8 = unsafe { (*attr) }.value;
+        if unsafe { strcmp_safe(safe_attr.name, b"style\x00" as *const u8) } == 0 {
+            let mut v: *const u8 = safe_attr.value;
             if unsafe {
                 (*v.offset(0) as i32 == 'S' as i32 || *v.offset(0) as i32 == 's' as i32)
                     && (*v.offset(1) as i32 == 'H' as i32 || *v.offset(1) as i32 == 'h' as i32)
@@ -2374,14 +2359,14 @@ fn xml_start(a: *mut archive_read, name: *const u8, list: *mut xmlattr_list) -> 
             }
         }
         FILE_FLAGS => {
-            if unsafe { xml_parse_file_flags(xar, name) } == 0 {
+            if xml_parse_file_flags(xar, name) == 0 {
                 if unknowntag_start(a, xar, name) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                     return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
                 }
             }
         }
         FILE_EXT2 => {
-            if unsafe { xml_parse_file_ext2(xar, name) } == 0 {
+            if xml_parse_file_ext2(xar, name) == 0 {
                 if unknowntag_start(a, xar, name) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                     return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
                 }
@@ -2466,7 +2451,7 @@ fn xml_end(userData: *mut (), name: *const u8) {
     let a: *mut archive_read;
     let xar: *mut xar;
     a = userData as *mut archive_read;
-    xar = unsafe { (*(*a).format) }.data as *mut xar;
+    xar = unsafe { *(*a).format }.data as *mut xar;
     let safe_xar = unsafe { &mut *xar };
     match safe_xar.xmlsts as u32 {
         XAR => {

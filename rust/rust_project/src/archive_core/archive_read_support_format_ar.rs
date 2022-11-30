@@ -190,19 +190,17 @@ fn _ar_read_header(
      */
     if unsafe { strcmp(filename.as_mut_ptr(), b"//\x00" as *const u8) } == 0 {
         /* This must come before any call to _read_ahead. */
-        unsafe { ar_parse_common_header(ar, entry, h) };
+        ar_parse_common_header(ar, entry, h);
         unsafe {
             archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr());
             archive_entry_set_filetype_safe(entry, ARCHIVE_AR_DEFINED_PARAM.ae_ifreg as mode_t);
         }
 
         /* Get the size of the filename table. */
-        number = unsafe {
-            ar_atol10(
-                unsafe { h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_size_offset as isize) },
-                ARCHIVE_AR_DEFINED_PARAM.ar_size_size as u32,
-            )
-        };
+        number = ar_atol10(
+            unsafe { h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_size_offset as isize) },
+            ARCHIVE_AR_DEFINED_PARAM.ar_size_size as u32,
+        );
         if number > SIZE_MAX as u64 || number > (1024 * 1024 * 1024) as u64 {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
@@ -256,7 +254,7 @@ fn _ar_read_header(
         safe_ar.entry_bytes_remaining = 0;
         unsafe { archive_entry_set_size(entry, (*ar).entry_bytes_remaining) };
         /* Parse the filename table. */
-        return unsafe { ar_parse_gnu_filename_table(a) };
+        return ar_parse_gnu_filename_table(a);
     }
     /*
      * GNU variant handles long filenames by storing /<number>
@@ -268,15 +266,13 @@ fn _ar_read_header(
         && filename[1] as i32 >= '0' as i32
         && filename[1] as i32 <= '9' as i32
     {
-        number = unsafe {
-            ar_atol10(
-                unsafe {
-                    h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_name_offset as isize)
-                        .offset(1)
-                },
-                (ARCHIVE_AR_DEFINED_PARAM.ar_name_size - 1) as u32,
-            )
-        };
+        number = ar_atol10(
+            unsafe {
+                h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_name_offset as isize)
+                    .offset(1)
+            },
+            (ARCHIVE_AR_DEFINED_PARAM.ar_name_size - 1) as u32,
+        );
         /*
          * If we can't look up the real name, warn and return
          * the entry with the wrong name.
@@ -292,14 +288,14 @@ fn _ar_read_header(
                 archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr())
             };
             /* Parse the time, owner, mode, size fields. */
-            unsafe { ar_parse_common_header(ar, entry, h) };
+            ar_parse_common_header(ar, entry, h);
             return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
         }
         unsafe {
             archive_entry_copy_pathname_safe(entry, &mut *(*ar).strtab.offset(number as isize))
         };
         /* Parse the time, owner, mode, size fields. */
-        return unsafe { ar_parse_common_header(ar, entry, h) };
+        return ar_parse_common_header(ar, entry, h);
     }
     /*
      * BSD handles long filenames by storing "#1/" followed by the
@@ -309,17 +305,15 @@ fn _ar_read_header(
     if unsafe { strncmp(filename.as_mut_ptr(), b"#1/\x00" as *const u8, 3) } == 0 {
         /* Parse the time, owner, mode, size fields. */
         /* This must occur before _read_ahead is called again. */
-        unsafe { ar_parse_common_header(ar, entry, h) };
+        ar_parse_common_header(ar, entry, h);
         /* Parse the size of the name, adjust the file size. */
-        number = unsafe {
-            ar_atol10(
-                unsafe {
-                    h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_name_offset as isize)
-                        .offset(3)
-                },
-                (ARCHIVE_AR_DEFINED_PARAM.ar_name_size - 3) as u32,
-            )
-        };
+        number = ar_atol10(
+            unsafe {
+                h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_name_offset as isize)
+                    .offset(3)
+            },
+            (ARCHIVE_AR_DEFINED_PARAM.ar_name_size - 3) as u32,
+        );
         /* Sanity check the filename length:
          *   = Must be <= SIZE_MAX - 1
          *   = Must be <= 1MB
@@ -384,7 +378,7 @@ fn _ar_read_header(
     {
         unsafe { archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr()) };
         /* Parse the time, owner, mode, size fields. */
-        r = unsafe { ar_parse_common_header(ar, entry, h) };
+        r = ar_parse_common_header(ar, entry, h);
         /* Force the file type to a regular file. */
         unsafe {
             archive_entry_set_filetype_safe(entry, ARCHIVE_AR_DEFINED_PARAM.ae_ifreg as mode_t)
@@ -397,7 +391,7 @@ fn _ar_read_header(
     if unsafe { strcmp(filename.as_mut_ptr(), b"__.SYMDEF\x00" as *const u8) } == 0 {
         unsafe { archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr()) };
         /* Parse the time, owner, mode, size fields. */
-        return unsafe { ar_parse_common_header(ar, entry, h) };
+        return ar_parse_common_header(ar, entry, h);
     }
     /*
      * Otherwise, this is a standard entry.  The filename
@@ -405,7 +399,7 @@ fn _ar_read_header(
      * on our current knowledge of the format.
      */
     unsafe { archive_entry_copy_pathname_safe(entry, filename.as_mut_ptr()) };
-    return unsafe { ar_parse_common_header(ar, entry, h) };
+    return ar_parse_common_header(ar, entry, h);
 }
 fn archive_read_format_ar_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
     let ar: *mut ar = unsafe { (*(*a).format).data as *mut ar };
@@ -431,7 +425,7 @@ fn archive_read_format_ar_read_header(a: *mut archive_read, entry: *mut archive_
         return ARCHIVE_AR_DEFINED_PARAM.archive_eof;
     }
     unconsumed = 60;
-    ret = unsafe { _ar_read_header(a, entry, ar, header_data as *const u8, &mut unconsumed) };
+    ret = _ar_read_header(a, entry, ar, header_data as *const u8, &mut unconsumed);
     if unconsumed != 0 {
         unsafe { __archive_read_consume(a, unconsumed as int64_t) };
     }

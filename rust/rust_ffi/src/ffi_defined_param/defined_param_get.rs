@@ -711,7 +711,7 @@ pub struct archive_cab_defined_param {
     pub comptype_none: i32,
     pub z_ok: i32,
     pub z_stream_end: i32,
-    pub z_mem_error:i32,
+    pub z_mem_error: i32,
     pub ifoldcontinued_to_next: i32,
     pub ifoldcontinued_prev_and_next: i32,
     pub ifoldcontinued_from_prev: i32,
