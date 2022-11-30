@@ -1260,9 +1260,15 @@ fn iconv_strncat_in_locale(
                         )
                     };
                 } else if safe_sc.flag & (1) << 10 != 0 {
-                    archive_be16enc(outp as *mut (), ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint16_t);
+                    archive_be16enc(
+                        outp as *mut (),
+                        ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint16_t,
+                    );
                 } else {
-                    archive_le16enc(outp as *mut (), ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint16_t);
+                    archive_le16enc(
+                        outp as *mut (),
+                        ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint16_t,
+                    );
                 }
                 outp = unsafe { outp.offset(rbytes as isize) };
                 avail = ((avail as u64) - rbytes) as size_t
@@ -1723,7 +1729,9 @@ fn utf16_to_unicode(pwc: *mut uint32_t, s: *const u8, n: size_t, be: i32) -> i32
      * larger than ARCHIVE_STRING_DEFINED_PARAM.unicode_max. Thus, those are not legal Unicode
      * values.
      */
-    if uc >= 0xd800 as u32 && uc <= 0xdfff as u32 || uc > ARCHIVE_STRING_DEFINED_PARAM.unicode_max as u32 {
+    if uc >= 0xd800 as u32 && uc <= 0xdfff as u32
+        || uc > ARCHIVE_STRING_DEFINED_PARAM.unicode_max as u32
+    {
         /* Undescribed code point should be U+FFFD
          * (replacement character). */
         unsafe { *pwc = ARCHIVE_STRING_DEFINED_PARAM.unicode_r_char as uint32_t };
