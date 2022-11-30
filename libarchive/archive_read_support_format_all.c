@@ -36,6 +36,7 @@ struct archive_all_defined_param
 	unsigned int archive_read_magic;
 	unsigned int archive_state_new;
 	int archive_ok;
+	int archive_fatal;
 };
 
 struct archive_all_defined_param get_archive_all_defined_param();
@@ -45,6 +46,7 @@ struct archive_all_defined_param get_archive_all_defined_param(){
 	param.archive_read_magic = ARCHIVE_READ_MAGIC;
 	param.archive_state_new = ARCHIVE_STATE_NEW;
 	param.archive_ok = ARCHIVE_OK;
+	param.archive_fatal = ARCHIVE_FATAL;
 	return param;
 }
 // 编译时使用

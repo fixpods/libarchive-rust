@@ -23,8 +23,8 @@ pub fn archive_read_support_format_by_code(a: *mut archive, format_code: i32) ->
             b"archive_read_support_format_by_code\x00" as *const u8,
         )
     };
-    if magic_test == -30 {
-        return -30;
+    if magic_test == ARCHIVE_ALL_DEFINED_PARAM.archive_fatal {
+        return ARCHIVE_ALL_DEFINED_PARAM.archive_fatal;
     }
     let p: i32 = format_code & ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_base_mask as i32;
     if p == ARCHIVE_BY_CODE_DEFINED_PARAM.archive_format_7zip {

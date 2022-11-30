@@ -15,8 +15,8 @@ pub fn archive_read_support_format_empty(_a: *mut archive) -> i32 {
             b"archive_read_support_format_empty\x00" as *const u8,
         )
     };
-    if magic_test == -30 {
-        return -30;
+    if magic_test == ARCHIVE_ALL_DEFINED_PARAM.archive_fatal {
+        return ARCHIVE_ALL_DEFINED_PARAM.archive_fatal;
     }
     r = unsafe {
         __archive_read_register_format_safe(
