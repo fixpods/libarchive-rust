@@ -33,6 +33,15 @@ extern "C" {
     fn get_archive_mtree_defined_param() -> archive_mtree_defined_param;
 
     fn get_archive_cpio_defined_param() -> archive_cpio_defined_param;
+
+    fn get_archive_string_defined_param() -> archive_string_defined_param;
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct archive_string_defined_param {
+    pub unicode_r_char: u32,
+    pub unicode_max: u32,
 }
 
 #[derive(Copy, Clone)]
@@ -42,6 +51,7 @@ pub struct archive_empty_defined_param {
     pub archive_state_new: u32,
     pub archive_format_empty: i32,
     pub archive_eof: i32,
+    pub archive_fatal: i32,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -213,6 +223,7 @@ pub struct archive_all_defined_param {
     pub archive_read_magic: u32,
     pub archive_state_new: u32,
     pub archive_ok: i32,
+    pub archive_fatal: i32,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -980,4 +991,6 @@ lazy_static! {
         unsafe { get_archive_mtree_defined_param() };
     pub static ref ARCHIVE_CPIO_DEFINED_PARAM: archive_cpio_defined_param =
         unsafe { get_archive_cpio_defined_param() };
+    pub static ref ARCHIVE_STRING_DEFINED_PARAM: archive_string_defined_param =
+        unsafe { get_archive_string_defined_param() };
 }
