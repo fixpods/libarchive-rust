@@ -1757,7 +1757,6 @@ pub struct links_entry {
     pub name: *mut u8,
 }
 
-
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct mtree {
