@@ -213,15 +213,15 @@ fn get_line_size(mut b: *const u8, avail: ssize_t, nlsize: *mut ssize_t) -> ssiz
     while len < avail {
         let b_safe = unsafe { &*b };
         let nlsize_safe = unsafe { &mut *nlsize };
-        match *b_safe as i32 {
-            0 => {
+        match *b_safe as char {
+            '\0' => {
                 /* Non-ascii character or control character. */
                 if !nlsize.is_null() {
                     *nlsize_safe = 0
                 }
                 return -1 as ssize_t;
             }
-            13 => {
+            '\r' => {
                 if unsafe { avail - len > 1 && *b.offset(1) == '\n' as u8 } {
                     if !nlsize.is_null() {
                         *nlsize_safe = 2
@@ -233,7 +233,7 @@ fn get_line_size(mut b: *const u8, avail: ssize_t, nlsize: *mut ssize_t) -> ssiz
                 }
                 return len + 1;
             }
-            10 => {
+            '\n' => {
                 /* FALL THROUGH */
                 if !nlsize.is_null() {
                     *nlsize_safe = 1
@@ -1960,8 +1960,8 @@ fn parse_keyword(
     *val_safe = '\u{0}' as u8;
     val = unsafe { val.offset(1) };
     let mut current_block: u64;
-    match unsafe { *key.offset(0) as i32 } {
-        99 => {
+    match unsafe { *key.offset(0) as char } {
+        'c' => {
             if unsafe { strcmp_safe(key, b"content\x00" as *const u8) } == 0
                 || unsafe { strcmp_safe(key, b"contents\x00" as *const u8) } == 0
             {
@@ -1981,37 +1981,37 @@ fn parse_keyword(
                 current_block = 100;
             }
         }
-        100 => {
+        'd' => {
             current_block = 100;
         }
-        102 => {
+        'f' => {
             current_block = 102;
         }
-        103 => {
+        'g' => {
             current_block = 103;
         }
-        105 => {
+        'i' => {
             current_block = 105;
         }
-        108 => {
+        'l' => {
             current_block = 108;
         }
-        109 => {
+        'm' => {
             current_block = 109;
         }
-        110 => {
+        'n' => {
             current_block = 110;
         }
-        114 => {
+        'r' => {
             current_block = 114;
         }
-        115 => {
+        's' => {
             current_block = 115;
         }
-        116 => {
+        't' => {
             current_block = 116;
         }
-        117 => {
+        'u' => {
             current_block = 117;
         }
         _ => {
