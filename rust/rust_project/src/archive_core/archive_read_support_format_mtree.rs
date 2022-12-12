@@ -438,20 +438,20 @@ fn bid_keyword(p: *const u8, len: ssize_t) -> i32 {
     let mut keys: *const *const u8 = 0 as *const *const u8;
     let mut i: i32 = 0;
     unsafe {
-        match *p as i32 {
-            99 => {
+        match *p as char {
+            'c' => {
                 keys = keys_c.as_ptr()
                 /* Unknown key */
             }
-            100 | 102 => keys = keys_df.as_ptr(),
-            103 => keys = keys_g.as_ptr(),
-            105 | 108 => keys = keys_il.as_ptr(),
-            109 => keys = keys_m.as_ptr(),
-            110 | 111 => keys = keys_no.as_ptr(),
-            114 => keys = keys_r.as_ptr(),
-            115 => keys = keys_s.as_ptr(),
-            116 => keys = keys_t.as_ptr(),
-            117 => keys = keys_u.as_ptr(),
+            'd' | 'f' => keys = keys_df.as_ptr(),
+            'g' => keys = keys_g.as_ptr(),
+            'i' | 'l' => keys = keys_il.as_ptr(),
+            'm' => keys = keys_m.as_ptr(),
+            'n' | 'o' => keys = keys_no.as_ptr(),
+            'r' => keys = keys_r.as_ptr(),
+            's' => keys = keys_s.as_ptr(),
+            't' => keys = keys_t.as_ptr(),
+            'u' => keys = keys_u.as_ptr(),
             _ => return 0,
         }
     }
