@@ -141,7 +141,7 @@ pub fn archive_acl_add_entry_len_l(
 fn acl_special(acl: *mut archive_acl, type_0: i32, permset: i32, tag: i32) -> i32 {
     let safe_acl = unsafe { &mut *acl };
     if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access
-        && permset & !(0o7 as i32) == 0
+        && (permset & !(0o7 as i32) == 0)
     {
         if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user_obj {
             (safe_acl).mode &= !(0o700 as i32) as u32;
@@ -286,7 +286,7 @@ pub fn archive_acl_count(acl: *mut archive_acl, want_type: i32) -> i32 {
             ap = (*ap).next
         }
     }
-    if count > 0 && want_type & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access != 0 {
+    if count > 0 && (want_type & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access != 0) {
         count += 3
     }
     return count;
@@ -383,7 +383,7 @@ pub fn archive_acl_next(
                 return ARCHIVE_ACL_DEFINED_PARAM.archive_ok;
             }
         }
-        while !(*acl).acl_p.is_null() && (*(*acl).acl_p).type_0 & want_type == 0 as i32 {
+        while !(*acl).acl_p.is_null() && ((*(*acl).acl_p).type_0 & want_type == 0) {
             (*acl).acl_p = (*(*acl).acl_p).next
         }
         if (*acl).acl_p.is_null() {
