@@ -1852,21 +1852,25 @@ fn parse_digest(
     let mut j: size_t = 0;
     let mut len: size_t = 0;
     let a_safe = unsafe { &mut *a };
-    match type_0 {
-        1 => len = size_of::<[u8; 16]>() as u64,
-        2 => len = size_of::<[u8; 20]>() as u64,
-        3 => len = size_of::<[u8; 20]>() as u64,
-        4 => len = size_of::<[u8; 32]>() as u64,
-        5 => len = size_of::<[u8; 48]>() as u64,
-        6 => len = size_of::<[u8; 64]>() as u64,
-        _ => {
-            archive_set_error_safe!(
-                &mut a_safe.archive as *mut archive,
-                ARCHIVE_MTREE_DEFINED_PARAM.archive_errno_programmer,
-                b"Internal error: Unknown digest type\x00" as *const u8
-            );
-            return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
-        }
+    if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_md5 {
+        len = size_of::<[u8; 16]>() as u64
+    } else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_rmd160 {
+        len = size_of::<[u8; 20]>() as u64
+    }else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha1 {
+        len = size_of::<[u8; 20]>() as u64
+    }else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha256 {
+        len = size_of::<[u8; 32]>() as u64
+    }else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha384 {
+        len = size_of::<[u8; 48]>() as u64
+    }else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha512 {
+        len = size_of::<[u8; 64]>() as u64
+    }else {
+        archive_set_error_safe!(
+            &mut a_safe.archive as *mut archive,
+            ARCHIVE_MTREE_DEFINED_PARAM.archive_errno_programmer,
+            b"Internal error: Unknown digest type\x00" as *const u8
+        );
+        return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
     if len > size_of::<[u8; 64]>() as u64 {
         archive_set_error_safe!(
