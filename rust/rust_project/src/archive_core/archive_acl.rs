@@ -141,7 +141,7 @@ pub fn archive_acl_add_entry_len_l(
 fn acl_special(acl: *mut archive_acl, type_0: i32, permset: i32, tag: i32) -> i32 {
     let safe_acl = unsafe { &mut *acl };
     if type_0 == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access
-        && permset & !(0o7 as i32) == 0
+        && (permset & !(0o7 as i32) == 0)
     {
         if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user_obj {
             (safe_acl).mode &= !(0o700 as i32) as u32;
@@ -286,7 +286,7 @@ pub fn archive_acl_count(acl: *mut archive_acl, want_type: i32) -> i32 {
             ap = (*ap).next
         }
     }
-    if count > 0 && want_type & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access != 0 {
+    if count > 0 && (want_type & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_access != 0) {
         count += 3
     }
     return count;
@@ -383,7 +383,7 @@ pub fn archive_acl_next(
                 return ARCHIVE_ACL_DEFINED_PARAM.archive_ok;
             }
         }
-        while !(*acl).acl_p.is_null() && (*(*acl).acl_p).type_0 & want_type == 0 as i32 {
+        while !(*acl).acl_p.is_null() && ((*(*acl).acl_p).type_0 & want_type == 0) {
             (*acl).acl_p = (*(*acl).acl_p).next
         }
         if (*acl).acl_p.is_null() {
@@ -1175,7 +1175,7 @@ fn append_entry(
     if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user_obj {
         name = 0 as *const u8;
         id = -1;
-        if type_0 & (0x400 | 0x800 | 0x1000 | 0x2000) != 0 {
+        if type_0 & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_nfs4 != 0 {
             unsafe { strcpy_safe(*p, b"owner@\x00" as *const u8) };
         } else {
             unsafe { strcpy_safe(*p, b"user\x00" as *const u8) };
@@ -1185,7 +1185,7 @@ fn append_entry(
     } else if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group_obj {
         name = 0 as *const u8;
         id = -1;
-        if type_0 & (0x400 | 0x800 | 0x1000 | 0x2000) != 0 {
+        if type_0 & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_nfs4 != 0 {
             unsafe { strcpy_safe(*p, b"group@\x00" as *const u8) };
         } else {
             unsafe { strcpy_safe(*p, b"group\x00" as *const u8) };
@@ -1212,20 +1212,28 @@ fn append_entry(
         *p = (*p).offset(1);
         *fresh22 = ':' as i32 as u8
     };
-    if type_0 & (0x100 | 0x200 as i32) != 0 || tag == 10001 || tag == 10003 {
+    if type_0 & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_posix1e != 0
+        || tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user
+        || tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group
+    {
         if !name.is_null() {
             unsafe {
                 strcpy_safe(*p, name);
                 *p = (*p).offset(strlen_safe(*p) as isize)
             }
-        } else if tag == 10001 || tag == 10003 {
+        } else if tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_user
+            || tag == ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_group
+        {
             unsafe { append_id(p, id) };
-            if type_0 & (0x400 | 0x800 | 0x1000 | 0x2000) == 0 {
+            if type_0 & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_nfs4 == 0 {
                 id = -(1 as i32)
             }
         }
         /* Solaris style has no second colon after other and mask */
-        if flags & 0x4 == 0 || tag != 10006 && tag != 10005 {
+        if flags & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_style_solaris == 0
+            || tag != ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_other
+                && tag != ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_mask
+        {
             unsafe {
                 let fresh23 = *p;
                 *p = (*p).offset(1);
@@ -1233,7 +1241,7 @@ fn append_entry(
             }
         }
     }
-    if type_0 & (0x100 | 0x200) != 0 {
+    if type_0 & ARCHIVE_ACL_DEFINED_PARAM.archive_entry_acl_type_posix1e != 0 {
         /* POSIX.1e ACL perms */
         unsafe {
             let fresh24 = *p;
@@ -1684,11 +1692,11 @@ fn isint_w(mut start: *const wchar_t, end: *const wchar_t, result: *mut i32) -> 
         if unsafe { *start } < '0' as wchar_t || unsafe { *start } > '9' as wchar_t {
             return 0;
         }
-        if n > 2147483647 / 10
-            || n == 2147483647 / 10
-                && unsafe { *start } - '0' as wchar_t > 2147483647 as wchar_t % 10 as wchar_t
+        if n > INT_MAX / 10
+            || n == INT_MAX / 10
+                && unsafe { *start } - '0' as wchar_t > INT_MAX as wchar_t % 10 as wchar_t
         {
-            n = 2147483647
+            n = INT_MAX
         } else {
             n *= 10;
             n += unsafe { *start } as i32 - '0' as i32
@@ -2349,11 +2357,11 @@ fn isint(mut start: *const u8, end: *const u8, result: *mut i32) -> i32 {
         if (unsafe { *start } as i32) < '0' as i32 || unsafe { *start } as i32 > '9' as i32 {
             return 0;
         }
-        if n > 2147483647 / 10
-            || n == 2147483647 / 10 as i32
-                && unsafe { *start } as i32 - '0' as i32 > 2147483647 as i32 % 10 as i32
+        if n > INT_MAX / 10
+            || n == INT_MAX / 10 as i32
+                && unsafe { *start } as i32 - '0' as i32 > INT_MAX as i32 % 10 as i32
         {
-            n = 2147483647 as i32
+            n = INT_MAX as i32
         } else {
             n *= 10 as i32;
             n += unsafe { *start } as i32 - '0' as i32

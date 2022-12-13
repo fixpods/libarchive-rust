@@ -213,15 +213,15 @@ fn get_line_size(mut b: *const u8, avail: ssize_t, nlsize: *mut ssize_t) -> ssiz
     while len < avail {
         let b_safe = unsafe { &*b };
         let nlsize_safe = unsafe { &mut *nlsize };
-        match *b_safe as i32 {
-            0 => {
+        match *b_safe as char {
+            '\0' => {
                 /* Non-ascii character or control character. */
                 if !nlsize.is_null() {
                     *nlsize_safe = 0
                 }
                 return -1 as ssize_t;
             }
-            13 => {
+            '\r' => {
                 if unsafe { avail - len > 1 && *b.offset(1) == '\n' as u8 } {
                     if !nlsize.is_null() {
                         *nlsize_safe = 2
@@ -233,7 +233,7 @@ fn get_line_size(mut b: *const u8, avail: ssize_t, nlsize: *mut ssize_t) -> ssiz
                 }
                 return len + 1;
             }
-            10 => {
+            '\n' => {
                 /* FALL THROUGH */
                 if !nlsize.is_null() {
                     *nlsize_safe = 1
@@ -438,20 +438,20 @@ fn bid_keyword(p: *const u8, len: ssize_t) -> i32 {
     let mut keys: *const *const u8 = 0 as *const *const u8;
     let mut i: i32 = 0;
     unsafe {
-        match *p as i32 {
-            99 => {
+        match *p as char {
+            'c' => {
                 keys = keys_c.as_ptr()
                 /* Unknown key */
             }
-            100 | 102 => keys = keys_df.as_ptr(),
-            103 => keys = keys_g.as_ptr(),
-            105 | 108 => keys = keys_il.as_ptr(),
-            109 => keys = keys_m.as_ptr(),
-            110 | 111 => keys = keys_no.as_ptr(),
-            114 => keys = keys_r.as_ptr(),
-            115 => keys = keys_s.as_ptr(),
-            116 => keys = keys_t.as_ptr(),
-            117 => keys = keys_u.as_ptr(),
+            'd' | 'f' => keys = keys_df.as_ptr(),
+            'g' => keys = keys_g.as_ptr(),
+            'i' | 'l' => keys = keys_il.as_ptr(),
+            'm' => keys = keys_m.as_ptr(),
+            'n' | 'o' => keys = keys_no.as_ptr(),
+            'r' => keys = keys_r.as_ptr(),
+            's' => keys = keys_s.as_ptr(),
+            't' => keys = keys_t.as_ptr(),
+            'u' => keys = keys_u.as_ptr(),
             _ => return 0,
         }
     }
@@ -1852,21 +1852,25 @@ fn parse_digest(
     let mut j: size_t = 0;
     let mut len: size_t = 0;
     let a_safe = unsafe { &mut *a };
-    match type_0 {
-        1 => len = size_of::<[u8; 16]>() as u64,
-        2 => len = size_of::<[u8; 20]>() as u64,
-        3 => len = size_of::<[u8; 20]>() as u64,
-        4 => len = size_of::<[u8; 32]>() as u64,
-        5 => len = size_of::<[u8; 48]>() as u64,
-        6 => len = size_of::<[u8; 64]>() as u64,
-        _ => {
-            archive_set_error_safe!(
-                &mut a_safe.archive as *mut archive,
-                ARCHIVE_MTREE_DEFINED_PARAM.archive_errno_programmer,
-                b"Internal error: Unknown digest type\x00" as *const u8
-            );
-            return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
-        }
+    if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_md5 {
+        len = size_of::<[u8; 16]>() as u64
+    } else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_rmd160
+        || type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha1
+    {
+        len = size_of::<[u8; 20]>() as u64
+    } else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha256 {
+        len = size_of::<[u8; 32]>() as u64
+    } else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha384 {
+        len = size_of::<[u8; 48]>() as u64
+    } else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha512 {
+        len = size_of::<[u8; 64]>() as u64
+    } else {
+        archive_set_error_safe!(
+            &mut a_safe.archive as *mut archive,
+            ARCHIVE_MTREE_DEFINED_PARAM.archive_errno_programmer,
+            b"Internal error: Unknown digest type\x00" as *const u8
+        );
+        return ARCHIVE_MTREE_DEFINED_PARAM.archive_fatal;
     }
     if len > size_of::<[u8; 64]>() as u64 {
         archive_set_error_safe!(
@@ -1960,8 +1964,8 @@ fn parse_keyword(
     *val_safe = '\u{0}' as u8;
     val = unsafe { val.offset(1) };
     let mut current_block: u64;
-    match unsafe { *key.offset(0) as i32 } {
-        99 => {
+    match unsafe { *key.offset(0) as char } {
+        'c' => {
             if unsafe { strcmp_safe(key, b"content\x00" as *const u8) } == 0
                 || unsafe { strcmp_safe(key, b"contents\x00" as *const u8) } == 0
             {
@@ -1981,37 +1985,37 @@ fn parse_keyword(
                 current_block = 100;
             }
         }
-        100 => {
+        'd' => {
             current_block = 100;
         }
-        102 => {
+        'f' => {
             current_block = 102;
         }
-        103 => {
+        'g' => {
             current_block = 103;
         }
-        105 => {
+        'i' => {
             current_block = 105;
         }
-        108 => {
+        'l' => {
             current_block = 108;
         }
-        109 => {
+        'm' => {
             current_block = 109;
         }
-        110 => {
+        'n' => {
             current_block = 110;
         }
-        114 => {
+        'r' => {
             current_block = 114;
         }
-        115 => {
+        's' => {
             current_block = 115;
         }
-        116 => {
+        't' => {
             current_block = 116;
         }
-        117 => {
+        'u' => {
             current_block = 117;
         }
         _ => {

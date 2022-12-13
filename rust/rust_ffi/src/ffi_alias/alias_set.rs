@@ -734,3 +734,4 @@ pub type lzma_vli = uint64_t;
 pub type lzma_delta_type = u32;
 pub const LZMA_DELTA_TYPE_BYTE: lzma_delta_type = 0;
 pub type evp_pkey_ctx_st = ();
+pub const INT_MAX: i32 = 2147483647;

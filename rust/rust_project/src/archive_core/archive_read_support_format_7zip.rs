@@ -354,7 +354,7 @@ fn archive_read_format_7zip_bid(a: *mut archive_read, best_bid: i32) -> i32 {
 }
 fn check_7zip_header_in_sfx(p: *const u8) -> i32 {
     match unsafe { *p.offset(5 as isize) as i32 } {
-        28 => {
+        0x1C => {
             if unsafe {
                 memcmp_safe(
                     p as *const (),
@@ -379,11 +379,11 @@ fn check_7zip_header_in_sfx(p: *const u8) -> i32 {
             /* Hit the header! */
             return 0;
         }
-        55 => return 5,
-        122 => return 4,
-        188 => return 3,
-        175 => return 2,
-        39 => return 1,
+        0x37 => return 5,
+        0x7A => return 4,
+        0xBC => return 3,
+        0xAF => return 2,
+        0x27 => return 1,
         _ => return 6,
     };
 }
