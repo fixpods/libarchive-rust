@@ -1854,17 +1854,17 @@ fn parse_digest(
     let a_safe = unsafe { &mut *a };
     if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_md5 {
         len = size_of::<[u8; 16]>() as u64
-    } else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_rmd160 {
+    } else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_rmd160
+        || type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha1
+    {
         len = size_of::<[u8; 20]>() as u64
-    }else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha1 {
-        len = size_of::<[u8; 20]>() as u64
-    }else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha256 {
+    } else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha256 {
         len = size_of::<[u8; 32]>() as u64
-    }else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha384 {
+    } else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha384 {
         len = size_of::<[u8; 48]>() as u64
-    }else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha512 {
+    } else if type_0 == ARCHIVE_MTREE_DEFINED_PARAM.archive_entry_digest_sha512 {
         len = size_of::<[u8; 64]>() as u64
-    }else {
+    } else {
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
             ARCHIVE_MTREE_DEFINED_PARAM.archive_errno_programmer,
