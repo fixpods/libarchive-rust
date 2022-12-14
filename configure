@@ -578,7 +578,7 @@ ac_hostname=`(hostname || uname -n) 2>/dev/null | sed 1q`
 #
 # Initializations.
 #
-ac_default_prefix=/usr/local
+ac_default_prefix=/usr
 ac_clean_files=
 ac_config_libobj_dir=.
 LIBOBJS=
@@ -894,7 +894,7 @@ htmldir='${docdir}'
 dvidir='${docdir}'
 pdfdir='${docdir}'
 psdir='${docdir}'
-libdir='${exec_prefix}/lib'
+libdir='${exec_prefix}/lib64'
 localedir='${datarootdir}/locale'
 mandir='${datarootdir}/man'
 
