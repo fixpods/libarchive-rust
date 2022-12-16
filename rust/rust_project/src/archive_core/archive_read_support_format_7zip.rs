@@ -496,7 +496,7 @@ fn archive_read_format_7zip_read_header(a: *mut archive_read, entry: *mut archiv
     }
     zip_entry = (safe_zip).entry;
     let safe_zip_entry = unsafe { &mut *zip_entry };
-    if (safe_zip).entries_remaining <= 0 || zip_entry.is_null() {
+    if (safe_zip).entries_remaining <= 0 as i32 as u64 || zip_entry.is_null() {
         return ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof;
     }
     (safe_zip).entries_remaining = (safe_zip).entries_remaining.wrapping_sub(1);
