@@ -11,7 +11,7 @@ libc = "0.2.9"
 libz-sys = { version = "1.1.0", default-features = false, features = ["libc"] }
 wchar = "0.11.0"
 rust_ffi = {path = "../rust_ffi"}
-c2rust-bitfields = "0.3"
+c2rust-bitfields = "0.3.0"
 lazy_static = "1.4.0"
 
 [build-dependencies]
