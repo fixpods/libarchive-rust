@@ -214,8 +214,8 @@ pub fn archive_read_support_format_cab(mut _a: *mut archive) -> i32 {
             b"archive_read_support_format_cab\x00" as *const u8,
         )
     };
-    if magic_test == -(30 as i32) {
-        return -(30 as i32);
+    if magic_test == -30 {
+        return -30;
     }
     cab = unsafe { calloc_safe(1, size_of::<cab>() as u64) } as *mut cab;
     let a_safe = unsafe { &mut *a };
@@ -256,33 +256,36 @@ pub fn archive_read_support_format_cab(mut _a: *mut archive) -> i32 {
     return ARCHIVE_CAB_DEFINED_PARAM.archive_ok;
 }
 fn find_cab_magic(mut p: *const u8) -> i32 {
-    match unsafe { *p.offset(4) as i32 } {
-        0 => {
-            /*
-             * Note: Self-Extraction program has 'MSCF' string in their
-             * program. If we were finding 'MSCF' string only, we got
-             * wrong place for Cabinet header, thus, we have to check
-             * following four bytes which are reserved and must be set
-             * to zero.
-             */
-            if unsafe {
-                memcmp_safe(
-                    p as *const (),
-                    b"MSCF\x00\x00\x00\x00\x00" as *const u8 as *const (),
-                    8,
-                )
-            } == 0
-            {
-                return 0;
-            }
-            return 5;
+    if unsafe { *p.offset(4) } == 0 {
+        /*
+         * Note: Self-Extraction program has 'MSCF' string in their
+         * program. If we were finding 'MSCF' string only, we got
+         * wrong place for Cabinet header, thus, we have to check
+         * following four bytes which are reserved and must be set
+         * to zero.
+         */
+        if unsafe {
+            memcmp_safe(
+                p as *const (),
+                b"MSCF\x00\x00\x00\x00\x00" as *const u8 as *const (),
+                8,
+            )
+        } == 0
+        {
+            return 0;
         }
-        70 => return 1,
-        67 => return 2,
-        83 => return 3,
-        77 => return 4,
-        _ => return 5,
-    };
+        return 5;
+    } else if unsafe { *p.offset(4) } == 'F' as u8 {
+        return 1;
+    } else if unsafe { *p.offset(4) } == 'C' as u8 {
+        return 2;
+    } else if unsafe { *p.offset(4) } == 'S' as u8 {
+        return 3;
+    } else if unsafe { *p.offset(4) } == 'M' as u8 {
+        return 4;
+    } else {
+        return 5;
+    }
 }
 fn archive_read_format_cab_bid(a: *mut archive_read, best_bid: i32) -> i32 {
     let mut p: *const u8;
@@ -313,7 +316,7 @@ fn archive_read_format_cab_bid(a: *mut archive_read, best_bid: i32) -> i32 {
      * by noting a PE header and searching forward
      * up to 128k for a 'MSCF' marker.
      */
-    if unsafe { *p.offset(0) as i32 == 'M' as i32 && *p.offset(1) as i32 == 'Z' as i32 } {
+    if unsafe { *p.offset(0) == 'M' as u8 && *p.offset(1) == 'Z' as u8 } {
         offset = 0;
         window = 4096;
         while offset < (1024 * 128) {
@@ -432,7 +435,7 @@ fn cab_strnlen(p: *const u8, maxlen: size_t) -> ssize_t {
     let mut i: size_t;
     i = 0;
     while i <= maxlen {
-        if unsafe { *p.offset(i as isize) as i32 == 0 } {
+        if unsafe { *p.offset(i as isize) == 0 } {
             break;
         }
         i = i.wrapping_add(1)
@@ -467,14 +470,14 @@ fn cab_convert_path_separator_1(fn_0: *mut archive_string, attr: u8) -> i32 {
     i = 0;
     let fn_0_safe = unsafe { &mut *fn_0 };
     while i < fn_0_safe.length {
-        if unsafe { *(*fn_0).s.offset(i as isize) as i32 == '\\' as i32 } {
+        if unsafe { *(*fn_0).s.offset(i as isize) == '\\' as u8 } {
             if mb != 0 {
                 break;
             }
             unsafe { *(*fn_0).s.offset(i as isize) = '/' as u8 };
             mb = 0
         } else if unsafe {
-            *(*fn_0).s.offset(i as isize) as i32 & 0x80 as i32 != 0
+            *(*fn_0).s.offset(i as isize) & 0x80 != 0
                 && attr as i32 & ARCHIVE_CAB_DEFINED_PARAM.attr_name_is_utf == 0
         } {
             mb = 1
@@ -545,11 +548,8 @@ fn cab_read_header(mut a: *mut archive_read) -> i32 {
         return truncated_error(a);
     }
     cab = unsafe { (*(*a).format).data as *mut cab };
-    if unsafe {
-        (*cab).found_header == 0
-            && *p.offset(0) as i32 == 'M' as i32
-            && *p.offset(1) as i32 == 'Z' as i32
-    } {
+    if unsafe { (*cab).found_header == 0 && *p.offset(0) == 'M' as u8 && *p.offset(1) == 'Z' as u8 }
+    {
         /* This is an executable?  Must be self-extracting... */
         err = cab_skip_sfx(a);
         if err < ARCHIVE_CAB_DEFINED_PARAM.archive_warn {
@@ -568,13 +568,10 @@ fn cab_read_header(mut a: *mut archive_read) -> i32 {
      */
     hd = &mut cab_safe.cfheader; /* Avoid compiling warning. */
     if unsafe {
-        *p.offset((ARCHIVE_CAB_DEFINED_PARAM.cfheader_signature + 0) as isize) as i32 != 'M' as i32
-            || *p.offset((ARCHIVE_CAB_DEFINED_PARAM.cfheader_signature + 1) as isize) as i32
-                != 'S' as i32
-            || *p.offset((ARCHIVE_CAB_DEFINED_PARAM.cfheader_signature + 2) as isize) as i32
-                != 'C' as i32
-            || *p.offset((ARCHIVE_CAB_DEFINED_PARAM.cfheader_signature + 3) as isize) as i32
-                != 'F' as i32
+        *p.offset((ARCHIVE_CAB_DEFINED_PARAM.cfheader_signature + 0) as isize) != 'M' as u8
+            || *p.offset((ARCHIVE_CAB_DEFINED_PARAM.cfheader_signature + 1) as isize) != 'S' as u8
+            || *p.offset((ARCHIVE_CAB_DEFINED_PARAM.cfheader_signature + 2) as isize) != 'C' as u8
+            || *p.offset((ARCHIVE_CAB_DEFINED_PARAM.cfheader_signature + 3) as isize) != 'F' as u8
     } {
         archive_set_error_safe!(
             &mut a_safe.archive as *mut archive,
@@ -634,8 +631,8 @@ fn cab_read_header(mut a: *mut archive_read) -> i32 {
                             *p.offset(ARCHIVE_CAB_DEFINED_PARAM.cfheader_cbcfdata as isize);
                     }
                     /* abReserve */
-                    used = (used as u64).wrapping_add(4) as size_t as size_t; /* cbCFHeader, cbCFFolder and cbCFData */
-                    used = (used as u64).wrapping_add(cfheader as u64) as size_t as size_t;
+                    used = (used as u64).wrapping_add(4); /* cbCFHeader, cbCFFolder and cbCFData */
+                    used = (used as u64).wrapping_add(cfheader as u64);
                     current_block = 9007357115414505193;
                 }
             } else {
@@ -657,7 +654,7 @@ fn cab_read_header(mut a: *mut archive_read) -> i32 {
                         if len <= 0 {
                             current_block = 3979278900421119935;
                         } else {
-                            used = (used as u64).wrapping_add((len + 1 as i64) as u64) as size_t;
+                            used = (used).wrapping_add((len + 1) as u64);
                             /* How many bytes are used for szDiskPrev. */
                             p = unsafe {
                                 __archive_read_ahead_safe(
@@ -673,7 +670,7 @@ fn cab_read_header(mut a: *mut archive_read) -> i32 {
                             if len <= 0 {
                                 current_block = 3979278900421119935;
                             } else {
-                                used = (used as u64).wrapping_add((len + 1) as u64) as size_t;
+                                used = (used as u64).wrapping_add((len + 1) as u64);
                                 current_block = 2989495919056355252;
                             }
                         }
@@ -699,7 +696,7 @@ fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                 if len <= 0 {
                                     current_block = 3979278900421119935;
                                 } else {
-                                    used = (used as u64).wrapping_add((len + 1) as u64) as size_t;
+                                    used = (used as u64).wrapping_add((len + 1) as u64);
                                     /* How many bytes are used for szDiskNext. */
                                     p = unsafe {
                                         __archive_read_ahead_safe(
@@ -715,8 +712,7 @@ fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                     if len <= 0 {
                                         current_block = 3979278900421119935;
                                     } else {
-                                        used =
-                                            (used as u64).wrapping_add((len + 1) as u64) as size_t;
+                                        used = (used as u64).wrapping_add((len + 1) as u64);
                                         current_block = 6072622540298447352;
                                     }
                                 }
@@ -728,8 +724,7 @@ fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                 _ => {
                                     unsafe { __archive_read_consume_safe(a, used as int64_t) };
                                     cab_safe.cab_offset =
-                                        (cab_safe.cab_offset as u64).wrapping_add(used) as int64_t
-                                            as int64_t;
+                                        (cab_safe.cab_offset as u64).wrapping_add(used) as int64_t;
                                     used = 0;
                                     /*
                                      * Read CFFOLDER.
@@ -816,14 +811,13 @@ fn cab_read_header(mut a: *mut archive_read) -> i32 {
                                                 } /* abReserve */
                                             }
                                             p = unsafe { p.offset(8) };
-                                            used = (used as u64).wrapping_add(8) as size_t;
+                                            used = (used).wrapping_add(8) as size_t;
                                             if hd_safe.flags as i32
                                                 & ARCHIVE_CAB_DEFINED_PARAM.reserve_present
                                                 != 0
                                             {
                                                 p = unsafe { p.offset((*hd).cffolder as isize) };
-                                                used = (used as u64)
-                                                    .wrapping_add(hd_safe.cffolder as u64)
+                                                used = (used).wrapping_add(hd_safe.cffolder as u64)
                                                     as size_t
                                             }
                                             /*
@@ -1172,9 +1166,9 @@ fn archive_read_format_cab_read_header(a: *mut archive_read, entry: *mut archive
         cab_safe.end_of_archive = 1;
         return ARCHIVE_CAB_DEFINED_PARAM.archive_eof;
     }
-    let fresh0 = hd_safe.file_index;
+    let index_old = hd_safe.file_index;
     hd_safe.file_index = hd_safe.file_index + 1;
-    file = unsafe { &mut *(*hd).file_array.offset(fresh0 as isize) as *mut cffile };
+    file = unsafe { &mut *(*hd).file_array.offset(index_old as isize) as *mut cffile };
     cab_safe.end_of_entry = 0;
     cab_safe.end_of_entry_cleanup = 0;
     cab_safe.entry_compressed_bytes_read = 0;
@@ -1316,21 +1310,6 @@ fn archive_read_format_cab_read_data(
         offset_safe = &mut *offset;
         a_safe = &mut *a;
     }
-    match unsafe { (*(*cab).entry_cffile).folder as i32 } {
-        65533 | 65534 | 65535 => {
-            *buff_safe = 0 as *const ();
-            *size_safe = 0;
-            *offset_safe = 0;
-            unsafe { archive_clear_error_safe(&mut a_safe.archive) };
-            archive_set_error_safe!(
-                &mut a_safe.archive as *mut archive,
-                ARCHIVE_CAB_DEFINED_PARAM.archive_errno_file_format,
-                b"Cannot restore this file split in multivolume.\x00" as *const u8
-            );
-            return ARCHIVE_CAB_DEFINED_PARAM.archive_failed;
-        }
-        _ => {}
-    }
     if unsafe { (*(*cab).entry_cffile).folder as i32 }
         == ARCHIVE_CAB_DEFINED_PARAM.ifoldcontinued_from_prev
         || unsafe { (*(*cab).entry_cffile).folder as i32 }
@@ -1376,7 +1355,7 @@ fn archive_read_format_cab_read_data(
     if cab_safe.end_of_archive as i32 != 0 || cab_safe.end_of_entry as i32 != 0 {
         if cab_safe.end_of_entry_cleanup == 0 {
             /* End-of-entry cleanup done. */
-            cab_safe.end_of_entry_cleanup = 1 as i32 as u8
+            cab_safe.end_of_entry_cleanup = 1 as u8
         }
         *offset_safe = cab_safe.entry_offset;
         *size_safe = 0;
@@ -1453,11 +1432,11 @@ fn cab_checksum_update(a: *mut archive_read, bytes: size_t) {
     sumbytes = bytes;
     if cfdata_safe.sum_extra_avail != 0 {
         while cfdata_safe.sum_extra_avail < 4 && sumbytes > 0 {
-            let fresh3 = p;
+            let p_old = p;
             p = unsafe { p.offset(1) };
-            let fresh4 = cfdata_safe.sum_extra_avail;
+            let avail_old = cfdata_safe.sum_extra_avail;
             cfdata_safe.sum_extra_avail = cfdata_safe.sum_extra_avail + 1;
-            cfdata_safe.sum_extra[fresh4 as usize] = unsafe { *fresh3 };
+            cfdata_safe.sum_extra[avail_old as usize] = unsafe { *p_old };
             sumbytes = sumbytes.wrapping_sub(1)
         }
         if cfdata_safe.sum_extra_avail == 4 {
@@ -1864,7 +1843,7 @@ fn cab_read_ahead_cfdata_deflate(a: *mut archive_read, avail: *mut ssize_t) -> *
             }
         }
         /* Don't check for zlib header */
-        if r != 0 as i32 {
+        if r != ARCHIVE_CAB_DEFINED_PARAM.z_ok {
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.archive_errno_misc,
@@ -1878,7 +1857,7 @@ fn cab_read_ahead_cfdata_deflate(a: *mut archive_read, avail: *mut ssize_t) -> *
         /* We've initialized decompression for this stream. */
         cab_cffolder_safe.decompress_init = 1
     }
-    if cfdata_safe.compressed_bytes_remaining as i32 == cfdata_safe.compressed_size as i32 {
+    if cfdata_safe.compressed_bytes_remaining == cfdata_safe.compressed_size {
         mszip = 2
     } else {
         mszip = 0
@@ -1902,7 +1881,7 @@ fn cab_read_ahead_cfdata_deflate(a: *mut archive_read, avail: *mut ssize_t) -> *
         };
         cab_safe.stream.avail_out =
             (cfdata_safe.uncompressed_size as u64).wrapping_sub(cab_safe.stream.total_out) as uInt;
-        d = unsafe { __archive_read_ahead_safe(a, 1 as i32 as size_t, &mut bytes_avail) };
+        d = unsafe { __archive_read_ahead_safe(a, 1 as size_t, &mut bytes_avail) };
         if bytes_avail <= 0 {
             *avail_safe = truncated_error(a) as ssize_t;
             return 0 as *const ();
@@ -1916,7 +1895,7 @@ fn cab_read_ahead_cfdata_deflate(a: *mut archive_read, avail: *mut ssize_t) -> *
          * next_in pointer, only reads it).  The result: this ugly
          * cast to remove 'const'.
          */
-        cab_safe.stream.next_in = d as uintptr_t as *mut Bytef;
+        cab_safe.stream.next_in = d as *mut Bytef;
         cab_safe.stream.avail_in = bytes_avail as uInt;
         cab_safe.stream.total_in = 0;
         /* Cut out a tow-byte MSZIP signature(0x43, 0x4b). */
@@ -2108,7 +2087,7 @@ fn cab_read_ahead_cfdata_lzx(a: *mut archive_read, mut avail: *mut ssize_t) -> *
     let avail_safe = unsafe { &mut *avail };
     /* If the buffer hasn't been allocated, allocate it now. */
     if cab_safe.uncompressed_buffer.is_null() {
-        cab_safe.uncompressed_buffer_size = 0x8000 as size_t;
+        cab_safe.uncompressed_buffer_size = 0x8000;
         cab_safe.uncompressed_buffer =
             unsafe { malloc_safe(cab_safe.uncompressed_buffer_size) } as *mut u8;
         if cab_safe.uncompressed_buffer.is_null() {
@@ -2123,13 +2102,13 @@ fn cab_read_ahead_cfdata_lzx(a: *mut archive_read, mut avail: *mut ssize_t) -> *
     }
     let cfdata_safe = unsafe { &mut *cfdata };
     uavail = cfdata_safe.uncompressed_avail;
-    if uavail as i32 == cfdata_safe.uncompressed_size as i32 {
+    if uavail == cfdata_safe.uncompressed_size {
         d = unsafe {
             (*cab)
                 .uncompressed_buffer
-                .offset((*cfdata).read_offset as i32 as isize) as *const ()
+                .offset((*cfdata).read_offset as isize) as *const ()
         };
-        *avail_safe = (uavail as i32 - cfdata_safe.read_offset as i32) as ssize_t;
+        *avail_safe = (uavail - cfdata_safe.read_offset) as ssize_t;
         return d;
     }
     let cab_cffolder_safe = unsafe { &mut (*(*cab).entry_cffolder) };
@@ -2159,7 +2138,7 @@ fn cab_read_ahead_cfdata_lzx(a: *mut archive_read, mut avail: *mut ssize_t) -> *
         };
         cab_safe.xstrm.avail_out = cfdata_safe.uncompressed_size as i64 - cab_safe.xstrm.total_out;
         d = unsafe { __archive_read_ahead_safe(a, 1 as size_t, &mut bytes_avail) };
-        if bytes_avail <= 0 as i64 {
+        if bytes_avail <= 0 {
             archive_set_error_safe!(
                 &mut a_safe.archive as *mut archive,
                 ARCHIVE_CAB_DEFINED_PARAM.archive_errno_file_format,
@@ -2310,10 +2289,9 @@ fn cab_consume_cfdata(a: *mut archive_read, consumed_bytes: int64_t) -> int64_t 
                 }
             } else {
                 cfdata_safe.read_offset =
-                    (cfdata_safe.read_offset as i32 + cbytes as uint16_t as i32) as uint16_t;
+                    (cfdata_safe.read_offset as i32 + cbytes as i32) as uint16_t;
                 cfdata_safe.uncompressed_bytes_remaining =
-                    (cfdata_safe.uncompressed_bytes_remaining as i32 - cbytes as uint16_t as i32)
-                        as uint16_t;
+                    (cfdata_safe.uncompressed_bytes_remaining as i32 - cbytes as i32) as uint16_t;
                 break;
             }
         } else if cbytes == 0 {
@@ -2597,7 +2575,7 @@ fn cab_dos_time(p: *const u8) -> time_t {
         tm_zone: 0 as *const u8,
     }; /* Day of month.     */
     msDate = archive_le16dec(p as *const ()) as i32;
-    msTime = unsafe { archive_le16dec(p.offset(2 as i32 as isize) as *const ()) as i32 };
+    msTime = unsafe { archive_le16dec(p.offset(2) as *const ()) as i32 };
     unsafe { memset_safe(&mut ts as *mut tm as *mut (), 0, size_of::<tm>() as u64) };
     ts.tm_year = (msDate >> 9 & 0x7f) + 80;
     ts.tm_mon = (msDate >> 5 & 0xf) - 1;
@@ -2856,10 +2834,10 @@ fn lzx_br_fillup(strm: *mut lzx_stream, br: *mut lzx_br) -> i32 {
             /* There is not enough compressed data to
              * fill up the cache buffer. */
             if strm_safe.avail_in == 1 {
-                let fresh5 = strm_safe.next_in;
+                let next_in_old = strm_safe.next_in;
                 unsafe {
                     (*strm).next_in = (*strm).next_in.offset(1);
-                    (*br).odd = *fresh5;
+                    (*br).odd = *next_in_old;
                 }
                 strm_safe.avail_in -= 1;
                 br_safe.have_odd = 1
@@ -2938,109 +2916,94 @@ fn lzx_read_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
     let mut r: i32;
     let br_safe = unsafe { &mut *br };
     's_16: loop {
-        match ds_safe.state {
-            0 => {
-                if !(br_safe.cache_avail >= 1
-                    || lzx_br_fillup(strm, br) != 0
-                    || br_safe.cache_avail >= 1)
-                {
-                    ds_safe.state = ARCHIVE_CAB_DEFINED_PARAM.st_rd_translation;
-                    if last != 0 {
-                        break;
-                    }
-                    return ARCHIVE_CAB_DEFINED_PARAM.archive_ok;
-                } else {
-                    ds_safe.translation = unsafe {
-                        ((br_safe.cache_buffer >> br_safe.cache_avail - 1) as uint32_t
-                            & cache_masks[1 as usize]) as u8
-                    };
-                    br_safe.cache_avail -= 1
+        if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_translation {
+            if !(br_safe.cache_avail >= 1
+                || lzx_br_fillup(strm, br) != 0
+                || br_safe.cache_avail >= 1)
+            {
+                ds_safe.state = ARCHIVE_CAB_DEFINED_PARAM.st_rd_translation;
+                if last != 0 {
+                    break;
                 }
-                current_block = 15836835945094511460;
+                return ARCHIVE_CAB_DEFINED_PARAM.archive_ok;
+            } else {
+                ds_safe.translation = unsafe {
+                    ((br_safe.cache_buffer >> br_safe.cache_avail - 1) as uint32_t
+                        & cache_masks[1 as usize]) as u8
+                };
+                br_safe.cache_avail -= 1
             }
-            1 => {
-                current_block = 15836835945094511460;
-            }
-            2 => {
-                current_block = 16145219462989692018;
-            }
-            3 => {
-                current_block = 18257203903591193900;
-            }
-            4 => {
-                current_block = 16465730530612695416;
-            }
-            5 | 6 | 7 => {
-                current_block = 1724319918354933278;
-            }
-            8 => {
-                current_block = 5023038348526654800;
-            }
-            9 => {
-                current_block = 1130861444095256174;
-            }
-            10 => {
-                /*
-                 * Read Aligned offset tree.
-                 */
-                if !(br_safe.cache_avail >= 3 * ds_safe.at.len_size
-                    || lzx_br_fillup(strm, br) != 0
-                    || br_safe.cache_avail >= 3 * ds_safe.at.len_size)
-                {
-                    ds_safe.state = ARCHIVE_CAB_DEFINED_PARAM.st_rd_aligned_offset;
-                    if last != 0 {
-                        break;
-                    }
-                    return ARCHIVE_CAB_DEFINED_PARAM.archive_ok;
-                } else {
+            current_block = 15836835945094511460;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_translation_size {
+            current_block = 15836835945094511460;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_block_type {
+            current_block = 16145219462989692018;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_block_size {
+            current_block = 18257203903591193900;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_alignment {
+            current_block = 16465730530612695416;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_r0
+            || ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_r1
+            || ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_r2
+        {
+            current_block = 1724319918354933278;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_copy_uncomp1 {
+            current_block = 5023038348526654800;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_copy_uncomp2 {
+            current_block = 1130861444095256174;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_aligned_offset {
+            /*
+             * Read Aligned offset tree.
+             */
+            if !(br_safe.cache_avail >= 3 * ds_safe.at.len_size
+                || lzx_br_fillup(strm, br) != 0
+                || br_safe.cache_avail >= 3 * ds_safe.at.len_size)
+            {
+                ds_safe.state = ARCHIVE_CAB_DEFINED_PARAM.st_rd_aligned_offset;
+                if last != 0 {
+                    break;
+                }
+                return ARCHIVE_CAB_DEFINED_PARAM.archive_ok;
+            } else {
+                unsafe {
+                    memset_safe(
+                        ds_safe.at.freq.as_mut_ptr() as *mut (),
+                        0,
+                        size_of::<[i32; 17]>() as u64,
+                    )
+                };
+                i = 0;
+                while i < ds_safe.at.len_size {
                     unsafe {
-                        memset_safe(
-                            ds_safe.at.freq.as_mut_ptr() as *mut (),
-                            0,
-                            size_of::<[i32; 17]>() as u64,
-                        )
-                    };
-                    i = 0;
-                    while i < ds_safe.at.len_size {
-                        unsafe {
-                            *(*ds).at.bitlen.offset(i as isize) =
-                                ((br_safe.cache_buffer >> br_safe.cache_avail - 3) as uint32_t
-                                    & cache_masks[3]) as u8;
-                            ds_safe.at.freq[*(*ds).at.bitlen.offset(i as isize) as usize] += 1;
-                        }
-                        br_safe.cache_avail -= 3;
-                        i += 1
+                        *(*ds).at.bitlen.offset(i as isize) =
+                            ((br_safe.cache_buffer >> br_safe.cache_avail - 3) as uint32_t
+                                & cache_masks[3]) as u8;
+                        ds_safe.at.freq[*(*ds).at.bitlen.offset(i as isize) as usize] += 1;
                     }
-                    if lzx_make_huffman_table(&mut ds_safe.at) == 0 {
-                        break;
-                    }
+                    br_safe.cache_avail -= 3;
+                    i += 1
                 }
-                current_block = 10834452935023522597;
+                if lzx_make_huffman_table(&mut ds_safe.at) == 0 {
+                    break;
+                }
             }
-            11 => {
-                current_block = 10834452935023522597;
-            }
-            12 => {
-                current_block = 17947203442271072565;
-            }
-            13 => {
-                current_block = 12175694472802639057;
-            }
-            14 => {
-                current_block = 14663568441095876955;
-            }
-            15 => {
-                current_block = 11522940221586662047;
-            }
-            16 => {
-                current_block = 10662747035737099349;
-            }
-            17 => {
-                current_block = 8491080914264407520;
-            }
-            _ => {
-                continue;
-            }
+            current_block = 10834452935023522597;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_verbatim {
+            current_block = 10834452935023522597;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_pre_main_tree_256 {
+            current_block = 17947203442271072565;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_main_tree_256 {
+            current_block = 12175694472802639057;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_pre_main_tree_rem {
+            current_block = 14663568441095876955;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_main_tree_rem {
+            current_block = 11522940221586662047;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_rd_pre_length_tree {
+            current_block = 10662747035737099349;
+        } else if ds_safe.state == ARCHIVE_CAB_DEFINED_PARAM.st_length_tree {
+            current_block = 8491080914264407520;
+        } else {
+            continue;
         }
         match current_block {
             15836835945094511460 =>
@@ -3280,9 +3243,9 @@ fn lzx_read_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                         ds_safe.rbytes_avail = 2
                     }
                     if ds_safe.rbytes_avail < 4 && ds_safe.br.have_odd as i32 != 0 {
-                        let fresh6 = ds_safe.rbytes_avail;
+                        let rbytes_avail_old = ds_safe.rbytes_avail;
                         ds_safe.rbytes_avail = ds_safe.rbytes_avail + 1;
-                        ds_safe.rbytes[fresh6 as usize] = ds_safe.br.odd;
+                        ds_safe.rbytes[rbytes_avail_old as usize] = ds_safe.br.odd;
                         ds_safe.br.have_odd = 0
                     }
                     while ds_safe.rbytes_avail < 4 {
@@ -3292,11 +3255,11 @@ fn lzx_read_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                             }
                             return ARCHIVE_CAB_DEFINED_PARAM.archive_ok;
                         } else {
-                            let fresh7 = strm_safe.next_in;
+                            let next_in_old = strm_safe.next_in;
                             strm_safe.next_in = unsafe { strm_safe.next_in.offset(1) };
-                            let fresh8 = ds_safe.rbytes_avail;
+                            let rbytes_avail_old = ds_safe.rbytes_avail;
                             ds_safe.rbytes_avail = ds_safe.rbytes_avail + 1;
-                            ds_safe.rbytes[fresh8 as usize] = unsafe { *fresh7 };
+                            ds_safe.rbytes[rbytes_avail_old as usize] = unsafe { *next_in_old };
                             strm_safe.avail_in -= 1
                         }
                     }
@@ -3581,7 +3544,7 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                             );
                         }
                         bre.cache_avail -= unsafe { *mt_bitlen.offset(c as isize) as i32 };
-                        if !(bre.cache_avail >= 0 as i32) {
+                        if !(bre.cache_avail >= 0) {
                             current_block = 17444092441624531628;
                             break 's_73;
                         }
@@ -3615,10 +3578,10 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                         }
                         w_pos = w_pos + 1 & w_mask;
                         /* Store the decoded code to output buffer. */
-                        let fresh9 = noutp;
+                        let noutp_old = noutp;
                         unsafe {
                             noutp = noutp.offset(1);
-                            *fresh9 = c as u8;
+                            *noutp_old = c as u8;
                         }
                         block_bytes_avail = block_bytes_avail.wrapping_sub(1);
                         current_block = 7149356873433890176;
@@ -3635,7 +3598,7 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                             || bre.cache_avail >= lt_max_bits)
                         {
                             if last == 0 {
-                                state = 19;
+                                state = ARCHIVE_CAB_DEFINED_PARAM.st_length;
                                 current_block = 5333453573631877616;
                                 break 's_73;
                             } else {
@@ -3679,7 +3642,7 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                         0 => {
                             /* Use repeated offset 0. */
                             copy_pos = r0;
-                            state = 21;
+                            state = ARCHIVE_CAB_DEFINED_PARAM.st_real_pos;
                             break;
                         }
                         1 => {
@@ -3688,7 +3651,7 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                             /* Swap repeated offset. */
                             r1 = r0;
                             r0 = copy_pos;
-                            state = 21;
+                            state = ARCHIVE_CAB_DEFINED_PARAM.st_real_pos;
                             break;
                         }
                         2 => {
@@ -3697,7 +3660,7 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                             /* Swap repeated offset. */
                             r2 = r0;
                             r0 = copy_pos;
-                            state = 21;
+                            state = ARCHIVE_CAB_DEFINED_PARAM.st_real_pos;
                             break;
                         }
                         _ => {
@@ -3746,9 +3709,9 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                         li = 0;
                         while li < l {
                             unsafe {
-                                let ref mut fresh10 = *d.offset(li as isize);
-                                *fresh10 = *s.offset(li as isize);
-                                *noutp.offset(li as isize) = *fresh10;
+                                let ref mut d_offset_old = *d.offset(li as isize);
+                                *d_offset_old = *s.offset(li as isize);
+                                *noutp.offset(li as isize) = *d_offset_old;
                             }
                             li += 1
                         }
@@ -3759,7 +3722,7 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                     block_bytes_avail = (block_bytes_avail as u64).wrapping_sub(l as u64) as size_t;
                     if copy_len <= l {
                         /* A copy of current pattern ended. */
-                        state = 18;
+                        state = ARCHIVE_CAB_DEFINED_PARAM.st_main;
                         break;
                     } else {
                         copy_len -= l;
@@ -3768,7 +3731,7 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                             continue;
                         }
                         /* Output buffer is empty. */
-                        state = 22;
+                        state = ARCHIVE_CAB_DEFINED_PARAM.st_copy;
                         current_block = 5333453573631877616;
                         break 's_73;
                     }
@@ -3795,7 +3758,7 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                             || lzx_br_fillup(strm, &mut bre) != 0
                             || bre.cache_avail >= offbits)
                         {
-                            state = 20;
+                            state = ARCHIVE_CAB_DEFINED_PARAM.st_offset;
                             if last != 0 {
                                 current_block = 17444092441624531628;
                                 break 's_73;
@@ -3816,7 +3779,7 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                                 || bre.cache_avail >= offbits + at_max_bits)
                             {
                                 if last == 0 {
-                                    state = 20;
+                                    state = ARCHIVE_CAB_DEFINED_PARAM.st_offset;
                                     current_block = 5333453573631877616;
                                     break 's_73;
                                 } else {
@@ -3855,7 +3818,7 @@ fn lzx_decode_blocks(strm: *mut lzx_stream, last: i32) -> i32 {
                         || lzx_br_fillup(strm, &mut bre) != 0
                         || bre.cache_avail >= offset_bits)
                     {
-                        state = 20;
+                        state = ARCHIVE_CAB_DEFINED_PARAM.st_offset;
                         if last != 0 {
                             current_block = 17444092441624531628;
                             break 's_73;
@@ -4012,10 +3975,10 @@ fn lzx_read_bitlen(strm: *mut lzx_stream, d: *mut huffman, mut end: i32) -> i32 
                 br_safe.cache_avail -= 4;
                 j = 0;
                 while j < same {
-                    let fresh11 = i;
+                    let i_old = i;
                     i = i + 1;
                     unsafe {
-                        *(*d).bitlen.offset(fresh11 as isize) = 0;
+                        *(*d).bitlen.offset(i_old as isize) = 0;
                     }
                     j += 1
                 }
@@ -4080,10 +4043,10 @@ fn lzx_read_bitlen(strm: *mut lzx_stream, d: *mut huffman, mut end: i32) -> i32 
                 }
                 j = 0;
                 while j < same {
-                    let fresh12 = i;
+                    let i_old = i;
                     i = i + 1;
                     unsafe {
-                        *(*d).bitlen.offset(fresh12 as isize) = c as u8;
+                        *(*d).bitlen.offset(i_old as isize) = c as u8;
                     }
                     j += 1
                 }
@@ -4098,9 +4061,9 @@ fn lzx_read_bitlen(strm: *mut lzx_stream, d: *mut huffman, mut end: i32) -> i32 
                     return -1;
                 }
                 d_safe.freq[c as usize] += 1;
-                let fresh13 = i;
+                let i_old = i;
                 i = i + 1;
-                unsafe { *(*d).bitlen.offset(fresh13 as isize) = c as u8 }
+                unsafe { *(*d).bitlen.offset(i_old as isize) = c as u8 }
             }
         }
     }
