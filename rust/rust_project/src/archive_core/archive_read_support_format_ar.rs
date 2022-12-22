@@ -25,7 +25,7 @@ pub fn archive_read_support_format_ar(_a: *mut archive) -> i32 {
     if ar.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
-            12,
+            ARCHIVE_AR_DEFINED_PARAM.enomem,
             b"Can\'t allocate ar data\x00" as *const u8
         );
         return ARCHIVE_AR_DEFINED_PARAM.archive_fatal;
@@ -100,7 +100,14 @@ fn _ar_read_header(
     let safe_ar = unsafe { &mut *ar };
     let safe_unconsumed = unsafe { &mut *unconsumed };
     /* Verify the magic signature on the file header. */
-    if unsafe { strncmp(h.offset(58), b"`\n\x00" as *const u8, 2) } != 0 {
+    if unsafe {
+        strncmp(
+            h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_fmag_offset as isize),
+            b"`\n\x00" as *const u8,
+            2,
+        )
+    } != 0
+    {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
             ARCHIVE_AR_DEFINED_PARAM.einval,
@@ -157,8 +164,11 @@ fn _ar_read_header(
      * a 16-char filename that ends in ' '.
      */
     unsafe {
-        p = filename.as_mut_ptr().offset(16).offset(-1);
-        while p >= filename.as_mut_ptr() && *p as i32 == ' ' as i32 {
+        p = filename
+            .as_mut_ptr()
+            .offset(ARCHIVE_AR_DEFINED_PARAM.ar_name_size as isize)
+            .offset(-1);
+        while p >= filename.as_mut_ptr() && *p == ' ' as u8 {
             *p = '\u{0}' as u8;
             p = p.offset(-1)
         }
@@ -170,10 +180,7 @@ fn _ar_read_header(
      * and are not terminated in '/', so we don't trim anything
      * that starts with '/'.)
      */
-    if filename[0] as i32 != '/' as i32
-        && p > filename.as_mut_ptr()
-        && unsafe { *p as i32 } == '/' as i32
-    {
+    if filename[0] != '/' as u8 && p > filename.as_mut_ptr() && unsafe { *p } == '/' as u8 {
         unsafe { *p = '\u{0}' as u8 }
     }
     if p < filename.as_mut_ptr() {
@@ -262,10 +269,7 @@ fn _ar_read_header(
      * XXX TODO: Verify that it's all digits... Don't be fooled
      * by "/9xyz" XXX
      */
-    if filename[0] as i32 == '/' as i32
-        && filename[1] as i32 >= '0' as i32
-        && filename[1] as i32 <= '9' as i32
-    {
+    if filename[0] == '/' as u8 && filename[1] >= '0' as u8 && filename[1] <= '9' as u8 {
         number = ar_atol10(
             unsafe {
                 h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_name_offset as isize)
@@ -362,7 +366,7 @@ fn _ar_read_header(
         }
         unsafe {
             strncpy(p, b as *const u8, bsd_name_length);
-            *p.offset(bsd_name_length as isize) = '\u{0}' as i32 as u8;
+            *p.offset(bsd_name_length as isize) = '\u{0}' as u8;
             __archive_read_consume(a, bsd_name_length as int64_t);
             archive_entry_copy_pathname_safe(entry, p);
             free(p as *mut ())
@@ -450,14 +454,14 @@ fn ar_parse_common_header(ar: *mut ar, entry: *mut archive_entry, h: *const u8) 
             ar_atol10(
                 h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_uid_offset as isize),
                 ARCHIVE_AR_DEFINED_PARAM.ar_uid_size as u32,
-            ) as uid_t as la_int64_t,
+            ) as la_int64_t,
         );
         archive_entry_set_gid(
             entry,
             ar_atol10(
                 h.offset(ARCHIVE_AR_DEFINED_PARAM.ar_gid_offset as isize),
                 ARCHIVE_AR_DEFINED_PARAM.ar_gid_size as u32,
-            ) as gid_t as la_int64_t,
+            ) as la_int64_t,
         );
         archive_entry_set_mode(
             entry,
@@ -573,11 +577,10 @@ fn ar_parse_gnu_filename_table(a: *mut archive_read) -> i32 {
             current_block = 13109137661213826276;
             break;
         }
-        if unsafe { *p } as i32 == '/' as i32 {
-            let fresh0 = p;
+        if unsafe { *p } == '/' as u8 {
+            unsafe { *p = '\u{0}' as u8 };
             unsafe { p = p.offset(1) };
-            unsafe { *fresh0 = '\u{0}' as u8 };
-            if unsafe { *p } as i32 != '\n' as i32 {
+            if unsafe { *p } != '\n' as u8 {
                 current_block = 17886206266124083048;
                 break;
             }
@@ -593,8 +596,8 @@ fn ar_parse_gnu_filename_table(a: *mut archive_read) -> i32 {
          */
         {
             if !(p != unsafe { ar_safe.strtab.offset(size as isize) }
-                && unsafe { *p } as i32 != '\n' as i32
-                && unsafe { *p } as i32 != '`' as i32)
+                && unsafe { *p } != '\n' as u8
+                && unsafe { *p } != '`' as u8)
             {
                 /* Enforce zero termination. */
                 unsafe { *(ar_safe).strtab.offset(size.wrapping_sub(1) as isize) = '\u{0}' as u8 }; /* Truncate on overflow. */
@@ -622,19 +625,19 @@ fn ar_atol8(mut p: *const u8, mut char_cnt: u32) -> uint64_t {
     limit = (SIZE_MAX).wrapping_div(base as u64);
     last_digit_limit = (SIZE_MAX).wrapping_rem(base as u64);
 
-    while (unsafe { *p as i32 == ' ' as i32 } || unsafe { *p as i32 == '\t' as i32 }) && {
-        let fresh3 = char_cnt;
+    while (unsafe { *p == ' ' as u8 } || unsafe { *p == '\t' as u8 }) && {
+        let cnt_old = char_cnt;
         char_cnt = char_cnt.wrapping_sub(1);
-        (fresh3) > 0
+        (cnt_old) > 0
     } {
         unsafe { p = p.offset(1) }
     }
     l = 0;
-    digit = unsafe { (*p as i32 - '0' as i32) as u32 };
-    while unsafe { *p as i32 >= '0' as i32 } && digit < base && {
-        let fresh4 = char_cnt;
+    digit = unsafe { (*p - '0' as u8) as u32 };
+    while unsafe { *p >= '0' as u8 } && digit < base && {
+        let cnt_old = char_cnt;
         char_cnt = char_cnt.wrapping_sub(1);
-        (fresh4) > 0
+        (cnt_old) > 0
     } {
         if l > limit || l == limit && digit as u64 > last_digit_limit {
             l = SIZE_MAX;
@@ -642,7 +645,7 @@ fn ar_atol8(mut p: *const u8, mut char_cnt: u32) -> uint64_t {
         } else {
             l = l.wrapping_mul(base as u64).wrapping_add(digit as u64);
             unsafe { p = p.offset(1) };
-            digit = (unsafe { *p as i32 } - '0' as i32) as u32
+            digit = (unsafe { *p } - '0' as u8) as u32
         }
     }
     return l;
@@ -658,19 +661,19 @@ fn ar_atol10(mut p: *const u8, mut char_cnt: u32) -> uint64_t {
     limit = (SIZE_MAX).wrapping_div(base as u64);
     last_digit_limit = (SIZE_MAX).wrapping_rem(base as u64);
 
-    while (unsafe { *p as i32 == ' ' as i32 } || unsafe { *p as i32 == '\t' as i32 }) && {
-        let fresh3 = char_cnt;
+    while (unsafe { *p == ' ' as u8 } || unsafe { *p == '\t' as u8 }) && {
+        let cnt_old = char_cnt;
         char_cnt = char_cnt.wrapping_sub(1);
-        (fresh3) > 0
+        (cnt_old) > 0
     } {
         unsafe { p = p.offset(1) }
     }
     l = 0;
-    digit = unsafe { (*p as i32 - '0' as i32) as u32 };
-    while unsafe { *p as i32 >= '0' as i32 } && digit < base && {
-        let fresh4 = char_cnt;
+    digit = unsafe { (*p - '0' as u8) as u32 };
+    while unsafe { *p >= '0' as u8 } && digit < base && {
+        let cnt_old = char_cnt;
         char_cnt = char_cnt.wrapping_sub(1);
-        (fresh4) > 0 as i32 as u32
+        (cnt_old) > 0
     } {
         if l > limit || l == limit && digit as u64 > last_digit_limit {
             l = SIZE_MAX;
@@ -678,14 +681,14 @@ fn ar_atol10(mut p: *const u8, mut char_cnt: u32) -> uint64_t {
         } else {
             l = l.wrapping_mul(base as u64).wrapping_add(digit as u64);
             unsafe { p = p.offset(1) };
-            digit = (unsafe { *p as i32 } - '0' as i32) as u32
+            digit = (unsafe { *p } - '0' as u8) as u32
         }
     }
     return l;
 }
 
 #[no_mangle]
-pub unsafe fn archive_test_archive_read_format_ar_read_data(
+pub fn archive_test_archive_read_format_ar_read_data(
     _a: *mut archive,
     buff: *mut *const (),
     size: *mut size_t,
@@ -693,41 +696,49 @@ pub unsafe fn archive_test_archive_read_format_ar_read_data(
 ) {
     let a: *mut archive_read = _a as *mut archive_read;
     let ar: *mut ar;
-    ar = unsafe { calloc_safe(1 as u64, size_of::<ar>() as u64) } as *mut ar;
-    (*ar).entry_bytes_remaining = 0 as int64_t;
-    (*ar).entry_padding = 2147483647 as int64_t;
-    (*(*a).format).data = ar as *mut ();
+    ar = unsafe { calloc_safe(1, size_of::<ar>() as u64) } as *mut ar;
+    unsafe {
+        (*ar).entry_bytes_remaining = 0;
+        (*ar).entry_padding = 2147483647;
+        (*(*a).format).data = ar as *mut ();
+    }
     archive_read_format_ar_read_data(a, buff, size, offset);
-    (*ar).entry_bytes_remaining = 1 as int64_t;
+    unsafe {
+        (*ar).entry_bytes_remaining = 1;
+    }
     let mut archive_read_filter: *mut archive_read_filter = 0 as *mut archive_read_filter;
-    archive_read_filter =
-        unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read_filter>() as u64) }
-            as *mut archive_read_filter;
-    (*archive_read_filter).client_avail = 10000 as size_t;
-    (*archive_read_filter).end_of_file = 'a' as u8;
+    archive_read_filter = unsafe { calloc_safe(1, size_of::<archive_read_filter>() as u64) }
+        as *mut archive_read_filter;
+    unsafe {
+        (*archive_read_filter).client_avail = 10000;
+        (*archive_read_filter).end_of_file = 'a' as u8;
+    }
     archive_read_format_ar_read_data(a, buff, size, offset);
 }
 
 #[no_mangle]
-pub unsafe fn archive_test_archive_read_support_format_ar() {
+pub fn archive_test_archive_read_support_format_ar() {
     let mut archive_read: *mut archive_read = 0 as *mut archive_read;
-    archive_read = unsafe { calloc_safe(1 as i32 as u64, size_of::<archive_read>() as u64) }
-        as *mut archive_read;
-    (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
-    (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
-    archive_read_support_format_ar(&mut (*archive_read).archive as *mut archive);
+    archive_read = unsafe { calloc_safe(1, size_of::<archive_read>() as u64) } as *mut archive_read;
+    unsafe {
+        (*archive_read).archive.magic = ARCHIVE_AR_DEFINED_PARAM.archive_read_magic;
+        (*archive_read).archive.state = ARCHIVE_AR_DEFINED_PARAM.archive_state_new;
+        archive_read_support_format_ar(&mut (*archive_read).archive as *mut archive);
+    }
 }
 
 #[no_mangle]
-pub unsafe fn archive_test__ar_read_header(
-    mut _a: *mut archive,
-    mut entry: *mut archive_entry,
-    mut h: *const u8,
-    mut unconsumed: *mut size_t,
+pub fn archive_test__ar_read_header(
+    _a: *mut archive,
+    entry: *mut archive_entry,
+    h: *const u8,
+    unconsumed: *mut size_t,
 ) {
     let mut a: *mut archive_read = _a as *mut archive_read;
-    (*a).archive.archive_format = ARCHIVE_AR_DEFINED_PARAM.archive_format_ar;
+    unsafe {
+        (*a).archive.archive_format = ARCHIVE_AR_DEFINED_PARAM.archive_format_ar;
+    }
     let mut ar: *mut ar = 0 as *mut ar;
-    ar = unsafe { calloc_safe(1 as i32 as u64, size_of::<ar>() as u64) } as *mut ar;
+    ar = unsafe { calloc_safe(1, size_of::<ar>() as u64) } as *mut ar;
     _ar_read_header(a, entry, ar, h, unconsumed);
 }
