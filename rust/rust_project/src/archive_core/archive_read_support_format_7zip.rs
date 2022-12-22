@@ -1459,94 +1459,115 @@ fn decompress(
     } else if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_lzma as u64
         || safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_lzma2 as u64
     {
-        (safe_zip).lzstream.next_in = t_next_in;
-        (safe_zip).lzstream.avail_in = t_avail_in;
-        (safe_zip).lzstream.next_out = t_next_out;
-        (safe_zip).lzstream.avail_out = t_avail_out;
-        r = unsafe { lzma_code_safe(&mut (safe_zip).lzstream, LZMA_RUN) } as i32;
-        if r == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_stream_end {
-            /* Found end of stream. */
-            unsafe {
-                lzma_end_safe(&mut (safe_zip).lzstream);
-            }
-            (safe_zip).lzstream_valid = 0 as i32;
-            ret = ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof;
-        } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_ok {
-        } else {
-            unsafe {
-                archive_set_error(
-                    &mut (safe_a).archive as *mut archive,
-                    -(1 as i32),
-                    b"Decompression failed(%d)\x00" as *const u8,
-                    r,
-                )
-            };
-            return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-        }
+        match () {
+            #[cfg(HAVE_LZMA_H)]
+            _ => {
+                (safe_zip).lzstream.next_in = t_next_in;
+                (safe_zip).lzstream.avail_in = t_avail_in;
+                (safe_zip).lzstream.next_out = t_next_out;
+                (safe_zip).lzstream.avail_out = t_avail_out;
+                r = unsafe { lzma_code_safe(&mut (safe_zip).lzstream, LZMA_RUN) } as i32;
+                if r == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_stream_end {
+                    /* Found end of stream. */
+                    unsafe {
+                        lzma_end_safe(&mut (safe_zip).lzstream);
+                    }
+                    (safe_zip).lzstream_valid = 0 as i32;
+                    ret = ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof;
+                } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.lzma_ok {
+                } else {
+                    unsafe {
+                        archive_set_error(
+                            &mut (safe_a).archive as *mut archive,
+                            -(1 as i32),
+                            b"Decompression failed(%d)\x00" as *const u8,
+                            r,
+                        )
+                    };
+                    return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+                }
 
-        t_avail_in = (safe_zip).lzstream.avail_in;
-        t_avail_out = (safe_zip).lzstream.avail_out
+                t_avail_in = (safe_zip).lzstream.avail_in;
+                t_avail_out = (safe_zip).lzstream.avail_out
+            }
+            #[cfg(not(HAVE_LZMA_H))]
+            _ => {}
+        }
     } else if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_bz2 as u64 {
-        (safe_zip).bzstream.next_in = t_next_in as uintptr_t as *mut u8;
-        (safe_zip).bzstream.avail_in = t_avail_in as u32;
-        (safe_zip).bzstream.next_out = t_next_out as uintptr_t as *mut u8;
-        (safe_zip).bzstream.avail_out = t_avail_out as u32;
-        r = unsafe { BZ2_bzDecompress_safe(&mut (safe_zip).bzstream) };
-        if r == ARCHIVE_7ZIP_DEFINED_PARAM.bz_stream_end {
-            /* Found end of stream. */
-            let BZ2_bzDecompressEnd_result =
-                unsafe { BZ2_bzDecompressEnd_safe(&mut (safe_zip).bzstream) };
-            if BZ2_bzDecompressEnd_result == ARCHIVE_7ZIP_DEFINED_PARAM.bz_ok {
-            } else {
-                unsafe {
-                    archive_set_error(
-                        &mut (safe_a).archive as *mut archive,
-                        ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
-                        b"Failed to clean up decompressor\x00" as *const u8,
-                    )
-                };
-                return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+        match () {
+            #[cfg(all(HAVE_BZLIB_H, BZ_CONFIG_ERROR))]
+            _ => {
+                (safe_zip).bzstream.next_in = t_next_in as uintptr_t as *mut u8;
+                (safe_zip).bzstream.avail_in = t_avail_in as u32;
+                (safe_zip).bzstream.next_out = t_next_out as uintptr_t as *mut u8;
+                (safe_zip).bzstream.avail_out = t_avail_out as u32;
+                r = unsafe { BZ2_bzDecompress_safe(&mut (safe_zip).bzstream) };
+                if r == ARCHIVE_7ZIP_DEFINED_PARAM.bz_stream_end {
+                    /* Found end of stream. */
+                    let BZ2_bzDecompressEnd_result =
+                        unsafe { BZ2_bzDecompressEnd_safe(&mut (safe_zip).bzstream) };
+                    if BZ2_bzDecompressEnd_result == ARCHIVE_7ZIP_DEFINED_PARAM.bz_ok {
+                    } else {
+                        unsafe {
+                            archive_set_error(
+                                &mut (safe_a).archive as *mut archive,
+                                ARCHIVE_7ZIP_DEFINED_PARAM.archive_errno_misc,
+                                b"Failed to clean up decompressor\x00" as *const u8,
+                            )
+                        };
+                        return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+                    }
+
+                    (safe_zip).bzstream_valid = 0;
+                    ret = ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof
+                } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.bz_ok {
+                } else {
+                    unsafe {
+                        archive_set_error(
+                            &mut (safe_a).archive as *mut archive,
+                            ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof,
+                            b"bzip decompression failed\x00" as *const u8,
+                        )
+                    };
+                    return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+                }
+                t_avail_in = (safe_zip).bzstream.avail_in as size_t;
+                t_avail_out = (safe_zip).bzstream.avail_out as size_t
             }
-
-            (safe_zip).bzstream_valid = 0;
-            ret = ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof
-        } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.bz_ok {
-        } else {
-            unsafe {
-                archive_set_error(
-                    &mut (safe_a).archive as *mut archive,
-                    ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof,
-                    b"bzip decompression failed\x00" as *const u8,
-                )
-            };
-            return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+            #[cfg(all(not(HAVE_BZLIB_H), not(BZ_CONFIG_ERROR)))]
+            _ => {}
         }
-        t_avail_in = (safe_zip).bzstream.avail_in as size_t;
-        t_avail_out = (safe_zip).bzstream.avail_out as size_t
     } else if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_deflate as u64 {
-        safe_zip.stream.next_in = t_next_in as uintptr_t as *mut Bytef;
-        safe_zip.stream.avail_in = t_avail_in as uInt;
-        safe_zip.stream.next_out = t_next_out;
-        safe_zip.stream.avail_out = t_avail_out as uInt;
-        r = unsafe { inflate_safe(&mut safe_zip.stream, 0) };
-        if r == ARCHIVE_7ZIP_DEFINED_PARAM.z_stream_end {
-            /* Found end of stream. */
-            ret = 1 as i32
-        } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.z_ok {
-        } else {
-            unsafe {
-                archive_set_error(
-                    &mut (safe_a).archive as *mut archive,
-                    ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof,
-                    b"File decompression failed (%d)\x00" as *const u8,
-                    r,
-                )
-            };
-            return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
-        }
+        match () {
+            #[cfg(HAVE_ZLIB_H)]
+            _ => {
+                safe_zip.stream.next_in = t_next_in as uintptr_t as *mut Bytef;
+                safe_zip.stream.avail_in = t_avail_in as uInt;
+                safe_zip.stream.next_out = t_next_out;
+                safe_zip.stream.avail_out = t_avail_out as uInt;
+                r = unsafe { inflate_safe(&mut safe_zip.stream, 0) };
+                if r == ARCHIVE_7ZIP_DEFINED_PARAM.z_stream_end {
+                    /* Found end of stream. */
+                    ret = 1 as i32
+                } else if r == ARCHIVE_7ZIP_DEFINED_PARAM.z_ok {
+                } else {
+                    unsafe {
+                        archive_set_error(
+                            &mut (safe_a).archive as *mut archive,
+                            ARCHIVE_7ZIP_DEFINED_PARAM.archive_eof,
+                            b"File decompression failed (%d)\x00" as *const u8,
+                            r,
+                        )
+                    };
+                    return ARCHIVE_7ZIP_DEFINED_PARAM.archive_failed;
+                }
 
-        t_avail_in = (safe_zip).stream.avail_in as size_t;
-        t_avail_out = (safe_zip).stream.avail_out as size_t
+                t_avail_in = (safe_zip).stream.avail_in as size_t;
+                t_avail_out = (safe_zip).stream.avail_out as size_t
+            }
+            #[cfg(not(HAVE_ZLIB_H))]
+            _ => {}
+        }
     } else if safe_zip.codec == ARCHIVE_7ZIP_DEFINED_PARAM._7z_ppmd as u64 {
         let mut flush_bytes: uint64_t;
         if (safe_zip).ppmd7_valid == 0
@@ -1718,7 +1739,6 @@ fn decompress(
 fn free_decompression(a: *mut archive_read, zip: *mut _7zip) -> i32 {
     let safe_a = unsafe { &mut *a };
     let safe_zip = unsafe { &mut *zip };
-    #[cfg_attr(not(HAVE_ZLIB_H), not(HAVE_BZLIB_H), BZ_CONFIG_ERROR)]
     let mut r: i32 = ARCHIVE_7ZIP_DEFINED_PARAM.archive_ok;
 
     #[cfg(HAVE_LZMA_H)]
@@ -1731,7 +1751,7 @@ fn free_decompression(a: *mut archive_read, zip: *mut _7zip) -> i32 {
         if unsafe { BZ2_bzDecompressEnd_safe(&mut (safe_zip).bzstream) } != 0 {
             unsafe {
                 archive_set_error(
-                    &mut (safe_a).archive as *mut archive,
+                    &mut (*a).archive as *mut archive,
                     -(1 as i32),
                     b"Failed to clean up bzip2 decompressor\x00" as *const u8,
                 )
