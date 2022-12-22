@@ -802,7 +802,7 @@ fn xar_read_data(
         unsafe { __archive_read_consume_safe(a, safe_xar.entry_unconsumed as int64_t) };
         safe_xar.entry_unconsumed = 0
     }
-    if safe_xar.end_of_file != 0 || safe_xar.entry_remaining <= 0 as u64{
+    if safe_xar.end_of_file != 0 || safe_xar.entry_remaining <= 0 as u64 {
         r = ARCHIVE_XAR_DEFINED_PARAM.archive_eof
     } else {
         if safe_xar.entry_init != 0 {
