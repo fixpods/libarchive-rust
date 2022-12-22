@@ -791,7 +791,7 @@ fn xar_read_data(
     size: *mut size_t,
     offset: *mut int64_t,
 ) -> i32 {
-    let xar: *mut xar;
+    let mut xar: *mut xar = 0 as *mut xar;
     let mut used: size_t = 0 as size_t;
     let mut r: i32;
     xar = unsafe { (*(*a).format).data as *mut xar };
