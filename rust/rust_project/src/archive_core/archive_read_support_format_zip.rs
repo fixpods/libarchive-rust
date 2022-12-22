@@ -132,7 +132,7 @@ fn trad_enc_update_keys(ctx: *mut trad_enc_ctx, mut c: uint8_t) {
     };
     safe_ctx.keys[1] =
         ((safe_ctx.keys[1] + (safe_ctx.keys[0] & 0xff)) as i64 * 134775813 + 1) as uint32_t;
-    t = (safe_ctx.keys[1] >> 24 as i32 & 0xff) as uint8_t;
+    t = (safe_ctx.keys[1] >> 24 & 0xff) as uint8_t;
     safe_ctx.keys[2] = unsafe {
         (crc32_safe(safe_ctx.keys[2] as u64 ^ 0xffffffff, &mut t, 1) ^ 0xffffffff) as uint32_t
     };
@@ -540,7 +540,7 @@ fn process_extra(
                         match current_block {
                             1 => {}
                             _ => {
-                                if flags & 0x4 as i32 != 0 {
+                                if flags & 0x4 != 0 {
                                     if !(datasize < 4) {
                                         safe_zip_entry.ctime = archive_le32dec(unsafe {
                                             p.offset(offset as isize) as *const ()
@@ -660,7 +660,7 @@ fn process_extra(
                             match current_block {
                                 1 => {}
                                 _ => {
-                                    if bitmap & 4 as i32 != 0 {
+                                    if bitmap & 4 != 0 {
                                         /* 4 byte "external file attributes" */
                                         let mut external_attributes: uint32_t = 0;
                                         if datasize < 4 {
@@ -832,7 +832,7 @@ fn process_extra(
                             safe_zip_entry.uid = archive_le16dec(unsafe {
                                 p.offset(offset as isize).offset(2 as isize) as *const ()
                             }) as int64_t
-                        } else if uidsize == 4 as i32 && datasize as i32 >= 6 as i32 {
+                        } else if uidsize == 4 && datasize as i32 >= 6 {
                             safe_zip_entry.uid = archive_le32dec(unsafe {
                                 p.offset(offset as isize).offset(2 as isize) as *const ()
                             }) as int64_t
@@ -881,8 +881,8 @@ fn process_extra(
                     return ARCHIVE_ZIP_DEFINED_PARAM.archive_failed;
                 }
                 if unsafe {
-                    *p.offset(offset as isize + 2) as i32 == 'A' as i32
-                        && *p.offset(offset as isize + 3) as i32 == 'E' as i32
+                    *p.offset(offset as isize + 2) == 'A' as u8
+                        && *p.offset(offset as isize + 3) == 'E' as u8
                 } {
                     /* Vendor version. */
                     safe_zip_entry.aes_extra.vendor =
@@ -1180,9 +1180,7 @@ fn zip_read_local_file_header(
             } else {
                 0
             };
-            unsafe {
-                has_slash = (len > 0 && *cp.offset(len as isize - 1) as i32 == '/' as i32) as i32
-            }
+            unsafe { has_slash = (len > 0 && *cp.offset(len as isize - 1) == '/' as u8) as i32 }
         }
         /* Correct file type as needed. */
         if has_slash != 0 {
@@ -1597,10 +1595,10 @@ fn zip_read_data_none(
             if (*zip).hctx_valid != 0 {
                 p = p.offset(ARCHIVE_ZIP_DEFINED_PARAM.auth_code_size as isize)
             }
-            if *p.offset(0 as isize) as i32 == 'P' as i32
-                && *p.offset(1 as isize) as i32 == 'K' as i32
-                && *p.offset(2 as isize) as i32 == '\u{7}' as i32
-                && *p.offset(3 as isize) as i32 == '\u{8}' as i32
+            if *p.offset(0 as isize) == 'P' as u8
+                && *p.offset(1 as isize) == 'K' as u8
+                && *p.offset(2 as isize) == '\u{7}' as u8
+                && *p.offset(3 as isize) == '\u{8}' as u8
                 && (archive_le32dec(p.offset(4 as isize) as *const ()) as u64 == (*zip).entry_crc32
                     || (*zip).ignore_crc32 != 0
                     || (*zip).hctx_valid as i32 != 0 && (*(*zip).entry).aes_extra.vendor == 0x2)
@@ -1646,16 +1644,16 @@ fn zip_read_data_none(
             /* Return bytes up until that point.  On the next call,
              * the code above will verify the data descriptor. */
             while p < buff.offset(bytes_avail as isize - 4) {
-                if *p.offset(3 as isize) as i32 == 'P' as i32 {
+                if *p.offset(3 as isize) == 'P' as u8 {
                     p = p.offset(3 as isize)
-                } else if *p.offset(3 as isize) as i32 == 'K' as i32 {
+                } else if *p.offset(3 as isize) == 'K' as u8 {
                     p = p.offset(2 as isize)
-                } else if *p.offset(3 as isize) as i32 == '\u{7}' as i32 {
+                } else if *p.offset(3 as isize) == '\u{7}' as u8 {
                     p = p.offset(1 as isize)
-                } else if *p.offset(3 as isize) as i32 == '\u{8}' as i32
-                    && *p.offset(2 as isize) as i32 == '\u{7}' as i32
-                    && *p.offset(1 as isize) as i32 == 'K' as i32
-                    && *p.offset(0 as isize) as i32 == 'P' as i32
+                } else if *p.offset(3 as isize) == '\u{8}' as u8
+                    && *p.offset(2 as isize) == '\u{7}' as u8
+                    && *p.offset(1 as isize) == 'K' as u8
+                    && *p.offset(0 as isize) == 'P' as u8
                 {
                     if (*zip).hctx_valid != 0 {
                         p = p.offset(-(ARCHIVE_ZIP_DEFINED_PARAM.auth_code_size as isize))
@@ -1758,13 +1756,13 @@ fn consume_optional_marker(a: *mut archive_read, zip: *mut zip) -> i32 {
         }
         /* Consume the optional PK\007\010 marker. */
         if unsafe {
-            *p.offset(0 as isize) as i32 == 'P' as i32
-                && *p.offset(1 as isize) as i32 == 'K' as i32
-                && *p.offset(2 as isize) as i32 == '\u{7}' as i32
-                && *p.offset(3 as isize) as i32 == '\u{8}' as i32
+            *p.offset(0 as isize) == 'P' as u8
+                && *p.offset(1 as isize) == 'K' as u8
+                && *p.offset(2 as isize) == '\u{7}' as u8
+                && *p.offset(3 as isize) == '\u{8}' as u8
         } {
             unsafe { p = p.offset(4 as isize) };
-            safe_zip.unconsumed = 4 as size_t
+            safe_zip.unconsumed = 4
         }
         if unsafe {
             (*(safe_zip).entry).flags as i32 & ARCHIVE_ZIP_DEFINED_PARAM.la_used_zip64 != 0
@@ -2607,7 +2605,7 @@ fn zip_deflate_init(a: *mut archive_read, zip: *mut zip) -> i32 {
                     &mut safe_zip.stream,
                     -15,
                     b"1.2.11\x00" as *const u8,
-                    size_of::<z_stream>() as u64 as i32,
+                    size_of::<z_stream>() as i32,
                 )
             }
         }
@@ -3296,7 +3294,7 @@ fn init_traditional_PKWARE_decryption(a: *mut archive_read) -> i32 {
             ARCHIVE_ZIP_DEFINED_PARAM.enc_header_size as u64,
             &mut crcchk,
         ); /* The passphrase is OK. */
-        if unsafe { r == 0 && crcchk as i32 == (*(safe_zip).entry).decdat as i32 } {
+        if unsafe { r == 0 && crcchk == (*(safe_zip).entry).decdat } {
             break;
         }
         if retry > 10000 {
@@ -3427,9 +3425,8 @@ fn init_WinZip_AES_decryption(a: *mut archive_read) -> i32 {
                     /* Check password verification value. */
                     pv = unsafe { (p as *const uint8_t).offset(salt_len as isize) }; /* The passphrase is OK. */
                     if unsafe {
-                        derived_key[(key_len * 2) as usize] as i32 == *pv.offset(0 as isize) as i32
-                            && derived_key[(key_len * 2 + 1) as usize] as i32
-                                == *pv.offset(1 as isize) as i32
+                        derived_key[(key_len * 2) as usize] == *pv.offset(0 as isize)
+                            && derived_key[(key_len * 2 + 1) as usize] == *pv.offset(1 as isize)
                     } {
                         break;
                     }
@@ -3775,7 +3772,7 @@ fn archive_read_format_zip_options(a: *mut archive_read, key: *const u8, val: *c
         return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
     } else {
         if unsafe { strcmp_safe(key, b"hdrcharset\x00" as *const u8) } == 0 {
-            if unsafe { val.is_null() || *val.offset(0 as isize) as i32 == 0 } {
+            if unsafe { val.is_null() || *val.offset(0 as isize) == 0 } {
                 unsafe {
                     archive_set_error(
                         &mut (safe_a).archive as *mut archive,
@@ -3801,7 +3798,7 @@ fn archive_read_format_zip_options(a: *mut archive_read, key: *const u8, val: *c
         } else {
             if unsafe { strcmp_safe(key, b"ignorecrc32\x00" as *const u8) } == 0 {
                 /* Mostly useful for testing. */
-                if unsafe { val.is_null() || *val.offset(0 as isize) as i32 == 0 } {
+                if unsafe { val.is_null() || *val.offset(0 as isize) == 0 } {
                     (safe_zip).crc32func = Some(real_crc32);
                     (safe_zip).ignore_crc32 = 0
                 } else {
@@ -3859,22 +3856,15 @@ fn archive_read_format_zip_streamable_bid(a: *mut archive_read, best_bid: i32) -
      * So we've effectively verified ~29 total bits of check data.
      */
     unsafe {
-        if *p.offset(0 as isize) as i32 == 'P' as i32 && *p.offset(1 as isize) as i32 == 'K' as i32
-        {
-            if *p.offset(2 as isize) as i32 == '\u{1}' as i32
-                && *p.offset(3 as isize) as i32 == '\u{2}' as i32
-                || *p.offset(2 as isize) as i32 == '\u{3}' as i32
-                    && *p.offset(3 as isize) as i32 == '\u{4}' as i32
-                || *p.offset(2 as isize) as i32 == '\u{5}' as i32
-                    && *p.offset(3 as isize) as i32 == '\u{6}' as i32
-                || *p.offset(2 as isize) as i32 == '\u{6}' as i32
-                    && *p.offset(3 as isize) as i32 == '\u{6}' as i32
-                || *p.offset(2 as isize) as i32 == '\u{7}' as i32
-                    && *p.offset(3 as isize) as i32 == '\u{8}' as i32
-                || *p.offset(2 as isize) as i32 == '0' as i32
-                    && *p.offset(3 as isize) as i32 == '0' as i32
+        if *p.offset(0 as isize) == 'P' as u8 && *p.offset(1 as isize) == 'K' as u8 {
+            if *p.offset(2 as isize) == '\u{1}' as u8 && *p.offset(3 as isize) == '\u{2}' as u8
+                || *p.offset(2 as isize) == '\u{3}' as u8 && *p.offset(3 as isize) == '\u{4}' as u8
+                || *p.offset(2 as isize) == '\u{5}' as u8 && *p.offset(3 as isize) == '\u{6}' as u8
+                || *p.offset(2 as isize) == '\u{6}' as u8 && *p.offset(3 as isize) == '\u{6}' as u8
+                || *p.offset(2 as isize) == '\u{7}' as u8 && *p.offset(3 as isize) == '\u{8}' as u8
+                || *p.offset(2 as isize) == '0' as u8 && *p.offset(3 as isize) == '0' as u8
             {
-                return 29 as i32;
+                return 29;
             }
         }
         /* TODO: It's worth looking ahead a little bit for a valid
@@ -3967,11 +3957,9 @@ fn archive_read_format_zip_streamable_read_header(
         end = unsafe { p.offset(bytes as isize) };
         unsafe {
             while p.offset(4 as isize) <= end {
-                if *p.offset(0 as isize) as i32 == 'P' as i32
-                    && *p.offset(1 as isize) as i32 == 'K' as i32
-                {
-                    if *p.offset(2 as isize) as i32 == '\u{3}' as i32
-                        && *p.offset(3 as isize) as i32 == '\u{4}' as i32
+                if *p.offset(0 as isize) == 'P' as u8 && *p.offset(1 as isize) == 'K' as u8 {
+                    if *p.offset(2 as isize) == '\u{3}' as u8
+                        && *p.offset(3 as isize) == '\u{4}' as u8
                     {
                         /* Regular file entry. */
                         __archive_read_consume_safe(a, skipped);
@@ -3990,17 +3978,16 @@ fn archive_read_format_zip_streamable_read_header(
                      * and may not help with regular file
                      * permissions, either.  <sigh>
                      */
-                    if *p.offset(2 as isize) as i32 == '\u{1}' as i32
-                        && *p.offset(3 as isize) as i32 == '\u{2}' as i32
+                    if *p.offset(2 as isize) == '\u{1}' as u8
+                        && *p.offset(3 as isize) == '\u{2}' as u8
                     {
                         return 1;
                     }
                     /* End of central directory?  Must be an
                      * empty archive. */
-                    if *p.offset(2 as isize) as i32 == '\u{5}' as i32
-                        && *p.offset(3 as isize) as i32 == '\u{6}' as i32
-                        || *p.offset(2) as i32 == '\u{6}' as i32
-                            && *p.offset(3) as i32 == '\u{6}' as i32
+                    if *p.offset(2 as isize) == '\u{5}' as u8
+                        && *p.offset(3 as isize) == '\u{6}' as u8
+                        || *p.offset(2) == '\u{6}' as u8 && *p.offset(3) == '\u{6}' as u8
                     {
                         return 1;
                     }
@@ -4107,16 +4094,16 @@ fn archive_read_format_zip_read_data_skip_streamable(a: *mut archive_read) -> i3
                 p = buff_0;
                 unsafe {
                     while p <= buff_0.offset(bytes_avail as isize).offset(-(16)) {
-                        if *p.offset(3 as isize) as i32 == 'P' as i32 {
+                        if *p.offset(3 as isize) == 'P' as u8 {
                             p = p.offset(3 as isize)
-                        } else if *p.offset(3 as isize) as i32 == 'K' as i32 {
+                        } else if *p.offset(3 as isize) == 'K' as u8 {
                             p = p.offset(2 as isize)
-                        } else if *p.offset(3 as isize) as i32 == '\u{7}' as i32 {
+                        } else if *p.offset(3 as isize) == '\u{7}' as u8 {
                             p = p.offset(1 as isize)
-                        } else if *p.offset(3 as isize) as i32 == '\u{8}' as i32
-                            && *p.offset(2 as isize) as i32 == '\u{7}' as i32
-                            && *p.offset(1 as isize) as i32 == 'K' as i32
-                            && *p.offset(0 as isize) as i32 == 'P' as i32
+                        } else if *p.offset(3 as isize) == '\u{8}' as u8
+                            && *p.offset(2 as isize) == '\u{7}' as u8
+                            && *p.offset(1 as isize) == 'K' as u8
+                            && *p.offset(0 as isize) == 'P' as u8
                         {
                             if (*(*zip).entry).flags as i32
                                 & ARCHIVE_ZIP_DEFINED_PARAM.la_used_zip64
