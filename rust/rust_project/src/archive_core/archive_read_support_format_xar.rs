@@ -1401,32 +1401,32 @@ fn add_link(a: *mut archive_read, xar: *mut xar, file: *mut xar_file) -> i32 {
 fn _checksum_init(sumwrk: *mut chksumwork, sum_alg: i32) {
     unsafe { (*sumwrk).alg = sum_alg };
     match sum_alg {
-        CKSUM_SHA1 => {
-            match () {
-                #[cfg(ARCHIVE_HAS_SHA1)]
-                _ => {
-                    unsafe {
-                        __archive_digest
-                            .sha1init
-                            .expect("non-null function pointer")(&mut (*sumwrk).sha1ctx)
-                    };
-                }
-                #[cfg(not(ARCHIVE_HAS_SHA1))]
-                _ => {}
+        CKSUM_SHA1 => match () {
+            #[cfg(ARCHIVE_HAS_SHA1)]
+            _ => {
+                unsafe {
+                    __archive_digest
+                        .sha1init
+                        .expect("non-null function pointer")(
+                        &mut (*sumwrk).sha1ctx
+                    )
+                };
             }
-        }
-        CKSUM_MD5 => {
-            match () {
-                #[cfg(ARCHIVE_HAS_MD5)]
-                _ => {
-                    unsafe {
-                        __archive_digest.md5init.expect("non-null function pointer")(&mut (*sumwrk).md5ctx)
-                    };
-                }
-                #[cfg(not(ARCHIVE_HAS_MD5))]
-                _ => {}
+            #[cfg(not(ARCHIVE_HAS_SHA1))]
+            _ => {}
+        },
+        CKSUM_MD5 => match () {
+            #[cfg(ARCHIVE_HAS_MD5)]
+            _ => {
+                unsafe {
+                    __archive_digest.md5init.expect("non-null function pointer")(
+                        &mut (*sumwrk).md5ctx,
+                    )
+                };
             }
-        }
+            #[cfg(not(ARCHIVE_HAS_MD5))]
+            _ => {}
+        },
         CKSUM_NONE | _ => {}
     };
 }
@@ -1434,38 +1434,34 @@ fn _checksum_init(sumwrk: *mut chksumwork, sum_alg: i32) {
 fn _checksum_update(sumwrk: *mut chksumwork, buff: *const (), mut size: size_t) {
     let safe_sumwrk = unsafe { &mut *sumwrk };
     match safe_sumwrk.alg {
-        CKSUM_SHA1 => {
-            match () {
-                #[cfg(ARCHIVE_HAS_SHA1)]
-                _ => {
-                    unsafe {
-                        __archive_digest
-                            .sha1update
-                            .expect("non-null function pointer")(
-                            &mut safe_sumwrk.sha1ctx, buff, size
-                        )
-                    };
-                }
-                #[cfg(not(ARCHIVE_HAS_SHA1))]
-                _ => {}
+        CKSUM_SHA1 => match () {
+            #[cfg(ARCHIVE_HAS_SHA1)]
+            _ => {
+                unsafe {
+                    __archive_digest
+                        .sha1update
+                        .expect("non-null function pointer")(
+                        &mut safe_sumwrk.sha1ctx, buff, size
+                    )
+                };
             }
-        }
-        CKSUM_MD5 => {
-            match () {
-                #[cfg(ARCHIVE_HAS_MD5)]
-                _ => {
-                    unsafe {
-                        __archive_digest
-                            .md5update
-                            .expect("non-null function pointer")(
-                            &mut safe_sumwrk.md5ctx, buff, size
-                        )
-                    };
-                }
-                #[cfg(not(ARCHIVE_HAS_MD5))]
-                _ => {}
+            #[cfg(not(ARCHIVE_HAS_SHA1))]
+            _ => {}
+        },
+        CKSUM_MD5 => match () {
+            #[cfg(ARCHIVE_HAS_MD5)]
+            _ => {
+                unsafe {
+                    __archive_digest
+                        .md5update
+                        .expect("non-null function pointer")(
+                        &mut safe_sumwrk.md5ctx, buff, size
+                    )
+                };
             }
-        }
+            #[cfg(not(ARCHIVE_HAS_MD5))]
+            _ => {}
+        },
         CKSUM_NONE | _ => {}
     };
 }
@@ -1478,16 +1474,14 @@ fn _checksum_final(sumwrk: *mut chksumwork, val: *const (), len: size_t) -> i32 
         CKSUM_SHA1 => {
             match () {
                 #[cfg(ARCHIVE_HAS_SHA1)]
-                _ => {
-                    unsafe {
-                        __archive_digest
-                            .sha1final
-                            .expect("non-null function pointer")(
-                            &mut safe_sumwrk.sha1ctx,
-                            sum.as_mut_ptr() as *mut (),
-                        );
-                    }
-                }
+                _ => unsafe {
+                    __archive_digest
+                        .sha1final
+                        .expect("non-null function pointer")(
+                        &mut safe_sumwrk.sha1ctx,
+                        sum.as_mut_ptr() as *mut (),
+                    );
+                },
                 #[cfg(not(ARCHIVE_HAS_SHA1))]
                 _ => {}
             }
@@ -1500,16 +1494,14 @@ fn _checksum_final(sumwrk: *mut chksumwork, val: *const (), len: size_t) -> i32 
         CKSUM_MD5 => {
             match () {
                 #[cfg(ARCHIVE_HAS_MD5)]
-                _ => {
-                    unsafe {
-                        __archive_digest
-                            .md5final
-                            .expect("non-null function pointer")(
-                            &mut safe_sumwrk.md5ctx,
-                            sum.as_mut_ptr() as *mut (),
-                        );
-                    }
-                }
+                _ => unsafe {
+                    __archive_digest
+                        .md5final
+                        .expect("non-null function pointer")(
+                        &mut safe_sumwrk.md5ctx,
+                        sum.as_mut_ptr() as *mut (),
+                    );
+                },
                 #[cfg(not(ARCHIVE_HAS_MD5))]
                 _ => {}
             }
@@ -1607,7 +1599,7 @@ fn decompression_init(a: *mut archive_read, encoding: enctype) -> i32 {
             safe_xar.stream.total_out = 0
         }
         BZIP2 => match () {
-            #[cfg(all(HAVE_BZLIB_H,BZ_CONFIG_ERROR))]
+            #[cfg(all(HAVE_BZLIB_H, BZ_CONFIG_ERROR))]
             _ => {
                 if safe_xar.bzstream_valid != 0 {
                     BZ2_bzDecompressEnd_safe(&mut safe_xar.bzstream);
@@ -1651,7 +1643,7 @@ fn decompression_init(a: *mut archive_read, encoding: enctype) -> i32 {
                 safe_xar.bzstream.total_out_lo32 = 0;
                 safe_xar.bzstream.total_out_hi32 = 0
             }
-            #[cfg(not(all(HAVE_BZLIB_H,BZ_CONFIG_ERROR)))]
+            #[cfg(not(all(HAVE_BZLIB_H, BZ_CONFIG_ERROR)))]
             _ => {}
         },
         XZ | LZMA => {
@@ -1806,7 +1798,7 @@ fn decompress(
         }
         BZIP2 => {
             match () {
-                #[cfg(all(HAVE_BZLIB_H,BZ_CONFIG_ERROR))]
+                #[cfg(all(HAVE_BZLIB_H, BZ_CONFIG_ERROR))]
                 _ => {
                     safe_xar.bzstream.next_in = b as uintptr_t as *mut u8;
                     safe_xar.bzstream.avail_in = avail_in as u32;
@@ -1843,7 +1835,7 @@ fn decompress(
                     *safe_used = avail_in - (safe_xar.bzstream.avail_in as u64);
                     *safe_outbytes = avail_out - (safe_xar.bzstream.avail_out as u64)
                 }
-                #[cfg(not(all(HAVE_BZLIB_H,BZ_CONFIG_ERROR)))]
+                #[cfg(not(all(HAVE_BZLIB_H, BZ_CONFIG_ERROR)))]
                 _ => {}
             }
         }
@@ -1922,7 +1914,7 @@ fn decompression_cleanup(a: *mut archive_read) -> i32 {
     }
 
     match () {
-        #[cfg(all(HAVE_BZLIB_H,BZ_CONFIG_ERROR))]
+        #[cfg(all(HAVE_BZLIB_H, BZ_CONFIG_ERROR))]
         _ => {
             if safe_xar.bzstream_valid != 0 {
                 if BZ2_bzDecompressEnd_safe(&mut safe_xar.bzstream) != 0 {
@@ -1935,7 +1927,7 @@ fn decompression_cleanup(a: *mut archive_read) -> i32 {
                 }
             }
         }
-        #[cfg(not(all(HAVE_BZLIB_H,BZ_CONFIG_ERROR)))]
+        #[cfg(not(all(HAVE_BZLIB_H, BZ_CONFIG_ERROR)))]
         _ => {}
     }
     match () {

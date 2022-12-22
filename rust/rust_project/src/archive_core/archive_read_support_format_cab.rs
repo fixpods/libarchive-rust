@@ -1764,18 +1764,17 @@ fn cab_read_ahead_cfdata_none(a: *mut archive_read, avail: *mut ssize_t) -> *con
 
 /* HAVE_ZLIB_H */
 #[cfg(not(HAVE_ZLIB_H))]
-fn cab_read_ahead_cfdata_deflate(
-    a: *mut archive_read,
-    mut avail: *mut ssize_t,
-) -> *const () {
+fn cab_read_ahead_cfdata_deflate(a: *mut archive_read, mut avail: *mut ssize_t) -> *const () {
     let avail_safe = unsafe { &mut *avail };
     let a_safe = unsafe { &mut *a };
-    unsafe{*avail_safe = ARCHIVE_CAB_DEFINED_PARAM.archive_fatal as ssize_t;
-    archive_set_error_safe!(
-        &mut a_safe.archive as *mut archive,
-        ARCHIVE_CAB_DEFINED_PARAM.archive_errno_misc,
-        b"libarchive compiled without deflate support (no libz)\x00" as *const u8
-    );}
+    unsafe {
+        *avail_safe = ARCHIVE_CAB_DEFINED_PARAM.archive_fatal as ssize_t;
+        archive_set_error_safe!(
+            &mut a_safe.archive as *mut archive,
+            ARCHIVE_CAB_DEFINED_PARAM.archive_errno_misc,
+            b"libarchive compiled without deflate support (no libz)\x00" as *const u8
+        );
+    }
     return 0 as *const ();
 }
 
