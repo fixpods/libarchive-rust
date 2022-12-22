@@ -1308,6 +1308,7 @@ fn zip_read_local_file_header(
         archive_entry_set_ctime_safe(entry, safe_zip_entry.ctime, 0);
         archive_entry_set_atime_safe(entry, safe_zip_entry.atime, 0)
     };
+
     if unsafe {
         (*(safe_zip).entry).mode as u32 & ARCHIVE_ZIP_DEFINED_PARAM.ae_ifmt as mode_t
             == ARCHIVE_ZIP_DEFINED_PARAM.ae_iflnk as mode_t
@@ -1854,6 +1855,7 @@ fn zipx_xz_init(a: *mut archive_read, zip: *mut zip) -> i32 {
     safe_zip.decompress_init = 1;
     return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
 }
+#[cfg(all(HAVE_LZMA_H, HAVE_LIBLZMA))]
 fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
     unsafe {
         let safe_a = unsafe { &mut *a };
@@ -1957,6 +1959,7 @@ fn zipx_lzma_alone_init(a: *mut archive_read, zip: *mut zip) -> i32 {
         return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
     }
 }
+#[cfg(all(HAVE_LZMA_H, HAVE_LIBLZMA))]
 fn zip_read_data_zipx_xz(
     a: *mut archive_read,
     buff: *mut *const (),
@@ -2471,6 +2474,7 @@ fn zipx_bzip2_init(a: *mut archive_read, zip: *mut zip) -> i32 {
     safe_zip.decompress_init = 1;
     return ARCHIVE_ZIP_DEFINED_PARAM.archive_ok;
 }
+#[cfg(HAVE_BZLIB_H)]
 fn zip_read_data_zipx_bzip2(
     a: *mut archive_read,
     buff: *mut *const (),
