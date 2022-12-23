@@ -23,7 +23,7 @@ pub fn archive_le16dec(pp: *const ()) -> uint16_t {
 }
 
 #[inline]
-pub fn archive_be32dec(mut pp: *const ()) -> uint32_t {
+pub fn archive_be32dec(pp: *const ()) -> uint32_t {
     let mut p: *const u8 = pp as *const u8;
     /* Store into unsigned temporaries before left shifting, to avoid
     promotion to signed int and then left shifting into the sign bit,

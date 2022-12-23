@@ -223,7 +223,7 @@ fn _mkgmtime_safe(__tp: *mut tm) -> time_t {
 
 #[no_mangle]
 pub fn archive_read_support_format_xar(_a: *mut archive) -> i32 {
-    let mut xar: *mut xar;
+    let xar: *mut xar;
     let a: *mut archive_read = _a as *mut archive_read;
     let mut r: i32;
     let magic_test: i32 = unsafe {
@@ -290,13 +290,13 @@ fn PRINT_TOC(d: i32, outbytes: i32) {
 }
 
 fn xar_bid(a: *mut archive_read, best_bid: i32) -> i32 {
-    let mut b: *const u8 = 0 as *const u8;
+    let b: *const u8;
     let mut bid: i32;
     /* UNUSED */
     b = unsafe { __archive_read_ahead_safe(a, HEADER_SIZE as size_t, 0 as *mut ssize_t) }
         as *const u8;
     if b.is_null() {
-        return -(1 as i32);
+        return -1;
     }
     bid = 0;
     /*
@@ -309,21 +309,21 @@ fn xar_bid(a: *mut archive_read, best_bid: i32) -> i32 {
     /*
      * Verify header size
      */
-    if archive_be16dec(unsafe { b.offset(4 as isize) as *const () }) as i32 != HEADER_SIZE {
+    if archive_be16dec(unsafe { b.offset(4) as *const () }) as i32 != HEADER_SIZE {
         return 0;
     }
     bid += 16;
     /*
      * Verify header version
      */
-    if archive_be16dec(unsafe { b.offset(6 as isize) as *const () }) as i32 != HEADER_VERSION {
+    if archive_be16dec(unsafe { b.offset(6) as *const () }) as i32 != HEADER_VERSION {
         return 0;
     }
     bid += 16;
     /*
      * Verify type of checksum
      */
-    match archive_be32dec(unsafe { b.offset(24 as isize) as *const () }) as i32 {
+    match archive_be32dec(unsafe { b.offset(24) as *const () }) as i32 {
         CKSUM_NONE | CKSUM_SHA1 | CKSUM_MD5 => bid += 32,
         _ => return 0,
     }
@@ -585,7 +585,7 @@ fn xar_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
         r = ARCHIVE_XAR_DEFINED_PARAM.archive_warn
     }
     unsafe { archive_entry_set_uid_safe(entry, safe_file.uid) };
-    if safe_file.uname.length > 0 as u64
+    if safe_file.uname.length > 0
         && unsafe {
             _archive_entry_copy_uname_l_safe(
                 entry,
@@ -610,7 +610,7 @@ fn xar_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             archive_string_conversion_charset_name(safe_xar.sconv)
         );
 
-        r = -20
+        r = ARCHIVE_XAR_DEFINED_PARAM.archive_warn
     }
     unsafe { archive_entry_set_mode_safe(entry, safe_file.mode) };
     if unsafe {
@@ -692,7 +692,7 @@ fn xar_read_header(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
     if safe_file.has & HAS_DEVMINOR as u32 != 0 {
         unsafe { archive_entry_set_devminor_safe(entry, safe_file.devminor) };
     }
-    if safe_file.fflags_text.length > 0 as u64 {
+    if safe_file.fflags_text.length > 0 {
         unsafe { archive_entry_copy_fflags_text_safe(entry, safe_file.fflags_text.s) };
     }
     safe_xar.entry_init = 1;
@@ -791,16 +791,16 @@ fn xar_read_data(
     size: *mut size_t,
     offset: *mut int64_t,
 ) -> i32 {
-    let mut xar: *mut xar = 0 as *mut xar;
-    let mut used: size_t = 0 as size_t;
-    let mut r: i32 = 0;
+    let mut xar: *mut xar;
+    let mut used: size_t = 0;
+    let mut r: i32;
     xar = unsafe { (*(*a).format).data as *mut xar };
     let mut safe_xar = unsafe { &mut *xar };
     let mut safe_buff = unsafe { &mut *buff };
     let mut safe_a = unsafe { &mut *a };
     if safe_xar.entry_unconsumed != 0 {
         unsafe { __archive_read_consume_safe(a, safe_xar.entry_unconsumed as int64_t) };
-        safe_xar.entry_unconsumed = 0 as size_t
+        safe_xar.entry_unconsumed = 0
     }
     if safe_xar.end_of_file != 0 || safe_xar.entry_remaining <= 0 as u64 {
         r = ARCHIVE_XAR_DEFINED_PARAM.archive_eof
@@ -813,7 +813,7 @@ fn xar_read_data(
                 safe_xar.entry_e_sum.alg,
             );
             if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
-                safe_xar.entry_remaining = 0 as uint64_t;
+                safe_xar.entry_remaining = 0;
                 return r;
             }
             safe_xar.entry_init = 0
@@ -879,7 +879,7 @@ fn xar_read_data_skip(a: *mut archive_read) -> i32 {
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
     safe_xar.offset = ((safe_xar.offset) + (bytes_skipped as u64) as uint64_t) as uint64_t;
-    safe_xar.entry_unconsumed = 0 as size_t;
+    safe_xar.entry_unconsumed = 0;
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
@@ -900,7 +900,7 @@ fn xar_cleanup(a: *mut archive_read) -> i32 {
     }
     i = 0;
     while i < safe_xar.file_queue.used {
-        unsafe { file_free(unsafe { *safe_xar.file_queue.files.offset(i as isize) }) };
+        file_free(unsafe { *safe_xar.file_queue.files.offset(i as isize) });
         i += 1
     }
     unsafe { free_safe(safe_xar.file_queue.files as *mut ()) };
@@ -960,14 +960,14 @@ fn rd_contents_init(
     a_sum_alg: i32,
     e_sum_alg: i32,
 ) -> i32 {
-    let mut r: i32 = 0;
+    let mut r: i32;
     /* Init decompress library. */
-    r = unsafe { decompression_init(a, encoding) };
+    r = decompression_init(a, encoding);
     if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
         return r;
     }
     /* Init checksum library. */
-    unsafe { checksum_init(a, a_sum_alg, e_sum_alg) };
+    checksum_init(a, a_sum_alg, e_sum_alg);
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 
@@ -1001,23 +1001,19 @@ fn rd_contents(
      * Decompress contents of file.
      */
     unsafe { *used = bytes as size_t };
-    if unsafe { decompress(a, buff, size, b as *const (), used) }
-        != ARCHIVE_XAR_DEFINED_PARAM.archive_ok
-    {
+    if decompress(a, buff, size, b as *const (), used) != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
     }
     /*
      * Update checksum of a compressed data and a extracted data.
      */
-    unsafe {
-        checksum_update(
-            a,
-            b as *const (),
-            unsafe { *used },
-            unsafe { *buff },
-            unsafe { *size },
-        )
-    };
+    checksum_update(
+        a,
+        b as *const (),
+        unsafe { *used },
+        unsafe { *buff },
+        unsafe { *size },
+    );
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
 /*
@@ -1031,16 +1027,16 @@ fn atol10(mut p: *const u8, mut char_cnt: size_t) -> uint64_t {
     if char_cnt == 0 {
         return 0;
     }
-    l = 0 as uint64_t;
+    l = 0;
     digit = unsafe { *p as i32 - '0' as i32 };
     while digit >= 0 && digit < 10 && {
-        let fresh0 = char_cnt;
+        let cnt_old = char_cnt;
         char_cnt = char_cnt - 1;
-        (fresh0) > 0 as u64
+        (cnt_old) > 0
     } {
         l = (l * 10) + digit as u64;
         unsafe {
-            p = p.offset(1 as isize);
+            p = p.offset(1);
             digit = *p as i32 - '0' as i32
         }
     }
@@ -1055,12 +1051,11 @@ fn atol8(mut p: *const u8, mut char_cnt: size_t) -> int64_t {
     }
     l = 0 as int64_t;
     loop {
-        let fresh1 = char_cnt;
-        char_cnt = char_cnt.wrapping_sub(1);
-        if !(fresh1 > 0 as u64) {
+        if !(char_cnt > 0) {
             break;
         }
-        if !unsafe { *p as i32 >= '0' as i32 && *p as i32 <= '7' as i32 } {
+        char_cnt = char_cnt.wrapping_sub(1);
+        if !unsafe { *p >= '0' as u8 && *p <= '7' as u8 } {
             break;
         }
         digit = unsafe { *p as i32 - '0' as i32 };
@@ -1075,44 +1070,29 @@ fn atohex(mut b: *mut u8, mut bsize: size_t, mut p: *const u8, mut psize: size_t
     let mut fbsize: size_t = bsize;
     while bsize != 0 && psize > 1 {
         let mut x: u8 = 0;
-        if unsafe { *p.offset(0 as isize) as i32 } >= 'a' as i32
-            && unsafe { *p.offset(0 as isize) as i32 } <= 'z' as i32
-        {
-            x = ((unsafe { *p.offset(0 as isize) } as i32 - 'a' as i32 + 0xa as i32) << 4 as i32)
-                as u8
-        } else if unsafe { *p.offset(0 as isize) } as i32 >= 'A' as i32
-            && unsafe { *p.offset(0 as isize) } as i32 <= 'Z' as i32
-        {
-            x = ((unsafe { *p.offset(0 as isize) } as i32 - 'A' as i32 + 0xa as i32) << 4 as i32)
-                as u8
-        } else if unsafe { *p.offset(0 as isize) } as i32 >= '0' as i32
-            && unsafe { *p.offset(0 as isize) } as i32 <= '9' as i32
-        {
-            x = ((unsafe { *p.offset(0 as isize) } as i32 - '0' as i32) << 4 as i32) as u8
+        if unsafe { *p.offset(0) } >= 'a' as u8 && unsafe { *p.offset(0) } <= 'z' as u8 {
+            x = (unsafe { *p.offset(0) } - 'a' as u8 + 0xa) << 4
+        } else if unsafe { *p.offset(0) } >= 'A' as u8 && unsafe { *p.offset(0) } <= 'Z' as u8 {
+            x = (unsafe { *p.offset(0) } - 'A' as u8 + 0xa) << 4
+        } else if unsafe { *p.offset(0) } >= '0' as u8 && unsafe { *p.offset(0) } <= '9' as u8 {
+            x = (unsafe { *p.offset(0) } - '0' as u8) << 4
         } else {
             return -(1 as i32) as size_t;
         }
-        if unsafe { *p.offset(1 as isize) } as i32 >= 'a' as i32
-            && unsafe { *p.offset(1 as isize) } as i32 <= 'z' as i32
-        {
-            x = (x as i32 | unsafe { *p.offset(1 as isize) } as i32 - 'a' as i32 + 0xa as i32) as u8
-        } else if unsafe { *p.offset(1 as isize) } as i32 >= 'A' as i32
-            && unsafe { *p.offset(1 as isize) } as i32 <= 'Z' as i32
-        {
-            x = (x as i32 | unsafe { *p.offset(1 as isize) } as i32 - 'A' as i32 + 0xa as i32) as u8
-        } else if unsafe { *p.offset(1 as isize) } as i32 >= '0' as i32
-            && unsafe { *p.offset(1 as isize) } as i32 <= '9' as i32
-        {
-            x = (x as i32 | unsafe { *p.offset(1 as isize) } as i32 - '0' as i32) as u8
+        if unsafe { *p.offset(1) } >= 'a' as u8 && unsafe { *p.offset(1) } <= 'z' as u8 {
+            x = x | unsafe { *p.offset(1) } - 'a' as u8 + 0xa
+        } else if unsafe { *p.offset(1) } >= 'A' as u8 && unsafe { *p.offset(1) } <= 'Z' as u8 {
+            x = x | unsafe { *p.offset(1) } - 'A' as u8 + 0xa
+        } else if unsafe { *p.offset(1) } >= '0' as u8 && unsafe { *p.offset(1) } <= '9' as u8 {
+            x = x | unsafe { *p.offset(1) } - '0' as u8
         } else {
             return -(1 as i32) as size_t;
         }
-        let fresh2 = b;
+        unsafe { *b = x };
         b = unsafe { b.offset(1) };
-        unsafe { *fresh2 = x };
         bsize = bsize - 1;
-        p = unsafe { p.offset(2 as isize) };
-        psize = ((psize as u64) - (2 as u64)) as size_t
+        p = unsafe { p.offset(2) };
+        psize = ((psize as u64) - 2) as size_t
     }
     return fbsize - (bsize);
 }
@@ -1123,7 +1103,7 @@ fn time_from_tm(t: *mut tm) -> time_t {
     return timegm_safe(t);
     #[cfg_attr(HAVE__MKGMTIME64, cfg(not(HAVE_TIMEGM)))]
     return _mkgmtime_safe(t);
-    if unsafe { mktime_safe(t) == -(1) as time_t } {
+    if unsafe { mktime_safe(t) == -1 } {
         return -(1 as i32) as time_t;
     }
     let mut safe_t = unsafe { &mut *t };
@@ -1157,62 +1137,57 @@ fn parse_time(mut p: *const u8, mut n: size_t) -> time_t {
     if n != 20 {
         return t;
     }
-    data = atol10(p, 4 as size_t) as int64_t;
+    data = atol10(p, 4) as int64_t;
     if data < 1900 {
         return t;
     }
     tm.tm_year = data as i32 - 1900;
-    p = unsafe { p.offset(4 as isize) };
-    let fresh3 = p;
-    p = unsafe { p.offset(1) };
-    if unsafe { *fresh3 } as i32 != '-' as i32 {
+    p = unsafe { p.offset(4) };
+    if unsafe { *p } != '-' as u8 {
         return t;
     }
-    data = atol10(p, 02 as size_t) as int64_t;
-    if data < 1 || data > 102 {
+    p = unsafe { p.offset(1) };
+    data = atol10(p, 2) as int64_t;
+    if data < 1 || data > 12 {
         return t;
     }
     tm.tm_mon = data as i32 - 1;
-    p = unsafe { p.offset(2 as isize) };
-    let fresh4 = p;
-    p = unsafe { p.offset(1) };
-    if unsafe { *fresh4 as i32 } != '-' as i32 {
+    p = unsafe { p.offset(2) };
+    if unsafe { *p } != '-' as u8 {
         return t;
     }
-    data = atol10(p, 02 as size_t) as int64_t;
+    p = unsafe { p.offset(1) };
+    data = atol10(p, 2) as int64_t;
     if data < 1 || data > 31 {
         return t;
     }
     tm.tm_mday = data as i32;
-    p = unsafe { p.offset(2 as isize) };
-    let fresh5 = p;
-    p = unsafe { p.offset(1) };
-    if unsafe { *fresh5 as i32 } != 'T' as i32 {
+    p = unsafe { p.offset(2) };
+    if unsafe { *p } != 'T' as u8 {
         return t;
     }
-    data = atol10(p, 02 as size_t) as int64_t;
+    p = unsafe { p.offset(1) };
+    data = atol10(p, 2) as int64_t;
     if data < 0 || data > 23 {
         return t;
     }
     tm.tm_hour = data as i32;
-    p = unsafe { p.offset(2 as isize) };
-    let fresh6 = p;
-    p = unsafe { p.offset(1) };
-    if unsafe { *fresh6 as i32 } != ':' as i32 {
+    p = unsafe { p.offset(2) };
+    if unsafe { *p } != ':' as u8 {
         return t;
     }
-    data = atol10(p, 02 as size_t) as int64_t;
+    p = unsafe { p.offset(1) };
+    data = atol10(p, 2) as int64_t;
     if data < 0 || data > 59 {
         return t;
     }
     tm.tm_min = data as i32;
-    p = unsafe { p.offset(2 as isize) };
-    let fresh7 = p;
-    p = unsafe { p.offset(1) };
-    if unsafe { *fresh7 as i32 } != ':' as i32 {
+    p = unsafe { p.offset(2) };
+    if unsafe { *p } != ':' as u8 {
         return t;
     }
-    data = atol10(p, 02 as size_t) as int64_t;
+    p = unsafe { p.offset(1) };
+    data = atol10(p, 2) as int64_t;
     if data < 0 || data > 60 {
         return t;
     }
@@ -1236,13 +1211,13 @@ fn heap_add_entry(a: *mut archive_read, heap: *mut heap_queue, file: *mut xar_fi
         if safe_heap.allocated < 1024 {
             new_size = 1024
         } else {
-            new_size = safe_heap.allocated * 02
+            new_size = safe_heap.allocated * 2
         }
         /* Overflow might keep us from growing the list. */
         if new_size <= safe_heap.allocated {
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
-                102,
+                ARCHIVE_XAR_DEFINED_PARAM.enomem,
                 b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
@@ -1254,7 +1229,7 @@ fn heap_add_entry(a: *mut archive_read, heap: *mut heap_queue, file: *mut xar_fi
         if new_pending_files.is_null() {
             archive_set_error_safe!(
                 &mut (*a).archive as *mut archive,
-                102,
+                ARCHIVE_XAR_DEFINED_PARAM.enomem,
                 b"Out of memory\x00" as *const u8
             );
             return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
@@ -1276,29 +1251,25 @@ fn heap_add_entry(a: *mut archive_read, heap: *mut heap_queue, file: *mut xar_fi
     /*
      * Start with hole at end, walk it up tree to find insertion point.
      */
-    let fresh8 = safe_heap.used;
+    hole = safe_heap.used;
     safe_heap.used = safe_heap.used + 1;
-    hole = fresh8;
     while hole > 0 {
         parent = (hole - 1) / 2;
-        parent_id = unsafe { (**safe_heap.files.offset(parent as isize)) }.id;
+        parent_id = unsafe { **safe_heap.files.offset(parent as isize) }.id;
         if file_id >= parent_id {
             unsafe {
-                let ref mut fresh9 = *safe_heap.files.offset(hole as isize);
-                *fresh9 = file;
+                *safe_heap.files.offset(hole as isize) = file;
             }
             return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
         }
         /* Move parent into hole <==> move hole up tree. */
         unsafe {
-            let ref mut fresh10 = *(*heap).files.offset(hole as isize);
-            *fresh10 = *safe_heap.files.offset(parent as isize);
+            *(*heap).files.offset(hole as isize) = *safe_heap.files.offset(parent as isize);
         }
         hole = parent
     }
     unsafe {
-        let ref mut fresh11 = *safe_heap.files.offset(0 as isize);
-        *fresh11 = file;
+        *safe_heap.files.offset(0) = file;
     }
     return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
 }
@@ -1319,14 +1290,13 @@ fn heap_get_entry(heap: *mut heap_queue) -> *mut xar_file {
     /*
      * The first file in the list is the earliest; we'll return this.
      */
-    r = unsafe { *safe_heap.files.offset(0 as isize) };
+    r = unsafe { *safe_heap.files.offset(0) };
     /*
      * Move the last item in the heap to the root of the tree
      */
     safe_heap.used -= 1;
     unsafe {
-        let ref mut fresh12 = *safe_heap.files.offset(0 as isize);
-        *fresh12 = *safe_heap.files.offset(safe_heap.used as isize);
+        *safe_heap.files.offset(0) = *safe_heap.files.offset(safe_heap.used as isize);
     }
 
     /*
@@ -1353,10 +1323,8 @@ fn heap_get_entry(heap: *mut heap_queue) -> *mut xar_file {
         }
         tmp = unsafe { *safe_heap.files.offset(a as isize) };
         unsafe {
-            let ref mut fresh13 = *safe_heap.files.offset(a as isize);
-            *fresh13 = *safe_heap.files.offset(b as isize);
-            let ref mut fresh14 = *safe_heap.files.offset(b as isize);
-            *fresh14 = tmp;
+            *safe_heap.files.offset(a as isize) = *safe_heap.files.offset(b as isize);
+            *safe_heap.files.offset(b as isize) = tmp;
         }
         a = b
     }
@@ -1384,7 +1352,7 @@ fn add_link(a: *mut archive_read, xar: *mut xar, file: *mut xar_file) -> i32 {
     if hdlink.is_null() {
         archive_set_error_safe!(
             &mut safe_a.archive as *mut archive,
-            102,
+            ARCHIVE_XAR_DEFINED_PARAM.enomem,
             b"Out of memory\x00" as *const u8
         );
         return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
@@ -1545,7 +1513,7 @@ fn checksum_final(
     e_sum_val: *const (),
     e_sum_len: size_t,
 ) -> i32 {
-    let mut xar: *mut xar;
+    let xar: *mut xar;
     let mut r: i32;
     xar = unsafe { (*(*a).format).data as *mut xar };
     let safe_xar = unsafe { &mut *xar };
@@ -1565,7 +1533,7 @@ fn checksum_final(
 }
 
 fn decompression_init(a: *mut archive_read, encoding: enctype) -> i32 {
-    let mut xar: *mut xar;
+    let xar: *mut xar;
     let mut detail: *const u8;
     let mut r: i32;
     xar = unsafe { (*(*a).format).data as *mut xar };
@@ -1589,7 +1557,7 @@ fn decompression_init(a: *mut archive_read, encoding: enctype) -> i32 {
             if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
                 archive_set_error_safe!(
                     &mut safe_a.archive as *mut archive,
-                    -(1),
+                    ARCHIVE_XAR_DEFINED_PARAM.archive_errno_misc,
                     b"Couldn\'t initialize zlib stream.\x00" as *const u8
                 );
                 return ARCHIVE_XAR_DEFINED_PARAM.archive_fatal;
@@ -1606,7 +1574,7 @@ fn decompression_init(a: *mut archive_read, encoding: enctype) -> i32 {
                     safe_xar.bzstream_valid = 0
                 }
                 r = BZ2_bzDecompressInit_safe(&mut safe_xar.bzstream, 0, 0);
-                if r == -(3 as i32) {
+                if r == -3 {
                     r = BZ2_bzDecompressInit_safe(&mut safe_xar.bzstream, 0, 1)
                 }
                 if r != ARCHIVE_XAR_DEFINED_PARAM.archive_ok {
@@ -1667,7 +1635,7 @@ fn decompression_init(a: *mut archive_read, encoding: enctype) -> i32 {
                         r = lzma_stream_decoder_safe(
                             &mut safe_xar.lzstream,
                             LZMA_MEMLIMIT as u64,
-                            0x8 as u32,
+                            0x8,
                         ) as i32
                     } else {
                         r = lzma_alone_decoder_safe(
@@ -2117,21 +2085,21 @@ fn getsumalgorithm(list: *mut xmlattr_list) -> i32 {
         if unsafe { strcmp_safe(safe_attr.name, b"style\x00" as *const u8) } == 0 {
             let mut v: *const u8 = safe_attr.value;
             if unsafe {
-                (*v.offset(0) as i32 == 'S' as i32 || *v.offset(0) as i32 == 's' as i32)
-                    && (*v.offset(1) as i32 == 'H' as i32 || *v.offset(1) as i32 == 'h' as i32)
-                    && (*v.offset(2) as i32 == 'A' as i32 || *v.offset(2) as i32 == 'a' as i32)
-                    && *v.offset(3) as i32 == '1' as i32
-                    && *v.offset(4) as i32 == '\u{0}' as i32
+                (*v.offset(0) == 'S' as u8 || *v.offset(0) == 's' as u8)
+                    && (*v.offset(1) == 'H' as u8 || *v.offset(1) == 'h' as u8)
+                    && (*v.offset(2) == 'A' as u8 || *v.offset(2) == 'a' as u8)
+                    && *v.offset(3) == '1' as u8
+                    && *v.offset(4) == '\u{0}' as u8
             } {
-                alg = 1
+                alg = CKSUM_SHA1
             }
             if unsafe {
-                (*v.offset(0) as i32 == 'M' as i32 || *v.offset(0) as i32 == 'm' as i32)
-                    && (*v.offset(1) as i32 == 'D' as i32 || *v.offset(1) as i32 == 'd' as i32)
-                    && *v.offset(2) as i32 == '5' as i32
-                    && *v.offset(3) as i32 == '\u{0}' as i32
+                (*v.offset(0) == 'M' as u8 || *v.offset(0) == 'm' as u8)
+                    && (*v.offset(1) == 'D' as u8 || *v.offset(1) == 'd' as u8)
+                    && *v.offset(2) == '5' as u8
+                    && *v.offset(3) == '\u{0}' as u8
             } {
-                alg = 2
+                alg = CKSUM_MD5
             }
         }
         attr = unsafe { *attr }.next
@@ -3149,12 +3117,12 @@ fn xml_data(userData: *mut (), s: *const u8, len: i32) {
         }
         FILE_EA_NAME => {
             safe_file.has |= HAS_XATTR as u32;
-            safe_xattr.name.length = 0 as i32 as size_t;
+            safe_xattr.name.length = 0;
             unsafe { archive_strncat_safe(&mut safe_xattr.name, s as *const (), len as size_t) };
         }
         FILE_EA_FSTYPE => {
             safe_file.has |= HAS_XATTR as u32;
-            safe_xattr.fstype.length = 0 as i32 as size_t;
+            safe_xattr.fstype.length = 0;
             unsafe { archive_strncat_safe(&mut safe_xattr.fstype, s as *const (), len as size_t) };
         }
         FILE_ACL_DEFAULT | FILE_ACL_ACCESS | FILE_ACL_APPLEEXTENDED => {
@@ -3390,8 +3358,10 @@ fn xml2_xmlattr_setup(
         }
 
         if unsafe { (*attr).value.is_null() } {
-            unsafe { free_safe(unsafe { (*attr).name as *mut () }) };
-            unsafe { free_safe(attr as *mut ()) };
+            unsafe {
+                free_safe((*attr).name as *mut ());
+                free_safe(attr as *mut ())
+            };
             archive_set_error_safe!(
                 &mut safe_a.archive as *mut archive,
                 ARCHIVE_XAR_DEFINED_PARAM.enomem,
@@ -3568,7 +3538,7 @@ fn expat_xmlattr_setup(
     if atts.is_null() {
         return ARCHIVE_XAR_DEFINED_PARAM.archive_ok;
     }
-    while unsafe { !(*atts.offset(0 as i32 as isize)).is_null() && !(*atts.offset(1)).is_null() } {
+    while unsafe { !(*atts.offset(0)).is_null() && !(*atts.offset(1)).is_null() } {
         attr = malloc_safe(size_of::<xmlattr>() as u64) as *mut xmlattr;
         name = strdup_safe(unsafe { *atts.offset(0) });
         value = strdup_safe(unsafe { *atts.offset(1) });
