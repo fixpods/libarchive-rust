@@ -87,6 +87,8 @@ int archive_read_support_format_xar(struct archive *_a)
 #define SHA1_SIZE 20
 #define MAX_SUM_SIZE 20
 
+#endif
+
 #ifndef COMPILE_WITH_RUST
 struct archive_xar_defined_param
 {
@@ -143,7 +145,5 @@ int archive_read_support_format_xar(struct archive *_a)
 
   return 0;
 }
-
-#endif
 
 #endif

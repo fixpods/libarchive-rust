@@ -400,6 +400,8 @@ extern "C" {
 
     pub fn nl_langinfo(__item: nl_item) -> *mut u8;
 
+    pub fn locale_charset() -> *mut u8;
+
     pub fn __ctype_get_mb_cur_max() -> size_t;
 
     pub fn memchr(_: *const (), _: i32, _: u64) -> *mut ();
