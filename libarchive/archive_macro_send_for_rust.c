@@ -51,6 +51,10 @@ __FBSDID("$FreeBSD$");
 #include "archive_crc32.h"
 #endif
 
+
+int get_have_locale_charset();
+int get___apple__();
+int get_have_nl_langinfo();
 int get__win32();
 int get___cygwin__();
 int get__debug();
@@ -76,6 +80,63 @@ int get_have__localtime64_s();
 int get_check_crc_on_solid_skip();
 int get_dont_fail_on_crc_error();
 int get_have_iconv();
+int get_archive_endian_h_included();
+int get_mtree_strnlen();
+int get_WIN32();
+
+int get_WIN32()
+{
+#if !defined WIN32
+	return 0;
+#else
+	return 1;
+#endif
+}
+
+int get_mtree_strnlen()
+{
+#ifdef HAVE_STRNLEN
+	return 1;
+#else
+	return 0;
+#endif
+}
+
+int get_archive_endian_h_included()
+{
+#ifdef ARCHIVE_ENDIAN_H_INCLUDED
+	return 1;
+#else
+	return 0;
+#endif
+}
+
+int get_have_locale_charset()
+{
+#if HAVE_LOCALE_CHARSET
+	return 1;
+#else
+	return 0;
+#endif
+}
+
+int get___apple__()
+{
+#ifdef __APPLE__
+	return 1;
+#else
+	return 0;
+#endif
+}
+
+int get_have_nl_langinfo()
+{
+#if HAVE_NL_LANGINFO
+	return 1;
+#else
+	return 0;
+#endif
+}
 
 int get__win32()
 {

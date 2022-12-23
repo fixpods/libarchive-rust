@@ -37,9 +37,21 @@ extern "C" {
     fn get_have__localtime64_s() -> i32;
     fn get_check_crc_on_solid_skip() -> i32;
     fn get_dont_fail_on_crc_error() -> i32;
+    fn get_have_locale_charset() -> i32;
+    fn get___apple__() -> i32;
+    fn get_have_nl_langinfo() -> i32;
+    fn get_archive_endian_h_included() -> i32;
+    fn get_mtree_strnlen() -> i32;
+    fn get_WIN32() -> i32;
 }
 
 pub fn defined_param_set() {
+    have_locale_charset_add_cfg();
+    __apple___add_cfg();
+    have_nl_langinfo_add_cfg();
+    archive_endian_h_included_add_cfg();
+    WIN32_add_cfg();
+    mtree_strnlen_add_cfg();
     have_zlib_h_add_cfg();
     have_timegm_add_cfg();
     have__mkgmtime64_add_cfg();
@@ -78,6 +90,42 @@ pub fn defined_param_set() {
     have__localtime64_s_add_cfg();
     have_check_crc_on_solid_skip_add_cfg();
     have_dont_fail_on_crc_error_add_cfg();
+}
+
+fn WIN32_add_cfg() {
+    if unsafe { get_WIN32() } == 1 {
+        println!("cargo:rustc-cfg=WIN32");
+    }
+}
+
+fn mtree_strnlen_add_cfg() {
+    if unsafe { get_mtree_strnlen() } == 1 {
+        println!("cargo:rustc-cfg=HAVE_STRNLEN");
+    }
+}
+
+fn archive_endian_h_included_add_cfg() {
+    if unsafe { get_archive_endian_h_included() } == 1 {
+        println!("cargo:rustc-cfg=ARCHIVE_ENDIAN_H_INCLUDED");
+    }
+}
+
+fn have_nl_langinfo_add_cfg() {
+    if unsafe { get_have_nl_langinfo() } == 1 {
+        println!("cargo:rustc-cfg=HAVE_NL_LANGINFO");
+    }
+}
+
+fn __apple___add_cfg() {
+    if unsafe { get___apple__() } == 1 {
+        println!("cargo:rustc-cfg=__APPLE__");
+    }
+}
+
+fn have_locale_charset_add_cfg() {
+    if unsafe { get_have_locale_charset() } == 1 {
+        println!("cargo:rustc-cfg=HAVE_LOCALE_CHARSET");
+    }
 }
 
 fn have_zlib_h_add_cfg() {

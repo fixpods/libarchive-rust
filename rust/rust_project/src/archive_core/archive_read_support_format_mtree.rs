@@ -49,6 +49,7 @@ fn get_time_t_min() -> int64_t {
         }
     }
 }
+
 fn mtree_strnlen(p: *const u8, maxlen: size_t) -> size_t {
     match () {
         #[cfg(HAVE_STRLEN)]

@@ -1977,6 +1977,21 @@ fn process_base_block(a: *mut archive_read, entry: *mut archive_entry) -> i32 {
             }
         }
     };
+    match () {
+        #[cfg(not(WIN32))]
+        _ => {
+            unsafe {
+                archive_set_error(
+                    &mut (*a).archive as *mut archive,
+                    ARCHIVE_RAR5_DEFINED_PARAM.archive_errno_programmer,
+                    b"Internal unpacker error\x00" as *const u8,
+                )
+            };
+            return ARCHIVE_RAR5_DEFINED_PARAM.archive_fatal;
+        }
+        #[cfg(WIN32)]
+        _ => {}
+    }
 }
 
 fn skip_base_block(mut a: *mut archive_read) -> i32 {
@@ -3607,6 +3622,15 @@ fn do_unpack(
         /* fallthrough */
         return uncompress_file(a);
     };
+
+    match () {
+        #[cfg(not(WIN32))]
+        _ => {
+            return ARCHIVE_RAR5_DEFINED_PARAM.archive_ok;
+        }
+        #[cfg(WIN32)]
+        _ => {}
+    }
 }
 
 fn verify_checksums(a: *mut archive_read) -> i32 {
